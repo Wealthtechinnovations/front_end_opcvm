@@ -2,7 +2,7 @@
 import { urlconstant } from "@/app/constants";
 
 import Link from "next/link";
-import { Fragment, JSXElementConstructor, Key, ReactNode, ReactElement, ReactNode, useEffect, useState } from "react";
+import { Fragment, JSXElementConstructor, Key, ReactNode, ReactElement, useEffect, useState } from "react";
 import Swal from "sweetalert2";
 
 

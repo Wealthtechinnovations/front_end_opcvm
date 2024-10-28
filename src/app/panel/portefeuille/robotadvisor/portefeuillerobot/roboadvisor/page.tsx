@@ -2,7 +2,7 @@
 import { urlconstant } from "@/app/constants";
 
 import Link from "next/link";
-import { Fragment, JSXElementConstructor, Key, ReactNode, ReactElement, ReactNode, ReactPortal, SetStateAction, useEffect, useState } from "react";
+import { Fragment, JSXElementConstructor, Key, ReactNode, ReactElement, ReactPortal, SetStateAction, useEffect, useState } from "react";
 import Select, { SingleValue } from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";

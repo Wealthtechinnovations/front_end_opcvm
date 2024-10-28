@@ -2,7 +2,7 @@
 import { urlconstant } from "@/app/constants";
 import axios from 'axios';
 import Link from "next/link";
-import { Fragment, JSXElementConstructor, ReactNode, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
+import { Fragment, JSXElementConstructor, ReactNode, ReactElement, ReactPortal, useEffect, useState } from "react";
 import Select from 'react-select';
 import { useRouter } from 'next/navigation';
 import Calendar from 'react-calendar';

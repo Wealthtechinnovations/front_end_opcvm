@@ -2,7 +2,7 @@
 import { urlconstant, urlconstantimage } from "@/app/constants";
 
 import Link from "next/link";
-import { Fragment, JSXElementConstructor, Key, ReactNode, ReactElement, ReactNode, ReactPortal, SetStateAction, useEffect, useState } from "react";
+import { Fragment, JSXElementConstructor, Key, ReactNode, ReactElement, ReactPortal, SetStateAction, useEffect, useState } from "react";
 import Select from 'react-select';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faFileDownload, faPhoneAlt, faEnvelope } from '@fortawesome/free-solid-svg-icons';
