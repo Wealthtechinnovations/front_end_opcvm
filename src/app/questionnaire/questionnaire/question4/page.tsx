@@ -303,7 +303,7 @@ export default function Profile(props: PageProps): JSX.Element {
                         {quizPartOne.map((questionData, index) => (
                           <div key={index}>
                             <label className='mb-3'>{questionData.question}</label>
-                            {questionData.reponses.map((reponse: { reponse: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.PromiseLikeOfReactNode | null | undefined; }, idx: React.Key | null | undefined) => (
+                            {questionData.reponses.map((reponse: { reponse: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactNode | null | undefined; }, idx: React.Key | null | undefined) => (
                               <div key={idx} className='form-group'>
                                 <label className='d-flex'>
                                   <input

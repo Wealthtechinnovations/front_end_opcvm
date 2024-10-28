@@ -164,13 +164,13 @@ interface OneKycForParticular {
 interface Country {
     id: React.Key | null | undefined;
     code: string | number | readonly string[] | undefined;
-    libelle: string | number | boolean | React.ReactElement | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined;
+    libelle: string | number | boolean | React.ReactElement | Iterable<React.ReactNode> | React.ReactPortal | React.ReactNode | null | undefined;
 }
 
 interface CountryOne {
     id: React.Key | null | undefined;
     code: string | number | readonly string[] | undefined;
-    libelle: string | number | boolean | React.ReactElement | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined;
+    libelle: string | number | boolean | React.ReactElement | Iterable<React.ReactNode> | React.ReactPortal | React.ReactNode | null | undefined;
 }
 
 export default function Profile(props: PageProps): JSX.Element {

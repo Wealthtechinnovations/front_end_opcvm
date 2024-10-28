@@ -23,7 +23,7 @@ interface KycForParticular {
 interface Country {
     id: React.Key | null | undefined;
     code: string | number | readonly string[] | undefined;
-    libelle: string | number | boolean | React.ReactElement | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined;
+    libelle: string | number | boolean | React.ReactElement | Iterable<React.ReactNode> | React.ReactPortal | React.ReactNode | null | undefined;
 }
 interface Bank {
     id: React.Key | null | undefined;
@@ -730,7 +730,7 @@ export default function Profile(props: PageProps): JSX.Element {
                                                 >
                                                     <option defaultValue="">Choisissez</option>
                                                     {allCountry ? (
-                                                        allCountry.map((data: { id: React.Key | null | undefined; code: string | number | readonly string[] | undefined; libelle: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined; }) => (
+                                                        allCountry.map((data: { id: React.Key | null | undefined; code: string | number | readonly string[] | undefined; libelle: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.ReactNode | null | undefined; }) => (
                                                             <optgroup className='single-cryptocurrency-box'
                                                                 key={data.id}>
                                                                 <option value={data.code}>{data.libelle}</option>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, JSXElementConstructor, Key, PromiseLikeOfReactNode, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
+import { Fragment, JSXElementConstructor, Key, ReactNode, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import Header from '../../../Header';
 import { urlconstant, urlsite } from "@/app/constants";
 import { useRouter } from 'next/navigation';
@@ -892,7 +892,7 @@ borderColor:'grey'
                                               <tr>
                                                 <th className="text-left">Données</th>
 
-                                                {post?.data?.performances?.data?.adaptValues1.map((item: (string | number | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | PromiseLikeOfReactNode | null | undefined)[], index: Key | null | undefined) => (
+                                                {post?.data?.performances?.data?.adaptValues1.map((item: (string | number | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | ReactNode | null | undefined)[], index: Key | null | undefined) => (
 
                                                   <th key={index} className="text-center">{item[0]}</th>
 
