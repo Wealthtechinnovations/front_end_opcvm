@@ -749,7 +749,6 @@ export default function Profile(props: PageProps): JSX.Element {
                                                         Nom de la banque de votre compte d épargne
                                                     </label>
                                                     <select
-                                                        placeholder='Banque'
                                                         className='form-control'
                                                         defaultValue={otherBankNameSavings}
                                                         onChange={(event) => setOtherBankNameSavings(event.target.value)}
