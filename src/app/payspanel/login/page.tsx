@@ -757,7 +757,7 @@ export default function Login() {
           </li>
           <li>
             <Link className="link-style" style={{ backgroundColor: "#3b82f6", color: "white" }}
-              href="/societegestionpanel/login"
+              href="/panel/societegestionpanel/login"
 
             >
               Espace membre

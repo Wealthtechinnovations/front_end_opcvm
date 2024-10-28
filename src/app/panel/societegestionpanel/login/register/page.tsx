@@ -277,7 +277,7 @@ export default function Register(props: PageProps) {
 
         // Redirect the user to another page after a delay (e.g., 2 seconds)
         setTimeout(() => {
-          router.push('/societegestionpanel/pagehome'); // Replace '/other-page' with your desired page URL
+          router.push('/panel/societegestionpanel/pagehome'); // Replace '/other-page' with your desired page URL
         }, 2000);
       }
     } catch (error) {

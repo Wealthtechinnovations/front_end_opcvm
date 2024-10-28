@@ -159,7 +159,7 @@ export default function Login() {
           </li>
           <li>
             <Link className="link-style"
-              href="/societegestionpanel/login"
+              href="/panel/societegestionpanel/login"
 
             >
               Espace membre

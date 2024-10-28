@@ -48,24 +48,25 @@ export default function Callback() {
                                 if (res.status === 200) {
                                     let href;
                                     // Définir la route en fonction du type d'utilisateur
-                                    if (data.data.user.typeusers_id === 2) {
+                                    if (data.data.user.typeusers_id == 2) {
                                         href = `/panel/societegestionpanel/pagehome?id=${data.data.user.denomination}`;
                                         localStorage.setItem('isLoggedIn', 'true');
                                         localStorage.setItem('userId', data.data.user.denomination);
-                                    } else if (data.data.user.typeusers_id === 1) {
+                                    } else if (data.data.user.typeusers_id == 1) {
                                         href = `/panel/portefeuille/home?id=${data.data.user.id}`;
                                         localStorage.setItem('isLoggedIn', 'true');
                                         localStorage.setItem('userId', data.data.user.id);
-                                    } else if (data.data.user.typeusers_id === 5) {
+                                    } else if (data.data.user.typeusers_id == 5) {
                                         href = `/payspanel/pagehome?id=${data.data.user.pays}`;
                                         localStorage.setItem('isLoggedIn', 'true');
                                         localStorage.setItem('userId', data.data.user.id);
-                                    } else if (data.data.user.typeusers_id === 0) {
+                                    } else if (data.data.user.typeusers_id == 0) {
                                         href = `/panel/admin/home?id=${data.data.user.id}`;
                                         localStorage.setItem('isLoggedIn', 'true');
                                         localStorage.setItem('userId', data.data.user.id);
                                     }
                                     // Rediriger l'utilisateur vers la page appropriée
+                                    console.log("href", href);
                                     router.push(href);
                                 } else {
                                     console.error("Échec de la connexion : Statut", res.status);

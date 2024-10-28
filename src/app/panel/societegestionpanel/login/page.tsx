@@ -1153,7 +1153,7 @@ const handleMouseLeaveaa = () => {
                             </Dropdown.Toggle>
                             <Dropdown.Menu>
                                 <Dropdown.Item onClick={handleLinkClick} href="#">Espace Membre</Dropdown.Item>
-                                <Dropdown.Item href="/societegestionpanel/login">Espace client</Dropdown.Item>
+                                <Dropdown.Item href="/panel/societegestionpanel/login">Espace client</Dropdown.Item>
                             </Dropdown.Menu>
                         </Dropdown>
                     </li>
@@ -1259,7 +1259,7 @@ const handleMouseLeaveaa = () => {
                               borderRadius: '5px', // Rounded corners
                               width: '200px', // Définir une largeur fixe
                               display: 'inline-block', // Assurez-vous que l'élément est en ligne
-                            }} href="/societegestionpanel/login/forgot-password">Mot de passe oublié</a>
+                            }} href="/panel/societegestionpanel/login/forgot-password">Mot de passe oublié</a>
 
                             </div>
                             {/* /.col */}

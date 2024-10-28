@@ -537,40 +537,16 @@ export default function Ajoutvl(props: PageProps) {
           {/* Main content */}
           <section className="content">
             <div className="row">
-              <div className="col-xl-12 col-lg-12 mb-4">
-                <div className="card text-center shadow-lg border-0 rounded-lg overflow-hidden">
-                  <div className="card-body bg-gradient-to-r from-indigo-500 via-purple-500 to-purple-500 text-white">
-                    <img src="/images/avatar/avatar-13.png" className="bg-light rounded-circle avatar-lg img-thumbnail border-4 border-white mb-3" alt="profile-image" />
-                    <h4 className="mb-0 mt-2">{societeconneted}</h4>
-                    <h2 className="mb-0 mt-2">{fund?.nom_fond}</h2>
+            <div className="col-xl-12 mb-4">
+                    <div className="card text-center shadow-lg border-0 rounded-lg overflow-hidden">
+                      <div className="card-body bg-gradient-to-b from-white to-blue-200 text-white p-5">
+                        <img src="/images/avatar/avatar-13.png" className="bg-light rounded-circle avatar-lg img-thumbnail border-4 border-white mb-3" alt="profile-image" />
+                        <h4 className="mb-0 mt-2 font-bold text-black-50">{societeconneted}</h4>
 
-
-
-                    <ul className="social-list list-inline mt-3 mb-0">
-                      <li className="list-inline-item">
-                        <a href="#" className="btn btn-social-icon btn-circle text-white bg-facebook hover:bg-facebook-dark">
-                          <i className="fa fa-facebook"></i>
-                        </a>
-                      </li>
-                      <li className="list-inline-item">
-                        <a href="#" className="btn btn-social-icon btn-circle text-white bg-twitter hover:bg-twitter-dark">
-                          <i className="fa fa-twitter"></i>
-                        </a>
-                      </li>
-                      <li className="list-inline-item">
-                        <a href="#" className="btn btn-social-icon btn-circle text-white bg-google hover:bg-google-dark">
-                          <i className="fa fa-google"></i>
-                        </a>
-                      </li>
-                      <li className="list-inline-item">
-                        <a href="#" className="btn btn-social-icon btn-circle text-white bg-instagram hover:bg-instagram-dark">
-                          <i className="fa fa-instagram"></i>
-                        </a>
-                      </li>
-                    </ul>
+                      
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
               <div className="col-12">
                     <div className="box ">
                       <div className="box-body">

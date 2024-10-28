@@ -372,7 +372,7 @@ export default function Pagehome(props: PageProps) {
         setTimeout(() => {
           const href = `/panel/societegestionpanel/pagehome?id=${societeconneted}`;
 
-          router.push(href);
+          window.location.reload();
         }, 2000);
       }
     } catch (error) {
@@ -479,8 +479,8 @@ export default function Pagehome(props: PageProps) {
             className="bg-light rounded-circle img-thumbnail border-4 border-white mb-3 mx-auto w-48 h-48" // Augmente la taille de l'image
             alt="profile-image"
           />
-          <h4 className="mt-2">{societeconneted}</h4>
-          <p className="text-white-50">Société de gestion</p>
+          <h4 className="mt-2 text-black-50">{societeconneted}</h4>
+          <p className="text-black-50">Société de gestion</p>
         </div>
       </div>
     </div>
@@ -764,23 +764,27 @@ export default function Pagehome(props: PageProps) {
                                       </form>
                                     </div>
 
-                                    {actualites.map((actualite, index) => (
-                                      <div key={index} className="border rounded-lg p-4 mb-4 shadow-sm bg-white transition-all duration-300 hover:bg-gray-100">
-                                        <div className="d-flex align-items-center">
-                                          <img className="me-3 rounded-circle bg-light" src="/images/avatar/avatar-1.png" alt="Avatar" height="50" width="50" />
-                                          <div>
-                                            <h5 className="fs-16 m-0 font-semibold">{actualite.username}</h5>
-                                            <p className="text-muted fs-12"><FontAwesomeIcon icon={faClock} /> {actualite.date}</p>
-                                          </div>
-                                        </div>
-                                        <p className="text-dark mt-3 mb-2">{actualite.description}</p>
-                                        {actualite.image && <img className="img-fluid rounded-lg bg-light m-2" src={`${urlconstantimage}/${actualite.image}`} alt="Image" style={{ maxHeight: "300px", maxWidth: "300px" }} />}
-                                        <div className="d-flex justify-content-between align-items-center mt-3">
-                                          <button className="btn btn-outline-primary btn-sm"><FontAwesomeIcon icon={faThumbsUp} /> J aime</button>
-                                          <button className="btn btn-outline-secondary btn-sm"><FontAwesomeIcon icon={faComments} /> Commenter</button>
-                                        </div>
-                                      </div>
-                                    ))}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {actualites.map((actualite, index) => (
+                            <div key={index} className="p-6 border border-gray-200 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
+                                <div className="d-flex align-items-center mb-4">
+                                    <img className="rounded-circle bg-light" src="/images/avatar/avatar-1.png" alt="Avatar" height="50" width="50" />
+                                    <div className="ml-3">
+                                        <h5 className="text-lg font-semibold text-gray-800">{actualite.username}</h5>
+                                        <p className="text-gray-500 text-sm"><i className="fa fa-clock"></i> {actualite.date}</p>
+                                    </div>
+                                </div>
+                                <p className="text-gray-700 mb-4">{actualite.description}</p>
+                                {actualite.image && (
+                                    <img className="img-fluid rounded-lg mb-4" src={`${urlconstantimage}/${actualite.image}`} alt="Image" style={{ maxHeight: "300px", maxWidth: "100%" }} />
+                                )}
+                                <div className="flex justify-between items-center">
+                                    <button className="btn btn-outline-primary btn-sm px-4 rounded-full">J aime</button>
+                                    <button className="btn btn-outline-secondary btn-sm px-4 rounded-full">Commenter</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
 
                                     <div className="text-center">
                                       <a href="#" className="text-primary hover:text-red-500 transition duration-300"><i className="mdi mdi-spin mdi-loading me-1"></i> Charger plus </a>

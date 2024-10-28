@@ -240,7 +240,7 @@ export default function Accueil() {
                             </Dropdown.Toggle>
                             <Dropdown.Menu>
                                 <Dropdown.Item onClick={handleLinkClick} href="#">Espace Membre</Dropdown.Item>
-                                <Dropdown.Item href="/societegestionpanel/login">Espace client</Dropdown.Item>
+                                <Dropdown.Item href="/panel/societegestionpanel/login">Espace client</Dropdown.Item>
                             </Dropdown.Menu>
                         </Dropdown>
                     </li>
