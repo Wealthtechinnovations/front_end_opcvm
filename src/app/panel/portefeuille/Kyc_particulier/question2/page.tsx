@@ -859,7 +859,6 @@ export default function Profile(props: PageProps): JSX.Element {
                                                         Nom de la banque de votre compte courant
                                                     </label>
                                                     <select
-                                                        placeholder='Banque'
                                                         className='form-control'
                                                         defaultValue={otherBankNameCurrent}
                                                         onChange={(event) => setOtherBankNameCurrent(event.target.value)}
@@ -967,7 +966,6 @@ export default function Profile(props: PageProps): JSX.Element {
 
                                                     </label>
                                                     <select
-                                                        placeholder='Banque'
                                                         className='form-control'
                                                         defaultValue={otherBankNameTitle}
                                                         onChange={(event) => setOtherBankNameTitle(event.target.value)}
