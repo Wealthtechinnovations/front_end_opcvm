@@ -411,11 +411,11 @@ export default function Fond(props: PageProps) {
   console.log("filteredPerforma")
   console.log(filteredPerforma)
   const categoriesColors = {
-    'Actions': '#544fc5',
-    'Diversifié': '#00e272',
-    'Monétaire': '#fe6a35',
-    'Obligations': '#2caffe',
-    'Autres': '#33FF57',
+    'ACTIONS': '#544fc5',
+    'DIVERSIFIE': '#00e272',
+    'MONETAIRE': '#fe6a35',
+    'OBLIGATIONS': '#2caffe',
+    'AUTRES': '#33FF57',
 
     // Ajoutez des couleurs pour chaque catégorie supplémentaire
   };
