@@ -1263,7 +1263,7 @@ const getValue = (fund, key) => {
                           <div className="row justify-content-center">
                             <div className="col-12 text-center">
                               {funds && funds.data && funds.data.funds && funds.data.funds.length > 0 && (
-                                <p>Nombre d'éléments dans la liste : {funds.data.funds.length}</p>
+                                <p>Nombre d éléments dans la liste : {funds.data.funds.length}</p>
                               )}
                             </div>
                           </div>
