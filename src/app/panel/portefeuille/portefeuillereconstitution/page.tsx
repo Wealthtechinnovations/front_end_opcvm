@@ -1687,7 +1687,7 @@ export default function PorteFeuile(props: PageProps) {
                             <div className="text-center">
                               <Link
                                 href={{
-                                  pathname: '/portefeuille/portefeuillereconstitution/achat',
+                                  pathname: '/panel/portefeuille/portefeuillereconstitution/achat',
                                   query: {
                                     id: id, allfund: selectedfunds, selectedfund: data.data.funds[0]?.id, portefeuille: selectedportfeuille, devise: data.data.funds[0]?.devise
                                   },
@@ -1705,7 +1705,7 @@ export default function PorteFeuile(props: PageProps) {
                               </Link>
                               <Link
                                 href={{
-                                  pathname: '/portefeuille/portefeuillereconstitution/vente',
+                                  pathname: '/panel/portefeuille/portefeuillereconstitution/vente',
                                   query: { id: id, allfund: selectedfunds, selectedfund: data.data.funds[0]?.id, portefeuille: selectedportfeuille },
                                 }}
                                 style={{

@@ -169,6 +169,11 @@ interface Funds {
                 sortino: any;
                 omega: any;
                 dsr: any;
+                beta:any;
+                trackingError:any;
+                UpCaptureRatio:any;
+                DownCaptureRatio:any;
+                betaHaussier:any;
             };
 
         };
@@ -2915,7 +2920,7 @@ export default function Fond(props: PageProps) {
                                         <div className="card-body">
                                             <div className="d-md-flex justify-content-between align-items-center">
                                                 <div className="row">
-                                                    <p><span className="text-primary">Indicateurs de risque au {post?.data?.lastdatepreviousmonth}</span> | <span className="text-fade"></span></p>
+                                                    <p><span className="text-primary">Indicateurs de gestion au {post?.data?.lastdatepreviousmonth}</span> | <span className="text-fade"></span></p>
 
                                                 </div>
 
@@ -2936,7 +2941,7 @@ export default function Fond(props: PageProps) {
                                                 <tbody>
                                                     <tr className="row-content">
                                                         <td className="titre">
-                                                            Volatilité{' '}
+                                                            Down Capture{' '}
                                                             <span
                                                                 data-content="Le risque est mesuré par l'écart-type des rendements hebdomadaires du fonds sur différentes périodes : 1 an, 3 ans, 5 ans, ou sur une période définie par l'utilisateur. On parle aussi parfois de volatilité. Plus le fonds est volatil, plus grande est la fourchette des performances possibles, qu'elles soient positives ou négatives. Toutes choses étant égales par ailleurs, moins le risque est élevé, meilleur a été le fonds pour l'investisseur, mais certains fonds ont à la fois un risque élevé et des performances passées excellentes, il faut donc savoir séparer le bon risque du mauvais risque."
                                                                 data-helper-explanation=""
@@ -2944,20 +2949,20 @@ export default function Fond(props: PageProps) {
                                                                 data-tooltip-isinit="true"
                                                             ></span>
                                                         </td>
-                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.volatility)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.volatility).toFixed(2)} %</td>
+                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.DownCaptureRatio)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.DownCaptureRatio).toFixed(2)} %</td>
 
                                                         <td className="notation">
-                                                            {getNotationClasses(classementlocal?.data?.classementType1?.rankvolatilite, classementlocal?.data?.classementType1?.rankvolatilitetotal).map((className, index) => (
+                                                            {getNotationClasses(classementlocal?.data?.classementType1?.rankbetabaissier, classementlocal?.data?.classementType1?.rankbetabaissiertotal).map((className, index) => (
                                                                 <div key={index} className={className}></div>
                                                             ))}
                                                         </td>
                                                         <td className="estimation highlight">
-                                                            {getEstimationText(Math.ceil((classementlocal?.data?.classementType1?.rankvolatilite / classementlocal?.data?.classementType1?.rankvolatilitetotal) * 5))}
+                                                            {getEstimationText(Math.ceil((classementlocal?.data?.classementType1?.rankbetabaissier / classementlocal?.data?.classementType1?.rankbetabaissiertotal) * 5))}
                                                         </td>
                                                     </tr>
                                                     <tr className="row-content">
                                                         <td className="titre">
-                                                            Perte max{' '}
+                                                            Beta{' '}
                                                             <span
                                                                 data-content="Il s'agit de la perte la plus importante encourue par le fonds sur la période, c’est-à-dire ce qui aurait été perdu si le fonds avait été acheté au plus haut et vendu au plus bas possible sur la période."
                                                                 data-helper-explanation=""
@@ -2965,7 +2970,7 @@ export default function Fond(props: PageProps) {
                                                                 data-tooltip-isinit="true"
                                                             ></span>
                                                         </td>
-                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.maxDrawdown)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.maxDrawdown).toFixed(2)} %</td>
+                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.beta)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.beta).toFixed(2)} %</td>
                                                         <td className="notation">
                                                             {getNotationClasses(classementlocal?.data?.classementType1?.rankpertemax, classementlocal?.data?.classementType1?.rankpertemaxtotal).map((className, index) => (
                                                                 <div key={index} className={className}></div>
@@ -2978,7 +2983,7 @@ export default function Fond(props: PageProps) {
                                                     </tr>
                                                     <tr className="row-content">
                                                         <td className="titre">
-                                                            DSR{' '}
+                                                            Tracking Error{' '}
                                                             <span
                                                                 data-content="La volatilité considère les écarts de performance négatifs comme positifs par rapport à la performance moyenne du fonds, alors que l'investisseur n'est généralement concerné que par les performances inférieures à un certain seuil. Le downside risk (DSR) ne va prendre en compte que les rendements inférieurs à ce seuil pour en calculer la volatilité. Nous utilisons l'EONIA, qui mesure le taux de l'argent au jour le jour, et ne retenons que les rendements mensuels inférieurs à l'EONIA pour calculer le downside risk du fonds. Comme pour la volatilité classique, plus le downside risk est grand, plus la stratégie appliquée par le fonds est risquée."
                                                                 data-helper-explanation=""
@@ -2986,7 +2991,7 @@ export default function Fond(props: PageProps) {
                                                                 data-tooltip-isinit="true"
                                                             ></span>
                                                         </td>
-                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.dsr)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.dsr).toFixed(2)} %</td>
+                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.trackingError)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.trackingError).toFixed(2)} %</td>
                                                         <td className="notation">
                                                             {getNotationClasses(classementlocal?.data?.classementType1?.rankdsr, classementlocal?.data?.classementType1?.rankdsrtotal).map((className, index) => (
                                                                 <div key={index} className={className}></div>
@@ -2998,7 +3003,7 @@ export default function Fond(props: PageProps) {
                                                     </tr>
                                                     <tr className="row-content">
                                                         <td className="titre">
-                                                            Beta baiss.{' '}
+                                                        Beta Haussier.{' '}
                                                             <span
                                                                 data-content="Le bêta d'un fonds  est un coefficient de volatilité mesurant la relation entre les fluctuations de la valeur du fonds et celles de son marché quand ce dernier est en baisse. On le calcule en régressant les rendements mensuels du fonds sur les rendements mensuels négatifs de l'indice de référence de sa catégorie. On affecte au marché un bêta de 1 : un fonds ayant un beta baissier de 1,2 sera 20% plus réactif que le marché quand celui-ci baisse (et donc baissera plus que le marché), un fonds ayant un bêta baissier de 0,8 sera 20% moins réactif que le marché quand celui-ci baisse (et donc baissera moins que le marché)."
                                                                 data-helper-explanation=""
@@ -3006,7 +3011,7 @@ export default function Fond(props: PageProps) {
                                                                 data-tooltip-isinit="true"
                                                             ></span>
                                                         </td>
-                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.betaBaiss)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.betaBaiss).toFixed(2)}</td>
+                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.betaHaussier)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.betaHaussier).toFixed(2)}</td>
                                                         <td className="notation">
                                                             {getNotationClasses(classementlocal?.data?.classementType1?.rankbetabaissier, classementlocal?.data?.classementType1?.rankbetabaissiertotal).map((className, index) => (
                                                                 <div key={index} className={className}></div>
@@ -3018,7 +3023,7 @@ export default function Fond(props: PageProps) {
                                                     </tr>
                                                     <tr className="row-content">
                                                         <td className="titre">
-                                                            VAR 95{' '}
+                                                        Up capture   {' '}
                                                             <span
                                                                 data-content="Il s'agit de la Var historique 95, c'est à dire du rendement au dessus duquel 95% des rendements hebdomadaires ont été constatés. Par exemple si la Var est de -2% cela signifie que la performance hebdomadaire a été supérieure à -2% dans 95% des cas et inférieure dans 5% des cas."
                                                                 data-helper-explanation=""
@@ -3026,7 +3031,7 @@ export default function Fond(props: PageProps) {
                                                                 data-tooltip-isinit="true"
                                                             ></span>
                                                         </td>
-                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.VAR95)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.VAR95).toFixed(2)} %</td>
+                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.UpCaptureRatio)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.UpCaptureRatio).toFixed(2)} %</td>
                                                         <td className="notation">
                                                             {getNotationClasses(classementlocal?.data?.classementType1?.rankvar95, classementlocal?.data?.classementType1?.rankvar95total).map((className, index) => (
                                                                 <div key={index} className={className}></div>

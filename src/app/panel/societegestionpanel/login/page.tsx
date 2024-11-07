@@ -8,6 +8,7 @@ import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 import Head from 'next/head';
 import { urlconstant, urlstableconstant, API_KEY_STABLECOIN, urlsite } from "@/app/constants";
+import Headermenu from "@/app/Headermenu";
 
 import { useRouter } from 'next/navigation';
 import { magic } from '../../../../../magic'; // Importer correctement le module
@@ -993,176 +994,13 @@ const handleMouseLeaveaa = () => {
 
   return (
 
-
-
-    < Fragment >
-      <nav className="main-nav bg-white" role="navigation">
-
-
-        <input id="main-menu-state" type="checkbox" checked={menuOpen} onChange={toggleMenu} />
-        <label className="main-menu-btn" htmlFor="main-menu-state">
-          <span className="main-menu-btn-icon"></span> Toggle main menu visibility
-        </label>
-
-        <ul id="main-menu" className={`sm sm-blue ${menuOpen ? 'open' : ''}`}>
-                    <li style={{ height: '40px' }}>
-                        <button
-                            onClick={handleLinkaccueil}
-                            style={{
-                                width: '150px',
-                                backgroundColor: isHovereda ? 'blue' : 'white',
-                                color: isHovereda ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEntersa}
-                            onMouseLeave={handleMouseLeavesa}
-                        >
-                            Accueil
-                        </button>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <button
-                            onClick={() => router.push(`${urlsite}/Opcvm/recherche`)}
-                            style={{
-                                width: '150px',
-                                backgroundColor: isHoveredc ? 'blue' : 'white',
-                                color: isHoveredc ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEnterc}
-                            onMouseLeave={handleMouseLeavec}
-                        >
-                            Fonds
-                        </button>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <button
-                            onClick={handleLinksociete}
-                            style={{
-                                width: '150px',
-                                backgroundColor: isHovered ? 'blue' : 'white',
-                                color: isHovered ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEnters}
-                            onMouseLeave={handleMouseLeaves}
-                        >
-                            Societe de gestion
-                        </button>
-                    </li>
-                    <li style={{ height: '40px', }}>
-                        <button
-                            onClick={handleLinkpays}
-                            style={{
-                                width: '150px',
-                                backgroundColor: isHoveredp ? 'blue' : 'white',
-                                color: isHoveredp ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEnterp}
-                            onMouseLeave={handleMouseLeavep}
-                        >
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     Pays &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        </button>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <Dropdown>
-                            <Dropdown.Toggle id="dropdown-basic" style={{ width: '150px', backgroundColor: 'white', color: 'black', display: 'block', height: '100%', padding: '10px', textDecoration: 'none' }}>
-                                Services
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                <Dropdown.Item href="/questionnaire/questionnaire/pre/question1">Questionnaire cours</Dropdown.Item>
-                                <Dropdown.Item href="/questionnaire/questionnaire/question1">Profil investisseur (MIFID)</Dropdown.Item>
-                                <Dropdown.Item href="#">KYC</Dropdown.Item>
-                            </Dropdown.Menu>
-                        </Dropdown>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <Dropdown>
-                            <Dropdown.Toggle id="dropdown-basic" style={{ width: '150px', backgroundColor: 'white', color: 'black', display: 'block', height: '100%', padding: '10px', textDecoration: 'none' }}>
-                                Outils
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                <Dropdown.Item href="/Outils/comparaison">Comparaison</Dropdown.Item>
-                                <Dropdown.Item href="/Outils/recherche">Selection OPCVM</Dropdown.Item>
-                                <Dropdown.Item href="/Outils/robot">Robot Advisor</Dropdown.Item>
-                                <Dropdown.Item href="/Outils/profil">Profil investisseurs</Dropdown.Item>
-                                <Dropdown.Item href="/Outils/education">Éducation financière</Dropdown.Item>
-
-                            </Dropdown.Menu>
-                        </Dropdown>
-                    </li>
-
-
-
-                    <li style={{ height: '40px' }}>
-                        <button
-                            onClick={handleLinkactualite}
-                            style={{
-                                width: '150px',
-                                backgroundColor: isHoveredaa ? 'blue' : 'white',
-                                color: isHoveredaa ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEnteraa}
-                            onMouseLeave={handleMouseLeaveaa}
-                        >
-                            &nbsp;&nbsp;&nbsp;   Actualités &nbsp;&nbsp;&nbsp;
-                        </button>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <Dropdown>
-                            <Dropdown.Toggle id="dropdown-basic" style={{ width: '150px',   backgroundColor: '#3b82f6',
-                                color: 'white', display: 'block', height: '100%', padding: '10px', textDecoration: 'none' }}>
-                                Connexion
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                <Dropdown.Item onClick={handleLinkClick} href="#">Espace Membre</Dropdown.Item>
-                                <Dropdown.Item href="/panel/societegestionpanel/login">Espace client</Dropdown.Item>
-                            </Dropdown.Menu>
-                        </Dropdown>
-                    </li>
-
-                </ul>
-      </nav>
-      <br />
-      <br /><br /><br /><br /><br />
-      <div className="col-12 mt-3">
+< Fragment >
+    <div className="flex bg-gray-100">
+      <div className="flex-1 ml-64">
+        <Headermenu />
+        <br />
+        <br /><br /><br /><br /><br />
+        <div className="col-12 mt-3">
 
         <div className="container h-p100">
           <div className="row align-items-center justify-content-md-center h-p100">
@@ -1317,6 +1155,8 @@ const handleMouseLeaveaa = () => {
           </div>
         </div>
       </div>
+      </div>
+    </div>
     </Fragment >
   );
 }

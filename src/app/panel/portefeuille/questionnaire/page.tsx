@@ -286,7 +286,7 @@ export default function TypeProfil(props: PageProps): JSX.Element {
                             <Button
                               color="primary"
                               type="button"
-                              href='/portefeuille/questionnaire/first'
+                              href='/panel/portefeuille/questionnaire/first'
                             >
                               Cliquez ici pour nous donner votre avis sur votre résultat
                             </Button>
@@ -297,7 +297,7 @@ export default function TypeProfil(props: PageProps): JSX.Element {
                             <Button
                               color="primary"
                               type="button"
-                              href='/portefeuille/profile'
+                              href='/panel/portefeuille/profile'
                             >
                               Voir profil MIFID
                             </Button>
@@ -306,7 +306,7 @@ export default function TypeProfil(props: PageProps): JSX.Element {
 
                               color="primary"
                               type="button"
-                              href='/portefeuille/questionnaire/question1'
+                              href='/panel/portefeuille/questionnaire/question1'
                             >
                               Questionnaire MIFID
                             </Button>

@@ -255,9 +255,9 @@ const router=useRouter();
 
         {/* Widgets supplémentaires */}
         <div className="sidebar-widgets mt-10">
-          <div className="p-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg text-center text-white shadow-lg">
+          <div className="text-center">
             <img src="../../../images/svg-icon/color-svg/custom-32.svg" className="sideimg mx-auto p-5" alt="Logo" />
-            <h4 className="text-lg font-bold mt-4">Panel Admin</h4>
+            <h4 className="text-lg font-bold text-black mt-4">Panel Admin</h4>
           </div>
         </div>
       </aside>

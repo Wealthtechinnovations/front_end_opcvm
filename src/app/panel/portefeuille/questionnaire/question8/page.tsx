@@ -133,7 +133,7 @@ export default function Profile(props: PageProps): JSX.Element {
         });
 
         setTimeout(() => {
-          router.push('/portefeuille/profile');
+          router.push('/panel/portefeuille/profile');
         }, 5000);
       }
     } catch (error) {

@@ -127,7 +127,7 @@ export default function Profile(props: PageProps): JSX.Element {
                     timer: 5000
                 }),
                     setTimeout(() => {
-                        router.push("/portefeuille/Kyc_particulier/profil");
+                        router.push("/panel/portefeuille/Kyc_particulier/profil");
                     }, 5000)
 
             } else {

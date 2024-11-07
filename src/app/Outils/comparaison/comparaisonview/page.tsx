@@ -365,7 +365,7 @@ export default function Comparaisonview(props: PageProps) {
       setTimeout(() => {
         // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
 
-        router.push('/portefeuille/login');
+        router.push('/panel/portefeuille/login');
       }, 5);
     }
   };

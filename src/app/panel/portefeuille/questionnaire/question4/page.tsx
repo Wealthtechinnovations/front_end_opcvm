@@ -134,7 +134,7 @@ export default function Profile(props: PageProps): JSX.Element {
         });
 
         setTimeout(() => {
-          router.push('/portefeuille/questionnaire/question5');
+          router.push('/panel/portefeuille/questionnaire/question5');
         }, 5000);
       }
     } catch (error) {

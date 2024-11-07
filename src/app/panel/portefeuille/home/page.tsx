@@ -179,7 +179,7 @@ export default function Home(props: PageProps) {
       setIsLoggedIn(false);
     } console.log(isLoggedIn)
     if (!isLoggedIn) {
-      router.push('/portefeuille/login');
+      router.push('/panel/portefeuille/login');
     }
     const fetchData = async () => {
       try {
@@ -364,7 +364,7 @@ export default function Home(props: PageProps) {
                               <div className="action-buttons">
                                 <Link
                                   href={{
-                                    pathname: '/portefeuille/fondsselected',
+                                    pathname: '/panel/portefeuille/fondsselected',
                                     query: { id: id, selectedValuename: item?.funds, selectedfund: item?.fundids, portefeuille: item.id },
                                   }}
                                 >

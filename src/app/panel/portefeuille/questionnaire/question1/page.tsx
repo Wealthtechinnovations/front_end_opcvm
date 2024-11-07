@@ -157,7 +157,7 @@ export default function Profile(props: PageProps): JSX.Element {
         });
 
         setTimeout(() => {
-          router.push('/portefeuille/questionnaire/question2');
+          router.push('/panel/portefeuille/questionnaire/question2');
         }, 5000);
       }
     } catch (error) {
@@ -215,7 +215,7 @@ export default function Profile(props: PageProps): JSX.Element {
         });
 
         setTimeout(() => {
-          router.push('/portefeuille/questionnaire/question2');
+          router.push('/panel/portefeuille/questionnaire/question2');
         }, 5000);
       }
     } catch (error) {

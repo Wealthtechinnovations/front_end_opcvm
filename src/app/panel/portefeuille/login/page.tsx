@@ -149,7 +149,7 @@ export default function Login() {
 
           </li>
           <li><Link className="link-style"
-            href="/portefeuille/login" style={{ backgroundColor: "#3b82f6", color: "white" }}
+            href="/panel/portefeuille/login" style={{ backgroundColor: "#3b82f6", color: "white" }}
           //href="/auth/login"
 
           >

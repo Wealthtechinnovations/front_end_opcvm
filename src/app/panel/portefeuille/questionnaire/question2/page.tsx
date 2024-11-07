@@ -133,7 +133,7 @@ export default function Profile(props: PageProps): JSX.Element {
         });
 
         setTimeout(() => {
-          router.push('/portefeuille/questionnaire/question3');
+          router.push('/panel/portefeuille/questionnaire/question3');
         }, 5000);
       }
     } catch (error) {
