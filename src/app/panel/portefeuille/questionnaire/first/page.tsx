@@ -113,7 +113,7 @@ export default function CConditionsProfil(props: PageProps): JSX.Element {
           timer: 5000
         }),
           setTimeout(() => {
-            router.push("/portefeuille/questionnaire/typeprofil");
+            router.push("/panel/portefeuille/questionnaire/typeprofil");
           }, 3000)
       }
       // Fin condition 

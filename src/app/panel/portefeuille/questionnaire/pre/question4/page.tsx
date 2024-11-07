@@ -119,7 +119,7 @@ export default function Profile(props: PageProps): JSX.Element {
           timer: 5000
         }),
           setTimeout(() => {
-            router.push("/portefeuille/questionnaire/pre/question5");
+            router.push("/panel/portefeuille/questionnaire/pre/question5");
           }, 5000)
       }
       // Fin condition 

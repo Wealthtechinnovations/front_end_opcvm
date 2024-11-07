@@ -30,21 +30,68 @@ async function getsociete() {
   return data;
 }
 const optionsCategorie = [
-  { value: "Obligations", label: 'Obligations' },
-  { value: "Actions", label: 'Actions' },
-  { value: "Diversifié", label: 'Diversifié' },
-  { value: "Monétaire", label: 'Monétaire' },
+  { value: "OBLIGATIONS", label: 'OBLIGATIONS' },
+  { value: "ACTIONS", label: 'ACTIONS' },
+  { value: "DIVERSIFIE", label: 'DIVERSIFIE' },
+  { value: "MONETAIRE", label: 'MONETAIRE' },
   { value: "ETF", label: 'ETF' },
-  { value: "Infrastructure", label: 'Infrastructure' },
-  { value: "Immobilier", label: 'Immobilier' },
-  { value: "Private equity", label: 'Private equity' },
-  { value: "Alternatif", label: 'Alternatif' },
-
-  { value: "Autres", label: 'Autres' },
-
+  { value: "INFRASTRUCTURE", label: 'INFRASTRUCTURE' },
+  { value: "IMMOBILIER", label: 'IMMOBILIER' },
+  { value: "PRIVATE EQUITY", label: 'PRIVATE EQUITY' },
+  { value: "ALTERNATIF", label: 'ALTERNATIF' },
+  { value: "AUTRES", label: 'AUTRES' },
 
 
+];
 
+const optionsCategorienationale = [
+  { value: "OBLIGATIONS MAROC", label: 'OBLIGATIONS MAROC', country: 'MAROC' },
+  { value: "ACTIONS MAROC", label: 'ACTIONS MAROC', country: 'MAROC' },
+  { value: "DIVERSIFIE MAROC", label: 'DIVERSIFIE MAROC', country: 'MAROC' },
+  { value: "MONETAIRE MAROC", label: 'MONETAIRE MAROC', country: 'MAROC' },
+  { value: "ETF MAROC", label: 'ETF MAROC', country: 'MAROC' },
+  { value: "INFRASTRUCTURE MAROC", label: 'INFRASTRUCTURE MAROC', country: 'MAROC' },
+  { value: "IMMOBILIER MAROC", label: 'IMMOBILIER MAROC', country: 'MAROC' },
+  { value: "PRIVATE EQUITY MAROC", label: 'PRIVATE EQUITY MAROC', country: 'MAROC' },
+  { value: "ALTERNATIF MAROC", label: 'ALTERNATIF MAROC', country: 'MAROC' },
+  { value: "AUTRES MAROC", label: 'AUTRES MAROC', country: 'MAROC' },
+
+  { value: "OBLIGATIONS TUNISIE", label: 'OBLIGATIONS TUNISIE', country: 'TUNISIE' },
+  { value: "ACTIONS TUNISIE", label: 'ACTIONS TUNISIE', country: 'TUNISIE' },
+  { value: "DIVERSIFIE TUNISIE", label: 'DIVERSIFIE TUNISIE', country: 'TUNISIE' },
+  { value: "MONETAIRE TUNISIE", label: 'MONETAIRE TUNISIE', country: 'TUNISIE' },
+  { value: "ETF TUNISIE", label: 'ETF TUNISIE', country: 'TUNISIE' },
+  { value: "INFRASTRUCTURE TUNISIE", label: 'INFRASTRUCTURE TUNISIE', country: 'TUNISIE' },
+  { value: "IMMOBILIER TUNISIE", label: 'IMMOBILIER TUNISIE', country: 'TUNISIE' },
+  { value: "PRIVATE EQUITY TUNISIE", label: 'PRIVATE EQUITY TUNISIE', country: 'TUNISIE' },
+  { value: "ALTERNATIF TUNISIE", label: 'ALTERNATIF TUNISIE', country: 'TUNISIE' },
+  { value: "AUTRES TUNISIE", label: 'AUTRES TUNISIE', country: 'TUNISIE' },
+
+  // Ajoutez plus d'options au besoin
+];
+
+const optionsCategorieregionale = [
+  { value: "OBLIGATIONS AFRIQUE DU NORD", label: 'OBLIGATIONS AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "ACTIONS AFRIQUE DU NORD", label: 'ACTIONS AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "DIVERSIFIE AFRIQUE DU NORD", label: 'DIVERSIFIE AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "MONETAIRE AFRIQUE DU NORD", label: 'MONETAIRE AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "ETF AFRIQUE DU NORD", label: 'ETF AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "INFRASTRUCTURE AFRIQUE DU NORD", label: 'INFRASTRUCTURE AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "IMMOBILIER AFRIQUE DU NORD", label: 'IMMOBILIER AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "PRIVATE EQUITY AFRIQUE DU NORD", label: 'PRIVATE EQUITY AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "ALTERNATIF AFRIQUE DU NORD", label: 'ALTERNATIF AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "AUTRES AFRIQUE DU NORD", label: 'AUTRES AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+
+  { value: "OBLIGATIONS AFRIQUE CENTRALE", label: 'OBLIGATIONS AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "ACTIONS AFRIQUE CENTRALE", label: 'ACTIONS AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "DIVERSIFIE AFRIQUE CENTRALE", label: 'DIVERSIFIE AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "MONETAIRE AFRIQUE CENTRALE", label: 'MONETAIRE AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "ETF AFRIQUE CENTRALE", label: 'ETF AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "INFRASTRUCTURE AFRIQUE CENTRALE", label: 'INFRASTRUCTURE AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "IMMOBILIER AFRIQUE CENTRALE", label: 'IMMOBILIER AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "PRIVATE EQUITY AFRIQUE CENTRALE", label: 'PRIVATE EQUITY AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "ALTERNATIF AFRIQUE CENTRALE", label: 'ALTERNATIF AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "AUTRES AFRIQUE CENTRALE", label: 'AUTRES AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
 
   // Ajoutez plus d'options au besoin
 ];
@@ -148,6 +195,8 @@ export default function Comparaison() {
   const [selectedOptions, setSelectedOptions] = useState<Option[]>([]);
   const [selectedOptions1, setSelectedOptions1] = useState<SingleValue<Option> | null>(null);
   const [selectedOptions2, setSelectedOptions2] = useState<SingleValue<Option> | null>(null);
+  const [selectedOptions3, setSelectedOptions3] = useState<SingleValue<Option> | null>(null);
+
   const [selectedRows, setSelectedRows] = useState<string[]>([]); // Tableau pour stocker les lignes sélectionnées
   const [sortConfig, setSortConfig] = useState({ key: '', direction: '' });
   const [sortedFunds, setSortedFunds] = useState<Funds | null>(null); // État pour les fonds triés
@@ -181,6 +230,8 @@ export default function Comparaison() {
 
 
     }
+    const selectedcategorienationale = selectedOptions3?.value;
+    const selectedcategorieregionale = selectedOptions2?.value;
     setError("");
     Swal.fire({
       title: 'Veuillez patienter',
@@ -194,7 +245,7 @@ export default function Comparaison() {
     console.log('Options sélectionnées :', formData);
     console.log('Texte saisi :', textInput);
     const selectedValues = selectedOptions.map(option => option?.value);
-    fetch(`${urlconstant}/api/recherchefonds?query=${selectedValues.join(',')}&selectedcategorie=${selectedcategorie}&selectedsociete=${selectedeSociete}`, {
+    fetch(`${urlconstant}/api/recherchefonds?query=${selectedValues.join(',')}&selectedcategorie=${selectedcategorie}&selectedsociete=${selectedeSociete}&selectedcategorienationale=${selectedcategorienationale}&selectedcategorieregionale=${selectedcategorieregionale}`, {
       method: 'POST', // Assurez-vous que la méthode HTTP correspond à votre API
       headers: {
         'Content-Type': 'application/json', // Spécifiez le type de contenu JSON
@@ -344,6 +395,7 @@ export default function Comparaison() {
   };
   var totalItems: any;
   const handleSort = (key: string) => {
+    setCurrentPage(1);
     let direction = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
@@ -631,6 +683,30 @@ const getValue = (fund, key) => {
                             value={selectedOptions}
                             onChange={(newValue, actionMeta) => setSelectedOptions(newValue.map(option => option as Option))}
                           />
+                        </div>
+                        <div className="row ">
+                          <div className="col-md-6">
+                            <label htmlFor="select">Categorie Regionale  :</label>
+                            <Select className="select-component"
+                              id="select"
+                              options={optionsCategorieregionale}
+
+                              isSearchable
+                              value={selectedOptions2}
+                              onChange={(newValue, actionMeta) => setSelectedOptions2(newValue)}
+                            />
+                          </div>
+                          <div className="col-md-6">
+                            <label htmlFor="select">Categorie nationale :</label>
+                            <Select className="select-component"
+                              id="select"
+                              options={optionsCategorienationale}
+
+                              isSearchable
+                              value={selectedOptions3}
+                              onChange={(newValue, actionMeta) => setSelectedOptions3(newValue)}
+                            />
+                          </div>
                         </div>
                         <div className="row ">
                           <div className="col-md-6">
@@ -1181,6 +1257,13 @@ const getValue = (fund, key) => {
                                 >
                                   Page précédente
                                 </button>
+                              )}
+                            </div>
+                          </div>
+                          <div className="row justify-content-center">
+                            <div className="col-12 text-center">
+                              {funds && funds.data && funds.data.funds && funds.data.funds.length > 0 && (
+                                <p>Nombre d'éléments dans la liste : {funds.data.funds.length}</p>
                               )}
                             </div>
                           </div>

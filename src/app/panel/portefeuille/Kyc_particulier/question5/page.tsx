@@ -204,10 +204,10 @@ export default function Profile(props: PageProps): JSX.Element {
                 }),
                     setTimeout(() => {
                         if (currentKycStatut === "1") {
-                            router.push("/portefeuille/Kyc_particulier/resultat-kyc");
+                            router.push("/panel/portefeuille/Kyc_particulier/resultat-kyc");
 
                         } else {
-                            router.push("/portefeuille/Kyc_particulier/question6");
+                            router.push("/panel/portefeuille/Kyc_particulier/question6");
                         }
                     }, 5000)
 
@@ -279,7 +279,7 @@ export default function Profile(props: PageProps): JSX.Element {
                         timer: 5000
                     }),
                         setTimeout(() => {
-                            router.push("/portefeuille/Kyc_particulier/question6");
+                            router.push("/panel/portefeuille/Kyc_particulier/question6");
                         }, 5000)
 
                 } else {

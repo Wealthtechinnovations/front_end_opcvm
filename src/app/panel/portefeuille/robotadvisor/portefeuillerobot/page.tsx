@@ -260,7 +260,7 @@ export default function PorteFeuile(props: PageProps) {
                   </div>    {portefeuille?.data?.simulations !== null ?
                     <div className="text-right">  <Link
                       href={{
-                        pathname: '/portefeuille/robotadvisor/portefeuillerobot/roboadvisor',
+                        pathname: '/panel/portefeuille/robotadvisor/portefeuillerobot/roboadvisor',
                         query: { id: id, simulation: selectedportfeuille }, // Passer les éléments sélectionnés comme paramètres de requête
                       }}
                       /*  as={`/about/${selectedRows ? selectedRows.join(',') : ''}`}

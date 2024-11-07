@@ -130,7 +130,7 @@ export default function TypeProfil(props: PageProps): JSX.Element {
       setTimeout(() => {
         // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
 
-        router.push('/portefeuille/login');
+        router.push('/panel/portefeuille/login');
       }, 5);
     }
   };

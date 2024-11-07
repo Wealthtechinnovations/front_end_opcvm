@@ -230,10 +230,10 @@ export default function Profile(props: PageProps): JSX.Element {
                 }),
                     setTimeout(() => {
                         if (currentKycStatut === "1") {
-                            router.push("/portefeuille/Kyc_particulier/resultat-kyc");
+                            router.push("/panel/portefeuille/Kyc_particulier/resultat-kyc");
 
                         } else {
-                            router.push("/portefeuille/Kyc_particulier/question5");
+                            router.push("/panel/portefeuille/Kyc_particulier/question5");
                         }
                     }, 5000)
             }

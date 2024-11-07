@@ -50,69 +50,68 @@ async function getdevise() {
   return data;
 }
 const optionsCategorie = [
-  { value: "Obligations", label: 'Obligations' },
-  { value: "Actions", label: 'Actions' },
-  { value: "Diversifié", label: 'Diversifié' },
-  { value: "Monétaire", label: 'Monétaire' },
+  { value: "OBLIGATIONS", label: 'OBLIGATIONS' },
+  { value: "ACTIONS", label: 'ACTIONS' },
+  { value: "DIVERSIFIE", label: 'DIVERSIFIE' },
+  { value: "MONETAIRE", label: 'MONETAIRE' },
   { value: "ETF", label: 'ETF' },
-  { value: "Infrastructure", label: 'Infrastructure' },
-  { value: "Immobilier", label: 'Immobilier' },
-  { value: "Private equity", label: 'Private equity' },
-  { value: "Alternatif", label: 'Alternatif' },
-
-  { value: "Autres", label: 'Autres' },
+  { value: "INFRASTRUCTURE", label: 'INFRASTRUCTURE' },
+  { value: "IMMOBILIER", label: 'IMMOBILIER' },
+  { value: "PRIVATE EQUITY", label: 'PRIVATE EQUITY' },
+  { value: "ALTERNATIF", label: 'ALTERNATIF' },
+  { value: "AUTRES", label: 'AUTRES' },
 
 
 ];
 
 const optionsCategorienationale = [
-  { value: "Obligations Maroc", label: 'Obligations Maroc', country: 'Maroc' },
-  { value: "Obligations Maroc", label: 'Actions Maroc', country: 'Maroc' },
-  { value: "Diversifié Maroc", label: 'Diversifié Maroc', country: 'Maroc' },
-  { value: "Monétaire Maroc", label: 'Monétaire Maroc', country: 'Maroc' },
-  { value: "ETF Maroc", label: 'ETF Maroc', country: 'Maroc' },
-  { value: "Infrastructure Maroc", label: 'Infrastructure Maroc', country: 'Maroc' },
-  { value: "Immobilier Maroc", label: 'Immobilier Maroc', country: 'Maroc' },
-  { value: "Private equity Maroc", label: 'Private equity Maroc', country: 'Maroc' },
-  { value: "Alternatif Maroc", label: 'Alternatif Maroc', country: 'Maroc' },
-  { value: "Autres Maroc", label: 'Autres Maroc', country: 'Maroc' },
+  { value: "OBLIGATIONS MAROC", label: 'OBLIGATIONS MAROC', country: 'MAROC' },
+  { value: "ACTIONS MAROC", label: 'ACTIONS MAROC', country: 'MAROC' },
+  { value: "DIVERSIFIE MAROC", label: 'DIVERSIFIE MAROC', country: 'MAROC' },
+  { value: "MONETAIRE MAROC", label: 'MONETAIRE MAROC', country: 'MAROC' },
+  { value: "ETF MAROC", label: 'ETF MAROC', country: 'MAROC' },
+  { value: "INFRASTRUCTURE MAROC", label: 'INFRASTRUCTURE MAROC', country: 'MAROC' },
+  { value: "IMMOBILIER MAROC", label: 'IMMOBILIER MAROC', country: 'MAROC' },
+  { value: "PRIVATE EQUITY MAROC", label: 'PRIVATE EQUITY MAROC', country: 'MAROC' },
+  { value: "ALTERNATIF MAROC", label: 'ALTERNATIF MAROC', country: 'MAROC' },
+  { value: "AUTRES MAROC", label: 'AUTRES MAROC', country: 'MAROC' },
 
-  { value: "Obligations Tunisie", label: 'Obligations Tunisie', country: 'Tunisie' },
-  { value: "Actions Tunisie", label: 'Actions Tunisie', country: 'Tunisie' },
-  { value: "Diversifié Tunisie", label: 'Diversifié Tunisie', country: 'Tunisie' },
-  { value: "Monétaire Tunisie", label: 'Monétaire Tunisie', country: 'Tunisie' },
-  { value: "ETF Tunisie", label: 'ETF Tunisie', country: 'Tunisie' },
-  { value: "Infrastructure Tunisie", label: 'Infrastructure Tunisie', country: 'Tunisie' },
-  { value: "Immobilier Tunisie", label: 'Immobilier Tunisie', country: 'Tunisie' },
-  { value: "Private equity Tunisie", label: 'Private equity Tunisie', country: 'Tunisie' },
-  { value: "Alternatif Tunisie", label: 'Alternatif Tunisie', country: 'Tunisie' },
-  { value: "Autres Tunisie", label: 'Autres Tunisie', country: 'Tunisie' },
+  { value: "OBLIGATIONS TUNISIE", label: 'OBLIGATIONS TUNISIE', country: 'TUNISIE' },
+  { value: "ACTIONS TUNISIE", label: 'ACTIONS TUNISIE', country: 'TUNISIE' },
+  { value: "DIVERSIFIE TUNISIE", label: 'DIVERSIFIE TUNISIE', country: 'TUNISIE' },
+  { value: "MONETAIRE TUNISIE", label: 'MONETAIRE TUNISIE', country: 'TUNISIE' },
+  { value: "ETF TUNISIE", label: 'ETF TUNISIE', country: 'TUNISIE' },
+  { value: "INFRASTRUCTURE TUNISIE", label: 'INFRASTRUCTURE TUNISIE', country: 'TUNISIE' },
+  { value: "IMMOBILIER TUNISIE", label: 'IMMOBILIER TUNISIE', country: 'TUNISIE' },
+  { value: "PRIVATE EQUITY TUNISIE", label: 'PRIVATE EQUITY TUNISIE', country: 'TUNISIE' },
+  { value: "ALTERNATIF TUNISIE", label: 'ALTERNATIF TUNISIE', country: 'TUNISIE' },
+  { value: "AUTRES TUNISIE", label: 'AUTRES TUNISIE', country: 'TUNISIE' },
 
   // Ajoutez plus d'options au besoin
 ];
 
 const optionsCategorieregionale = [
-  { value: "Obligations Afrique du Nord", label: 'Obligations Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Actions Afrique du Nord", label: 'Actions Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Diversifié Afrique du Nord", label: 'Diversifié Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Monétaire Afrique du Nord", label: 'Monétaire Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "ETF Afrique du Nord", label: 'ETF Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Infrastructure Afrique du Nord", label: 'Infrastructure Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Immobilier Afrique du Nord", label: 'Immobilier Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Private equity Afrique du Nord", label: 'Private equity Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Alternatif Afrique du Nord", label: 'Alternatif Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Autres Afrique du Nord", label: 'Autres Afrique du Nord', country: 'Afrique du Nord' },
+  { value: "OBLIGATIONS AFRIQUE DU NORD", label: 'OBLIGATIONS AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "ACTIONS AFRIQUE DU NORD", label: 'ACTIONS AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "DIVERSIFIE AFRIQUE DU NORD", label: 'DIVERSIFIE AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "MONETAIRE AFRIQUE DU NORD", label: 'MONETAIRE AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "ETF AFRIQUE DU NORD", label: 'ETF AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "INFRASTRUCTURE AFRIQUE DU NORD", label: 'INFRASTRUCTURE AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "IMMOBILIER AFRIQUE DU NORD", label: 'IMMOBILIER AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "PRIVATE EQUITY AFRIQUE DU NORD", label: 'PRIVATE EQUITY AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "ALTERNATIF AFRIQUE DU NORD", label: 'ALTERNATIF AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
+  { value: "AUTRES AFRIQUE DU NORD", label: 'AUTRES AFRIQUE DU NORD', country: 'AFRIQUE DU NORD' },
 
-  { value: "Obligations Afrique Centrale", label: 'Obligations Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Actions Afrique Centrale", label: 'Actions Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Diversifié Afrique Centrale", label: 'Diversifié Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Monétaire Afrique Centrale", label: 'Monétaire Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "ETF Afrique Centrale", label: 'ETF Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Infrastructure Afrique Centrale", label: 'Infrastructure Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Immobilier Afrique Centrale", label: 'Immobilier Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Private equity Afrique Centrale", label: 'Private equity Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Alternatif Afrique Centrale", label: 'Alternatif Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Autres Afrique Centrale", label: 'Autres Afrique Centrale', country: 'Afrique Centrale' },
+  { value: "OBLIGATIONS AFRIQUE CENTRALE", label: 'OBLIGATIONS AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "ACTIONS AFRIQUE CENTRALE", label: 'ACTIONS AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "DIVERSIFIE AFRIQUE CENTRALE", label: 'DIVERSIFIE AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "MONETAIRE AFRIQUE CENTRALE", label: 'MONETAIRE AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "ETF AFRIQUE CENTRALE", label: 'ETF AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "INFRASTRUCTURE AFRIQUE CENTRALE", label: 'INFRASTRUCTURE AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "IMMOBILIER AFRIQUE CENTRALE", label: 'IMMOBILIER AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "PRIVATE EQUITY AFRIQUE CENTRALE", label: 'PRIVATE EQUITY AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "ALTERNATIF AFRIQUE CENTRALE", label: 'ALTERNATIF AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
+  { value: "AUTRES AFRIQUE CENTRALE", label: 'AUTRES AFRIQUE CENTRALE', country: 'AFRIQUE CENTRALE' },
 
   // Ajoutez plus d'options au besoin
 ];
@@ -500,6 +499,7 @@ export default function Recherche() {
   };
   var totalItems: any;
   const handleSort = (key: string) => {
+    setCurrentPage(1);
     let direction = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
@@ -3141,6 +3141,7 @@ export default function Recherche() {
                                 </div>}
                         <div className="text-center">
 
+
                           <div className="row justify-content-center">
                             <div className="col-2">
                               {currentPage < totalPages && (
@@ -3179,6 +3180,13 @@ export default function Recherche() {
                                 >
                                   Page précédente
                                 </button>
+                              )}
+                            </div>
+                          </div>
+                          <div className="row justify-content-center">
+                            <div className="col-12 text-center">
+                              {funds && funds.data && funds.data.funds && funds.data.funds.length > 0 && (
+                                <p>Nombre d'éléments dans la liste : {funds.data.funds.length}</p>
                               )}
                             </div>
                           </div>
