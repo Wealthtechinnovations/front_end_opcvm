@@ -1768,7 +1768,7 @@ export default function Fond(props: PageProps) {
 
                                                     <tr className="white-hover">
                                                         <td colSpan={3} className="p-t-1">
-                                                            <strong >Données 3 ans au {post?.data?.lastdatepreviousmonth}</strong>
+                                                            <strong >Données 3 ans à fin {post?.data?.lastdatepreviousmonth ? new Date(post?.data?.lastdatepreviousmonth).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : ''}</strong>
                                                         </td>
                                                     </tr>
                                                     <tr>
@@ -2112,7 +2112,7 @@ export default function Fond(props: PageProps) {
                                         <div className="card-body">
                                             <div className="d-md-flex justify-content-between align-items-center">
                                                 <div className="row">
-                                                    <p><span className="text-primary">Classement  au {post?.data?.lastdatepreviousmonth}</span> | {post?.data?.categorie_national} <span className="text-fade"></span></p>
+                                                    <p><span className="text-primary">Classement  à fin {post?.data?.lastdatepreviousmonth ? new Date(post?.data?.lastdatepreviousmonth).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : ''}</span> | {post?.data?.categorie_national} <span className="text-fade"></span></p>
 
                                                 </div>
 
@@ -2381,7 +2381,7 @@ export default function Fond(props: PageProps) {
                                         <div className="card-body">
                                             <div className="d-md-flex justify-content-between align-items-center">
                                                 <div className="row">
-                                                    <p><span className="text-primary">Classement au {post?.data?.lastdatepreviousmonth}</span> | {post?.data?.categorie_globale} Afrique<span className="text-fade"></span></p>
+                                                    <p><span className="text-primary">Classement à fin {post?.data?.lastdatepreviousmonth ? new Date(post?.data?.lastdatepreviousmonth).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : ''}</span> | {post?.data?.categorie_globale} Afrique<span className="text-fade"></span></p>
 
                                                 </div>
 
@@ -2652,7 +2652,7 @@ export default function Fond(props: PageProps) {
                                         <div className="card-body">
                                             <div className="d-md-flex justify-content-between align-items-center">
                                                 <div className="row">
-                                                    <p><span className="text-primary">Indicateurs de risque au {post?.data?.lastdatepreviousmonth}</span> | <span className="text-fade"></span></p>
+                                                    <p><span className="text-primary">Indicateurs de risque à fin {post?.data?.lastdatepreviousmonth ? new Date(post?.data?.lastdatepreviousmonth).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : ''}</span> | <span className="text-fade"></span></p>
 
                                                 </div>
 
@@ -2787,7 +2787,7 @@ export default function Fond(props: PageProps) {
                                         <div className="card-body">
                                             <div className="d-md-flex justify-content-between align-items-center">
                                                 <div className="row">
-                                                    <p><span className="text-primary">L œil de l expert au {post?.data?.lastdatepreviousmonth}</span> | <span className="text-fade"></span></p>
+                                                    <p><span className="text-primary">L œil de l expert à fin {post?.data?.lastdatepreviousmonth ? new Date(post?.data?.lastdatepreviousmonth).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : ''}</span> | <span className="text-fade"></span></p>
 
                                                 </div>
 
@@ -2920,7 +2920,7 @@ export default function Fond(props: PageProps) {
                                         <div className="card-body">
                                             <div className="d-md-flex justify-content-between align-items-center">
                                                 <div className="row">
-                                                    <p><span className="text-primary">Indicateurs de gestion au {post?.data?.lastdatepreviousmonth}</span> | <span className="text-fade"></span></p>
+                                                    <p><span className="text-primary">Indicateurs de gestion à fin {post?.data?.lastdatepreviousmonth ? new Date(post?.data?.lastdatepreviousmonth).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : ''}</span> | <span className="text-fade"></span></p>
 
                                                 </div>
 
@@ -3055,7 +3055,7 @@ export default function Fond(props: PageProps) {
                                         <div className="card-body">
                                             <div className="d-md-flex justify-content-between align-items-center">
                                                 <div className="row">
-                                                    <p><span className="text-primary">L œil de l expert au {post?.data?.lastdatepreviousmonth}</span> | <span className="text-fade"></span></p>
+                                                    <p><span className="text-primary">Scénario de performance </span> | <span className="text-fade"></span></p>
 
                                                 </div>
 
@@ -3063,117 +3063,39 @@ export default function Fond(props: PageProps) {
 
                                             <table className="table table-sm">
                                                 <thead className="table-header">
-                                                    <tr className="th-no-border row-title">
-                                                        <th className="no-left-padding value" colSpan={2}>
-                                                            valeur à 3 ans
-                                                        </th>
-
-                                                        <th colSpan={2} className="rapport-cat">
-                                                            Par rapport à la Cat
-                                                        </th>
+                                                    <tr>
+                                                        <th></th>
+                                                        <th>Perf 1 an</th>
+                                                        <th>Perf 3ans</th>
+                                                        <th>Perf 5ans</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <tr className="row-content">
-                                                        <td className="titre">
-                                                            Sharpe{' '}
-                                                            <span
-                                                                data-content="Le risque est mesuré par l'écart-type des rendements hebdomadaires du fonds sur différentes périodes : 1 an, 3 ans, 5 ans, ou sur une période définie par l'utilisateur. On parle aussi parfois de volatilité. Plus le fonds est volatil, plus grande est la fourchette des performances possibles, qu'elles soient positives ou négatives. Toutes choses étant égales par ailleurs, moins le risque est élevé, meilleur a été le fonds pour l'investisseur, mais certains fonds ont à la fois un risque élevé et des performances passées excellentes, il faut donc savoir séparer le bon risque du mauvais risque."
-                                                                data-helper-explanation=""
-                                                                data-trigger="hover"
-                                                                data-tooltip-isinit="true"
-                                                            ></span>
-                                                        </td>
-                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.ratioSharpe)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.ratioSharpe).toFixed(2)} </td>
-                                                        <td className="notation">
-                                                            {getNotationClasses(classementlocal?.data?.classementType1?.ranksharpe, classementlocal?.data?.classementType1?.ranksharpetotal).map((className, index) => (
-                                                                <div key={index} className={className}></div>
-                                                            ))}
-                                                        </td>
-                                                        <td className="estimation highlight">
-                                                            {getEstimationText(Math.ceil((classementlocal?.data?.classementType1?.ranksharpe / classementlocal?.data?.classementType1?.ranksharpetotal) * 5))}
-                                                        </td>
+                                                    <tr>
+                                                        <td>Tensions</td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
                                                     </tr>
-                                                    <tr className="row-content">
-                                                        <td className="titre">
-                                                            Ratio Inf{' '}
-                                                            <span
-                                                                data-content="Il s'agit de la perte la plus importante encourue par le fonds sur la période, c’est-à-dire ce qui aurait été perdu si le fonds avait été acheté au plus haut et vendu au plus bas possible sur la période."
-                                                                data-helper-explanation=""
-                                                                data-trigger="hover"
-                                                                data-tooltip-isinit="true"
-                                                            ></span>
-                                                        </td>
-                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.info)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.info).toFixed(2)} </td>
-                                                        <td className="notation">
-                                                            {getNotationClasses(classementlocal?.data?.classementType1?.rankinfo, classementlocal?.data?.classementType1?.rankinfototal).map((className, index) => (
-                                                                <div key={index} className={className}></div>
-                                                            ))}
-                                                        </td>
-                                                        <td className="estimation highlight">
-                                                            {getEstimationText(Math.ceil((classementlocal?.data?.classementType1?.rankinfo / classementlocal?.data?.classementType1?.rankinfototal) * 5))}
-                                                        </td>
+                                                    <tr>
+                                                        <td>Défavorable</td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
                                                     </tr>
-                                                    <tr className="row-content">
-                                                        <td className="titre">
-                                                            Sortino{' '}
-                                                            <span
-                                                                data-content="La volatilité considère les écarts de performance négatifs comme positifs par rapport à la performance moyenne du fonds, alors que l'investisseur n'est généralement concerné que par les performances inférieures à un certain seuil. Le downside risk (DSR) ne va prendre en compte que les rendements inférieurs à ce seuil pour en calculer la volatilité. Nous utilisons l'EONIA, qui mesure le taux de l'argent au jour le jour, et ne retenons que les rendements mensuels inférieurs à l'EONIA pour calculer le downside risk du fonds. Comme pour la volatilité classique, plus le downside risk est grand, plus la stratégie appliquée par le fonds est risquée."
-                                                                data-helper-explanation=""
-                                                                data-trigger="hover"
-                                                                data-tooltip-isinit="true"
-                                                            ></span>
-                                                        </td>
-                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.sortino)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.sortino).toFixed(2)} </td>
-                                                        <td className="notation">
-                                                            {getNotationClasses(classementlocal?.data?.classementType1?.ranksortino, classementlocal?.data?.classementType1?.ranksortinototal).map((className, index) => (
-                                                                <div key={index} className={className}></div>
-                                                            ))}
-                                                        </td>
-                                                        <td className="estimation highlight">
-                                                            {getEstimationText(Math.ceil((classementlocal?.data?.classementType1?.ranksortino / classementlocal?.data?.classementType1?.ranksortinototal) * 5))}
-                                                        </td>
+                                                    <tr>
+                                                        <td>Intermediaire</td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
                                                     </tr>
-                                                    <tr className="row-content">
-                                                        <td className="titre">
-                                                            Omega{' '}
-                                                            <span
-                                                                data-content="Le bêta d'un fonds  est un coefficient de volatilité mesurant la relation entre les fluctuations de la valeur du fonds et celles de son marché quand ce dernier est en baisse. On le calcule en régressant les rendements mensuels du fonds sur les rendements mensuels négatifs de l'indice de référence de sa catégorie. On affecte au marché un bêta de 1 : un fonds ayant un beta baissier de 1,2 sera 20% plus réactif que le marché quand celui-ci baisse (et donc baissera plus que le marché), un fonds ayant un bêta baissier de 0,8 sera 20% moins réactif que le marché quand celui-ci baisse (et donc baissera moins que le marché)."
-                                                                data-helper-explanation=""
-                                                                data-trigger="hover"
-                                                                data-tooltip-isinit="true"
-                                                            ></span>
-                                                        </td>
-                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.omega)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.omega).toFixed(2)} </td>
-                                                        <td className="notation">
-                                                            {getNotationClasses(classementlocal?.data?.classementType1?.rankomega, classementlocal?.data?.classementType1?.rankomegatotal).map((className, index) => (
-                                                                <div key={index} className={className}></div>
-                                                            ))}
-                                                        </td>
-                                                        <td className="estimation highlight">
-                                                            {getEstimationText(Math.ceil((classementlocal?.data?.classementType1?.rankomega / classementlocal?.data?.classementType1?.rankomegatotal) * 5))}
-                                                        </td>
+                                                    <tr>
+                                                        <td>Favorable</td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
                                                     </tr>
-                                                    <tr className="row-content">
-                                                        <td className="titre">
-                                                            Calamar{' '}
-                                                            <span
-                                                                data-content="Il s'agit de la Var historique 95, c'est à dire du rendement au dessus duquel 95% des rendements hebdomadaires ont été constatés. Par exemple si la Var est de -2% cela signifie que la performance hebdomadaire a été supérieure à -2% dans 95% des cas et inférieure dans 5% des cas."
-                                                                data-helper-explanation=""
-                                                                data-trigger="hover"
-                                                                data-tooltip-isinit="true"
-                                                            ></span>
-                                                        </td>
-                                                        <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.calmar)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.calmar).toFixed(2)} %</td>
-                                                        <td className="notation">
-                                                            {getNotationClasses(classementlocal?.data?.classementType1?.rankcalamar, classementlocal?.data?.classementType1?.rankcalamartotal).map((className, index) => (
-                                                                <div key={index} className={className}></div>
-                                                            ))}
-                                                        </td>
-                                                        <td className="estimation highlight">
-                                                            {getEstimationText(Math.ceil((classementlocal?.data?.classementType1?.rankcalamar / classementlocal?.data?.classementType1?.rankcalamartotal) * 5))}
-                                                        </td>
-                                                    </tr>
+                                                   
                                                 </tbody>
                                             </table>
 
@@ -3279,20 +3201,21 @@ export default function Fond(props: PageProps) {
                                         <div className="card-body">
                                             <div className="d-md-flex justify-content-between align-items-center">
                                                 <p><span className="text-primary">
-                                                    Pré-selection quantitative</span></p>
+                                                    Pré-selection quantitative à fin {post?.data?.lastdatepreviousmonth ? new Date(post?.data?.lastdatepreviousmonth).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : ''} </span></p>
                                                 <table className="table table-sm">
                                                     <thead>
                                                         <tr>
-                                                            <th>Nom du fond</th>
-                                                            <th>Performance annuelle</th>
-                                                            <th>Performance 1 an</th>
-                                                            <th>Performance 3 ans</th>
-                                                            <th>Performance YTD</th>
-                                                            <th>Volatilité à 3 ans</th>
+                                                            <th>Nom du fonds</th>
+                                                            <th>Perf. Annu</th>
+                                                            <th>Perf. 1 an</th>
+                                                            <th>Perf. 3 ans</th>
+                                                            <th>Perf. YTD</th>
+                                                            <th>Vol. 3 ans</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                     {post?.data?.meilleursFonds.map((fond: { 
+                                                        id:string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.ReactNode | null | undefined;
                                                         nom_fond: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.ReactNode | null | undefined;
                                                         volatility3an: any;
                                                         performance_annualisee: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.ReactNode | null | undefined;
@@ -3300,7 +3223,7 @@ export default function Fond(props: PageProps) {
                                                         performance_3_ans: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.ReactNode | null | undefined;
                                                         performance_ytd: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.ReactNode | null | undefined;
                                                     }, index: React.Key | null | undefined) => (                                                            <tr key={index}>
-                                                                <td>{fond.nom_fond}</td>
+                                                                <td><a href={`/Opcvm/${fond.id}`} style={{textDecoration: 'none', color: 'inherit'}}>{fond.nom_fond}</a></td>
                                                                 <td style={{ color: typeof fond.performance_annualisee === 'number' && fond.performance_annualisee >= 0 ? 'green' : 'red' }}>{typeof fond.performance_annualisee === 'number' ? fond.performance_annualisee.toFixed(2) + '%' : '-'}</td>
                                                                 <td style={{ color: typeof fond.performance_1_an === 'number' && fond.performance_1_an >= 0 ? 'green' : 'red' }}>{typeof fond.performance_1_an === 'number' ? fond.performance_1_an.toFixed(2) + '%' : '-'}</td>
                                                                 <td style={{ color: typeof fond.performance_3_ans === 'number' && fond.performance_3_ans >= 0 ? 'green' : 'red' }}>{typeof fond.performance_3_ans === 'number' ? fond.performance_3_ans.toFixed(2) + '%' : '-'}</td>

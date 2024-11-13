@@ -52,6 +52,8 @@ export default function Comparaison() {
     tabAccueil: [
       { label: 'Nom', key: 'pays' },
       { label: 'Nombre de societé', key: 'companyCount' },
+      { label: 'Nombre de fonds', key: 'fondscount' },
+      { label: 'Encours', key: 'encours' },
 
     ],
 
@@ -514,7 +516,7 @@ export default function Comparaison() {
                             <thead className="table-header">
                               <tr className="text-center">
                                 {headers.tabAccueil.map((header) => (
-                                  <th className="text-center" key={header.key} onClick={() => handleSort(header.key)}>
+                                  <th className="text-center" style={{ height: '35px' }} key={header.key} onClick={() => handleSort(header.key)}>
                                     {header.label}
                                     {sortConfig.key === header.key && (
                                       <span>{sortConfig.direction === 'asc' ? ' ▲' : ' ▼'}</span>
@@ -528,7 +530,8 @@ export default function Comparaison() {
                                 <tr className="text-center" key={item.id}>
                                   <td className="text-center"><Link href={`/pays/${encodeURIComponent(item.pays.replace(/ /g, '-'))}`}>{item?.pays}</Link></td>
                                   <td className="text-center">{item?.companyCount}</td>
-
+                                  <td className="text-center">{item?.fondscount}</td>
+                                  <td className="text-center">0</td>
                                 </tr>
                               ))}
 

@@ -688,7 +688,7 @@ const getValue = (fund, key) => {
                             <thead className="table-header">
                               <tr className="text-center">
                                 {headers.tabAccueil.map((header) => (
-                                  <th className="text-center" key={header.key} onClick={() => handleSort(header.key)}>
+                                  <th className="text-center" style={{ height: '35px' }} key={header.key} onClick={() => handleSort(header.key)}>
                                     {header.label}
                                     {sortConfig.key === header.key && (
                                       <span>{sortConfig.direction === 'asc' ? ' ▲' : ' ▼'}</span>
