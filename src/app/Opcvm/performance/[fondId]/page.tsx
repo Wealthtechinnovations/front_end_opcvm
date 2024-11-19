@@ -1228,9 +1228,9 @@ borderColor:'grey'
                                     </tr>
                                     <tr className="text-center">
                                       <td className="text-left">R²</td>
-                                      <td className={`text-center`}>{isNaN(parseFloat(post?.data?.ratios1a?.data?.r2)) ? '-' : parseFloat(post?.data?.ratios1a?.data?.r2).toFixed(2)} %</td>
-                                      <td className={`text-center`}>{isNaN(parseFloat(post?.data?.ratios3a?.data?.r2)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.r2).toFixed(2)} %</td>
-                                      <td className={`text-center`}>{isNaN(parseFloat(post?.data?.ratios5a?.data?.r2)) ? '-' : parseFloat(post?.data?.ratios5a?.data?.r2).toFixed(2)} %</td>
+                                      <td className={`text-center`}>{isNaN(parseFloat(post?.data?.ratios1a?.data?.r2)) ? '-' : parseFloat(post?.data?.ratios1a?.data?.r2).toFixed(2)} </td>
+                                      <td className={`text-center`}>{isNaN(parseFloat(post?.data?.ratios3a?.data?.r2)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.r2).toFixed(2)} </td>
+                                      <td className={`text-center`}>{isNaN(parseFloat(post?.data?.ratios5a?.data?.r2)) ? '-' : parseFloat(post?.data?.ratios5a?.data?.r2).toFixed(2)} </td>
 
                                     </tr>
                                     <tr className="text-center">
@@ -1252,16 +1252,16 @@ borderColor:'grey'
                                     </tr>
                                     <tr className="text-center">
                                       <td className="text-left">Skewness</td>
-                                      <td className={`text-center `}>{isNaN(parseFloat(post?.data?.ratios1a?.data?.skewness)) ? '-' : parseFloat(post?.data?.ratios1a?.data?.skewness).toFixed(2)} %</td>
-                                      <td className={`text-center `}>{isNaN(parseFloat(post?.data?.ratios3a?.data?.skewness)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.skewness).toFixed(2)} %</td>
-                                      <td className={`text-center `}>{isNaN(parseFloat(post?.data?.ratios5a?.data?.skewness)) ? '-' : parseFloat(post?.data?.ratios5a?.data?.skewness).toFixed(2)} %</td>
+                                      <td className={`text-center `}>{isNaN(parseFloat(post?.data?.ratios1a?.data?.skewness)) ? '-' : parseFloat(post?.data?.ratios1a?.data?.skewness).toFixed(2)} </td>
+                                      <td className={`text-center `}>{isNaN(parseFloat(post?.data?.ratios3a?.data?.skewness)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.skewness).toFixed(2)} </td>
+                                      <td className={`text-center `}>{isNaN(parseFloat(post?.data?.ratios5a?.data?.skewness)) ? '-' : parseFloat(post?.data?.ratios5a?.data?.skewness).toFixed(2)} </td>
 
                                     </tr>
                                     <tr className="text-center">
                                       <td className="text-left">Kurtosis</td>
-                                      <td className={`text-center `}>{isNaN(parseFloat(post?.data?.ratios1a?.data?.kurtosis)) ? '-' : parseFloat(post?.data?.ratios1a?.data?.kurtosis).toFixed(2)} %</td>
-                                      <td className={`text-center `}>{isNaN(parseFloat(post?.data?.ratios3a?.data?.kurtosis)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.kurtosis).toFixed(2)} %</td>
-                                      <td className={`text-center `}>{isNaN(parseFloat(post?.data?.ratios5a?.data?.kurtosis)) ? '-' : parseFloat(post?.data?.ratios5a?.data?.kurtosis).toFixed(2)} %</td>
+                                      <td className={`text-center `}>{isNaN(parseFloat(post?.data?.ratios1a?.data?.kurtosis)) ? '-' : parseFloat(post?.data?.ratios1a?.data?.kurtosis).toFixed(2)} </td>
+                                      <td className={`text-center `}>{isNaN(parseFloat(post?.data?.ratios3a?.data?.kurtosis)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.kurtosis).toFixed(2)} </td>
+                                      <td className={`text-center `}>{isNaN(parseFloat(post?.data?.ratios5a?.data?.kurtosis)) ? '-' : parseFloat(post?.data?.ratios5a?.data?.kurtosis).toFixed(2)} </td>
 
                                     </tr>
                                   </tbody>

@@ -3279,16 +3279,16 @@ export default function Fond(props: PageProps) {
                                         <div className="card-body">
                                             <div className="d-md-flex justify-content-between align-items-center">
                                                 <p><span className="text-primary">
-                                                    Pré-selection quantitative</span></p>
+                                                    Pré-selection quantitative au {new Date(post?.data?.lastdatepreviousmonth).toLocaleDateString()}.</span></p>
                                                 <table className="table table-sm">
                                                     <thead>
                                                         <tr>
                                                             <th>Nom du fond</th>
-                                                            <th>Performance annuelle</th>
-                                                            <th>Performance 1 an</th>
-                                                            <th>Performance 3 ans</th>
-                                                            <th>Performance YTD</th>
-                                                            <th>Volatilité à 3 ans</th>
+                                                            <th>Perf. annualisée 3 ans</th>
+                                                            <th>Perf. glis 1 an</th>
+                                                            <th>Perf. glis 3 ans</th>
+                                                            <th>Perf. YTD</th>
+                                                            <th>Vol. 3 ans</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
