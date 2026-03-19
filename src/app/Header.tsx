@@ -1,422 +1,183 @@
+'use client';
 
-import React, { useEffect, useState } from 'react';
-import Highcharts from 'highcharts';
-import HighchartsReact from 'highcharts-react-official';
+import React from 'react';
 import Link from 'next/link';
-import { useRouter,usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Button, Dropdown } from 'react-bootstrap';
 import { urlsite } from './constants';
 
+interface NavButtonProps {
+  label: string;
+  pathMatch: string;
+  onClick: () => void;
+}
+
+const NavButton: React.FC<NavButtonProps> = ({ label, pathMatch, onClick }) => {
+  const pathname = usePathname();
+  const isActive = pathname?.includes(pathMatch);
+
+  return (
+    <li className="nav-item">
+      <Button
+        onClick={onClick}
+        className={`nav-btn ${isActive ? 'nav-btn-active' : ''}`}
+        style={{
+          width: '150px',
+          backgroundColor: isActive ? '#3b82f6' : 'white',
+          color: isActive ? 'white' : 'black',
+          display: 'block',
+          height: '100%',
+          padding: '10px',
+          textDecoration: 'none',
+          border: '1px solid #000',
+          borderRadius: '5px',
+          cursor: 'pointer',
+          transition: 'background-color 0.3s',
+        }}
+      >
+        {label}
+      </Button>
+    </li>
+  );
+};
+
+interface NavDropdownProps {
+  label: string;
+  pathMatch: string;
+  items: { label: string; href: string }[];
+}
+
+const NavDropdownMenu: React.FC<NavDropdownProps> = ({ label, pathMatch, items }) => {
+  const pathname = usePathname();
+  const isActive = pathname?.includes(pathMatch);
+
+  return (
+    <li className="nav-item">
+      <Dropdown>
+        <Dropdown.Toggle
+          id={`dropdown-${pathMatch}`}
+          style={{
+            border: '1px solid #000',
+            borderRadius: '5px',
+            width: '150px',
+            backgroundColor: isActive ? '#3b82f6' : 'white',
+            color: isActive ? 'white' : 'black',
+            display: 'block',
+            height: '100%',
+            padding: '10px',
+            textDecoration: 'none',
+          }}
+        >
+          {label}
+        </Dropdown.Toggle>
+        <Dropdown.Menu>
+          {items.map((item, idx) => (
+            <Dropdown.Item key={idx} href={item.href}>
+              {item.label}
+            </Dropdown.Item>
+          ))}
+        </Dropdown.Menu>
+      </Dropdown>
+    </li>
+  );
+};
+
 const Header = () => {
-    const pathname = usePathname(); // Obtenir le chemin actuel
-
-    useEffect(() => {
-        // Configuration du graphique Highcharts ici
-    }, []);
-
-    const [menuOpen, setMenuOpen] = useState(false);
-
-    const toggleMenu = () => {
-        setMenuOpen(!menuOpen);
-    };
-    const router = useRouter();
-
-    const [userConnected, setUserConnected] = useState<number | null>(null);
-
-    const handleLinkClick = () => {
-
-        if (userConnected !== null) {
-            setTimeout(() => {
-                const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-                router.push(redirectUrl);
-            }, 5);
-
-        } else {
-            setTimeout(() => {
-                // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-                router.push('/panel/societegestionpanel/login');
-            }, 5);
-        }
-    };
-    // const handleLinkClick = () => {
-
-    //     if (userConnected !== null) {
-    //         setTimeout(() => {
-    //             const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-    //             router.push(redirectUrl);
-    //         }, 5);
-
-    //     } else {
-    //         setTimeout(() => {
-    //             // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-    //             router.push('/panel/societegestionpanel/login');
-    //         }, 5);
-    //     }
-    // };
-
-    const handleLinksociete = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/Fundmanager/recherche`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-    const handleLinkquestionnaire = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/Opcvm/questionnaire`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-
-    const [isHovered, setIsHovered] = useState(false);
-
-    const handleMouseEnter = () => {
-        setIsHovered(true);
-    };
-
-    const handleMouseLeave = () => {
-        setIsHovered(false);
-    };
-
-    const [isHoveredq, setIsHoveredq] = useState(false);
-
-    const handleMouseEnterq = () => {
-        setIsHoveredq(true);
-    };
-
-    const handleMouseLeaveq = () => {
-        setIsHoveredq(false);
-    };
-
-    const [isHovereda, setIsHovereda] = useState(false);
-
-    const handleMouseEntera = () => {
-        setIsHovereda(true);
-    };
-
-    const handleMouseLeavea = () => {
-        setIsHovereda(false);
-    };
-    const handleLinkactualite = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/actualite`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-
-    const [isHoveredp, setIsHoveredp] = useState(false);
-
-    const handleMouseEnterp = () => {
-        setIsHoveredp(true);
-    };
-
-    const handleMouseLeavep = () => {
-        setIsHoveredp(false);
-    };
-    const handleLinkpays = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/pays`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-
-    const [isHoveredc, setIsHoveredc] = useState(false);
-
-    const handleMouseEnterc = () => {
-        setIsHoveredc(true);
-    };
-
-    const handleMouseLeavec = () => {
-        setIsHoveredc(false);
-    };
-
-    const handleMouseEnters = () => {
-        setIsHovered(true);
-    };
-
-    const handleMouseLeaves = () => {
-        setIsHovered(false);
-    };
-    const handleLinkaccueil = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/accueil`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-
-
-    const handleMouseEntersa = () => {
-        setIsHovereda(true);
-    };
-
-    const handleMouseLeavesa = () => {
-        setIsHovereda(false);
-    };
-    const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-    const handleMouseEnteraa = () => {
-        setIsHoveredaa(true);
-    };
-
-    const handleMouseLeaveaa = () => {
-        setIsHoveredaa(false);
-    };
-
-    const handleLinkcontact = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/contact`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-    const [isHoveredcontact, setIsHoveredcontact] = useState(false);
-
-    const handleMouseEntercontact = () => {
-        setIsHoveredcontact(true);
-    };
-
-    const handleMouseLeavecontact = () => {
-        setIsHoveredcontact(false);
-    };
-    console.log(pathname);
-
-    return (
-        <>
-         
-        <header className={`bg-white text-white p-6 shadow-lg flex justify-between items-center sticky top-0 z-50 `}>
-          <p><br /><br /></p>
-            <nav role="navigation" className={`${menuOpen ? 'hidden' : ''}`}>
-                <ul id="" className={`sm sm-blue ${menuOpen ? 'open' : ''}`}>
-                    <li style={{ height: '40px' }}>
-                        <Button
-                            onClick={handleLinkaccueil}
-                            style={{
-                                width: '150px',
-                                backgroundColor:  pathname.includes('/accueil')  ? '#3b82f6' : 'white', // Dynamiser la couleur active
-                                color: pathname.includes('/accueil') ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEntersa}
-                            onMouseLeave={handleMouseLeavesa}
-                        >
-                            Accueil
-                        </Button>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <Button
-                            onClick={() => router.push(`${urlsite}/Opcvm/recherche`)}
-                            style={{
-                                width: '150px',
-                                backgroundColor:  pathname.includes('/Opcvm')  ? '#3b82f6' : 'white', // Dynamiser la couleur active
-                                color: pathname.includes('/Opcvm') ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEnterc}
-                            onMouseLeave={handleMouseLeavec}
-                        >
-                            Fonds
-                        </Button>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <Button
-                            onClick={handleLinksociete}
-                            style={{
-                                width: '150px',
-                                backgroundColor:  pathname.includes('/Fundmanager')  ? '#3b82f6' : 'white', // Dynamiser la couleur active
-                                color: pathname.includes('/Fundmanager') ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEnters}
-                            onMouseLeave={handleMouseLeaves}
-                        >
-                            Societe de gestion
-                        </Button>
-                    </li>
-                    <li style={{ height: '40px', }}>
-                        <Button
-                            onClick={handleLinkpays}
-                            style={{
-                                width: '150px',
-                                backgroundColor:  pathname.includes('/pays')  ? '#3b82f6' : 'white', // Dynamiser la couleur active
-                                color: pathname.includes('/pays') ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEnterp}
-                            onMouseLeave={handleMouseLeavep}
-                        >
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     Pays &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        </Button>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <Dropdown>
-                            <Dropdown.Toggle id="dropdown-basic" style={{  border: '1px solid #000',
-                                borderRadius: '5px',width: '150px' ,backgroundColor:  pathname.includes('/Service')  ? '#3b82f6' : 'white', // Dynamiser la couleur active
-                                color: pathname.includes('/Service') ? 'white' : 'black', display: 'block', height: '100%', padding: '10px', textDecoration: 'none' }}>
-                                Services
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                <Dropdown.Item href="/questionnaire/questionnaire/pre/question1">Questionnaire cours</Dropdown.Item>
-                                <Dropdown.Item href="/questionnaire/questionnaire/question1">Profil investisseur (MIFID)</Dropdown.Item>
-                                <Dropdown.Item href="#">KYC</Dropdown.Item>
-                            </Dropdown.Menu>
-                        </Dropdown>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <Dropdown>
-                            <Dropdown.Toggle id="dropdown-basic" style={{  border: '1px solid #000',
-                                borderRadius: '5px',width: '150px',  backgroundColor:  pathname.includes('/Outils')  ? '#3b82f6' : 'white', // Dynamiser la couleur active
-                                color: pathname.includes('/Outils') ? 'white' : 'black', display: 'block', height: '100%', padding: '10px', textDecoration: 'none' }}>
-                                Outils
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                <Dropdown.Item href="/Outils/comparaison">Comparaison</Dropdown.Item>
-                                <Dropdown.Item href="/Outils/recherche">Selection OPCVM</Dropdown.Item>
-                                <Dropdown.Item href="/Outils/robot">Robot Advisor</Dropdown.Item>
-                                <Dropdown.Item href="/Outils/profil">Profil investisseurs</Dropdown.Item>
-                                <Dropdown.Item href="/Outils/education">Éducation financière</Dropdown.Item>
-
-                            </Dropdown.Menu>
-                        </Dropdown>
-                    </li>
-
-
-
-                    <li style={{ height: '40px' }}>
-                        <Button
-                            onClick={handleLinkactualite}
-                            style={{
-                                width: '150px',
-                                backgroundColor:  pathname.includes('/actualite')  ? '#3b82f6' : 'white', // Dynamiser la couleur active
-                                color: pathname.includes('/actualite') ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEnteraa}
-                            onMouseLeave={handleMouseLeaveaa}
-                        >
-                            &nbsp;&nbsp;&nbsp;   Actualités &nbsp;&nbsp;&nbsp;
-                        </Button>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <Dropdown>
-                            <Dropdown.Toggle id="dropdown-basic" style={{ border: '1px solid #000',
-                                borderRadius: '5px', width: '150px', backgroundColor:  pathname.includes('/societegestionpanel')  ? '#3b82f6' : 'white', // Dynamiser la couleur active
-                                color: pathname.includes('/societegestionpanel') ? 'white' : 'black', display: 'block', height: '100%', padding: '10px', textDecoration: 'none' }}>
-                                Connexion
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                 <Dropdown.Item onClick={handleLinkClick} href="#">Espace Membre</Dropdown.Item> 
-                                <Dropdown.Item href="/societegestionpanel/login">Espace client</Dropdown.Item>
-                            </Dropdown.Menu>
-                        </Dropdown>
-                    </li>
-
-                    <li style={{ height: '40px' }}>
-                        <Button
-                            onClick={handleLinkcontact}
-                            style={{
-                                width: '150px',
-                                backgroundColor:  pathname.includes('/contact')  ? '#3b82f6' : 'white', // Dynamiser la couleur active
-                                color: pathname.includes('/contact') ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                              
-                            }}
-                            onMouseEnter={handleMouseEntercontact}
-                            onMouseLeave={handleMouseLeavecontact}
-                        >
-                            Contact
-                        </Button>
-                    </li>
-
-                </ul>
-            </nav>
-            <br />
-            <div className='align-right'>
-             <input id="main-menu-state" type="checkbox" checked={menuOpen} onChange={toggleMenu} />
-                <label className="main-menu-btn" htmlFor="main-menu-state">
-                    <span className="main-menu-btn-icon"></span> Toggle main menu visibility
-                </label>
-        </div>
-           
-        </header>
-      
-        </>
-
-
-    );
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const [userConnected, setUserConnected] = React.useState<number | null>(null);
+
+  const navigateTo = (path: string) => {
+    router.push(path);
+  };
+
+  const handleLinkClick = () => {
+    if (userConnected !== null) {
+      navigateTo(`/panel/portefeuille/home?id=${userConnected}`);
+    } else {
+      navigateTo('/panel/societegestionpanel/login');
+    }
+  };
+
+  return (
+    <header className="bg-white text-white p-6 shadow-lg flex justify-between items-center sticky top-0 z-50">
+      <nav role="navigation" className={menuOpen ? 'hidden' : ''}>
+        <ul className={`sm sm-blue ${menuOpen ? 'open' : ''}`} style={{ display: 'flex', listStyle: 'none', gap: '4px', margin: 0, padding: 0 }}>
+          <NavButton
+            label="Accueil"
+            pathMatch="/accueil"
+            onClick={() => navigateTo('/accueil')}
+          />
+          <NavButton
+            label="Fonds"
+            pathMatch="/Opcvm"
+            onClick={() => navigateTo(`${urlsite}/Opcvm/recherche`)}
+          />
+          <NavButton
+            label="Societe de gestion"
+            pathMatch="/Fundmanager"
+            onClick={() => navigateTo('/Fundmanager/recherche')}
+          />
+          <NavButton
+            label="Pays"
+            pathMatch="/pays"
+            onClick={() => navigateTo('/pays')}
+          />
+          <NavDropdownMenu
+            label="Services"
+            pathMatch="/Service"
+            items={[
+              { label: 'Questionnaire cours', href: '/questionnaire/questionnaire/pre/question1' },
+              { label: 'Profil investisseur (MIFID)', href: '/questionnaire/questionnaire/question1' },
+              { label: 'KYC', href: '#' },
+            ]}
+          />
+          <NavDropdownMenu
+            label="Outils"
+            pathMatch="/Outils"
+            items={[
+              { label: 'Comparaison', href: '/Outils/comparaison' },
+              { label: 'Selection OPCVM', href: '/Outils/recherche' },
+              { label: 'Robot Advisor', href: '/Outils/robot' },
+              { label: 'Profil investisseurs', href: '/Outils/profil' },
+              { label: 'Éducation financière', href: '/Outils/education' },
+            ]}
+          />
+          <NavButton
+            label="Actualités"
+            pathMatch="/actualite"
+            onClick={() => navigateTo('/actualite')}
+          />
+          <NavDropdownMenu
+            label="Connexion"
+            pathMatch="/societegestionpanel"
+            items={[
+              { label: 'Espace Membre', href: '#' },
+              { label: 'Espace client', href: '/societegestionpanel/login' },
+            ]}
+          />
+          <NavButton
+            label="Contact"
+            pathMatch="/contact"
+            onClick={() => navigateTo('/contact')}
+          />
+        </ul>
+      </nav>
+      <div className="align-right">
+        <input
+          id="main-menu-state"
+          type="checkbox"
+          checked={menuOpen}
+          onChange={() => setMenuOpen(!menuOpen)}
+        />
+        <label className="main-menu-btn" htmlFor="main-menu-state">
+          <span className="main-menu-btn-icon"></span> Toggle main menu visibility
+        </label>
+      </div>
+    </header>
+  );
 };
 
 export default Header;
