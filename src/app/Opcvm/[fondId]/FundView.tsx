@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faSquare } from '@fortawesome/free-solid-svg-icons';
 import Header from '../../Header'
 import { urlconstant, urlsite } from "@/app/constants";
+import { extractIdFromSlug } from "@/lib/utils";
 import ExportModal from './exportmodal';
 import { Modal, Button } from 'react-bootstrap';
 import Calendar from 'react-calendar';
@@ -320,7 +321,7 @@ interface Option1 {
 
 interface PageProps {
     params: {
-        fondId: number;
+        fondId: string;
     };
 }
 interface MyDataType {
@@ -342,7 +343,7 @@ interface MyDataType {
 export default function Fond(props: PageProps) {
     const router = useRouter();
 
-    const id = props.params.fondId;
+    const id = extractIdFromSlug(props.params.fondId) || props.params.fondId;
     const randomPercentage: string = ((Math.random() * 200) - 100).toFixed(2);
 
     const randomPercentage1 = ((Math.random() * 200) - 100).toFixed(2);
@@ -1151,7 +1152,7 @@ export default function Fond(props: PageProps) {
                 <meta property="og:url" content={canonicalUrl} />
                 <meta property="og:image" content={`${urlsite}/images/logo.png`} />
                 <meta property="og:type" content="website" />
-                <link rel="canonical" href={`https://funds.chainsolutions.fr/Opcvm/${id}`} />
+                <link rel="canonical" href={`${urlsite}/Opcvm/${props.params.fondId}`} />
 
                 <script
                     type="application/ld+json"

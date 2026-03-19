@@ -364,7 +364,7 @@ export default function Accueil(props: any) {
             <Header />
             <Head>
 
-                <link rel="canonical" href="https://funds.chainsolutions.fr/Opcvm/accueil" />
+                <link rel="canonical" href="${urlsite}/Opcvm/accueil" />
 
             </Head>
             <br />

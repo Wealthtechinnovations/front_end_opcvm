@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { urlconstant, urlsite } from "@/app/constants";
+import { urlsite } from "@/app/constants";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -7,7 +7,15 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/privacy"],
+        disallow: [
+          "/panel/admin",
+          "/panel/portefeuille",
+          "/panel/societegestionpanel",
+          "/api",
+          "/auth",
+          "/callback",
+          "/testpanel",
+        ],
       },
     ],
     sitemap: `${urlsite}/sitemap.xml`,
