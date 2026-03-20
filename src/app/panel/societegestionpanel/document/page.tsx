@@ -131,7 +131,6 @@ export default function Profile(props: PageProps) {
         const data = await getsociete(societeconneted);
 
         setManagementCompany(data.data.societe);
-        console.log(managementCompany);
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
       }
@@ -174,7 +173,6 @@ export default function Profile(props: PageProps) {
     );
   });
 
-  console.log(managementCompany);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const toggleDropdown = () => {

@@ -106,7 +106,6 @@ export default function Profile(props: PageProps) {
     }
   }, [societeconneted,]);
 
-  console.log(managementCompany);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const toggleDropdown = () => {

@@ -22,13 +22,9 @@ interface Funds {
 }
 
 async function getPortefeuille(id: any) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getportefeuillebyuser/${id}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getportefeuillebyuser/${id}`);
+  if (!response.ok) throw new Error(`Failed to fetch portfolios: ${response.status}`);
+  return response.json();
 }
 interface PageProps {
   searchParams: {
@@ -126,26 +122,15 @@ export default function Home(props: PageProps) {
     });
   };
 
-  // Fonction de déconnexion (à personnaliser selon votre logique de déconnexion)
   const logout = async () => {
-    // Implémentez ici la logique de déconnexion
-       // Remove items from localStorage
-       localStorage.removeItem('isLoggedIn');
-       localStorage.removeItem('userId');
-        if (magic && magic.auth) {
-          await magic.user.logout();
-          console.log("Utilisateur déconnecté avec succès.");
-          // Si vous avez stocké le jeton quelque part (comme dans le localStorage), vous pouvez l'effacer ici.
-        // localStorage.removeItem('didToken');
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userId');
+    if (magic && magic.auth) {
+      await magic.user.logout();
     }
-       // Optionally, perform any additional logout-related tasks
-   
-       // Redirect to the homepage or login page, assuming you are using React Router
-       // You may need to adjust the route based on your application structure
-       setTimeout(() => {
-         router.push('/accueil'); // Replace '/other-page' with your desired page URL
-       }, 200);
-    // Rediriger ou déconnecter l'utilisateur
+    setTimeout(() => {
+      router.push('/accueil');
+    }, 200);
   };
 
   // Effet qui démarre le timer d'inactivité à l'initialisation et réinitialise le timer à chaque mouvement ou touche
@@ -169,15 +154,13 @@ export default function Home(props: PageProps) {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
 
-    console.log("isLoggedIn")
     if (isLoggedIn === 'true' && userId !== null) {
       const userIdNumber = parseInt(userId, 10);
       setIsLoggedIn(true);
       setUserConnected(userIdNumber)
     } else {
-      // If storedIsLoggedIn is null or any other value, set the state to false
       setIsLoggedIn(false);
-    } console.log(isLoggedIn)
+    }
     if (!isLoggedIn) {
       router.push('/portefeuille/login');
     }
@@ -211,27 +194,15 @@ export default function Home(props: PageProps) {
     }
     fetchData();
   }, []);
-  console.log("performanceData")
-
-  console.log(performanceData)
 
   const handleLogout = async () => {
-    // Remove items from localStorage
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
     if (magic && magic.auth) {
       await magic.user.logout();
-      console.log("Utilisateur déconnecté avec succès.");
-      // Si vous avez stocké le jeton quelque part (comme dans le localStorage), vous pouvez l'effacer ici.
-    // localStorage.removeItem('didToken');
-}
-    // Optionally, perform any additional logout-related tasks
-
-    // Redirect to the homepage or login page, assuming you are using React Router
-    // You may need to adjust the route based on your application structure
+    }
     setTimeout(() => {
-      
-      router.push('/accueil'); // Replace '/other-page' with your desired page URL
+      router.push('/accueil');
     }, 200);
   };
 
@@ -317,7 +288,6 @@ export default function Home(props: PageProps) {
                             <td className="text-center">{item?.portefeuilletype}</td>
                             <td className={(() => {
                               const matchingPort = [...performanceData].reverse().filter((port: { portefeuille_id: number; plusmoinsvalue: number; investissement: number }) => port.portefeuille_id === parseInt(item.id));
-                              console.log(matchingPort.length);
 
                               if (matchingPort.length > 0) {
                                 const firstPort = matchingPort[matchingPort.length - 1];
@@ -325,8 +295,6 @@ export default function Home(props: PageProps) {
 
                                 const { plus_moins_value: firstPlusMoinsValue, investissement: firstInvestissement, valeur_portefeuille: firstValeurPortefeuille } = firstPort;
                                 const { plus_moins_value: lastPlusMoinsValue, investissement: lastInvestissement, valeur_portefeuille: lastValeurPortefeuille } = lastPort;
-
-                                console.log(firstValeurPortefeuille, lastValeurPortefeuille);
 
                                 const calculatedValue = ((lastValeurPortefeuille - firstValeurPortefeuille) / firstValeurPortefeuille) * 100;
                                 if (calculatedValue < 0) {
@@ -339,10 +307,7 @@ export default function Home(props: PageProps) {
                               }
                             })()}>
                               {(() => {
-                                console.log(performanceData);
-
                                 const matchingPort = [...performanceData].reverse().filter((port: { portefeuille_id: number; plusmoinsvalue: number; investissement: number }) => port.portefeuille_id === parseInt(item.id));
-                                console.log(matchingPort.length);
 
                                 if (matchingPort.length > 0) {
                                   const firstPort = matchingPort[matchingPort.length - 1];
@@ -350,8 +315,6 @@ export default function Home(props: PageProps) {
 
                                   const { plus_moins_value: firstPlusMoinsValue, investissement: firstInvestissement, base_100_bis: firstValeurPortefeuille } = firstPort;
                                   const { plus_moins_value: lastPlusMoinsValue, investissement: lastInvestissement, base_100_bis: lastValeurPortefeuille } = lastPort;
-
-                                  console.log(firstValeurPortefeuille, lastValeurPortefeuille);
 
                                   const calculatedValue = ((lastValeurPortefeuille - firstValeurPortefeuille) / firstValeurPortefeuille) * 100;
                                   return calculatedValue.toFixed(2) + '%';

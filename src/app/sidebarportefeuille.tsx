@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from 'next/navigation';
-import router from "next/router";
 import { magic } from "../../magic";
 import Swal from "sweetalert2";
 
@@ -75,7 +74,7 @@ const router=useRouter();
       setIsLoggedIn(false);
     }
     if (!isLoggedIn) {
-      router.push('/panel/societegestionpanel/login');
+      router.push('/panel/portefeuille/login');
     }
    
   }, []);
@@ -237,7 +236,7 @@ const router=useRouter();
         <div className="sidebar-widgets mt-10">
           <div className="p-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg text-center text-white shadow-lg">
             <img src="../../../images/svg-icon/color-svg/custom-32.svg" className="sideimg mx-auto p-5" alt="Logo" />
-            <h4 className="text-lg font-bold mt-4">Panel Société de Gestion</h4>
+            <h4 className="text-lg font-bold mt-4">Panel Portefeuille</h4>
           </div>
         </div>
       </aside>

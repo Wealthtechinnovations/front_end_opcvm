@@ -14,25 +14,19 @@ import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebarportefeuille";
 
 async function getPortefeuille(selectedValues: any) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getportefeuille/${selectedValues}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getportefeuille/${selectedValues}`);
+  if (!response.ok) throw new Error(`Failed to fetch portfolio: ${response.status}`);
+  return response.json();
 }
 async function getlastvl1(minDate: any, maxDate: any) {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFunds?minHorizon=${minDate}&maxHorizon=${maxDate}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/searchFunds?minHorizon=${minDate}&maxHorizon=${maxDate}`);
+  if (!response.ok) throw new Error(`Failed to search funds: ${response.status}`);
+  return response.json();
 }
 async function getlastvl2(categorie: any, univers: any, universsous: any) {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFundsreconstitution?categorie=${categorie}&univers=${univers}&universsous=${universsous}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/searchFundsreconstitution?categorie=${categorie}&univers=${univers}&universsous=${universsous}`);
+  if (!response.ok) throw new Error(`Failed to search funds: ${response.status}`);
+  return response.json();
 }
 
 const options = [
@@ -159,7 +153,6 @@ export default function Fondselected(props: PageProps) {
   let selectedfunds = props?.searchParams?.selectedfund;
   let selectedportfeuille = props?.searchParams?.portefeuille;
   let selectedValuename = props?.searchParams?.selectedValuename;
-  console.log(selectedValuename);
   const [optionsPays, setOptionsPays] = useState([]);
   const [selectedPays, setSelectedPays] = useState<Pays | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
@@ -194,10 +187,6 @@ export default function Fondselected(props: PageProps) {
   const handleFondSelect = (fond: any) => {
     setSelectedFond(fond);
     setSelectedRows(selectedfunds.concat(fond));
-    console.log("s" + selectedfunds);
-    console.log(selectedRows.join(','));
-    console.log(fond);
-
   };
   const handleSearch = (e: any) => {
     e.preventDefault();
@@ -223,7 +212,6 @@ export default function Fondselected(props: PageProps) {
         try {
           const response = await fetch(`${urlconstant}/api/getfondbyid/${item}`);
           const data = await response.json();
-          console.log(fetchedData);
           fetchedData.push(data);
         } catch (error) {
           console.error("Erreur lors de l'appel API :", error);
@@ -255,13 +243,8 @@ export default function Fondselected(props: PageProps) {
       try {
         const data = await getPortefeuille(selectedportfeuille);
         setPortefeuille(data);
-        console.log("eeee");
         let minDate, maxDate;
         if (data?.data.portefeuille.portefeuilletype == 'Robot advisor') {
-          console.log(data?.data?.portefeuille.horizon);
-          console.log(data?.data?.portefeuille.horizon);
-          console.log(data?.data?.portefeuille.horizon);
-
           switch (data?.data?.portefeuille.horizon) {
             case "MOINS D UN AN":
               maxDate = new Date();
@@ -286,12 +269,12 @@ export default function Fondselected(props: PageProps) {
             case "Au moins 8 ans":
               maxDate = new Date();
               minDate = new Date(maxDate);
-              minDate.setFullYear(minDate.getFullYear() - 5);
+              minDate.setFullYear(minDate.getFullYear() - 8);
               break;
             case "Au moins 10 ans":
               maxDate = new Date();
               minDate = new Date(maxDate);
-              minDate.setFullYear(minDate.getFullYear() - 5);
+              minDate.setFullYear(minDate.getFullYear() - 10);
               break;
             default:
               // Gérer d'autres cas si nécessaire
@@ -308,11 +291,8 @@ export default function Fondselected(props: PageProps) {
           // Creamos las cadenas en formato "yyyy-mm-dd"
           const maxDateString = `${maxYear}-${maxMonth}-${maxDay}`;
           const minDateString = `${minYear}-${minMonth}-${minDay}`;
-          console.log(maxDateString);
-          console.log(minDateString);
 
           const data1 = await getlastvl1(minDateString, maxDateString);
-          console.log(data1);
           const mappedOptions = data1?.data.funds.map((funds: any) => ({
             value: funds.value,
             label: funds.label,
@@ -324,7 +304,6 @@ export default function Fondselected(props: PageProps) {
           // Ensuite, filtrez les options pour pré-sélectionner celles qui correspondent à selectedValuename.
           const preselectedOptions = mappedOptions.filter((option: { label: any; }) => selectedValuename.includes(option.label));
           setSelectedOptions(preselectedOptions);
-          console.log("ddd");
         } else {
           setcategories(data?.data.portefeuille.categorie.replace(/[^0-9A-Za-z\s,]+/g, '').split(','));
           setunivers(data?.data.portefeuille.univers);
@@ -353,15 +332,12 @@ export default function Fondselected(props: PageProps) {
           // Ensuite, filtrez les options pour pré-sélectionner celles qui correspondent à selectedValuename.
           const preselectedOptions = mappedOptions.filter((option: { label: any; }) => selectedValuename.includes(option.label));
           setSelectedOptions(preselectedOptions);
-          console.log("ddd");
 
           const preselectedOptions1 = mappedOptions1.filter((option: { label: any; }) => selectedValuename.includes(option.label));
           setSelectedOptions1(preselectedOptions1);
-          console.log("ddd");
 
           const preselectedOptions2 = mappedOptions2.filter((option: { label: any; }) => selectedValuename.includes(option.label));
           setSelectedOptions2(preselectedOptions2);
-          console.log("ddd");
 
           setAllSelectedValues(selectedValuename);
 
@@ -409,9 +385,6 @@ export default function Fondselected(props: PageProps) {
 
       formData.selectedValue = selectedValues.join(',') as unknown as string[]
       formData.selectedValuename = selectedValuenames.join(',') as unknown as string[]
-      console.log(formData);
-      console.log(selectedValues);
-
       const response = await fetch(`${urlconstant}/api/updateportefeuille`, {
         method: 'POST',
         headers: {
@@ -452,13 +425,11 @@ export default function Fondselected(props: PageProps) {
     { value: 'Afrique du Sud', label: 'Afrique du Sud' },
   ];
   const handlePaysChange = (selectedOption: any) => {
-    console.log(selectedOption)
     setFundsOptions([]);
     setSelectedPays(selectedOption.value); // Met à jour l'état selectedPays avec la nouvelle sélection
   };
 
   const handleRegionChange = (e: any) => {
-    console.log(e)
     setFundsOptions([]);
     setSelectedRegion(e);
   };

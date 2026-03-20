@@ -12,7 +12,6 @@ import Highcharts from 'highcharts';
 
 //import { router } from 'next/router';
 import Header from '@/app/Header';
-import Router from 'next/router';
 import { magic } from "../../../../../magic";
 import { useRouter } from 'next/navigation';
 import Headermenu from "@/app/Headermenu";
@@ -108,7 +107,6 @@ export default function Ajoutportefeuille(props: PageProps) {
     e.preventDefault();
 
     try {
-      console.log(formData);
       if (classeActifs != null) {
         formData.classeActifs = classeActifs;
 
@@ -125,8 +123,7 @@ export default function Ajoutportefeuille(props: PageProps) {
         },
         body: JSON.stringify(formData), // Convertissez votre objet formData en JSON
       });
-      console.log(response);
-      // Gérer la réponse de l'API (par exemple, afficher un message de succès)
+      // Gérer la réponse de l'API
 
       if (response.status === 200) {
 
@@ -182,9 +179,7 @@ export default function Ajoutportefeuille(props: PageProps) {
                       <div className="row row-no-gutters">
                         <div className="col-lg-12  text-center-xs p-t-1">
                           <h3>
-                            <span className="produit-type">Creation d un portefeuille</span> -       &nbsp;&nbsp;&nbsp;                     <strong></strong> -                        {' '}
-                            <small></small>{' '} &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
-                            &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                            <span className="produit-type">Création d&apos;un portefeuille</span>
                           </h3>
                         </div>
 
