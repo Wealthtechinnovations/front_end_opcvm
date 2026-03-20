@@ -13,9 +13,12 @@ import { useRouter } from 'next/navigation';
 import { magic } from '../../../../magic'; // Importer correctement le module
 
 async function login(email: string, password: string) {
-  const data = (
-    await fetch(`${urlconstant}/api/userlogin?email=${email}&password=${password}`)
-  ).json();
+  const response = await fetch(`${urlconstant}/api/userlogin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await response.json();
   return data;
 }
 async function emailexist(email: string) {
@@ -485,14 +488,17 @@ export default function Login() {
           const data1 = await login(email, password);
           setResponse(data1);
           if (data1.code === 200) {
-            console.log(data.token)
+            // Stocker le token JWT du backend principal
+            if (data1.data.token) {
+              localStorage.setItem('authToken', data1.data.token);
+            }
             localStorage.setItem('tokenEnCours', data.token);
             localStorage.setItem('isLoggedIn', 'true');
-            console.log(localStorage.getItem('tokenEnCours'));
-            if (data1.data.userExists.typeusers_id == 2) {
-              localStorage.setItem('userId', data1.data.userExists.denomination);
+            const user = data1.data.user;
+            if (user.typeusers_id == 2) {
+              localStorage.setItem('userId', user.denomination);
             } else {
-              localStorage.setItem('userId', data1.data.userExists.id);
+              localStorage.setItem('userId', user.id);
             }
             setIsLoggingIn(true)
 

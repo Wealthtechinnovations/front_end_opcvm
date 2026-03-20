@@ -30,11 +30,32 @@ export default function Importvl(props: PageProps) {
   const [file, setFile] = useState<File | null>(null); // État du fichier sélectionné
   const [message, setMessage] = useState(""); // État du message d'erreur ou de succès
 
+  const [isUploading, setIsUploading] = useState(false);
+
+  const ALLOWED_EXTENSIONS = ['.xlsx', '.xls'];
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
+
+      // Validation du type de fichier
+      const ext = selectedFile.name.substring(selectedFile.name.lastIndexOf('.')).toLowerCase();
+      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        setMessage("Format non supporté. Veuillez utiliser un fichier Excel (.xlsx ou .xls).");
+        setFile(null);
+        return;
+      }
+
+      // Validation de la taille
+      if (selectedFile.size > MAX_FILE_SIZE) {
+        setMessage("Le fichier est trop volumineux. Taille maximale : 10 MB.");
+        setFile(null);
+        return;
+      }
+
       setFile(selectedFile);
-      setMessage(""); // Réinitialiser le message d'erreur lors de la sélection d'un fichier
+      setMessage("");
     }
   };
 
@@ -53,13 +74,23 @@ export default function Importvl(props: PageProps) {
       return;
     }
 
+    setIsUploading(true);
+
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("id", societeconneted.toString());
 
+      // Ajouter le token d'authentification
+      const headers: Record<string, string> = {};
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${urlconstant}/api/uploadsocietefilenew/${societeconneted}`, {
         method: "POST",
+        headers,
         body: formData,
       });
 
@@ -73,20 +104,22 @@ export default function Importvl(props: PageProps) {
           timer: 3000,
         });
         setMessage("");
+        setFile(null);
       } else {
-        throw new Error("Erreur lors de l'enregistrement des données.");
+        const errorData = await response.json().catch(() => ({ message: "Erreur inconnue" }));
+        throw new Error(errorData.message || "Erreur lors de l'enregistrement des données.");
       }
-    } catch (error) {
+    } catch (error: any) {
       Swal.fire({
         position: "center",
         icon: "error",
         title: "Erreur",
-        html: `<p>Erreur lors de l'importation des données.</p>`,
-        showConfirmButton: false,
-        timer: 5000,
+        html: `<p>${error.message || "Erreur lors de l'importation des données."}</p>`,
+        showConfirmButton: true,
       });
-      console.error("Erreur lors de l'importation des données:", error);
-      setMessage("Erreur lors de l'importation des données.");
+      setMessage(error.message || "Erreur lors de l'importation des données.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -180,9 +213,14 @@ export default function Importvl(props: PageProps) {
                           {/* Submit Button */}
                           <button
                             type="submit"
-                            className="w-full py-3 px-5 text-lg font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition duration-200"
+                            disabled={isUploading || !file}
+                            className={`w-full py-3 px-5 text-lg font-semibold text-white rounded-lg transition duration-200 ${
+                              isUploading || !file
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-indigo-600 hover:bg-indigo-500'
+                            }`}
                           >
-                            Enregistrer
+                            {isUploading ? 'Importation en cours...' : 'Enregistrer'}
                           </button>
                         </form>
                       </div>

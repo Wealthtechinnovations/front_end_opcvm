@@ -41,13 +41,14 @@ interface PageProps {
 
   };
 }
-async function register(email: string, password: string, confirmPassword: string, codeTypeProfil: string, platform: string, typeBusiness: string) {
+async function register(formData: any) {
   const response = await fetch(`${urlstableconstant}/api/session/register-opcvm`, {
-    method: 'GET',
+    method: 'POST',
     headers: {
-      'x-api-key': API_KEY_STABLECOIN, // Ajouter votre en-tête personnalisé
-      'Content-Type': 'application/json', // Vous pouvez également ajouter d'autres en-têtes si nécessaire
+      'x-api-key': API_KEY_STABLECOIN,
+      'Content-Type': 'application/json',
     },
+    body: JSON.stringify(formData),
   });
 
   const data = await response.json();
@@ -254,35 +255,88 @@ export default function Register(props: PageProps) {
     fetchData();
   }, []);
 
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    setError(null);
 
+    // Validation côté client
+    if (password !== confirmpassword) {
+      setPasswordsMatch(false);
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Le mot de passe doit contenir au moins 8 caractères");
+      return;
+    }
+
+    setIsSubmitting(true);
     formData.codeTypeProfil = userType;
     formData.platform = "OPCVM";
+    formData.password = password;
+    formData.confirmPassword = confirmpassword;
 
     try {
-      console.log(formData);
-
+      // 1. Inscription sur l'API stablecoin
       const response = await fetch(`${urlstableconstant}/api/session/register-opcvm`, {
         method: 'POST',
         headers: {
-          'x-api-key': API_KEY_STABLECOIN, // Utiliser directement la variable sans ${}
-          'Content-Type': 'application/json', // Set the content type to JSON
+          'x-api-key': API_KEY_STABLECOIN,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData), // Convert the data to JSON and include it in the request body
+        body: JSON.stringify(formData),
       });
 
       const data = await response.json();
-      if (response.status === 200) {
 
-        // Redirect the user to another page after a delay (e.g., 2 seconds)
-        setTimeout(() => {
-          router.push('/societegestionpanel/pagehome'); // Replace '/other-page' with your desired page URL
-        }, 2000);
+      if (!response.ok) {
+        setError(data.message || "Erreur lors de l'inscription");
+        setIsSubmitting(false);
+        return;
       }
-    } catch (error) {
-      // Gérer les erreurs de l'API (par exemple, afficher une erreur)
-      console.error('Erreur lors de la soumission du formulaire :', error);
+
+      // 2. Créer aussi le compte sur le backend principal
+      const typeusersMap: Record<string, { typeusers: string; typeusers_id: number }> = {
+        'socGest': { typeusers: 'Societe de gestion', typeusers_id: 2 },
+        'part': { typeusers: 'Particulier', typeusers_id: 0 },
+        'insti': { typeusers: 'Investisseur institutionnel', typeusers_id: 1 },
+        'Data requester': { typeusers: 'Data requester', typeusers_id: 3 },
+      };
+
+      const typeInfo = typeusersMap[userType] || { typeusers: userType, typeusers_id: 0 };
+
+      const mainApiResponse = await fetch(`${urlconstant}/api/postuserportefeuille`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: password,
+          denomination: (selectedSociete as any)?.value || '',
+          pays: (selectedPays as any)?.value || '',
+          typeusers: typeInfo.typeusers,
+          typeusers_id: typeInfo.typeusers_id,
+        }),
+      });
+
+      const mainData = await mainApiResponse.json();
+
+      if (mainApiResponse.ok) {
+        // Stocker le token si retourné
+        if (mainData.data?.token) {
+          localStorage.setItem('authToken', mainData.data.token);
+        }
+        router.push('/payspanel/login');
+      } else {
+        setError(mainData.message || "Compte créé partiellement. Veuillez vous connecter.");
+        setTimeout(() => router.push('/payspanel/login'), 3000);
+      }
+    } catch (err) {
+      setError("Erreur de connexion au serveur. Veuillez réessayer.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -321,19 +375,29 @@ export default function Register(props: PageProps) {
                         <br />
                         {renderRegistrationFields()}
                         <br />
-                        <div className="row">
-
-                          {/* /.col */}
-                          <div className="col-12 text-center">
-                            <button className="text-right" style={{
-                              textDecoration: 'none', // Remove underline
-                              backgroundColor: '#6366f1', // Background color
-                              color: 'white', // Text color
-                              padding: '10px 20px', // Padding
-                              borderRadius: '5px', // Rounded corners
-                            }} type="submit">Enregistrer</button>
+                        {error && (
+                          <div className="alert alert-danger text-center" role="alert">
+                            {error}
                           </div>
-                          {/* /.col */}
+                        )}
+                        <div className="row">
+                          <div className="col-12 text-center">
+                            <button
+                              className="text-right"
+                              style={{
+                                textDecoration: 'none',
+                                backgroundColor: isSubmitting ? '#9ca3af' : '#6366f1',
+                                color: 'white',
+                                padding: '10px 20px',
+                                borderRadius: '5px',
+                                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                              }}
+                              type="submit"
+                              disabled={isSubmitting}
+                            >
+                              {isSubmitting ? 'Inscription en cours...' : 'Enregistrer'}
+                            </button>
+                          </div>
                         </div>
                       </form>
 
