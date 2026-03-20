@@ -67,15 +67,13 @@ const router=useRouter();
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
 
-    console.log("isLoggedIn")
     if (isLoggedIn === 'true' && userId !== null) {
       // const userIdNumber = parseInt(userId, 10);
       // setIsLoggedIn(true);
       // setUserConnected(userIdNumber)
     } else {
-      // If storedIsLoggedIn is null or any other value, set the state to false
       setIsLoggedIn(false);
-    } console.log(isLoggedIn)
+    }
     if (!isLoggedIn) {
       router.push('/panel/societegestionpanel/login');
     }
@@ -86,11 +84,8 @@ const router=useRouter();
     // Remove items from localStorage
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
-    console.log("Utilisateur déconnecté avec succès.");
-
     if (magic && magic.auth) {
       await magic.user.logout();
-      console.log("Utilisateur déconnecté avec succès.");
       // Si vous avez stocké le jeton quelque part (comme dans le localStorage), vous pouvez l'effacer ici.
     // localStorage.removeItem('didToken');
 }
