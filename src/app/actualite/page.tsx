@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import Header from '../Header';
-import { urlconstant, urlconstantimage } from "@/app/constants";
+import { urlconstant, urlconstantimage, urlsite } from "@/app/constants";
 import { useRouter } from 'next/navigation';
 import Swal from "sweetalert2";
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import Head from "next/head";
+import SEO from '@/components/common/SEO';
+import { breadcrumbSchema } from '@/utils/structuredData';
 
 async function getactualite() {
     const data = await fetch(`${urlconstant}/api/getactualite`, {
@@ -43,6 +45,16 @@ export default function Accueil() {
 
     return (
         <Fragment>
+            <SEO
+                title="Actualités OPCVM Afrique"
+                description="Restez informé avec les dernières actualités sur les OPCVM en Afrique. Analyses, tendances et nouvelles des fonds d'investissement africains."
+                keywords="OPCVM, actualités, Afrique, fonds, investissement, Fundafrique"
+                canonicalUrl={`${urlsite}/actualite`}
+                structuredData={breadcrumbSchema([
+                    { name: 'Accueil', url: `${urlsite}/accueil` },
+                    { name: 'Actualités', url: `${urlsite}/actualite` },
+                ])}
+            />
             <Header />
             <Head>
                 <title>Opcvm Afrique: Guide Complet</title>

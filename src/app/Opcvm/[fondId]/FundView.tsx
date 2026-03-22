@@ -15,6 +15,8 @@ import { Modal, Button } from 'react-bootstrap';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import Head from 'next/head';
+import SEO from '@/components/common/SEO';
+import { fundSchema, breadcrumbSchema } from '@/utils/structuredData';
 import { DropdownButton, Dropdown } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import Swal from 'sweetalert2';
@@ -1141,6 +1143,28 @@ export default function Fond(props: PageProps) {
     return (
 
         <Fragment>
+            <SEO
+                title={`${post?.data?.libelle_fond} ${post?.data?.symboledevise} ${post?.data?.code_ISIN} ${post?.data?.pays} - Synthèse OPCVM Afrique`}
+                description={`Analyse du fond ${post?.data?.libelle_fond} - Performance, VL, classement. Géré par ${post?.data?.societe_gestion}.`}
+                keywords={`${post?.data?.libelle_fond}, OPCVM, ${post?.data?.pays}, ${post?.data?.symboledevise}, investissement`}
+                canonicalUrl={`${urlsite}/Opcvm/${props.params.fondId}`}
+                ogImage={`${urlsite}/images/logo.png`}
+                structuredData={[
+                    fundSchema({
+                        nom_fond: post?.data?.libelle_fond,
+                        categorie: post?.data?.categorie_globale,
+                        societe_gestion: post?.data?.societe_gestion,
+                        devise: post?.data?.symboledevise,
+                        code_ISIN: post?.data?.code_ISIN,
+                        pays: post?.data?.pays,
+                    }),
+                    breadcrumbSchema([
+                        { name: 'Accueil', url: `${urlsite}/accueil` },
+                        { name: 'Recherche OPCVM', url: `${urlsite}/Opcvm/recherche` },
+                        { name: post?.data?.libelle_fond || 'Fond', url: `${urlsite}/Opcvm/${props.params.fondId}` },
+                    ]),
+                ]}
+            />
             <Header />
             <Head>
                 <title>{post?.data?.libelle_fond}  {post?.data?.symboledevise}  {post?.data?.code_ISIN}  {post?.data?.pays} - synthèse OPCVM Afrique - Fundafrique</title>

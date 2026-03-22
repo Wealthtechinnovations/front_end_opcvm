@@ -6,6 +6,7 @@ import "./style/css/skin_color.css";
 import "./style/css/vendors_css.css";
 import { urlsite } from "./constants";
 import { Metadata } from "next";
+import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: {
@@ -44,14 +45,44 @@ export default function RootLayout({
     <html lang="fr">
       <head>
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-F4F52HS3TF"></script>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Fundafrique',
+              description: 'Plateforme d\'analyse et de sélection des OPCVM Africains',
+              url: urlsite,
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'Fundafrique',
+              url: urlsite,
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: `${urlsite}/Opcvm/recherche?q={search_term_string}`,
+                'query-input': 'required name=search_term_string',
+              },
+            }),
+          }}
+        />
       </head>
       <body className="layout-top-nav light-skin theme-primary fixed" style={{ height: '100%', width: '100%' }}>
-        <div className="wrapper bg-white" style={{ overflowY: 'scroll' }}>
-          {children}
-          <footer className="main-footer text-center" style={{ padding: '16px', borderTop: '1px solid #e5e7eb' }}>
-            &copy; {new Date().getFullYear()} <a href="/accueil" style={{ color: '#3b82f6', textDecoration: 'none' }}>Fundafrique</a>. Tous droits réservés.
-          </footer>
-        </div>
+        <Providers>
+          <div className="wrapper bg-white" style={{ overflowY: 'scroll' }}>
+            {children}
+            <footer className="main-footer text-center" style={{ padding: '16px', borderTop: '1px solid #e5e7eb' }}>
+              &copy; {new Date().getFullYear()} <a href="/accueil" style={{ color: '#3b82f6', textDecoration: 'none' }}>Fundafrique</a>. Tous droits réservés.
+            </footer>
+          </div>
+        </Providers>
       </body>
     </html>
   );

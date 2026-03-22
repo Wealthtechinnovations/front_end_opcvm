@@ -10,6 +10,8 @@ import Select, { SingleValue } from 'react-select';
 //import * as XLSX from 'xlsx';
 import Header from '../../Header';
 import Head from 'next/head';
+import SEO from '@/components/common/SEO';
+import { websiteSchema, breadcrumbSchema } from '@/utils/structuredData';
 import { urlconstant, urlsite } from "@/app/constants";
 import { color } from "highcharts";
 import Swal from "sweetalert2";
@@ -564,6 +566,17 @@ const getValue = (fund, key) => {
 
 
     < Fragment >
+      <SEO
+        title="Rechercher des OPCVM en Afrique"
+        description="Recherchez et comparez les fonds OPCVM africains par société de gestion, pays et catégorie. VL, performances et classements."
+        keywords="recherche, OPCVM, Afrique, société de gestion, fonds, comparaison"
+        canonicalUrl={`${urlsite}/Opcvm/recherche`}
+        ogImage={`${urlsite}/images/logo.png`}
+        structuredData={[websiteSchema, breadcrumbSchema([
+          { name: 'Accueil', url: `${urlsite}/accueil` },
+          { name: 'Recherche OPCVM', url: `${urlsite}/Opcvm/recherche` },
+        ])]}
+      />
       <Header />
       <Head>
         <title>Rechercher une société de gestion</title>
