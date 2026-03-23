@@ -133,12 +133,10 @@ export default function Fond(props: PageProps) {
   const randomPercentage2 = ((Math.random() * 200) - 100).toFixed(2);
   const [showDescription, setShowDescription] = useState(false);
   const handleMouseEnter = () => {
-    console.log("open")
     setShowDescription(true);
   };
 
   const handleMouseLeave = () => {
-    console.log("close")
 
     setShowDescription(false);
   };
@@ -169,7 +167,6 @@ export default function Fond(props: PageProps) {
         const isLoggedIn = localStorage.getItem('isLoggedIn');
         const userId = localStorage.getItem('userId');
 
-        console.log("isLoggedIn", isLoggedIn);
 
         if (isLoggedIn === 'true' && userId !== null) {
           const userIdNumber = parseInt(userId, 10);
@@ -236,7 +233,6 @@ export default function Fond(props: PageProps) {
         setData(responseData.data.repartition);
         setData1(responseData.data.results2);
         setData2(responseData.data.performa);
-        console.log(responseData.data.performa);
 
         Swal.close(); // Close the loading popup
 
@@ -753,6 +749,34 @@ borderColor:'grey',
                             </div>
                           </div>
                           <br />
+                          {/* KPIs - Indicateurs clés */}
+                          <div className="row mb-4">
+                            <div className="col-md-4">
+                              <div className="card text-center shadow-sm border-0" style={{ borderLeft: '4px solid #6366f1' }}>
+                                <div className="card-body">
+                                  <h6 className="text-muted mb-1">Total des fonds</h6>
+                                  <h3 className="fw-bold" style={{ color: '#6366f1' }}>{totalfonds ?? '-'}</h3>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="col-md-4">
+                              <div className="card text-center shadow-sm border-0" style={{ borderLeft: '4px solid #10b981' }}>
+                                <div className="card-body">
+                                  <h6 className="text-muted mb-1">Fonds avec données</h6>
+                                  <h3 className="fw-bold" style={{ color: '#10b981' }}>{totalfondscompose ?? '-'}</h3>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="col-md-4">
+                              <div className="card text-center shadow-sm border-0" style={{ borderLeft: '4px solid #f59e0b' }}>
+                                <div className="card-body">
+                                  <h6 className="text-muted mb-1">Fonds sans données</h6>
+                                  <h3 className="fw-bold" style={{ color: '#f59e0b' }}>{totalfondsignore ?? '-'}</h3>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
                           <div className="row">
                             <div className="col-md-6">
                               <div className="graph-container">

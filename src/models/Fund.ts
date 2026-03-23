@@ -1,23 +1,27 @@
 export interface Fund {
-  value: any;
-  name: any;
-  nom_fond: any;
-  description: any;
-  code_ISIN: any;
-  nom: any;
-  pays: any;
+  value: number;
+  label: string;
+  name: string;
+  nom_fond: string;
+  description: string;
+  code_ISIN: string;
+  nom: string;
+  pays: string;
+  slug: string;
 }
 
 export interface Pays {
   id: number;
   nom: string;
   value: string;
+  slug?: string;
 }
 
 export interface Societe {
   id: number;
   nom: string;
-  name:string;
+  name: string;
+  slug?: string;
 }
 
 export interface FundsResponse {
@@ -25,24 +29,21 @@ export interface FundsResponse {
   data: {
     pays: any;
     funds: Fund[];
-    paysOptions: any;
-    societes: any;
+    paysOptions: Pays[];
+    societes: Societe[];
   };
 }
 
 export interface PaysResponse {
   code: number;
-    data: {
-      paysOptions: any;
-  
+  data: {
+    paysOptions: Pays[];
   };
 }
 
 export interface SocieteResponse {
   code: number;
- 
-    data: {
-      societes: any;
-    
+  data: {
+    societes: Societe[];
   };
 }

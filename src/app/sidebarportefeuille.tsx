@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from 'next/navigation';
-import router from "next/router";
 import { magic } from "../../magic";
 import Swal from "sweetalert2";
 
@@ -67,17 +66,15 @@ const router=useRouter();
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
 
-    console.log("isLoggedIn")
     if (isLoggedIn === 'true' && userId !== null) {
       // const userIdNumber = parseInt(userId, 10);
       // setIsLoggedIn(true);
       // setUserConnected(userIdNumber)
     } else {
-      // If storedIsLoggedIn is null or any other value, set the state to false
       setIsLoggedIn(false);
-    } console.log(isLoggedIn)
+    }
     if (!isLoggedIn) {
-      router.push('/panel/societegestionpanel/login');
+      router.push('/panel/portefeuille/login');
     }
    
   }, []);
@@ -86,11 +83,8 @@ const router=useRouter();
     // Remove items from localStorage
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
-    console.log("Utilisateur déconnecté avec succès.");
-
     if (magic && magic.auth) {
       await magic.user.logout();
-      console.log("Utilisateur déconnecté avec succès.");
       // Si vous avez stocké le jeton quelque part (comme dans le localStorage), vous pouvez l'effacer ici.
     // localStorage.removeItem('didToken');
 }
@@ -242,7 +236,7 @@ const router=useRouter();
         <div className="sidebar-widgets mt-10">
           <div className="p-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg text-center text-white shadow-lg">
             <img src="../../../images/svg-icon/color-svg/custom-32.svg" className="sideimg mx-auto p-5" alt="Logo" />
-            <h4 className="text-lg font-bold mt-4">Panel Société de Gestion</h4>
+            <h4 className="text-lg font-bold mt-4">Panel Portefeuille</h4>
           </div>
         </div>
       </aside>

@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
+import { generateFundSlug } from "@/lib/utils";
+import { generateFundSlug } from "@/lib/utils";
 
 
 import Select, { MultiValue } from 'react-select';
+import { generateFundSlug } from "@/lib/utils";
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
@@ -13,6 +16,7 @@ import Header from '../../../Header';
 import { urlconstant } from "../../../constants";
 import { DropdownButton, Dropdown, Modal, Button } from 'react-bootstrap';
 import Swal from 'sweetalert2';
+import { generateFundSlug } from "@/lib/utils";
 
 interface Option {
   value: string;
@@ -673,7 +677,7 @@ export default function Comparaisonview(props: PageProps) {
                               {funds?.data?.funds.map((item) => (
                                 <tr className="text-right" key={item.id}>
 
-                                  <td className="text-left"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                  <td className="text-left"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                   <td>{item.fundData?.categorie_globale}</td>
                                   <td>{item.fundData?.dev_libelle}</td>
                                   <td >{item.fundData?.categorie_national}</td>
@@ -709,7 +713,7 @@ export default function Comparaisonview(props: PageProps) {
                               {funds?.data?.funds.map((item) => (
                                 <tr className="text-right" key={item.id}>
 
-                                  <td className="text-left"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                  <td className="text-left"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                   <td>{item.fundData?.categorie_globale}</td>
                                   <td>{item.fundData?.dev_libelle}</td>
                                   <td className={`text-right ${parseFloat(item.firstData?.data?.perf1erJanvier) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.firstData?.data?.perf1erJanvier)) ? '-' : parseFloat(item.firstData?.data?.perf1erJanvier).toFixed(2)} %</td>
@@ -746,7 +750,7 @@ export default function Comparaisonview(props: PageProps) {
                               {funds?.data?.funds.map((item) => (
                                 <tr className="text-right" key={item.id}>
 
-                                  <td className="text-left"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                  <td className="text-left"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                   <td>{item.fundData?.dev_libelle}</td>
                                   <td className={`text-right ${parseFloat(item.firstData?.data?.perf1An) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.firstData?.data?.perf1An)) ? '-' : parseFloat(item.firstData?.data?.perf1An).toFixed(2)} %</td>
                                   <td className={`text-right ${parseFloat(item.firstData?.data?.perf3Ans) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.firstData?.data?.perf3Ans)) ? '-' : parseFloat(item.firstData?.data?.perf3Ans).toFixed(2)} %</td>
@@ -781,7 +785,7 @@ export default function Comparaisonview(props: PageProps) {
                               {funds?.data?.funds.map((item) => (
                                 <tr className="text-right" key={item.id}>
 
-                                  <td className="text-left"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                  <td className="text-left"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                   <td className={`text-right ${parseFloat(item.secondData?.data?.perfAnnualisee) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.secondData?.data?.perfAnnualisee)) ? '-' : parseFloat(item.secondData?.data?.perfAnnualisee).toFixed(2)} %</td>
                                   <td className={`text-right ${parseFloat(item.secondData?.data?.volatility) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.secondData?.data?.volatility)) ? '-' : parseFloat(item.secondData?.data?.volatility).toFixed(2)} %</td>
                                   <td className={`text-right ${parseFloat(item.secondData?.data?.ratioSharpe) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.secondData?.data?.ratioSharpe)) ? '-' : parseFloat(item.secondData?.data?.ratioSharpe).toFixed(2)} %</td>
@@ -818,7 +822,7 @@ export default function Comparaisonview(props: PageProps) {
                                 {funds?.data?.funds.map((item) => (
                                   <tr className="text-right" key={item.id}>
 
-                                    <td className="text-left"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                    <td className="text-left"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                     <td className={`text-right ${parseFloat(item.thirdData?.data?.perfAnnualisee) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.thirdData?.data?.perfAnnualisee)) ? '-' : parseFloat(item.thirdData?.data?.perfAnnualisee).toFixed(2)} %</td>
                                     <td className={`text-right ${parseFloat(item.thirdData?.data?.volatility) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.thirdData?.data?.volatility)) ? '-' : parseFloat(item.thirdData?.data?.volatility).toFixed(2)} %</td>
                                     <td className={`text-right ${parseFloat(item.thirdData?.data?.ratioSharpe) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.thirdData?.data?.ratioSharpe)) ? '-' : parseFloat(item.thirdData?.data?.ratioSharpe).toFixed(2)} %</td>
@@ -856,7 +860,7 @@ export default function Comparaisonview(props: PageProps) {
                                   {funds?.data?.funds.map((item) => (
                                     <tr className="text-right" key={item.id}>
 
-                                      <td className="text-left"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                      <td className="text-left"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                       <td className={`text-right ${parseFloat(item.fourthData?.data?.perfAnnualisee) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.fourthData?.data?.perfAnnualisee)) ? '-' : parseFloat(item.fourthData?.data?.perfAnnualisee).toFixed(2)} %</td>
                                       <td className={`text-right ${parseFloat(item.fourthData?.data?.volatility) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.fourthData?.data?.volatility)) ? '-' : parseFloat(item.fourthData?.data?.volatility).toFixed(2)} %</td>
                                       <td className={`text-right ${parseFloat(item.fourthData?.data?.ratioSharpe) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.fourthData?.data?.ratioSharpe)) ? '-' : parseFloat(item.fourthData?.data?.ratioSharpe).toFixed(2)} %</td>
@@ -896,7 +900,7 @@ export default function Comparaisonview(props: PageProps) {
                                     {funds?.data?.funds.map((item) => (
                                       <tr className="text-right" key={item.id}>
 
-                                        <td className="text-left"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                        <td className="text-left"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                         <td>{item.fundData?.minimum_investissement}</td>
                                         <td>{item.fundData?.frais_gestion}</td>
                                         <td>{item.fundData?.frais_souscription}</td>
@@ -934,7 +938,7 @@ export default function Comparaisonview(props: PageProps) {
                                       {funds?.data?.funds.map((item) => (
                                         <tr className="text-right" key={item.id}>
 
-                                          <td className="text-left"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                          <td className="text-left"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                           <td className="text-left"><Link href={`/Fundmanager/${item.fundData?.societe_gestion.replace(/ /g, '-')}`}>{item.fundData?.societe_gestion}</Link></td>
                                           <td className="text-left">Fonds</td>
                                           <td className="text-left">{item.fundData?.categorie_libelle}</td>

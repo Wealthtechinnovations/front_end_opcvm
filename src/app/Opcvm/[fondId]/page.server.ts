@@ -1,26 +1,34 @@
-import { urlconstant } from "@/app/constants";
+import { urlconstant, urlsite } from "@/app/constants";
 import { Fund, FundsResponse } from "@/models/Fund";
+import { generateFundSlug } from "@/lib/utils";
 
-// Fonction pour générer des paramètres statiques pour les routes dynamiques
 export async function generateStaticParams() {
     const response = await fetch(`${urlconstant}/api/searchFunds`);
     const { data }: FundsResponse = await response.json();
 
     return data.funds.map((fund: Fund) => ({
-        fondId: fund.value.toString(), // Assurez-vous que le paramètre correspond à votre route dynamique
+        fondId: fund.slug || generateFundSlug(fund.nom_fond || '', fund.code_ISIN || '', fund.value),
     }));
 }
 
-// Fonction pour générer les métadonnées pour le SEO
-export async function generateMetadata({ params }: { params: { fondId: any } }) {
+export async function generateMetadata({ params }: { params: { fondId: string } }) {
     const response = await fetch(`${urlconstant}/api/getfondbyidmeta/${params.fondId}`);
     const fund = await response.json();
-    console.log(fund)
-    console.log("fundssss")
+
+    const { nom_fond, devise, code_ISIN, pays, societe_gestion, slug } = fund.funds;
+    const fundSlug = slug || params.fondId;
 
     return {
-        title: `${fund.funds.nom_fond} ${fund.funds.devise} ${fund.funds.code_ISIN} ${fund.funds.pays} - synthèse OPCVM Afrique - Fundafrique`,
-        description: `Toutes les informations sur le fonds  du ${fund.funds.pays} OPCVM ${fund.funds.nom_fond} ${fund.funds.code_ISIN} ${fund.funds.devise}, gérer par ${fund.funds.societe_gestion} : VL, performances, analyses, classement, graphique historique, et ratios de risque sur Fundafrique`,
-        canonical: `https://funds.chainsolutions.fr/Opcvm/${params.fondId}`,
+        title: `${nom_fond} ${devise} ${code_ISIN} ${pays} - Synthèse OPCVM Afrique | Fundafrique`,
+        description: `Toutes les informations sur le fonds OPCVM ${nom_fond} (${code_ISIN}) du ${pays}, géré par ${societe_gestion} : VL, performances, analyses, classement, graphique historique et ratios de risque sur Fundafrique.`,
+        alternates: {
+            canonical: `${urlsite}/Opcvm/${fundSlug}`,
+        },
+        openGraph: {
+            title: `${nom_fond} - OPCVM ${pays} | Fundafrique`,
+            description: `Analyse complète du fonds ${nom_fond} (${code_ISIN}) : valeur liquidative, performances et ratios de risque.`,
+            url: `${urlsite}/Opcvm/${fundSlug}`,
+            type: 'website',
+        },
     };
 }

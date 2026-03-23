@@ -7,7 +7,6 @@ async function getlastvl1() {
     const data = (
         await fetch(`/api/searchFunds`)
     ).json();
-    console.log("post")
     return data;
 }
 interface Option {
@@ -24,16 +23,12 @@ const RechercheBar = () => {
         // Appel à l'API lors du premier rendu du composant
         async function fetchData() {
             try {
-                console.log("vvdddv")
                 const data1 = await getlastvl1();
-                console.log("vvdddv")
-                console.log(data1?.data.funds);
                 const mappedOptions = data1?.data.funds.map((funds: any) => ({
                     label: funds.label, // Replace with the actual property name
                     value: funds.value, // Replace with the actual property name
                 }));
 
-                console.log(mappedOptions)
                 setFundsOptions(mappedOptions);
 
             } catch (error) {
@@ -51,8 +46,6 @@ const RechercheBar = () => {
     const handleFundSelect = (selectedOption: any) => {
         setSelectedFund(selectedOption);
     };
-    console.log(fundsOptions)
-
     return (
         <div className="app-menu">
             <ul className="header-megamenu nav">
@@ -93,6 +86,5 @@ async function searchFunds(searchTerm: any) {
     // const response = await fetch(`/api/searchFunds?query=${searchTerm}`);
     const response = await fetch(`/api/searchFunds`);
     const data = await response.json();
-    console.log(data);
     return data;
 }

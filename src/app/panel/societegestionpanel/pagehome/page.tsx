@@ -196,7 +196,6 @@ export default function Pagehome(props: PageProps) {
           // Replace with the actual property name
         }));
         setOptionsPays(mappedOptions);
-        console.log(data.data.paysOptions);
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
       }
@@ -209,7 +208,6 @@ export default function Pagehome(props: PageProps) {
       const fetchRegulateur = async () => {
         try {
           const data = await getregulateur(selectedPays?.value)
-          console.log(data?.data);
 
           let mappedOptions = [];
           if (Array.isArray(data?.data.regulateur)) {
@@ -285,7 +283,6 @@ export default function Pagehome(props: PageProps) {
         setSelectedDevise({ value: data1.data.societe.devise, label: data1.data.societe.devise }); // Assurez-vous que l'objet a les propriétés 'value' et 'label'
         // ... code existant ...
 
-        console.log(managementCompany);
         const data8 = await getactualite();
         setActualites(data8);
 
@@ -315,7 +312,6 @@ export default function Pagehome(props: PageProps) {
   const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
 
-    console.log(formData)
     formData.societ = societeconneted;
     if (selectedPays)
       formData.pays = selectedPays.value;
@@ -343,8 +339,6 @@ export default function Pagehome(props: PageProps) {
     formDatas.append('site_web', formData.site_web);
 
 
-    console.log(formData)
-
     try {
 
       const response = await fetch(`${urlconstant}/api/updateSociete`, {
@@ -356,7 +350,6 @@ export default function Pagehome(props: PageProps) {
         body: JSON.stringify(formData)
       });
       const data = await response.json();
-      console.log(data);
       if (response.status === 200) {
         //  setIsModalOpen(true);
         Swal.fire({
@@ -399,7 +392,6 @@ export default function Pagehome(props: PageProps) {
       });
 
       const data = await response.json();
-      console.log(data);
       if (response.status === 200) {
         Swal.fire({
           position: 'center',

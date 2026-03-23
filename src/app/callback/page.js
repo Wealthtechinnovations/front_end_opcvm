@@ -8,6 +8,9 @@ import { urlconstant } from "@/app/constants";
 // Fonction pour vérifier si l'email existe dans votre base de données
 async function emailexist(email) {
     const response = await fetch(`${urlconstant}/api/userexist?email=${email}`);
+    if (!response.ok) {
+        throw new Error(`Failed to check user existence: ${response.status}`);
+    }
     const data = await response.json();
     return data;
 }
@@ -21,10 +24,8 @@ export default function Callback() {
                 // Vérification si l'instance magic existe
                 if (magic && magic.auth) {
                     const didToken = await magic.auth.loginWithCredential();
-                    console.log("didToken1")
                     const userMetadata = await magic.user.getMetadata();
                     const emailuser = userMetadata.email;
-                    console.log("Utilisateur avec email :", emailuser);
 
                     // Vérifier si l'email existe dans la base de données
                     const data = await emailexist(emailuser);
@@ -32,9 +33,6 @@ export default function Callback() {
 
                         try {
                          //   const didToken = await magic.auth.loginWithCredential();
-                            console.log("DID Token reçu :", didToken);
-
-                            // Si le token a été correctement généré
                             if (didToken) {
                                 const res = await fetch(`${urlconstant}/api/login`, {
                                     headers: {
@@ -42,8 +40,6 @@ export default function Callback() {
                                         'Authorization': `Bearer ${didToken}`
                                     },
                                 });
-
-                                console.log("Réponse du serveur :", res.status);
 
                                 if (res.status === 200) {
                                     let href;

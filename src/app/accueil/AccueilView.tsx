@@ -18,6 +18,8 @@ library.add(faMapMarkerAlt, faPhoneAlt, faEnvelope);
 import '@fortawesome/fontawesome-svg-core/styles.css'; // Import the styles
 import { config } from '@fortawesome/fontawesome-svg-core';
 import Head from "next/head";
+import SEO from '@/components/common/SEO';
+import { organizationSchema, websiteSchema, breadcrumbSchema } from '@/utils/structuredData';
 config.autoAddCss = false; // Disable the automatic styles insertion
 
 
@@ -315,10 +317,19 @@ export default function Accueil(props: any) {
 
     return (
         <Fragment>
+            <SEO
+                title="OPCVM Afrique - Guide Complet des Fonds d'Investissement"
+                description="Découvrez notre sélection d'OPCVM en Afrique pour optimiser votre portefeuille d'investissement. Analyses, performances et classements des fonds africains."
+                keywords="OPCVM, Fonds, Finance, Afrique, Performance, Fundafrique, Investissement, Portefeuille"
+                canonicalUrl={`${urlsite}/accueil`}
+                structuredData={[organizationSchema, websiteSchema, breadcrumbSchema([
+                    { name: 'Accueil', url: `${urlsite}/accueil` },
+                ])]}
+            />
             <Header />
             <Head>
 
-                <link rel="canonical" href="https://funds.chainsolutions.fr/Opcvm/accueil" />
+                <link rel="canonical" href="${urlsite}/Opcvm/accueil" />
 
             </Head>
             <br />

@@ -555,7 +555,7 @@ const getValue = (fund, key) => {
         <meta property="og:description" content="Rechercher une société de gestion" />
         <meta property="og:image" content={`${urlsite}/images/logo.png`} />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href={`https://funds.chainsolutions.fr/Fundmanager/recherche`} />
+        <link rel="canonical" href={`${urlsite}/Fundmanager/recherche`} />
         {/* Ajoutez ici d'autres métadonnées spécifiques au SEO */}     
        
       </Head>

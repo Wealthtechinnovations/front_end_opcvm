@@ -1,19 +1,19 @@
 import { Metadata } from "next";
+import { urlsite } from "@/app/constants";
 
 export const metadata: Metadata = {
-    title: "Contact-Opcvm Afrique: Guide Complet",
-    description: "Nous contacter pour plus d'information, Découvrez notre sélection d'Opcvm en Afrique pour optimiser votre portefeuille d'investissement.",
+    title: "Contact - Fundafrique | OPCVM Afrique",
+    description: "Contactez l'équipe Fundafrique pour toute question sur les OPCVM en Afrique et l'investissement dans les fonds africains.",
     alternates: {
-        canonical: '/contact',
+        canonical: `${urlsite}/contact`,
         languages: {
             'fr': '/fr',
-            'en': '/en'
-        }
+        },
     },
     openGraph: {
-        title: "Opcvm Afrique: Guide Complet",
-        description: "Nous contacter pour plus d'information, Découvrez notre sélection d'Opcvm en Afrique pour optimiser votre portefeuille d'investissement.",
-        url: "https://funds.chainsolutions.fr/contact",
+        title: "Contact - Fundafrique",
+        description: "Contactez-nous pour en savoir plus sur les OPCVM en Afrique.",
+        url: `${urlsite}/contact`,
         type: "website",
     },
     twitter: {

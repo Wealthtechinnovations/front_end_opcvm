@@ -15,11 +15,9 @@ import { Dropdown } from "react-bootstrap";
 import Swal from "sweetalert2";
 
 async function login(email: string, password: any) {
-  console.log(password);
-  const data = (
-    await fetch(`${urlconstant}/api/userlogin?email=${email}&password=${password}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/userlogin?email=${email}&password=${password}`);
+  if (!response.ok) throw new Error(`Login failed: ${response.status}`);
+  return response.json();
 }
 async function emailexist(email: string) {
   const response = await fetch(`${urlstableconstant}/api/user/find-user-by-email?email=${email}`, {
@@ -203,7 +201,6 @@ export default function Logins(props: PageProps) {
           // Replace with the actual property name
         }));
         setOptionsSociete(mappedOptions1);
-        console.log(data1);
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
       }
@@ -223,7 +220,6 @@ export default function Logins(props: PageProps) {
           // Replace with the actual property name
         }));
         setOptionsSociete(mappedOptions1);
-        console.log(data1);
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
       }
@@ -558,7 +554,6 @@ export default function Logins(props: PageProps) {
       if (data.message === "Aucun utilisateur trouvé") {
         //  router.push(`/panel/societegestionpanel/login/register?email=${email}&password=${password}`);
 
-        console.log(data);
         setisExist("NON EXIST");
         setError("Pour completer votre inscription merci de selectionner le type d utilisateur pour lequel vous voulez creer un compte")
 
@@ -588,28 +583,19 @@ export default function Logins(props: PageProps) {
           },
           body: JSON.stringify(datas), // Convert the data to JSON and include it in the request body
         });
-        console.log(JSON.stringify(datas));
-
         const data = await response.json();
-        console.log(data);
         if (data.message === "Mot de passe invalide") {
           setError("Mot de passe incorrect")
           // Redirect the user to another page after a delay (e.g., 2 seconds)
 
         } else {
-          console.log('password');
-
-          console.log(password);
-
           const data1 = await login(email, password.toString());
           setResponse(data1);
 
 
           if (data1.code === 200) {
-            console.log(data.token)
             localStorage.setItem('tokenEnCours', data.token);
             localStorage.setItem('isLoggedIn', 'true');
-            console.log(localStorage.getItem('tokenEnCours'));
             if (data1.data.userExists.typeusers_id == 2) {
               localStorage.setItem('userId', data1.data.userExists.denomination);
             } else if (data1.data.userExists.typeusers_id == 1) {
@@ -621,7 +607,6 @@ export default function Logins(props: PageProps) {
 
             try {
               if (magic && magic.auth) {
-                console.log('password');
                 /*  const didToken = await magic.auth.loginWithMagicLink({
                     email,
                     redirectURI: new URL('/callback', window.location.origin).href,
@@ -644,9 +629,8 @@ export default function Logins(props: PageProps) {
               }
             } catch (error) {
               setIsLoggingIn(false)
-              console.error(error);
+              console.error('Magic auth error:', error);
             }
-            console.log(data1)
             /* let href;
              //  router.push(`/panel/societegestionpanel/login/register?email=${email}&password=${password}`);
              if (data.data.userExists.typeusers_id == 2) {
@@ -679,7 +663,6 @@ export default function Logins(props: PageProps) {
 
 
       try {
-        console.log(userType)
         const response = await fetch(`${urlstableconstant}/api/session/register-opcvm`, {
           method: 'POST',
           headers: {
@@ -688,8 +671,6 @@ export default function Logins(props: PageProps) {
           },
           body: JSON.stringify(formData), // Convert the data to JSON and include it in the request body
         });
-        console.log(JSON.stringify(formData));
-
         const data = await response.json();
         if (response.status === 200) {
 
@@ -699,7 +680,6 @@ export default function Logins(props: PageProps) {
           const pays = selectedPays?.value;
           let typeusers = userType;
           const typeusers_id = typeusers === "socGest" ? "2" : typeusers === "part" ? "1" : typeusers === "insti" ? "3" : typeusers === "Data requester" ? "4" : "5";
-          console.log(typeusers_id)
 
           const formDatas = {
             email,
@@ -715,8 +695,6 @@ export default function Logins(props: PageProps) {
 
           // Convert the array to an object with key-value pairs
           const dataObject = Object.fromEntries(dataArray);
-
-          console.log(dataObject);
 
           const data = await fetch(`${urlconstant}/api/postuserportefeuille`, {
             method: 'POST',
@@ -742,16 +720,12 @@ export default function Logins(props: PageProps) {
               },
               body: JSON.stringify(datas), // Convert the data to JSON and include it in the request body
             });
-            console.log(JSON.stringify(datas));
-
             const data5 = await response5.json();
             if (data5.message === "Mot de passe invalide") {
 
             } else {
-              console.log(data5.token)
               localStorage.setItem('tokenEnCours', data5.token);
               localStorage.setItem('isLoggedIn', 'true');
-              console.log(localStorage.getItem('tokenEnCours'));
               const data1 = await login(email, password);
               setResponse(data1);
               if (data1.data.userExists.typeusers_id == 2) {
@@ -763,7 +737,6 @@ export default function Logins(props: PageProps) {
               }
             }
             const responseData = await data.json();
-            console.log(responseData)
 
             const userId = responseData.data.userId;
             setIsLoggingIn(true)
@@ -824,7 +797,6 @@ export default function Logins(props: PageProps) {
       body: JSON.stringify(formDat), // Convert the data to JSON and include it in the request body
 
     });
-    console.log(response);
     if (response.status === 200) {
 
       prevPage();

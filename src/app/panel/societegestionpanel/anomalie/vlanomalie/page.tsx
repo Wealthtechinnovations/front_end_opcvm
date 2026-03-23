@@ -144,8 +144,6 @@ export default function Home(props: PageProps) {
 
         setFundsData(data.data);
 
-        console.log(data.data)
-
         Swal.close(); // Close the loading popup
 
 
@@ -157,9 +155,6 @@ export default function Home(props: PageProps) {
     }
     fetchData();
   }, []);
-  console.log("performanceData")
-
-  console.log(performanceData)
 
   const handleLogout = () => {
     // Remove items from localStorage

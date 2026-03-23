@@ -691,7 +691,7 @@ export default function Fond(props: PageProps) {
         <meta property="og:description" content={id} />
         <meta property="og:image" content={`${urlsite}/images/logo.png`} />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href={`https://funds.chainsolutions.fr/pays/${id}`} />
+        <link rel="canonical" href={`${urlsite}/pays/${id}`} />
         {/* Ajoutez ici d'autres métadonnées spécifiques au SEO */}
         <script
           type="application/ld+json"

@@ -10,9 +10,12 @@ import Select, { SingleValue } from 'react-select';
 //import * as XLSX from 'xlsx';
 import Header from '../../Header';
 import Head from 'next/head';
+import SEO from '@/components/common/SEO';
+import { websiteSchema, breadcrumbSchema } from '@/utils/structuredData';
 import { urlconstant, urlsite } from "@/app/constants";
 import { color } from "highcharts";
 import Swal from "sweetalert2";
+import { generateFundSlug } from "@/lib/utils";
 interface Societe {
   value: any[]; // ou un type spécifique pour les éléments du tableau 'funds'
   label: any[]; // ou un type spécifique pour les éléments du tableau 'funds'
@@ -563,6 +566,17 @@ const getValue = (fund, key) => {
 
 
     < Fragment >
+      <SEO
+        title="Rechercher des OPCVM en Afrique"
+        description="Recherchez et comparez les fonds OPCVM africains par société de gestion, pays et catégorie. VL, performances et classements."
+        keywords="recherche, OPCVM, Afrique, société de gestion, fonds, comparaison"
+        canonicalUrl={`${urlsite}/Opcvm/recherche`}
+        ogImage={`${urlsite}/images/logo.png`}
+        structuredData={[websiteSchema, breadcrumbSchema([
+          { name: 'Accueil', url: `${urlsite}/accueil` },
+          { name: 'Recherche OPCVM', url: `${urlsite}/Opcvm/recherche` },
+        ])]}
+      />
       <Header />
       <Head>
         <title>Rechercher une société de gestion</title>
@@ -572,7 +586,7 @@ const getValue = (fund, key) => {
         <meta property="og:description" content="Rechercher une société de gestion" />
         <meta property="og:image" content={`${urlsite}/images/logo.png`} />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href={`https://funds.chainsolutions.fr/Fundmanager/recherche`} />
+        <link rel="canonical" href={`${urlsite}/Opcvm/recherche`} />
         {/* Ajoutez ici d'autres métadonnées spécifiques au SEO */}     
        
       </Head>
@@ -725,7 +739,7 @@ const getValue = (fund, key) => {
                             <tbody>
                               {funds?.data?.fonds.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item) => (
                                 <tr className="text-center" key={item.id}>
-                                  <td className="text-center"><Link href={`/Opcvm/${item.id}`}>{item?.nom_fond}</Link></td>
+                                  <td className="text-center"><Link href={`/Opcvm/${generateFundSlug(item?.nom_fond || '', item?.code_ISIN || '', item.id)}`}>{item?.nom_fond}</Link></td>
                                   <td>{item.pays}</td>
                                   <td>{item.societe_gestion}</td>
 

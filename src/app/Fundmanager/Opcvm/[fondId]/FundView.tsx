@@ -14,8 +14,9 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import Head from 'next/head';
 import { DropdownButton, Dropdown } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
+import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
+import { generateFundSlug } from "@/lib/utils";
 
 /**
  * Fonction asynchrone pour obtenir les détails d'un fond.
@@ -987,7 +988,7 @@ borderColor:'grey',
                                     onChange={() => handleCheckboxChange(item.id)}
                                   />
                                 </td>
-                                <td className="text-center"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                <td className="text-center"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                 <td>{item.fundData?.categorie_globale}</td>
                                 <td>{item.fundData?.dev_libelle}</td>
                                 <td >{item.fundData?.categorie_national}</td>
@@ -1033,7 +1034,7 @@ borderColor:'grey',
                                     onChange={() => handleCheckboxChange(item.id)}
                                   />
                                 </td>
-                                <td className="text-center"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                <td className="text-center"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                 <td>{item.fundData?.categorie_globale}</td>
                                 <td>{item.fundData?.dev_libelle}</td>
                                 <td className={`text-center ${parseFloat(item.performanceData?.ytd) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.performanceData?.ytd)) ? '-' : parseFloat(item.performanceData?.ytd).toFixed(2) + " %"}</td>
@@ -1080,7 +1081,7 @@ borderColor:'grey',
                                     onChange={() => handleCheckboxChange(item.id)}
                                   />
                                 </td>
-                                <td className="text-center"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                <td className="text-center"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                 <td>{item.fundData?.dev_libelle}</td>
                                 <td className={`text-center ${parseFloat(item.performanceData?.perf1an) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.performanceData?.perf1an)) ? '-' : parseFloat(item.performanceData?.perf1an).toFixed(2) + " %"}</td>
                                 <td className={`text-center ${parseFloat(item.performanceData?.perf3ans) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.performanceData?.perf3ans)) ? '-' : parseFloat(item.performanceData?.perf3ans).toFixed(2) + " %"}</td>
@@ -1125,7 +1126,7 @@ borderColor:'grey',
                                     onChange={() => handleCheckboxChange(item.id)}
                                   />
                                 </td>
-                                <td className="text-center"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                <td className="text-center"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                 <td className={`text-center ${parseFloat(item.performanceData?.perfannu1an) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.performanceData?.perfannu1an)) ? '-' : parseFloat(item.performanceData?.perfannu1an).toFixed(2) + " %"}</td>
                                 <td className={`text-center`}>{isNaN(parseFloat(item.performanceData?.volatility1an)) ? '-' : parseFloat(item.performanceData?.volatility1an).toFixed(2) + " %"} </td>
                                 <td className={`text-center ${parseFloat(item.performanceData?.ratiosharpe1an) < 0 ? 'text-danger' : parseFloat(item.performanceData?.ratiosharpe1an) > 1 ? 'text-success' : ''}`}>{isNaN(parseFloat(item.performanceData?.ratiosharpe1an)) ? '-' : parseFloat(item.performanceData?.ratiosharpe1an).toFixed(2)}</td>
@@ -1174,7 +1175,7 @@ borderColor:'grey',
                                       onChange={() => handleCheckboxChange(item.id)}
                                     />
                                   </td>
-                                  <td className="text-center"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                  <td className="text-center"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                   <td className={`text-center ${parseFloat(item.performanceData?.perfannu3an) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.performanceData?.perfannu3an)) ? '-' : parseFloat(item.performanceData?.perfannu3an).toFixed(2) + " %"}</td>
                                   <td className={`text-center `}>{isNaN(parseFloat(item.performanceData?.volatility3an)) ? '-' : parseFloat(item.performanceData?.volatility3an).toFixed(2) + " %"}</td>
                                   <td className={`text-center ${parseFloat(item.performanceData?.ratiosharpe3an) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.performanceData?.ratiosharpe3an)) ? '-' : parseFloat(item.performanceData?.ratiosharpe3an).toFixed(2)}</td>
@@ -1224,7 +1225,7 @@ borderColor:'grey',
                                         onChange={() => handleCheckboxChange(item.id)}
                                       />
                                     </td>
-                                    <td className="text-center"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                    <td className="text-center"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                     <td className={`text-center ${parseFloat(item.performanceData?.perfannu5an) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.performanceData?.perfannu5an)) ? '-' : parseFloat(item.performanceData?.perfannu5an).toFixed(2) + " %"}</td>
                                     <td className={`text-center`}>{isNaN(parseFloat(item.performanceData?.volatility5an)) ? '-' : parseFloat(item.performanceData?.volatility5an).toFixed(2) + " %"}</td>
                                     <td className={`text-center ${parseFloat(item.performanceData?.ratiosharpe5an) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(item.performanceData?.ratiosharpe5an)) ? '-' : parseFloat(item.performanceData?.ratiosharpe5an).toFixed(2)}</td>
@@ -1273,7 +1274,7 @@ borderColor:'grey',
                                           onChange={() => handleCheckboxChange(item.id)}
                                         />
                                       </td>
-                                      <td className="text-center"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                      <td className="text-center"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                       <td>{item.fundData?.minimum_investissement}</td>
                                       <td>{item.fundData?.frais_gestion !== undefined ? (item.fundData.frais_gestion * 100).toFixed(2) + '%' : ''}</td>
                                       <td>{item.fundData?.frais_souscription !== undefined ? (item.fundData.frais_souscription * 100).toFixed(2) + '%' : ''}</td>
@@ -1317,7 +1318,7 @@ borderColor:'grey',
                                             onChange={() => handleCheckboxChange(item.id)}
                                           />
                                         </td>
-                                        <td className="text-center"><Link href={`/Opcvm/${item.fundData?.id}`}>{item.fundData?.nom_fond}</Link></td>
+                                        <td className="text-center"><Link href={`/Opcvm/${generateFundSlug(item.fundData?.nom_fond || "", item.fundData?.code_ISIN || "", item.fundData?.id)}`}>{item.fundData?.nom_fond}</Link></td>
                                         <td className="text-center">{item.fundData?.societe_gestion}</td>
                                         <td className="text-center">{item.fundData?.structure_fond}</td>
                                         <td className="text-center">{item.fundData?.categorie_national}</td>

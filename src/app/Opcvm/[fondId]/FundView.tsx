@@ -9,11 +9,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faSquare } from '@fortawesome/free-solid-svg-icons';
 import Header from '../../Header'
 import { urlconstant, urlsite } from "@/app/constants";
+import { extractIdFromSlug } from "@/lib/utils";
 import ExportModal from './exportmodal';
 import { Modal, Button } from 'react-bootstrap';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import Head from 'next/head';
+import SEO from '@/components/common/SEO';
+import { fundSchema, breadcrumbSchema } from '@/utils/structuredData';
 import { DropdownButton, Dropdown } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import Swal from 'sweetalert2';
@@ -320,7 +323,7 @@ interface Option1 {
 
 interface PageProps {
     params: {
-        fondId: number;
+        fondId: string;
     };
 }
 interface MyDataType {
@@ -342,7 +345,7 @@ interface MyDataType {
 export default function Fond(props: PageProps) {
     const router = useRouter();
 
-    const id = props.params.fondId;
+    const id = extractIdFromSlug(props.params.fondId) || props.params.fondId;
     const randomPercentage: string = ((Math.random() * 200) - 100).toFixed(2);
 
     const randomPercentage1 = ((Math.random() * 200) - 100).toFixed(2);
@@ -1140,6 +1143,28 @@ export default function Fond(props: PageProps) {
     return (
 
         <Fragment>
+            <SEO
+                title={`${post?.data?.libelle_fond} ${post?.data?.symboledevise} ${post?.data?.code_ISIN} ${post?.data?.pays} - Synthèse OPCVM Afrique`}
+                description={`Analyse du fond ${post?.data?.libelle_fond} - Performance, VL, classement. Géré par ${post?.data?.societe_gestion}.`}
+                keywords={`${post?.data?.libelle_fond}, OPCVM, ${post?.data?.pays}, ${post?.data?.symboledevise}, investissement`}
+                canonicalUrl={`${urlsite}/Opcvm/${props.params.fondId}`}
+                ogImage={`${urlsite}/images/logo.png`}
+                structuredData={[
+                    fundSchema({
+                        nom_fond: post?.data?.libelle_fond,
+                        categorie: post?.data?.categorie_globale,
+                        societe_gestion: post?.data?.societe_gestion,
+                        devise: post?.data?.symboledevise,
+                        code_ISIN: post?.data?.code_ISIN,
+                        pays: post?.data?.pays,
+                    }),
+                    breadcrumbSchema([
+                        { name: 'Accueil', url: `${urlsite}/accueil` },
+                        { name: 'Recherche OPCVM', url: `${urlsite}/Opcvm/recherche` },
+                        { name: post?.data?.libelle_fond || 'Fond', url: `${urlsite}/Opcvm/${props.params.fondId}` },
+                    ]),
+                ]}
+            />
             <Header />
             <Head>
                 <title>{post?.data?.libelle_fond}  {post?.data?.symboledevise}  {post?.data?.code_ISIN}  {post?.data?.pays} - synthèse OPCVM Afrique - Fundafrique</title>
@@ -1151,7 +1176,7 @@ export default function Fond(props: PageProps) {
                 <meta property="og:url" content={canonicalUrl} />
                 <meta property="og:image" content={`${urlsite}/images/logo.png`} />
                 <meta property="og:type" content="website" />
-                <link rel="canonical" href={`https://funds.chainsolutions.fr/Opcvm/${id}`} />
+                <link rel="canonical" href={`${urlsite}/Opcvm/${props.params.fondId}`} />
 
                 <script
                     type="application/ld+json"
