@@ -1,22 +1,57 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const loginPaths: Record<string, string> = {
-  '/panel/admin': '/panel/admin/login',
-  '/panel/portefeuille': '/panel/portefeuille/login',
-  '/panel/societegestionpanel': '/panel/societegestionpanel/login',
+interface PanelConfig {
+  loginPath: string;
+  allowedTypes: number[];
+}
+
+const panelConfig: Record<string, PanelConfig> = {
+  '/panel/admin': {
+    loginPath: '/panel/admin/login',
+    allowedTypes: [0],
+  },
+  '/panel/portefeuille': {
+    loginPath: '/panel/portefeuille/login',
+    allowedTypes: [1, 3],
+  },
+  '/panel/societegestionpanel': {
+    loginPath: '/panel/societegestionpanel/login',
+    allowedTypes: [2, 5],
+  },
 };
+
+function decodeJwtPayload(token: string): Record<string, any> | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1]));
+    return payload;
+  } catch {
+    return null;
+  }
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  for (const [prefix, loginPath] of Object.entries(loginPaths)) {
-    if (pathname.startsWith(prefix) && !pathname.startsWith(loginPath)) {
-      const hasToken = request.cookies.get('tokenEnCours')?.value;
+  for (const [prefix, config] of Object.entries(panelConfig)) {
+    if (pathname.startsWith(prefix) && !pathname.startsWith(config.loginPath)) {
+      const token = request.cookies.get('tokenEnCours')?.value;
       const isLoggedIn = request.cookies.get('isLoggedIn')?.value;
-      if (!hasToken && !isLoggedIn) {
-        const loginUrl = new URL(loginPath, request.url);
-        return NextResponse.redirect(loginUrl);
+
+      if (!token && !isLoggedIn) {
+        return NextResponse.redirect(new URL(config.loginPath, request.url));
+      }
+
+      if (token) {
+        const payload = decodeJwtPayload(token);
+        if (payload && payload.typeusers_id != null) {
+          const userType = Number(payload.typeusers_id);
+          if (!config.allowedTypes.includes(userType)) {
+            return NextResponse.redirect(new URL(config.loginPath, request.url));
+          }
+        }
       }
     }
   }

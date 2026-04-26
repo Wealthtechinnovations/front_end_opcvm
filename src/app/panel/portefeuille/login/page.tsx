@@ -89,6 +89,11 @@ export default function Login() {
         }
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('userId', data.data.userExists.id);
+        if (data.token || data.data?.token) {
+          const token = data.token || data.data.token;
+          localStorage.setItem('tokenEnCours', token);
+          document.cookie = `tokenEnCours=${token}; path=/; max-age=86400; SameSite=Lax`;
+        }
         document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
 
         router.push(href);
