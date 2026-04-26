@@ -53,6 +53,8 @@ export default function Ajoutportefeuille(props: PageProps) {
 
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSearch = (e: any) => {
     e.preventDefault();
@@ -105,43 +107,55 @@ export default function Ajoutportefeuille(props: PageProps) {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    setSubmitError(null);
+    setIsSubmitting(true);
 
     try {
       if (classeActifs != null) {
         formData.classeActifs = classeActifs;
-
       }
       formData.userid = id;
 
+      const token =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('tokenEnCours')
+          : null;
 
-
-      // Envoyer les données du formulaire à l'API
       const response = await fetch(`${urlconstant}/api/postportefeuille`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json', // Spécifiez le type de contenu que vous envoyez
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify(formData), // Convertissez votre objet formData en JSON
+        body: JSON.stringify(formData),
       });
-      // Gérer la réponse de l'API
 
       if (response.status === 200) {
-
-
-
         setIsModalOpen(true);
-
-        // Redirect the user to another page after a delay (e.g., 2 seconds)
         setTimeout(() => {
-          const href = `/panel/portefeuille/home?id=${id}`;
-
-          router.push(href);
+          router.push(`/panel/portefeuille/home?id=${id}`);
         }, 2000);
+        return;
       }
 
-    } catch (error) {
-      // Gérer les erreurs de l'API (par exemple, afficher une erreur)
+      let serverMessage = '';
+      try {
+        const data = await response.json();
+        serverMessage = data?.error || data?.message || '';
+      } catch {
+        // ignore parse errors
+      }
+      setSubmitError(
+        serverMessage ||
+          `Erreur lors de la création du portefeuille (code ${response.status}).`
+      );
+    } catch (error: any) {
       console.error('Erreur lors de la soumission du formulaire :', error);
+      setSubmitError(
+        'Impossible de joindre le serveur. Veuillez réessayer.'
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -349,13 +363,35 @@ export default function Ajoutportefeuille(props: PageProps) {
 
                             }} />
                           </div> */}                       <br />
-                          <button style={{
-                            textDecoration: 'none', // Remove underline
-                            backgroundColor: '#6366f1', // Background color
-                            color: 'white', // Text color
-                            padding: '10px 20px', // Padding
-                            borderRadius: '5px', // Rounded corners
-                          }} >Enregistrer</button>
+                          {submitError && (
+                            <div
+                              role="alert"
+                              style={{
+                                color: '#b91c1c',
+                                backgroundColor: '#fee2e2',
+                                border: '1px solid #fecaca',
+                                padding: '10px',
+                                borderRadius: '5px',
+                                marginBottom: '10px',
+                              }}
+                            >
+                              {submitError}
+                            </div>
+                          )}
+                          <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            style={{
+                              textDecoration: 'none',
+                              backgroundColor: isSubmitting ? '#9ca3af' : '#6366f1',
+                              color: 'white',
+                              padding: '10px 20px',
+                              borderRadius: '5px',
+                              cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                            }}
+                          >
+                            {isSubmitting ? 'Enregistrement…' : 'Enregistrer'}
+                          </button>
                         </div>
                       </div>
                     </div>
