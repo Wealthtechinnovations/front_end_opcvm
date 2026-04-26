@@ -596,6 +596,8 @@ export default function Logins(props: PageProps) {
           if (data1.code === 200) {
             localStorage.setItem('tokenEnCours', data.token);
             localStorage.setItem('isLoggedIn', 'true');
+            document.cookie = `tokenEnCours=${data.token}; path=/; max-age=86400; SameSite=Lax`;
+            document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
             if (data1.data.userExists.typeusers_id == 2) {
               localStorage.setItem('userId', data1.data.userExists.denomination);
             } else if (data1.data.userExists.typeusers_id == 1) {
@@ -726,6 +728,8 @@ export default function Logins(props: PageProps) {
             } else {
               localStorage.setItem('tokenEnCours', data5.token);
               localStorage.setItem('isLoggedIn', 'true');
+              document.cookie = `tokenEnCours=${data5.token}; path=/; max-age=86400; SameSite=Lax`;
+              document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
               const data1 = await login(email, password);
               setResponse(data1);
               if (data1.data.userExists.typeusers_id == 2) {

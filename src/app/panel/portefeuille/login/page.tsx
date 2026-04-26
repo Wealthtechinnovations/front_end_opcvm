@@ -89,6 +89,7 @@ export default function Login() {
         }
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('userId', data.data.userExists.id);
+        document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
 
         router.push(href);
 
