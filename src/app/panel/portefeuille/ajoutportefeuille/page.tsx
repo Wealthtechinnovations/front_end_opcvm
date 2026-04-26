@@ -57,6 +57,8 @@ export default function Ajoutportefeuille(props: PageProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [fundsOptions, setFundsOptions] = useState<{ value: string; label: string }[]>([]);
+  const [selectedOptions, setSelectedOptions] = useState<{ value: string; label: string }[]>([]);
 
   const handleSearch = (e: any) => {
     e.preventDefault();
@@ -160,6 +162,32 @@ export default function Ajoutportefeuille(props: PageProps) {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('tokenEnCours')
+        : null;
+    fetch(`${urlconstant}/api/recherchefonds`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({}),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const fonds = data?.data || data || [];
+        setFundsOptions(
+          fonds.map((f: any) => ({
+            value: String(f.id),
+            label: `${f.nom_fond || f.nom || ''} - ${f.isin || ''}`.trim(),
+          }))
+        );
+      })
+      .catch(() => {});
+  }, []);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -347,24 +375,27 @@ export default function Ajoutportefeuille(props: PageProps) {
 
                           )}
 
-                          {/*  <div>
-                          <label htmlFor="select">Fonds (Nom/ISIN) :</label>
-                          <Select className="select-component"
-                            id="select"
-                            options={fundsOptions}
-                            isMulti
-                            isSearchable
-                            value={selectedOptions}
-                            onChange={(newValue, actionMeta) => {
-                              setSelectedOptions(newValue.map(option => option as Option));
-
-                              // Mise à jour de la propriété "Description" de formData
-                              const selectedDescription1 = newValue.map(option => option.value).join(', '); // Assurez-vous que la structure de l'option correspond à votre modèle
-                              const selectedDescription = newValue.map(option => option.label).join(', '); // Assurez-vous que la structure de l'option correspond à votre modèle
-                              setFormData({ ...formData, funds: selectedDescription, fundids: selectedDescription1 });
-
-                            }} />
-                          </div> */}                       <br />
+                          <div className="col-md-6 mx-auto text-left">
+                            <label htmlFor="select">Fonds (Nom/ISIN) :</label>
+                            <Select
+                              className="select-component"
+                              id="select"
+                              options={fundsOptions}
+                              isMulti
+                              isSearchable
+                              value={selectedOptions}
+                              onChange={(newValue) => {
+                                const selected = [...newValue];
+                                setSelectedOptions(selected);
+                                setFormData({
+                                  ...formData,
+                                  funds: selected.map((o) => o.label).join(', '),
+                                  fundids: selected.map((o) => o.value).join(', '),
+                                });
+                              }}
+                            />
+                          </div>
+                          <br />
                           {submitError && (
                             <div
                               role="alert"
