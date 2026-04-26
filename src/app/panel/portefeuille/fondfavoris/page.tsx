@@ -10,6 +10,7 @@ import Highcharts from 'highcharts';
 //import { router } from 'next/router';
 import Header from '@/app/Header';
 import { useRouter } from 'next/navigation';
+import { useUserId } from '@/hooks/useUserId';
 import Sidebar from "@/app/sidebarportefeuille";
 import Headermenu from "@/app/Headermenu";
 
@@ -137,7 +138,8 @@ interface Fund {
 }
 export default function Fondselected(props: PageProps) {
   const router = useRouter();
-  let id = props.searchParams.id;
+  const storedUserId = useUserId();
+  const id = storedUserId || props.searchParams.id;
 
   let selectedfunds = props?.searchParams?.selectedfund;
   let selectedportfeuille = props?.searchParams?.portefeuille;

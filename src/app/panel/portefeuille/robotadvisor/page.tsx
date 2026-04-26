@@ -11,6 +11,7 @@ import Highcharts from 'highcharts';
 import Headermenu from '../../../Headermenu';
 import Header from "@/app/Header";
 import { useRouter } from 'next/navigation';
+import { useUserId } from '@/hooks/useUserId';
 import { Dropdown } from "react-bootstrap";
 
 interface Funds {
@@ -36,7 +37,8 @@ interface PageProps {
 export default function RobotAdvisor(props: PageProps) {
 
   const router = useRouter();
-  let id = props.searchParams.id;
+  const storedUserId = useUserId();
+  const id = storedUserId || props.searchParams.id;
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
 
 

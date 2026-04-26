@@ -11,6 +11,7 @@ import Highcharts from 'highcharts';
 //import { router } from 'next/router';
 import Header from '@/app/Header';
 import { useRouter } from 'next/navigation';
+import { useUserId } from '@/hooks/useUserId';
 import Swal from 'sweetalert2';
 import { Button } from "react-bootstrap";
 import Headermenu from "@/app/Headermenu";
@@ -241,7 +242,8 @@ export default function PorteFeuile(props: PageProps) {
   let selectedfunds = props?.searchParams?.selectedfund;
   let selectedportfeuille = props?.searchParams?.portefeuille;
   let selectedValuename = props?.searchParams?.selectedValuename;
-  let id = props.searchParams.id;
+  const storedUserId = useUserId();
+  const id = storedUserId || props.searchParams.id;
 
 
   const formatDate = (date: Date): string => {

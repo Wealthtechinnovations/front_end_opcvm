@@ -14,6 +14,7 @@ import Highcharts from 'highcharts';
 import Header from '@/app/Header';
 import Router from 'next/router';
 import { magic } from "../../../../../magic";
+import { useUserId } from '@/hooks/useUserId';
 import Sidebar from "@/app/sidebarportefeuille";
 import Headermenu from "@/app/Headermenu";
 
@@ -74,7 +75,8 @@ interface QuizMifidOfUser {
   // Autres propriétés...
 }
 export default function Profile(props: PageProps) {
-  let id = props.searchParams.id;
+  const storedUserId = useUserId();
+  const id = storedUserId || props.searchParams.id;
 
   let response: globalThis.Response;
   const handleSearch = (e: any) => {

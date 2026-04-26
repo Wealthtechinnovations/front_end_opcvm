@@ -10,6 +10,7 @@ import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 import Header from "@/app/Header";
 import { useRouter } from 'next/navigation';
+import { useUserId } from '@/hooks/useUserId';
 import { Dropdown } from "react-bootstrap";
 import { magic } from "../../../../../magic";
 import Sidebar from "@/app/sidebarportefeuille";
@@ -34,7 +35,8 @@ interface PageProps {
 export default function Home(props: PageProps) {
 
   const router = useRouter();
-  let id = props.searchParams.id;
+  const storedUserId = useUserId();
+  const id = storedUserId || props.searchParams.id;
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [activeTab, setActiveTab] = useState("tabAccueil");
   const [startDate, setStartDate] = useState(null);
@@ -177,23 +179,17 @@ export default function Home(props: PageProps) {
     fetchData();
   }, []);
   useEffect(() => {
-    // Appel à l'API lors du premier rendu du composant
+    if (!id) return;
     async function fetchData() {
       try {
-
         const data = await getPortefeuille(id);
-
         setPortefeuille(data);
-
-
-
-
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
       }
     }
     fetchData();
-  }, []);
+  }, [id]);
 
   const handleLogout = async () => {
     localStorage.removeItem('isLoggedIn');

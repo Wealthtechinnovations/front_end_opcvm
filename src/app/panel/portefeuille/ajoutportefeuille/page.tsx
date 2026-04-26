@@ -14,6 +14,7 @@ import Highcharts from 'highcharts';
 import Header from '@/app/Header';
 import { magic } from "../../../../../magic";
 import { useRouter } from 'next/navigation';
+import { useUserId } from '@/hooks/useUserId';
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebarportefeuille";
 
@@ -49,7 +50,8 @@ interface Option {
 }
 export default function Ajoutportefeuille(props: PageProps) {
   const router = useRouter();
-  let id = props.searchParams.id;
+  const storedUserId = useUserId();
+  const id = storedUserId || props.searchParams.id;
 
 
   const [isModalOpen, setIsModalOpen] = useState(false);
