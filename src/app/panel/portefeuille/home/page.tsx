@@ -11,6 +11,7 @@ import Highcharts from 'highcharts';
 import Header from "@/app/Header";
 import { useRouter } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';
+import usePortfolioStore from '@/stores/usePortfolioStore';
 import { Dropdown } from "react-bootstrap";
 import { magic } from "../../../../../magic";
 import Sidebar from "@/app/sidebarportefeuille";
@@ -37,6 +38,7 @@ export default function Home(props: PageProps) {
   const router = useRouter();
   const storedUserId = useUserId();
   const id = storedUserId || props.searchParams.id;
+  const { portfolios, fetchPortfolios, deletePortfolio } = usePortfolioStore();
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [activeTab, setActiveTab] = useState("tabAccueil");
   const [startDate, setStartDate] = useState(null);
@@ -180,16 +182,8 @@ export default function Home(props: PageProps) {
   }, []);
   useEffect(() => {
     if (!id) return;
-    async function fetchData() {
-      try {
-        const data = await getPortefeuille(id);
-        setPortefeuille(data);
-      } catch (error) {
-        console.error("Erreur lors de l'appel à l'API :", error);
-      }
-    }
-    fetchData();
-  }, [id]);
+    fetchPortfolios(id);
+  }, [id, fetchPortfolios]);
 
   const handleLogout = async () => {
     localStorage.removeItem('isLoggedIn');
@@ -277,7 +271,7 @@ export default function Home(props: PageProps) {
                         </tr>
                       </thead>
                       <tbody>
-                        {portefeuille?.data?.portefeuille.map((item: any) => (
+                        {portfolios.map((item: any) => (
                           <tr className="" key={item.id}>
                             <td className="text-center">{item?.nom_portefeuille}</td>
                             <td className="text-center">{item?.portefeuilletype == 'Robot advisor' ? item?.horizon : item?.categorie}</td>
