@@ -15,6 +15,7 @@ import Router from 'next/router';
 import { magic } from "../../../../../magic";
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebaradmin";
+import PageHeader from "@/components/common/PageHeader";
 
 const options = [
   { value: 1, label: 'Option 1' },
@@ -144,6 +145,13 @@ export default function Profile(props: PageProps) {
       <div className="content-wrapper2">
         {/* Main content */}
         <section className="content">
+          <PageHeader
+            title="Tableau de bord Admin"
+            breadcrumbs={[
+              { label: 'Admin', link: `/panel/admin/home?id=${id}` },
+              { label: 'Accueil' },
+            ]}
+          />
 
         <div className="col-xl-12 col-lg-12 mb-4">
                     <div className="card text-center shadow-lg border-0 rounded-lg overflow-hidden">

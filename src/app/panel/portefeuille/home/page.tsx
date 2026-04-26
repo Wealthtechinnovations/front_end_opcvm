@@ -16,6 +16,8 @@ import { Dropdown } from "react-bootstrap";
 import { magic } from "../../../../../magic";
 import Sidebar from "@/app/sidebarportefeuille";
 import Headermenu from "@/app/Headermenu";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
+import PageHeader from "@/components/common/PageHeader";
 
 interface Funds {
   data: {
@@ -38,7 +40,7 @@ export default function Home(props: PageProps) {
   const router = useRouter();
   const storedUserId = useUserId();
   const id = storedUserId || props.searchParams.id;
-  const { portfolios, fetchPortfolios, deletePortfolio } = usePortfolioStore();
+  const { portfolios, fetchPortfolios, deletePortfolio, loading } = usePortfolioStore();
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [activeTab, setActiveTab] = useState("tabAccueil");
   const [startDate, setStartDate] = useState(null);
@@ -240,23 +242,25 @@ export default function Home(props: PageProps) {
 
                       </div>
                     </div>
-                    <div>
-                      <p><span className="text-primary">Liste de mes  portefeuilles</span> | <span className="text-fade"></span></p>
+                    <PageHeader
+                      title="Mes portefeuilles"
+                      breadcrumbs={[
+                        { label: 'Accueil', link: `/panel/portefeuille/home?id=${id}` },
+                        { label: 'Portefeuilles' },
+                      ]}
+                      actions={
+                        <Link
+                          className="btn btn-primary"
+                          href={`/panel/portefeuille/ajoutportefeuille?id=${id}`}
+                        >
+                          Créer un portefeuille
+                        </Link>
+                      }
+                    />
 
-                    </div>
-
-                  </div>
-                  <hr />
-                  <div className="text-right">
-                    <Link
-                      className={`btn btn-main active}`}
-                      style={{ backgroundColor: "#3b82f6", color: "white" }}
-                      href={`/panel/portefeuille/ajoutportefeuille?id=${id}`}
-                    >
-                      Creer un portefeuille
-                    </Link>
                   </div>
                   <br />
+                  {loading && <LoadingSpinner message="Chargement des portefeuilles..." />}
                   <div className="table-responsive">
 
 
