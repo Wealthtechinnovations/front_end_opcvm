@@ -3,13 +3,7 @@ import { urlconstant } from "@/app/constants";
 
 import Link from "next/link";
 import { ChangeEvent, Fragment, useEffect, useState } from "react";
-
-
 import Select, { SingleValue } from 'react-select';
-//import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Headermenu from '../../../Headermenu';
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
@@ -68,11 +62,6 @@ async function getdevise(selectedPays: any) {
     ).json();
     return data;
 }
-interface PageProps {
-    searchParams: {
-        id: any
-    };
-}
 async function getFonds(id: string) {
     const data = (
 
@@ -85,7 +74,7 @@ async function getFonds(id: string) {
 
 type OptionType = { value: string; label: string };
 
-export default function Reporting(props: PageProps) {
+export default function Reporting() {
 
     const router = useRouter();
     const [selectedFund, setSelectedFund] = useState(null);
@@ -94,14 +83,17 @@ export default function Reporting(props: PageProps) {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-
-
     const [optionsPays, setOptionsPays] = useState([]);
     const [regulateurOptions, setRegulateurOptions] = useState([]);
     let response: globalThis.Response;
 
-    const societeconneted = props.searchParams.id;
+    const [societeconneted, setSocieteconneted] = useState<string>('');
     useEffect(() => {
+        const stored = localStorage.getItem('userId');
+        if (stored) setSocieteconneted(stored);
+    }, []);
+    useEffect(() => {
+        if (!societeconneted) return;
         async function fetchData() {
             try {
                 const data1 = await getFonds(societeconneted);
@@ -111,13 +103,13 @@ export default function Reporting(props: PageProps) {
                     label: funds.test
                 }));
 
-                setFundsOptions(mappedOptions); // Mettre à jour l'état avec les données récupérées
+                setFundsOptions(mappedOptions);
             } catch (error) {
                 console.error("Erreur lors de la récupération des données :", error);
             }
         }
-        fetchData(); // Appel à fetchData() lors du premier rendu
-    }, []);
+        fetchData();
+    }, [societeconneted]);
 
     const handleChange = (e: { target: { name: any; value: any; }; }) => {
         const { name, value } = e.target;

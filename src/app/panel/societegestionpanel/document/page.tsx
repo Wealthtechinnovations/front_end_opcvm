@@ -8,12 +8,7 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { faFileDownload, faPhoneAlt, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
 //import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
 //import { router } from 'next/router';
-import Header from '@/app/Header';
-import Router from 'next/router';
-import { magic } from "../../../../../magic";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebar";
@@ -57,12 +52,6 @@ interface Option {
   value: string;
 }
 
-interface PageProps {
-  searchParams: {
-    selectedRows: any;
-    id: any;
-  };
-}
 interface Document {
   nom: ReactNode;
   id: Key | null | undefined;
@@ -93,8 +82,12 @@ const documentsall = [
 type Documents = Document[];
 
 
-export default function Profile(props: PageProps) {
-  let societeconneted = props.searchParams.id;
+export default function Profile() {
+  const [societeconneted, setSocieteconneted] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
   const [activeIndex, setActiveIndex] = useState(0); // Initialisation avec 0
   const [filteredDocument, setFilteredDocument] = useState<Document[] | null>(null);
 
@@ -125,6 +118,7 @@ export default function Profile(props: PageProps) {
 
 
   useEffect(() => {
+    if (!societeconneted) return;
     async function fetchData() {
       try {
 
@@ -136,7 +130,7 @@ export default function Profile(props: PageProps) {
       }
     }
     fetchData();
-  }, []);
+  }, [societeconneted]);
   useEffect(() => {
     const fetchDocuments = async () => {
       try {
@@ -243,7 +237,7 @@ export default function Profile(props: PageProps) {
                   </div>
                   <div className="box-controls pull-right">
                     <div className="box-header-actions" style={{ marginTop: '-30px' }}>
-                      <Link href={`/panel/societegestionpanel/document/ajout?id=${societeconneted}`} style={{
+                      <Link href={`/panel/societegestionpanel/document/ajout`} style={{
                         textDecoration: 'none',
                         backgroundColor: '#6366f1',
                         color: 'white',

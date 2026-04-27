@@ -4,15 +4,6 @@ import { urlconstant } from "@/app/constants";
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import Select from 'react-select';
-
-
-//import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
-//import { router } from 'next/router';
-import Header from '@/app/Header';
-import Router from 'next/router';
-import { magic } from "../../../../../magic";
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebar";
 
@@ -46,14 +37,12 @@ interface Option {
   value: string;
 }
 
-interface PageProps {
-  searchParams: {
-    selectedRows: any;
-    id: any;
-  };
-}
-export default function Profile(props: PageProps) {
-  let societeconneted = props.searchParams.id;
+export default function Profile() {
+  const [societeconneted, setSocieteconneted] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
 
   const [managementCompany, setManagementCompany] = useState<FormData>({
     name: '',

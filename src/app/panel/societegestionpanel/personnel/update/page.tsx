@@ -11,7 +11,7 @@ import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 //import { router } from 'next/router';
 import Header from "@/app/Header";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebar";
 import Swal from "sweetalert2";
@@ -37,12 +37,6 @@ interface Devise {
 }
 
 
-interface PageProps {
-  searchParams: {
-    personid: any,
-    societeconneted: any
-  };
-}
 interface FormData {
   page: number;
   id: number;
@@ -87,7 +81,8 @@ async function getpersonnelbyid(id: number) {
   ).json();
   return data;
 }
-export default function Ajoutvl(props: PageProps) {
+export default function Ajoutvl() {
+  const searchParams = useSearchParams();
 
   const fonctions = [
     "Commercial",
@@ -118,8 +113,12 @@ export default function Ajoutvl(props: PageProps) {
     "Direction générale",
     "Administration générale"
   ];
-  const societeconneted = props.searchParams.societeconneted;
-  const id = props.searchParams.personid;
+  const [societeconneted, setSocieteconneted] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
+  const id = searchParams.get('personid');
   const router = useRouter();
   const [selectedFund, setSelectedFund] = useState(null);
   const [fundsOptions, setFundsOptions] = useState([]);
@@ -218,7 +217,7 @@ export default function Ajoutvl(props: PageProps) {
           timer: 5000,
         });
         setTimeout(() => {
-          const href = `/panel/societegestionpanel/personnel?id=${societeconneted}`;
+          const href = `/panel/societegestionpanel/personnel`;
           router.push(href);
         }, 2000);
       } else {

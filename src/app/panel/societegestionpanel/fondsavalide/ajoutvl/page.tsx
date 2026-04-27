@@ -65,12 +65,7 @@ async function getdevise(selectedPays: any) {
   ).json();
   return data;
 }
-interface PageProps {
-  searchParams: {
-    id: any
-  };
-}
-export default function Ajoutvl(props: PageProps) {
+export default function Ajoutvl() {
 
   const [formData, setFormData] = useState({
     page: 1,
@@ -200,7 +195,11 @@ export default function Ajoutvl(props: PageProps) {
     e.preventDefault();
     // Effectuez votre recherche ici si nécessaire
   };
-  const societeconneted = props.searchParams.id;
+  const [societeconneted, setSocieteconneted] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
 
 
   const handleFundSelect = (selectedOption: any) => {
@@ -321,7 +320,7 @@ export default function Ajoutvl(props: PageProps) {
         });
         // Redirect the user to another page after a delay (e.g., 2 seconds)
         setTimeout(() => {
-          const href = `/panel/societegestionpanel/fondsavalide?id=${societeconneted}`;
+          const href = `/panel/societegestionpanel/fondsavalide`;
 
           router.push(href);
         }, 2000);

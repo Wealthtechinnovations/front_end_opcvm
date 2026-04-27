@@ -9,7 +9,7 @@ import Select from 'react-select';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 import Header from "@/app/Header";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebar";
@@ -90,12 +90,6 @@ async function getFonds(id: number) {
   return data;
 }
 
-interface PageProps {
-  searchParams: {
-    Id: number;
-    societeconneted: any
-  };
-}
 const buttonStyle = {
   backgroundColor: "#3b82f6",
   color: "white",
@@ -116,9 +110,14 @@ type ValuationRow1 = {
   nom: string;
 
 };
-export default function Fonds(props: PageProps) {
-  const id = props.searchParams.Id;
-  const societeconneted = props.searchParams.societeconneted;
+export default function Fonds() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get('Id');
+  const [societeconneted, setSocieteconneted] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
 
   const router = useRouter();
   const [file, setFile] = useState(null);

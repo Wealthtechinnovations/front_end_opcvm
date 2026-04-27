@@ -1,31 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { ChangeEvent, Fragment, useState } from "react";
+import { ChangeEvent, Fragment, useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import Sidebar from "@/app/sidebar";
 import Headermenu from "@/app/Headermenu";
 import { urlconstant } from "@/app/constants";
 import { Button } from "react-bootstrap";
 
-interface PageProps {
-  searchParams: {
-    id: any;
-    societeconneted: any;
-  };
-}
-
 const buttonStyle = {
   backgroundColor: "#3b82f6",
   color: "white",
-  padding: "10px 20px", // Adjust padding to control the button size
-  borderRadius: "5px", // Add rounded corners for a consistent look
-  cursor: "pointer", // Add a pointer cursor on hover for better user experience
-  width: "100%", // Set button width to 100%
+  padding: "10px 20px",
+  borderRadius: "5px",
+  cursor: "pointer",
+  width: "100%",
 };
 
-export default function Importvl(props: PageProps) {
-  const societeconneted = props.searchParams.id;
+export default function Importvl() {
+  const [societeconneted, setSocieteconneted] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
 
   const [file, setFile] = useState<File | null>(null); // État du fichier sélectionné
   const [message, setMessage] = useState(""); // État du message d'erreur ou de succès

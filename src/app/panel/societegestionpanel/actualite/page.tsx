@@ -26,15 +26,12 @@ async function getactualite() {
   return data;
 }
 
-interface PageProps {
-  searchParams: {
-    selectedRows: any;
-    id: any;
-  };
-}
-
-export default function Pagehome(props: PageProps) {
-  let societeconneted = props.searchParams.id;
+export default function Pagehome() {
+  const [societeconneted, setSocieteconneted] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
   const [actualites, setActualites] = useState<Actualite[]>([]);
   const [description, setDescription] = useState('');
   const [type, setType] = useState('');

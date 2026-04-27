@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from 'next/navigation';
-import router from "next/router";
-import { magic } from "../../magic";
 import Swal from "sweetalert2";
 
 export default function Sidebar({ societeconneted }: { societeconneted: string }) {
@@ -80,20 +78,13 @@ const router=useRouter();
    
   }, []);
   
-  const handleLogout = async () => {
-    // Remove items from localStorage
+  const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
-    if (magic && magic.auth) {
-      await magic.user.logout();
-      // Si vous avez stocké le jeton quelque part (comme dans le localStorage), vous pouvez l'effacer ici.
-    // localStorage.removeItem('didToken');
-}
-    
-    setTimeout(() => {
-      
-      router.push('/accueil'); // Replace '/other-page' with your desired page URL
-    }, 200);
+    localStorage.removeItem('tokenEnCours');
+    document.cookie = 'tokenEnCours=; path=/; max-age=0';
+    document.cookie = 'isLoggedIn=; path=/; max-age=0';
+    router.push('/accueil');
   };
 
    // State pour gérer l'affichage de la sidebar
@@ -128,7 +119,7 @@ const router=useRouter();
         <ul className="space-y-4">
           {/* Tableau de bord */}
           <li>
-            <Link href={`/panel/societegestionpanel/pagehome?id=${societeconneted}`}>
+            <Link href={`/panel/societegestionpanel/pagehome`}>
               <button
                 className={`block w-full py-3 px-4 ${
                   pathname.includes('/societegestionpanel/pagehome') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -154,7 +145,7 @@ const router=useRouter();
             {isSidebarOpen && (
               <ul className="pl-4 mt-2 space-y-2 text-sm">
                 <li>
-                  <Link href={`/panel/societegestionpanel/fondsvalide?id=${societeconneted}`}>
+                  <Link href={`/panel/societegestionpanel/fondsvalide`}>
                     <button
                       className={`block w-full py-2 px-2 ${
                         pathname.includes('/societegestionpanel/fondsvalide') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -165,7 +156,7 @@ const router=useRouter();
                   </Link>
                 </li>
                 <li>
-                  <Link href={`/panel/societegestionpanel/fondsavalide?id=${societeconneted}`}>
+                  <Link href={`/panel/societegestionpanel/fondsavalide`}>
                     <button
                       className={`block w-full py-2 px-2 ${
                         pathname.includes('/societegestionpanel/fondsavalide') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -176,7 +167,7 @@ const router=useRouter();
                   </Link>
                 </li>
                 <li>
-                  <Link href={`/panel/societegestionpanel/fondsavalide/ajoutvl?id=${societeconneted}`}>
+                  <Link href={`/panel/societegestionpanel/fondsavalide/ajoutvl`}>
                     <button
                       className={`block w-full py-2 px-2 ${
                         pathname.includes('/societegestionpanel/fondsavalide/ajoutvl') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -192,7 +183,7 @@ const router=useRouter();
 
           {/* Importation globale */}
           <li>
-            <Link href={`/panel/societegestionpanel/importfondvl?id=${societeconneted}`}>
+            <Link href={`/panel/societegestionpanel/importfondvl`}>
               <button
                 className={`block w-full py-3 px-4 ${
                   pathname.includes('/societegestionpanel/importfondvl') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -205,7 +196,7 @@ const router=useRouter();
 
           {/* Personnels */}
           <li>
-            <Link href={`/panel/societegestionpanel/personnel?id=${societeconneted}`}>
+            <Link href={`/panel/societegestionpanel/personnel`}>
               <button
                 className={`block w-full py-3 px-4 ${
                   pathname.includes('/societegestionpanel/personnel') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -218,7 +209,7 @@ const router=useRouter();
 
           {/* Documents */}
           <li>
-            <Link href={`/panel/societegestionpanel/document?id=${societeconneted}`}>
+            <Link href={`/panel/societegestionpanel/document`}>
               <button
                 className={`block w-full py-3 px-4 ${
                   pathname.includes('/societegestionpanel/document') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -244,7 +235,7 @@ const router=useRouter();
             {isSidebarOpenanomalie && (
               <ul className="pl-4 mt-2 space-y-2 text-sm">
                 <li>
-                  <Link href={`/panel/societegestionpanel/anomalie/vlanomalie?id=${societeconneted}`}>
+                  <Link href={`/panel/societegestionpanel/anomalie/vlanomalie`}>
                     <button
                       className={`block w-full py-2 px-2 ${
                         pathname.includes('/anomalie/vlanomalie') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -255,7 +246,7 @@ const router=useRouter();
                   </Link>
                 </li>
                 <li>
-                  <Link href={`/panel/societegestionpanel/anomalie/vlmanquante?id=${societeconneted}`}>
+                  <Link href={`/panel/societegestionpanel/anomalie/vlmanquante`}>
                     <button
                       className={`block w-full py-2 px-2 ${
                         pathname.includes('/anomalie/vlmanquante') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -272,7 +263,7 @@ const router=useRouter();
     
           {/* Actualités */}
           <li>
-            <Link href={`/panel/societegestionpanel/actualite?id=${societeconneted}`}>
+            <Link href={`/panel/societegestionpanel/actualite`}>
               <button
                 className={`block w-full py-3 px-4 ${
                   pathname.includes('/societegestionpanel/actualite') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -285,7 +276,7 @@ const router=useRouter();
 
           {/* Reporting */}
           <li>
-            <Link href={`/panel/societegestionpanel/reporting?id=${societeconneted}`}>
+            <Link href={`/panel/societegestionpanel/reporting`}>
               <button
                 className={`block w-full py-3 px-4 ${
                   pathname.includes('/societegestionpanel/reporting') ? 'bg-purple-500' : 'bg-indigo-500'

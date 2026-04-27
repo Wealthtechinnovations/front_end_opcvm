@@ -10,7 +10,7 @@ import Highcharts from 'highcharts';
 //import { router } from 'next/router';
 import Header from "@/app/Header";
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 import Headermenu from "@/app/Headermenu";
@@ -82,15 +82,6 @@ interface Option {
   value: string;
   label: string;
 }
-interface PageProps {
-  searchParams: {
-    fond: any;
-    selectedfund: any;
-    portefeuille: any;
-    selectedValuename: any;
-    id: any
-  };
-}
 interface MyDataType {
   name: any;
   y: any;
@@ -158,15 +149,20 @@ interface Fund {
 
   };
 }
-export default function Fondselected(props: PageProps) {
+export default function Fondselected() {
   const router = useRouter();
-  let id = props.searchParams.id;
-  let fondid = props.searchParams.fond;
-  let societeconneted = props.searchParams.id;
+  const searchParams = useSearchParams();
+  const [societeconneted, setSocieteconneted] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
+  const id = societeconneted;
+  const fondid = searchParams.get('fond');
 
-  let selectedfunds = props?.searchParams?.selectedfund;
-  let selectedportfeuille = props?.searchParams?.portefeuille;
-  let selectedValuename = props?.searchParams?.selectedValuename;
+  const selectedfunds = searchParams.get('selectedfund');
+  const selectedportfeuille = searchParams.get('portefeuille');
+  const selectedValuename = searchParams.get('selectedValuename');
   console.log(selectedValuename);
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [isOpen, setIsOpen] = useState(false);

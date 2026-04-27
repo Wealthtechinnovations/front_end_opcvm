@@ -1,15 +1,9 @@
 "use client";
 import { urlconstant } from "@/app/constants";
-import { useSession } from 'next-auth/react';
-
 import Link from "next/link";
 import { Fragment, SetStateAction, useEffect, useState } from "react";
 import Select from 'react-select';
-//import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
 import Headermenu from '../../../../Headermenu';
-import Header from "@/app/Header";
 import { useRouter } from 'next/navigation';
 import React from "react";
 import Swal from "sweetalert2";
@@ -30,11 +24,6 @@ async function getAnomalie(societegestionParam: any) {
     })
   ).json();
   return data;
-}
-interface PageProps {
-  searchParams: {
-    id: any;
-  };
 }
 interface Fund {
   map(arg0: (fund: { id: any; societe_gestion: string | number | boolean | React.ReactPortal | React.PromiseLikeOfReactNode | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined; nom_fond: string | number | boolean | React.ReactPortal | React.PromiseLikeOfReactNode | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined; code_ISIN: string | number | boolean | React.ReactPortal | React.PromiseLikeOfReactNode | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined; dev_libelle: string | number | boolean | React.ReactPortal | React.PromiseLikeOfReactNode | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined; type_anomalie: string | number | boolean | React.ReactPortal | React.PromiseLikeOfReactNode | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined; }, idx: React.Key | null | undefined) => React.JSX.Element): React.ReactNode;
@@ -96,11 +85,15 @@ interface Fund {
 
   };
 }
-export default function Home(props: PageProps) {
-  let societeconneted = props.searchParams.id;
+export default function Home() {
+  const [societeconneted, setSocieteconneted] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
 
   const router = useRouter();
-  let id = props.searchParams.id;
+  const id = societeconneted;
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [activeTab, setActiveTab] = useState("tabAccueil");
   const [startDate, setStartDate] = useState(null);

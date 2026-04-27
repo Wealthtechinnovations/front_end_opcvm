@@ -37,11 +37,6 @@ interface Devise {
 }
 
 
-interface PageProps {
-  searchParams: {
-    id: any
-  };
-}
 interface FormData {
   page: number;
   nom: string;
@@ -78,7 +73,7 @@ async function getlastvl1() {
   ).json();
   return data;
 }
-export default function Ajoutvl(props: PageProps) {
+export default function Ajoutvl() {
 
   const fonctions = [
     "Commercial",
@@ -128,7 +123,11 @@ export default function Ajoutvl(props: PageProps) {
     e.preventDefault();
     // Effectuez votre recherche ici si nécessaire
   };
-  const societeconneted = props.searchParams.id;
+  const [societeconneted, setSocieteconneted] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
 
 
   const handleFundSelect = (selectedOption: any) => {
@@ -214,7 +213,7 @@ export default function Ajoutvl(props: PageProps) {
           timer: 5000,
         });
         setTimeout(() => {
-          const href = `/panel/societegestionpanel/personnel?id=${societeconneted}`;
+          const href = `/panel/societegestionpanel/personnel`;
           window.location.href = href;  // This will navigate and refresh the page
 
           //     router.push(href);

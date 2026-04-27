@@ -79,11 +79,6 @@ async function getdevise(selectedPays: any) {
   ).json();
   return data;
 }
-interface PageProps {
-  searchParams: {
-    id: any
-  };
-}
 async function getFonds(id: string) {
   const data = (
 
@@ -93,7 +88,7 @@ async function getFonds(id: string) {
   ).json();
   return data;
 }
-export default function Ajoutvl(props: PageProps) {
+export default function Ajoutvl() {
 
   const router = useRouter();
   const [selectedFund, setSelectedFund] = useState(null);
@@ -102,14 +97,17 @@ export default function Ajoutvl(props: PageProps) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-
-
   const [optionsPays, setOptionsPays] = useState([]);
   const [regulateurOptions, setRegulateurOptions] = useState([]);
   let response: globalThis.Response;
 
-  const societeconneted = props.searchParams.id;
+  const [societeconneted, setSocieteconneted] = useState<string>('');
   useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
+  useEffect(() => {
+    if (!societeconneted) return;
     async function fetchData() {
       try {
         const data1 = await getFonds(societeconneted);
@@ -119,13 +117,13 @@ export default function Ajoutvl(props: PageProps) {
           label: funds.test
         }));
 
-        setFundsOptions(mappedOptions); // Mettre à jour l'état avec les données récupérées
+        setFundsOptions(mappedOptions);
       } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
       }
     }
-    fetchData(); // Appel à fetchData() lors du premier rendu
-  }, []);
+    fetchData();
+  }, [societeconneted]);
 
   const handleChange = (e: { target: { name: any; value: any; }; }) => {
     const { name, value } = e.target;
@@ -179,7 +177,7 @@ export default function Ajoutvl(props: PageProps) {
           timer: 5000,
         });
         setTimeout(() => {
-          const href = `/panel/societegestionpanel/document?id=${societeconneted}`;
+          const href = `/panel/societegestionpanel/document`;
           window.location.href = href;  // This will navigate and refresh the page
 
           //     router.push(href);

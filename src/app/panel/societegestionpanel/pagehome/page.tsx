@@ -17,7 +17,6 @@ import { Dropdown } from "react-bootstrap";
 import Head from "next/head";
 import { faThumbsUp } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from "next/navigation";
-import { magic } from '../../../../../magic'; // Importer correctement le module
 import Swal from "sweetalert2";
 import Sidebar from "@/app/sidebar";
 
@@ -81,12 +80,6 @@ async function getdevise(selectedPays: any) {
   ).json();
   return data;
 }
-interface PageProps {
-  searchParams: {
-    selectedRows: any;
-    id: any;
-  };
-}
 
 interface FormData {
   page: number;
@@ -120,7 +113,7 @@ interface Devise {
   label: string;
 
 }
-export default function Pagehome(props: PageProps) {
+export default function Pagehome() {
   const [managementCompany, setManagementCompany] = useState<FormData>({
     page: 1,
     nom: '',
@@ -137,7 +130,11 @@ export default function Pagehome(props: PageProps) {
     devise: ''
   });
 
-  let societeconneted = props.searchParams.id;
+  const [societeconneted, setSocieteconneted] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
   const [deviseOptions, setDeviseOptions] = useState([]);
 
   const [optionsPays, setOptionsPays] = useState([]);
@@ -253,7 +250,7 @@ export default function Pagehome(props: PageProps) {
     }
   }, [selectedPays]);
   useEffect(() => {
-    // Appel à l'API lors du premier rendu du composant
+    if (!societeconneted) return;
     async function fetchData() {
       try {
 
@@ -277,11 +274,9 @@ export default function Pagehome(props: PageProps) {
           pays: data1.data.societe.pays,
           regulateur: data1.data.societe.regulateur,
         });
-        // ... code existant ...
-        setSelectedPays({ value: data1.data.societe.pays, label: data1.data.societe.pays }); // Assurez-vous que l'objet a les propriétés 'value' et 'label'
-        setSelectedRegulateur({ value: data1.data.societe.regulateur, label: data1.data.societe.regulateur }); // Assurez-vous que l'objet a les propriétés 'value' et 'label'
-        setSelectedDevise({ value: data1.data.societe.devise, label: data1.data.societe.devise }); // Assurez-vous que l'objet a les propriétés 'value' et 'label'
-        // ... code existant ...
+        setSelectedPays({ value: data1.data.societe.pays, label: data1.data.societe.pays });
+        setSelectedRegulateur({ value: data1.data.societe.regulateur, label: data1.data.societe.regulateur });
+        setSelectedDevise({ value: data1.data.societe.devise, label: data1.data.societe.devise });
 
         const data8 = await getactualite();
         setActualites(data8);
@@ -291,7 +286,7 @@ export default function Pagehome(props: PageProps) {
       }
     }
     fetchData();
-  }, []);
+  }, [societeconneted]);
   const [activeTab, setActiveTab] = useState('aboutme');
 
   const handleTabClick = (tabId: SetStateAction<string>) => {
@@ -363,7 +358,7 @@ export default function Pagehome(props: PageProps) {
 
         // Redirect the user to another page after a delay (e.g., 2 seconds)
         setTimeout(() => {
-          const href = `/panel/societegestionpanel/pagehome?id=${societeconneted}`;
+          const href = `/panel/societegestionpanel/pagehome`;
 
           router.push(href);
         }, 2000);
@@ -401,7 +396,7 @@ export default function Pagehome(props: PageProps) {
           timer: 5000,
         });
         setTimeout(() => {
-          const href = `/panel/societegestionpanel/pagehome?id=${societeconneted}`;
+          const href = `/panel/societegestionpanel/pagehome`;
           window.location.href = href;  // This will navigate and refresh the page
 
           //     router.push(href);
@@ -429,21 +424,13 @@ export default function Pagehome(props: PageProps) {
       });
     }
   };
-  // Fonction de deconnexion
   const logout = useCallback(() => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
-    if (magic && magic.user) {
-
-      magic.user.logout().then(() => {
-        // Actualisation et redirection
-        setTimeout(() => {
-          window.location.reload()
-        }, 1000)
-        router.push("/"); //Redirection après connexion
-
-      });
-    }
+    localStorage.removeItem('tokenEnCours');
+    document.cookie = 'tokenEnCours=; path=/; max-age=0';
+    document.cookie = 'isLoggedIn=; path=/; max-age=0';
+    router.push("/");
   }, [router]);
   return (
     < Fragment >

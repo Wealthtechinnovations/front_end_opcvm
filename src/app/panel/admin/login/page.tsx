@@ -2,14 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
-
-
-import Select from 'react-select';
-//import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
-import Head from 'next/head';
-import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
+import { urlconstant } from "@/app/constants";
 
 import { useRouter } from 'next/navigation';
 interface Res {
