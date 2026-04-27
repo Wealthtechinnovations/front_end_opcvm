@@ -4,13 +4,7 @@ import { urlconstant } from "@/app/constants";
 import Link from "next/link";
 import React, { Fragment, useEffect, useState } from "react";
 import Select from 'react-select';
-import { useRouter } from 'next/navigation';
-
-//import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
-//import { router } from 'next/router';
-import Header from "@/app/Header";
+import { useRouter, useSearchParams } from 'next/navigation';
 import Swal from "sweetalert2";
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebaradmin";
@@ -32,17 +26,15 @@ interface Devise {
 
 }
 
-interface PageProps {
-  searchParams: {
-    fondId: number;
-    id: any;
-    fond: any
-  };
-}
-export default function UpdateFonds(props: PageProps) {
-  const fondId = props.searchParams.fondId;
-  let id = props.searchParams.id;
-  let fond = props.searchParams.fond;
+export default function UpdateFonds() {
+  const searchParams = useSearchParams();
+  const fondId = searchParams.get('fondId');
+  const [id, setId] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setId(stored);
+  }, []);
+  const fond = searchParams.get('fond');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 

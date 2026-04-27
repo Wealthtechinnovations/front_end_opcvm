@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from 'next/navigation';
-import router from "next/router";
-import { magic } from "../../magic";
 import Swal from "sweetalert2";
 
 export default function Sidebar({ id }: { id: string }) {
@@ -81,20 +79,13 @@ const router=useRouter();
    
   }, []);
   
-  const handleLogout = async () => {
-    // Remove items from localStorage
+  const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
-    if (magic && magic.auth) {
-      await magic.user.logout();
-      // Si vous avez stocké le jeton quelque part (comme dans le localStorage), vous pouvez l'effacer ici.
-    // localStorage.removeItem('didToken');
-}
-    
-    setTimeout(() => {
-      
-      router.push('/accueil'); // Replace '/other-page' with your desired page URL
-    }, 200);
+    localStorage.removeItem('tokenEnCours');
+    document.cookie = 'tokenEnCours=; path=/; max-age=0';
+    document.cookie = 'isLoggedIn=; path=/; max-age=0';
+    router.push('/accueil');
   };
 
    // State pour gérer l'affichage de la sidebar
@@ -128,7 +119,7 @@ const router=useRouter();
       >
        <ul className="space-y-4">
        <li>
-    <Link href={`/panel/admin/home?id=${id}`}>
+    <Link href={`/panel/admin/home`}>
       <button
         className={`block w-full py-3 px-4 ${
           pathname.includes('/admin/home') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -154,7 +145,7 @@ const router=useRouter();
             {isSidebarOpenanomalie && (
               <ul className="pl-4 mt-2 space-y-2 text-sm">
                 <li>
-                  <Link href={`/panel/admin/anomalie/vlanomalie?id=${id}`}>
+                  <Link href={`/panel/admin/anomalie/vlanomalie`}>
                     <button
                       className={`block w-full py-2 px-2 ${
                         pathname.includes('/anomalie/vlanomalie') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -165,7 +156,7 @@ const router=useRouter();
                   </Link>
                 </li>
                 <li>
-                  <Link href={`/panel/admin/anomalie/vlmanquante?id=${id}`}>
+                  <Link href={`/panel/admin/anomalie/vlmanquante`}>
                     <button
                       className={`block w-full py-2 px-2 ${
                         pathname.includes('/anomalie/vlmanquante') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -182,7 +173,7 @@ const router=useRouter();
 
   {/* Fonds à valider */}
   <li>
-    <Link href={`/panel/admin/fondsavalide?id=${id}`}>
+    <Link href={`/panel/admin/fondsavalide`}>
       <button
         className={`block w-full py-3 px-4 ${
           pathname.includes('/admin/fondsavalide') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -195,7 +186,7 @@ const router=useRouter();
 
   {/* Frais */}
   <li>
-    <Link href={`/panel/admin/frais?id=${id}`}>
+    <Link href={`/panel/admin/frais`}>
       <button
         className={`block w-full py-3 px-4 ${
           pathname.includes('/admin/frais') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -208,7 +199,7 @@ const router=useRouter();
 
   {/* Users */}
   <li>
-    <Link href={`/panel/admin/users?id=${id}`}>
+    <Link href={`/panel/admin/users`}>
       <button
         className={`block w-full py-3 px-4 ${
           pathname.includes('/admin/users') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -221,7 +212,7 @@ const router=useRouter();
 
   {/* Gestion des API */}
   <li>
-    <Link href={`/panel/admin/gestionapi?id=${id}`}>
+    <Link href={`/panel/admin/gestionapi`}>
       <button
         className={`block w-full py-3 px-4 ${
           pathname.includes('/admin/gestionapi') ? 'bg-purple-500' : 'bg-indigo-500'

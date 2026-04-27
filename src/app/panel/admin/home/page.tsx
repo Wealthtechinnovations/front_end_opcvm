@@ -4,15 +4,6 @@ import { urlconstant } from "@/app/constants";
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import Select from 'react-select';
-
-
-//import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
-//import { router } from 'next/router';
-import Header from '@/app/Header';
-import Router from 'next/router';
-import { magic } from "../../../../../magic";
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebaradmin";
 import PageHeader from "@/components/common/PageHeader";
@@ -29,14 +20,6 @@ interface Pays {
 
 }
 
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any;
-    selectedValuename: any;
-    id: any
-  };
-}
 async function getlastvl1() {
 
   const data = (
@@ -47,8 +30,12 @@ async function getlastvl1() {
 interface Option {
   value: string;
 }
-export default function Profile(props: PageProps) {
-  let id = props.searchParams.id;
+export default function Profile() {
+  const [id, setId] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setId(stored);
+  }, []);
 
   const [selectedOptions, setSelectedOptions] = useState<Option[]>([]);
   const [fundsOptions, setFundsOptions] = useState([]);

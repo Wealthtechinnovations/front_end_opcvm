@@ -11,7 +11,7 @@ import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 //import { router } from 'next/router';
 import Headermenu from '../../../../Headermenu';
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
 import Sidebar from "@/app/sidebaradmin";
 
@@ -173,28 +173,22 @@ async function getdevise(selectedPays: any) {
   ).json();
   return data;
 }
-interface PageProps {
-  searchParams: {
-    id: any,
-    fondId: any
-    societeconneted: any
-  };
-}
 async function fondscharge(id: number) {
   const data = (
     await fetch(`${urlconstant}/api/fondscharge/${id}`)
   ).json();
   return data;
 }
-export default function Ajoutvl(props: PageProps) {
+export default function Ajoutvl() {
+  const searchParams = useSearchParams();
   async function getlastvl1() {
     const data = (
       await fetch(`/api/searchFunds`)
     ).json();
     return data;
   }
-  let id = props.searchParams.id;
-  let fondId = props.searchParams.fondId
+  const id = searchParams.get('id');
+  const fondId = searchParams.get('fondId');
   const router = useRouter();
   const [selectedFund, setSelectedFund] = useState(null);
   const [fund, setFund] = useState<FormData>({
@@ -364,7 +358,11 @@ export default function Ajoutvl(props: PageProps) {
     e.preventDefault();
     // Effectuez votre recherche ici si nécessaire
   };
-  const societeconneted = props.searchParams.societeconneted;
+  const [societeconneted, setSocieteconneted] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
 
 
   const handleFundSelect = (selectedOption: any) => {

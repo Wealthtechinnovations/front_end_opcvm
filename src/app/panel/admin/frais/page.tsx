@@ -7,10 +7,6 @@ import { useRouter } from 'next/navigation';
 
 
 import Select from 'react-select';
-//import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
-import Header from '@/app/Header';
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebaradmin";
 interface Funds {
@@ -28,14 +24,12 @@ async function getFonds() {
   ).json();
   return data;
 }
-interface PageProps {
-  searchParams: {
-    selectedRows: any;
-    id: any;
-  };
-}
-export default function Fonds(props: PageProps) {
-  let id = props.searchParams.id;
+export default function Fonds() {
+  const [id, setId] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setId(stored);
+  }, []);
   const router = useRouter();
 
   const [funds, setFunds] = useState<Funds | null>(null);

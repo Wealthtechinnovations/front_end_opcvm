@@ -6,14 +6,11 @@ import { Fragment, useEffect, useState } from "react";
 
 
 import Select from 'react-select';
-//import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
-import Header from '@/app/Header';
 import Swal from "sweetalert2";
 import ReactPaginate from "react-paginate";
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebaradmin";
+import { useSearchParams } from "next/navigation";
 
 interface Funds {
   data: {
@@ -30,16 +27,14 @@ async function getFonds() {
   ).json();
   return data;
 }
-interface PageProps {
-  searchParams: {
-    selectedRows: any;
-    id: any;
-  };
-}
-export default function Fonds(props: PageProps) {
-  let societeconneted = props.searchParams.id;
-
-  let selectedValues = props.searchParams.selectedRows;
+export default function Fonds() {
+  const searchParams = useSearchParams();
+  const [societeconneted, setSocieteconneted] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setSocieteconneted(stored);
+  }, []);
+  const selectedValues = searchParams.get('selectedRows');
   const [funds, setFunds] = useState<Funds | null>(null);
   const [activeTab, setActiveTab] = useState("tabAccueil");
   const [startDate, setStartDate] = useState(null);
