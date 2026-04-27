@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
-import { signIn } from 'next-auth/react';
 
 
 import Select from 'react-select';

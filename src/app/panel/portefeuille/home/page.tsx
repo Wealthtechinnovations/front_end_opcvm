@@ -1,6 +1,5 @@
 "use client";
 import { urlconstant } from "@/app/constants";
-import { useSession } from 'next-auth/react';
 import {Fragment, useState, useEffect, useCallback, useRef } from 'react';
 import Swal from 'sweetalert2';
 import Link from "next/link";
@@ -131,12 +130,13 @@ export default function Home(props: PageProps) {
   const logout = async () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
+    localStorage.removeItem('tokenEnCours');
+    document.cookie = 'isLoggedIn=; path=/; max-age=0';
+    document.cookie = 'tokenEnCours=; path=/; max-age=0';
     if (magic && magic.auth) {
       await magic.user.logout();
     }
-    setTimeout(() => {
-      router.push('/accueil');
-    }, 200);
+    router.push('/accueil');
   };
 
   // Effet qui démarre le timer d'inactivité à l'initialisation et réinitialise le timer à chaque mouvement ou touche
@@ -188,14 +188,7 @@ export default function Home(props: PageProps) {
   }, [id, fetchPortfolios]);
 
   const handleLogout = async () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userId');
-    if (magic && magic.auth) {
-      await magic.user.logout();
-    }
-    setTimeout(() => {
-      router.push('/accueil');
-    }, 200);
+    await logout();
   };
 
 
