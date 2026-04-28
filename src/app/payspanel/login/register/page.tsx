@@ -8,7 +8,7 @@ import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Pays {
   value: any[]; // ou un type spécifique pour les éléments du tableau 'funds'
@@ -53,10 +53,11 @@ async function register(formData: any) {
   const data = await response.json();
   return data;
 }
-export default function Register(props: PageProps) {
+export default function Register() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  let email = props.searchParams.email;
+  let email = searchParams.get('email');
   //let password = props.searchParams.password;
   const [passwordsMatch, setPasswordsMatch] = useState(true);
 

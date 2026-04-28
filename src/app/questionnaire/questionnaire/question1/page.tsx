@@ -1,4 +1,5 @@
 "use client";
+import { useUserId } from '@/hooks/useUserId';
 import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
 
 import React, { useState, useEffect, Fragment } from 'react';
@@ -27,11 +28,11 @@ interface QuizMifidOfUser {
   userId: string;
   // Autres propriétés...
 }
-export default function Profile(props: PageProps): JSX.Element {
+export default function Profile(): JSX.Element {
   // Variable de l'url de l'api
   const API_URL = process.env.NEXT_PUBLIC_URL_API;
   const router = useRouter();
-  let id = props.searchParams.id;
+  const id = useUserId();
 
   // États pour gérer l'état du formulaire
   const [isLoggingIn, setIsLoggingIn] = useState(false);

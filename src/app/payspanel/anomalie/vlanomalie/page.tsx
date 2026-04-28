@@ -1,15 +1,15 @@
 "use client";
+import { useUserId } from '@/hooks/useUserId';
 import { urlconstant } from "@/app/constants";
 
 import Link from "next/link";
 import { Fragment, SetStateAction, useEffect, useState } from "react";
 import Select from 'react-select';
-//import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 import Header from "@/app/Header";
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, Modal } from "react-bootstrap";
 import Swal from "sweetalert2";
 
@@ -155,15 +155,16 @@ interface Fund {
 
   };
 }
-export default function Fondselected(props: PageProps) {
+export default function Fondselected() {
   const router = useRouter();
-  let id = props.searchParams.id;
-  let fondid = props.searchParams.fond;
-  let societeconneted = props.searchParams.id;
+  const searchParams = useSearchParams();
+  const id = useUserId();
+  let fondid = searchParams.get('fond');
+  const societeconneted = id;
 
-  let selectedfunds = props?.searchParams?.selectedfund;
-  let selectedportfeuille = props?.searchParams?.portefeuille;
-  let selectedValuename = props?.searchParams?.selectedValuename;
+  let selectedfunds = searchParams.get('selectedfund');
+  let selectedportfeuille = searchParams.get('portefeuille');
+  let selectedValuename = searchParams.get('selectedValuename');
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [fundsOptions, setFundsOptions] = useState([]);

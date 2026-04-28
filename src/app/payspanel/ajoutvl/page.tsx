@@ -1,4 +1,5 @@
 "use client";
+import { useUserId } from '@/hooks/useUserId';
 import { urlconstant } from "@/app/constants";
 
 import Link from "next/link";
@@ -73,7 +74,7 @@ interface PageProps {
     id: any
   };
 }
-export default function Ajoutvl(props: PageProps) {
+export default function Ajoutvl() {
   async function getlastvl1() {
     const data = (
       await fetch(`/api/searchFunds`)
@@ -98,7 +99,7 @@ export default function Ajoutvl(props: PageProps) {
     e.preventDefault();
     // Effectuez votre recherche ici si nécessaire
   };
-  const societeconneted = props.searchParams.id;
+  const societeconneted = useUserId();
 
 
   const handleFundSelect = (selectedOption: any) => {

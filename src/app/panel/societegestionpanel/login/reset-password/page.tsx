@@ -8,7 +8,7 @@ import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 import { urlconstant, urlstableconstant, API_KEY_STABLECOIN, urlsite } from "@/app/constants";
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Dropdown } from "react-bootstrap";
 
 async function login(email: string, password: any) {
@@ -66,7 +66,8 @@ interface PageProps {
     token: string;
   };
 }
-export default function Logins(props: PageProps) {
+export default function Logins() {
+  const searchParams = useSearchParams();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   // Fonction de connexion à magic
 
@@ -74,7 +75,7 @@ export default function Logins(props: PageProps) {
   const [passwordValid, setPasswordValid] = useState(true);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false); // État pour la visibilité du mot de passe de confirmation
 
-  let tokenapp = props.searchParams.token;
+  let tokenapp = searchParams.get('token');
 
   const [menuOpen, setMenuOpen] = useState(false);
 

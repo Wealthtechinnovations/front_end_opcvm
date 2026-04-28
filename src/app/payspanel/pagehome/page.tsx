@@ -1,4 +1,5 @@
 "use client";
+import { useUserId } from '@/hooks/useUserId';
 import { urlconstant, urlconstantimage } from "@/app/constants";
 
 import Link from "next/link";
@@ -114,7 +115,7 @@ interface Devise {
   value: string; // ou un type spécifique pour les éléments du tableau 'funds'
 
 }
-export default function Pagehome(props: PageProps) {
+export default function Pagehome() {
   const [managementCompany, setManagementCompany] = useState<FormData>({
     page: 1,
     nom: '',
@@ -131,7 +132,7 @@ export default function Pagehome(props: PageProps) {
     devise: ''
   });
 
-  let societeconneted = props.searchParams.id;
+  const societeconneted = useUserId();
   const [deviseOptions, setDeviseOptions] = useState([]);
 
   const [optionsPays, setOptionsPays] = useState([]);

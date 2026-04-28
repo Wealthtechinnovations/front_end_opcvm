@@ -10,7 +10,8 @@ import Select, { SingleValue } from 'react-select';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 import Header from '../../../Header';
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useUserId } from '@/hooks/useUserId';
 import Swal from "sweetalert2";
 
 const options = [
@@ -179,15 +180,16 @@ async function fondscharge(id: number) {
   ).json();
   return data;
 }
-export default function Ajoutvl(props: PageProps) {
+export default function Ajoutvl() {
+  const searchParams = useSearchParams();
   async function getlastvl1() {
     const data = (
       await fetch(`/api/searchFunds`)
     ).json();
     return data;
   }
-  let id = props.searchParams.id;
-  let fondId = props.searchParams.fondId
+  let id = searchParams.get('id');
+  let fondId = searchParams.get('fondId');
   const router = useRouter();
   const [selectedFund, setSelectedFund] = useState(null);
   const [fund, setFund] = useState<FormData>({
@@ -250,7 +252,7 @@ export default function Ajoutvl(props: PageProps) {
     e.preventDefault();
     // Effectuez votre recherche ici si nécessaire
   };
-  const societeconneted = props.searchParams.societeconneted;
+  const societeconneted = useUserId();
 
 
   const handleFundSelect = (selectedOption: any) => {

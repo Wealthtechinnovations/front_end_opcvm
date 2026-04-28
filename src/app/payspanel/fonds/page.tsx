@@ -1,5 +1,7 @@
 "use client";
+import { useUserId } from '@/hooks/useUserId';
 import { urlconstant } from "@/app/constants";
+import { useSearchParams } from 'next/navigation';
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
@@ -34,10 +36,11 @@ interface PageProps {
     id: any;
   };
 }
-export default function Fonds(props: PageProps) {
-  let societeconneted = props.searchParams.id;
+export default function Fonds() {
+  const searchParams = useSearchParams();
+  const societeconneted = useUserId();
 
-  let selectedValues = props.searchParams.selectedRows;
+  let selectedValues = searchParams.get('selectedRows');
   const [funds, setFunds] = useState<Funds | null>(null);
   const [activeTab, setActiveTab] = useState("tabAccueil");
   const [startDate, setStartDate] = useState(null);

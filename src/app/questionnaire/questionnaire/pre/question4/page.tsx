@@ -1,4 +1,5 @@
 "use client";
+import { useUserId } from '@/hooks/useUserId';
 import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
 
 import React, { useState, useEffect, Fragment } from 'react';
@@ -26,8 +27,8 @@ interface QuizMifidOfUser {
   userId: string;
   // Autres propriétés...
 }
-export default function Profile(props: PageProps): JSX.Element {
-  let id = props.searchParams.id;
+export default function Profile(): JSX.Element {
+  const id = useUserId();
 
   var router = useRouter();
   const [isLoggingIn, setIsLoggingIn] = useState(false);

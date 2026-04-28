@@ -9,7 +9,8 @@ import Select from 'react-select';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 import Header from "@/app/Header";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useUserId } from '@/hooks/useUserId';
 import Swal from "sweetalert2";
 
 interface Funds {
@@ -114,9 +115,10 @@ type ValuationRow1 = {
   nom: string;
 
 };
-export default function Fonds(props: PageProps) {
-  const id = props.searchParams.Id;
-  const societeconneted = props.searchParams.societeconneted;
+export default function Fonds() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get('Id');
+  const societeconneted = useUserId();
 
   const router = useRouter();
   const [file, setFile] = useState(null);

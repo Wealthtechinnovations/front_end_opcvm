@@ -1,4 +1,5 @@
 "use client";
+import { useUserId } from '@/hooks/useUserId';
 
 import Link from "next/link";
 import { ChangeEvent, Fragment, useEffect, useState } from "react";
@@ -31,8 +32,8 @@ const buttonStyle = {
   borderRadius: "5px", // Add rounded corners for a consistent look
   cursor: "pointer", // Add a pointer cursor on hover for better user experience
 };
-export default function Importvl(props: PageProps) {
-  const societeconneted = props.searchParams.id;
+export default function Importvl() {
+  const societeconneted = useUserId();
 
   useEffect(() => {
     // Appel à l'API lors du premier rendu du composant

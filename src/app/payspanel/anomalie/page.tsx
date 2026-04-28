@@ -1,4 +1,5 @@
 "use client";
+import { useUserId } from '@/hooks/useUserId';
 import { urlconstant } from "@/app/constants";
 
 import Link from "next/link";
@@ -93,11 +94,11 @@ interface Fund {
 
   };
 }
-export default function Home(props: PageProps) {
-  let societeconneted = props.searchParams.id;
+export default function Home() {
+  const societeconneted = useUserId();
 
   const router = useRouter();
-  let id = props.searchParams.id;
+  const id = useUserId();
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [activeTab, setActiveTab] = useState("tabAccueil");
   const [startDate, setStartDate] = useState(null);

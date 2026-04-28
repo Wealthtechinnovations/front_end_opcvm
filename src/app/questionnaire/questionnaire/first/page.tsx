@@ -1,4 +1,5 @@
 "use client";
+import { useUserId } from '@/hooks/useUserId';
 import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
 
 import React, { useState, useEffect, useCallback, useRef, Fragment } from 'react';
@@ -42,9 +43,9 @@ interface PageProps {
 
 // FIN
 
-export default function CConditionsProfil(props: PageProps): JSX.Element {
+export default function CConditionsProfil(): JSX.Element {
   // Variable de l'url de l'api
-  let id = props.searchParams.id;
+  const id = useUserId();
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [messageError, setMessageError] = useState();

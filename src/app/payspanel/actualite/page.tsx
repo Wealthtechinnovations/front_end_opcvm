@@ -1,4 +1,5 @@
 "use client";
+import { useUserId } from '@/hooks/useUserId';
 import { urlconstant, urlconstantimage } from "@/app/constants";
 
 import Link from "next/link";
@@ -47,10 +48,10 @@ interface PageProps {
   };
 }
 
-export default function Pagehome(props: PageProps) {
+export default function Pagehome() {
 
 
-  let societeconneted = props.searchParams.id;
+  const societeconneted = useUserId();
 
   const [actualites, setActualites] = useState<Actualite[]>([]);
 

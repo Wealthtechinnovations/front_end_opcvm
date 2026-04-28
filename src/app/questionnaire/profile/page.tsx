@@ -1,4 +1,5 @@
 "use client";
+import { useUserId } from '@/hooks/useUserId';
 import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
 
 
@@ -70,8 +71,8 @@ interface QuizMifidOfUser {
   volatilityPortfolioTarget: any;
   // Autres propriétés...
 }
-export default function Profile(props: PageProps) {
-  let id = props.searchParams.id;
+export default function Profile() {
+  const id = useUserId();
 
   let response: globalThis.Response;
   const handleSearch = (e: any) => {
