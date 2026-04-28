@@ -12,7 +12,6 @@ import Highcharts from 'highcharts';
 
 //import { router } from 'next/router';
 import Header from '@/app/Header';
-import { magic } from "../../../../../magic";
 import { useRouter } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';
 import Headermenu from "@/app/Headermenu";
@@ -37,21 +36,12 @@ async function getlastvl1() {
   return data;
 }
 
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any;
-    selectedValuename: any;
-    id: any
-  };
-}
 interface Option {
   value: string;
 }
-export default function Ajoutportefeuille(props: PageProps) {
+export default function Ajoutportefeuille() {
   const router = useRouter();
-  const storedUserId = useUserId();
-  const id = storedUserId || props.searchParams.id;
+  const id = useUserId();
 
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -137,7 +127,7 @@ export default function Ajoutportefeuille(props: PageProps) {
       if (response.status === 200) {
         setIsModalOpen(true);
         setTimeout(() => {
-          router.push(`/panel/portefeuille/home?id=${id}`);
+          router.push(`/panel/portefeuille/home`);
         }, 2000);
         return;
       }

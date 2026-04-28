@@ -9,7 +9,7 @@ import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 //import { router } from 'next/router';
 import Header from '@/app/Header';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';
 import Sidebar from "@/app/sidebarportefeuille";
 import Headermenu from "@/app/Headermenu";
@@ -72,14 +72,6 @@ interface Option {
   value: string;
   label: string;
 }
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any;
-    selectedValuename: any;
-    id: any
-  };
-}
 interface MyDataType {
   name: any;
   y: any;
@@ -136,15 +128,14 @@ interface Fund {
 
   };
 }
-export default function Fondselected(props: PageProps) {
+export default function Fondselected() {
   const router = useRouter();
-  const storedUserId = useUserId();
-  const id = storedUserId || props.searchParams.id;
+  const searchParams = useSearchParams();
+  const id = useUserId();
 
-  let selectedfunds = props?.searchParams?.selectedfund;
-  let selectedportfeuille = props?.searchParams?.portefeuille;
-  let selectedValuename = props?.searchParams?.selectedValuename;
-  console.log(selectedValuename);
+  const selectedfunds = searchParams.get('selectedfund');
+  const selectedportfeuille = searchParams.get('portefeuille');
+  const selectedValuename = searchParams.get('selectedValuename');
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [fundsOptions, setFundsOptions] = useState([]);

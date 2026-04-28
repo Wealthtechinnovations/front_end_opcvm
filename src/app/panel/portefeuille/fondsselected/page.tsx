@@ -9,7 +9,7 @@ import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 //import { router } from 'next/router';
 import Header from '@/app/Header';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebarportefeuille";
@@ -62,14 +62,6 @@ interface Funds {
 interface Option {
   value: string;
   label: string;
-}
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any;
-    selectedValuename: any;
-    id: any
-  };
 }
 interface MyDataType {
   name: any;
@@ -147,14 +139,14 @@ async function getpays() {
   ).json();
   return data;
 }
-export default function Fondselected(props: PageProps) {
+export default function Fondselected() {
   const router = useRouter();
-  const storedUserId = useUserId();
-  const id = storedUserId || props.searchParams.id;
+  const searchParams = useSearchParams();
+  const id = useUserId();
 
-  let selectedfunds = props?.searchParams?.selectedfund;
-  let selectedportfeuille = props?.searchParams?.portefeuille;
-  let selectedValuename = props?.searchParams?.selectedValuename;
+  const selectedfunds = searchParams.get('selectedfund');
+  const selectedportfeuille = searchParams.get('portefeuille');
+  const selectedValuename = searchParams.get('selectedValuename');
   const [optionsPays, setOptionsPays] = useState([]);
   const [selectedPays, setSelectedPays] = useState<Pays | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
@@ -400,7 +392,7 @@ export default function Fondselected(props: PageProps) {
 
         // Redirect the user to another page after a delay (e.g., 2 seconds)
         setTimeout(() => {
-          const href = `/panel/portefeuille/home?id=${id}`;
+          const href = `/panel/portefeuille/home`;
 
           router.push(href); // Replace '/other-page' with your desired page URL
         }, 2000);

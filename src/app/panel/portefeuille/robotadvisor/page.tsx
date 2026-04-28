@@ -9,10 +9,9 @@ import Select from 'react-select';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 import Headermenu from '../../../Headermenu';
-import Header from "@/app/Header";
 import { useRouter } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';
-import { Dropdown } from "react-bootstrap";
+import Sidebar from "@/app/sidebarportefeuille";
 
 interface Funds {
   data: {
@@ -29,21 +28,15 @@ async function getPortefeuille(id: any) {
   ).json();
   return data;
 }
-interface PageProps {
-  searchParams: {
-    id: any;
-  };
-}
-export default function RobotAdvisor(props: PageProps) {
+export default function RobotAdvisor() {
 
   const router = useRouter();
-  const storedUserId = useUserId();
-  const id = storedUserId || props.searchParams.id;
+  const id = useUserId();
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
 
 
   const handleLinkClick = (item: any) => {
-    const href = `/panel/portefeuille/robotadvisor/portefeuillerobot?id=${id}&simulation=${item.id}`;
+    const href = `/panel/portefeuille/robotadvisor/portefeuillerobot?simulation=${item.id}`;
 
     // Use the router.push method to navigate
     router.push(href);
@@ -79,110 +72,15 @@ export default function RobotAdvisor(props: PageProps) {
 
   console.log(performanceData)
 
-  const handleLogout = () => {
-    // Remove items from localStorage
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userId');
-
-    // Optionally, perform any additional logout-related tasks
-
-    // Redirect to the homepage or login page, assuming you are using React Router
-    // You may need to adjust the route based on your application structure
-    setTimeout(() => {
-      router.push('/accueil'); // Replace '/other-page' with your desired page URL
-    }, 200);
-  };
-
-
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
-
-  //////////////////
-
-
   return (
 
 
 
     < Fragment >
-      <Header />
-
-      <aside className="main-sidebar">
-        <section className="sidebar position-relative">
-          <div className="multinav">
-            <div className="multinav-scroll" style={{ height: '97%' }}>
-              <ul className="sidebar-menu" data-widget="tree">
-
-
-                <li>
-                  <Link href={`/panel/portefeuille/home?id=${id}`}>
-                    <i data-feather="plus-square"></i>
-                    <span>PorteFeuile</span>
-                  </Link>
-                </li>
-                <li>
-                  <a href={`/panel/portefeuille/robotadvisor?id=${id}`} style={{ backgroundColor: "#3b82f6", color: "white" }}>
-                    <span style={{ marginLeft: '55px' }}>Robot Advisor</span></a>
-                </li>
-                <li>
-                  <Link href={`/panel/portefeuille/fondfavoris?id=${id}`}>
-                    <i data-feather="user"></i>
-                    <span>Favoris</span>
-                  </Link>
-                </li>
-                <li className={`dropdown ${isDropdownOpen ? 'open' : ''}`}>
-                  <a href="#" onClick={toggleDropdown} className="dropdown-toggle" data-toggle="dropdown" >
-                    <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
-                    <span>Profil investisseur</span>
-                  </a>
-                  {isDropdownOpen && (
-                    <>
-                      <li>
-                        <a href={`/panel/portefeuille/profile?id=${id}`}>   <i className="bi bi-check2"></i>
-                          <span style={{ marginLeft: '55px' }}>Profil</span></a>
-                      </li>
-                      <li>
-                        <a href={`/panel/portefeuille/questionnaire?id=${id}`}>
-                          <span style={{ marginLeft: '55px' }}>Questionnaire</span></a>
-                      </li>
-
-                    </>
-                  )}
-                </li>
-                <li>
-                  <a href={`/panel/portefeuille/Kyc_particulier/question1?id=${id}`}>
-                    <span style={{ marginLeft: '55px' }}>KYC</span></a>
-                </li>
-                <li>
-                  <Link href="#" onClick={handleLogout}>
-                    <i data-feather="user"></i>
-                    <span>Se deconnecter</span>
-                  </Link>
-                </li>
-
-
-
-
-                {/*     localStorage.removeItem('isLoggedIn');
- ... (autres éléments du menu) */}
-              </ul>
-
-
-              <div className="sidebar-widgets">
-                <div className="mx-25 mb-30 pb-20 side-bx bg-primary-light rounded20">
-                  <div className="text-center">
-                    <img src="../../../images/svg-icon/color-svg/custom-32.svg" className="sideimg p-5" alt="" />
-                    <h4 className="title-bx text-primary">Portefeuille Panel</h4>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </aside>
+    <div className="flex bg-gray-100">
+      <Sidebar id={id} />
+      <div className="flex-1 ml-64">
+        <Headermenu />
       <div className="content-wrapper2">
         <div className="container-full">
           {/* Main content */}
@@ -221,7 +119,7 @@ export default function RobotAdvisor(props: PageProps) {
                     <Link
                       className={`btn btn-main active}`}
                       style={{ backgroundColor: "#3b82f6", color: "white" }}
-                      href={`/panel/portefeuille/robotadvisor/ajoutsimulation?id=${id}`}
+                      href={`/panel/portefeuille/robotadvisor/ajoutsimulation`}
                     >
                       Nouvelle simulation
                     </Link>
@@ -294,9 +192,9 @@ export default function RobotAdvisor(props: PageProps) {
 
           </section>
         </div>
-
+      </div>
       </div >
-
+      </div >
     </Fragment >
   );
 }

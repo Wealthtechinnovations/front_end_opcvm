@@ -10,7 +10,7 @@ import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 //import { router } from 'next/router';
 import Header from '@/app/Header';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';
 import Swal from 'sweetalert2';
 import { Button } from "react-bootstrap";
@@ -222,28 +222,20 @@ interface Option {
   value: string;
   label: string;
 }
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any;
-    selectedValuename: any;
-    id: any
-  };
-}
 interface MyDataType {
   name: any;
   y: any;
   // InRef: any; // Remplacez "number" par le type approprié
   // Autres propriétés
 }
-export default function PorteFeuile(props: PageProps) {
+export default function PorteFeuile() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  let selectedfunds = props?.searchParams?.selectedfund;
-  let selectedportfeuille = props?.searchParams?.portefeuille;
-  let selectedValuename = props?.searchParams?.selectedValuename;
-  const storedUserId = useUserId();
-  const id = storedUserId || props.searchParams.id;
+  const selectedfunds = searchParams.get('selectedfund');
+  const selectedportfeuille = searchParams.get('portefeuille');
+  const selectedValuename = searchParams.get('selectedValuename');
+  const id = useUserId();
 
 
   const formatDate = (date: Date): string => {
@@ -959,7 +951,7 @@ export default function PorteFeuile(props: PageProps) {
 
   const [reconstitutionEnCours, setReconstitutionEnCours] = useState(false);
   const handletransactionClick = async () => {
-    const href = `/panel/portefeuille/portefeuillereconstitution/transaction?id=${id}&selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`
+    const href = `/panel/portefeuille/portefeuillereconstitution/transaction?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`
     setTimeout(() => {
       window.location.href = href;
     }, 500);
@@ -967,7 +959,7 @@ export default function PorteFeuile(props: PageProps) {
 
   };
   const handleparamClick = async () => {
-    const href = `/panel/portefeuille/portefeuillereconstitution/parametrage?id=${id}&selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`
+    const href = `/panel/portefeuille/portefeuillereconstitution/parametrage?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`
     setTimeout(() => {
       window.location.href = href;
     }, 500);
@@ -1003,7 +995,7 @@ export default function PorteFeuile(props: PageProps) {
         Swal.close(); // Fermer le popup après que la requête est terminée
 
         setTimeout(() => {
-          const href = `/panel/portefeuille/portefeuillereconstitution?id=${id}&selectedValuename=${selectedValuename}&selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`;
+          const href = `/panel/portefeuille/portefeuillereconstitution?selectedValuename=${selectedValuename}&selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`;
           window.location.href = href;
         }, 500);
       } else {
@@ -1194,7 +1186,7 @@ export default function PorteFeuile(props: PageProps) {
 
                     <div className="text-right">
                       <a
-                        href={`/panel/portefeuille/portefeuillereconstitution/ajoutcash?id=${id}&selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`}
+                        href={`/panel/portefeuille/portefeuillereconstitution/ajoutcash?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`}
                         /*  as={`/about/${selectedRows ? selectedRows.join(',') : ''}`}
                           key={selectedRows.join(',')}*/
                         style={{
@@ -1210,7 +1202,7 @@ export default function PorteFeuile(props: PageProps) {
                       </a>
                       &nbsp;
                       <a
-                        href={`/panel/portefeuille/portefeuillereconstitution/retraitcash?id=${id}&selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`}
+                        href={`/panel/portefeuille/portefeuillereconstitution/retraitcash?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`}
                         /*  as={`/about/${selectedRows ? selectedRows.join(',') : ''}`}
                           key={selectedRows.join(',')}*/
                         style={{

@@ -14,23 +14,15 @@ import Link from "next/link";
  * @component
  * @return {JSX.Element} Composant de la première partie du quiz MIFID.
  */
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any;
-    selectedValuename: any;
-    id: any
-  };
-}
 interface QuizMifidOfUser {
   userId: string;
   // Autres propriétés...
 }
-export default function Profile(props: PageProps): JSX.Element {
+export default function Profile(): JSX.Element {
   // Variable de l'url de l'api
   const API_URL = process.env.NEXT_PUBLIC_URL_API;
   const router = useRouter();
-  let id = props.searchParams.id;
+  const id = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
 
   // États pour gérer l'état du formulaire
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -262,13 +254,13 @@ export default function Profile(props: PageProps): JSX.Element {
 
 
                 <li>
-                  <Link href={`/panel/portefeuille/home?id=${id}`}>
+                  <Link href={`/panel/portefeuille/home`}>
                     <i data-feather="plus-square"></i>
                     <span>PorteFeuile</span>
                   </Link>
                 </li>
                 <li>
-                  <Link href={`/panel/portefeuille/fondfavoris?id=${id}`}>
+                  <Link href={`/panel/portefeuille/fondfavoris`}>
                     <i data-feather="user"></i>
                     <span>Favoris</span>
                   </Link>
@@ -281,15 +273,15 @@ export default function Profile(props: PageProps): JSX.Element {
                   {isDropdownOpen && (
                     <>
                       <li>
-                        <a href={`/panel/portefeuille/profile?id=${id}`}>   <i className="bi bi-check2"></i>
+                        <a href={`/panel/portefeuille/profile`}>   <i className="bi bi-check2"></i>
                           <span style={{ marginLeft: '55px' }}>Profil</span></a>
                       </li>
                       <li>
-                        <a href={`/panel/portefeuille/questionnaire?id=${id}`}>
+                        <a href={`/panel/portefeuille/questionnaire`}>
                           <span style={{ marginLeft: '55px' }}>Questionnaire</span></a>
                       </li>
                       <li>
-                        <a href={`/panel/portefeuille/kyc?id=${id}`}>
+                        <a href={`/panel/portefeuille/kyc`}>
                           <span style={{ marginLeft: '55px' }}>KYC</span></a>
                       </li>
                     </>

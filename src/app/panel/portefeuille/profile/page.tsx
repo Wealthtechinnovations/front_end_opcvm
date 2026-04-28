@@ -13,7 +13,6 @@ import Highcharts from 'highcharts';
 //import { router } from 'next/router';
 import Header from '@/app/Header';
 import Router from 'next/router';
-import { magic } from "../../../../../magic";
 import { useUserId } from '@/hooks/useUserId';
 import Sidebar from "@/app/sidebarportefeuille";
 import Headermenu from "@/app/Headermenu";
@@ -30,14 +29,6 @@ interface Pays {
 
 }
 
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any;
-    selectedValuename: any;
-    id: any
-  };
-}
 async function getlastvl1() {
 
   const data = (
@@ -74,9 +65,8 @@ interface QuizMifidOfUser {
   volatilityPortfolioTarget: any;
   // Autres propriétés...
 }
-export default function Profile(props: PageProps) {
-  const storedUserId = useUserId();
-  const id = storedUserId || props.searchParams.id;
+export default function Profile() {
+  const id = useUserId();
 
   let response: globalThis.Response;
   const handleSearch = (e: any) => {

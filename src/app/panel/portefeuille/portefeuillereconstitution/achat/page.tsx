@@ -4,7 +4,8 @@ import axios from 'axios';
 import Link from "next/link";
 import { Fragment, JSXElementConstructor, PromiseLikeOfReactNode, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import Select from 'react-select';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useUserId } from '@/hooks/useUserId';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 //import * as XLSX from 'xlsx';
@@ -73,16 +74,6 @@ interface Option {
   value: number;
   label: string
 }
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any
-    id: any;
-    devise: any;
-    allfund: any;
-  };
-}
-
 interface Transaction {
 
   type: any;
@@ -97,7 +88,9 @@ interface Transaction {
 
 
 }
-export default function Achat(props: PageProps) {
+export default function Achat() {
+  const searchParams = useSearchParams();
+  const id = useUserId();
   const [availableDates, setAvailableDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const isDateAvailable = (date: Date): boolean => {
@@ -117,12 +110,11 @@ export default function Achat(props: PageProps) {
       setSelectedDate(date);
     }
   };
-  let allfund = props.searchParams.allfund;
-  let id = props.searchParams.id;
-  let devise = props.searchParams.devise || 'MAD';
-  const selectedfunds = props?.searchParams?.selectedfund;
+  const allfund = searchParams.get('allfund');
+  const devise = searchParams.get('devise') || 'MAD';
+  const selectedfunds = searchParams.get('selectedfund');
   console.log(selectedfunds);
-  const selectedportfeuille = props?.searchParams?.portefeuille;
+  const selectedportfeuille = searchParams.get('portefeuille');
   const router = useRouter();
   const [transactionData, settransactioData] = useState<Transaction[]>([]);
 
@@ -393,7 +385,7 @@ export default function Achat(props: PageProps) {
         localStorage.setItem('portefeuille', selectedportfeuille);
 
         setTimeout(() => {
-          const href = `/panel/portefeuille/portefeuillereconstitution?id=${id}&selectedfund=${allfund}&portefeuille=${selectedportfeuille}`;
+          const href = `/panel/portefeuille/portefeuillereconstitution?selectedfund=${allfund}&portefeuille=${selectedportfeuille}`;
           router.push(href);
         }, 500);
       }

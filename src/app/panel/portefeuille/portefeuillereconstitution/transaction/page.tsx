@@ -3,6 +3,8 @@ import { urlconstant } from "@/app/constants";
 
 import Link from "next/link";
 import { Fragment, SetStateAction, useEffect, useState } from "react";
+import { useSearchParams } from 'next/navigation';
+import { useUserId } from '@/hooks/useUserId';
 import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
@@ -136,25 +138,18 @@ interface Option {
   value: string;
   label: string;
 }
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any;
-    selectedValuename: any;
-    id: any
-  };
-}
 interface MyDataType {
   name: any;
   y: any;
   InRef: any; // Remplacez "number" par le type approprié
   // Autres propriétés
 }
-export default function Transactions(props: PageProps) {
-  let selectedfunds = props?.searchParams?.selectedfund;
-  let selectedportfeuille = props?.searchParams?.portefeuille;
-  let selectedValuename = props?.searchParams?.selectedValuename;
-  let id = props.searchParams.id;
+export default function Transactions() {
+  const searchParams = useSearchParams();
+  const id = useUserId();
+  const selectedfunds = searchParams.get('selectedfund');
+  const selectedportfeuille = searchParams.get('portefeuille');
+  const selectedValuename = searchParams.get('selectedValuename');
 
   console.log(selectedValuename);
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);

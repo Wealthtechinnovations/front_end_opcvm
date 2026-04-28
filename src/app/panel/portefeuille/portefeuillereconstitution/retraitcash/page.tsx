@@ -4,7 +4,8 @@ import axios from 'axios';
 import Link from "next/link";
 import { Fragment, JSXElementConstructor, PromiseLikeOfReactNode, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import Select from 'react-select';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useUserId } from '@/hooks/useUserId';
 
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
@@ -54,13 +55,6 @@ interface Option {
   value: number;
   label: string
 }
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any
-    id: any
-  };
-}
 
 interface Transaction {
 
@@ -85,12 +79,13 @@ async function getPortefeuille(selectedValues: any) {
   ).json();
   return data;
 }
-export default function Retraitcash(props: PageProps) {
-  let id = props.searchParams.id;
+export default function Retraitcash() {
+  const searchParams = useSearchParams();
+  const id = useUserId();
 
-  const selectedfunds = props?.searchParams?.selectedfund;
+  const selectedfunds = searchParams.get('selectedfund');
   console.log(selectedfunds);
-  const selectedportfeuille = props?.searchParams?.portefeuille;
+  const selectedportfeuille = searchParams.get('portefeuille');
   const router = useRouter();
   const [transactionData, settransactioData] = useState<Transaction[]>([]);
 
@@ -225,7 +220,7 @@ export default function Retraitcash(props: PageProps) {
           if (data.code === 200) {
 
             setTimeout(() => {
-              const href = `/panel/portefeuille/portefeuillereconstitution?id=${id}`;
+              const href = `/panel/portefeuille/portefeuillereconstitution`;
 
               router.push(href);
             }, 2000);

@@ -4,7 +4,8 @@ import axios from 'axios';
 import Link from "next/link";
 import { Fragment, JSXElementConstructor, PromiseLikeOfReactNode, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import Select from 'react-select';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useUserId } from '@/hooks/useUserId';
 
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
@@ -46,19 +47,13 @@ interface Option {
   value: number;
   label: string
 }
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any
-    id: any
-  };
-}
-export default function Reconstitution(props: PageProps) {
-  let id = props.searchParams.id;
+export default function Reconstitution() {
+  const searchParams = useSearchParams();
+  const id = useUserId();
 
-  const selectedfunds = props?.searchParams?.selectedfund;
+  const selectedfunds = searchParams.get('selectedfund');
   console.log(selectedfunds);
-  const selectedportfeuille = props?.searchParams?.portefeuille;
+  const selectedportfeuille = searchParams.get('portefeuille');
   const router = useRouter();
 
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
@@ -154,7 +149,7 @@ export default function Reconstitution(props: PageProps) {
           if (data.code === 200) {
 
             setTimeout(() => {
-              const href = `/panel/portefeuille/home?id=${id}`;
+              const href = `/panel/portefeuille/home`;
 
               router.push(href);
             }, 2000);

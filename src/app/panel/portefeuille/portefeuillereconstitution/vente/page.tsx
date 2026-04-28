@@ -4,7 +4,8 @@ import axios from 'axios';
 import Link from "next/link";
 import { Fragment, JSXElementConstructor, PromiseLikeOfReactNode, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import Select from 'react-select';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useUserId } from '@/hooks/useUserId';
 import Swal from 'sweetalert2';
 
 //import * as XLSX from 'xlsx';
@@ -61,14 +62,6 @@ interface Option {
   value: number;
   label: string
 }
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any
-    id: any;
-    allfund: any;
-  };
-}
 
 interface Transaction {
 
@@ -84,7 +77,9 @@ interface Transaction {
 
 
 }
-export default function Vente(props: PageProps) {
+export default function Vente() {
+  const searchParams = useSearchParams();
+  const id = useUserId();
   const [availableDates, setAvailableDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const isDateAvailable = (date: Date): boolean => {
@@ -104,12 +99,11 @@ export default function Vente(props: PageProps) {
       setSelectedDate(date);
     }
   };
-  let id = props.searchParams.id;
-  let allfund = props.searchParams.allfund;
+  const allfund = searchParams.get('allfund');
 
-  const selectedfunds = props?.searchParams?.selectedfund;
+  const selectedfunds = searchParams.get('selectedfund');
   console.log(selectedfunds);
-  const selectedportfeuille = props?.searchParams?.portefeuille;
+  const selectedportfeuille = searchParams.get('portefeuille');
   const router = useRouter();
   const [transactionData, settransactioData] = useState<Transaction[]>([]);
   const [error, setError] = useState(""); // État pour stocker le message d'erreur
@@ -312,7 +306,7 @@ export default function Vente(props: PageProps) {
             Swal.close(); // Close the loading popup
 
             setTimeout(() => {
-              const href = `/panel/portefeuille/portefeuillereconstitution?id=${id}&selectedfund=${allfund}&portefeuille=${selectedportfeuille}`;
+              const href = `/panel/portefeuille/portefeuillereconstitution?selectedfund=${allfund}&portefeuille=${selectedportfeuille}`;
 
               router.push(href);
             }, 500);

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from 'next/navigation';
-import { magic } from "../../magic";
 import Swal from "sweetalert2";
 
 export default function Sidebar({ id }: { id: string }) {
@@ -79,19 +78,15 @@ const router=useRouter();
    
   }, []);
   
-  const handleLogout = async () => {
-    // Remove items from localStorage
+  const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
-    if (magic && magic.auth) {
-      await magic.user.logout();
-      // Si vous avez stocké le jeton quelque part (comme dans le localStorage), vous pouvez l'effacer ici.
-    // localStorage.removeItem('didToken');
-}
-    
+    localStorage.removeItem('tokenEnCours');
+    document.cookie = 'isLoggedIn=; path=/; max-age=0';
+    document.cookie = 'tokenEnCours=; path=/; max-age=0';
+
     setTimeout(() => {
-      
-      router.push('/accueil'); // Replace '/other-page' with your desired page URL
+      router.push('/accueil');
     }, 200);
   };
 
@@ -127,7 +122,7 @@ const router=useRouter();
     <ul className="space-y-4">
   {/* PorteFeuille */}
   <li>
-    <Link href={`/panel/portefeuille/home?id=${id}`}>
+    <Link href={`/panel/portefeuille/home`}>
       <button
         className={`block w-full py-3 px-4 ${
           pathname.includes('/portefeuille/home') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -140,7 +135,7 @@ const router=useRouter();
 
   {/* Robot Advisor */}
   <li>
-    <Link href={`/panel/portefeuille/robotadvisor?id=${id}`}>
+    <Link href={`/panel/portefeuille/robotadvisor`}>
       <button
         className={`block w-full py-3 px-4 ${
           pathname.includes('/portefeuille/robotadvisor') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -153,7 +148,7 @@ const router=useRouter();
 
   {/* Favoris */}
   <li>
-    <Link href={`/panel/portefeuille/fondfavoris?id=${id}`}>
+    <Link href={`/panel/portefeuille/fondfavoris`}>
       <button
         className={`block w-full py-3 px-4 ${
           pathname.includes('/portefeuille/fondfavoris') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -179,7 +174,7 @@ const router=useRouter();
     {isDropdownOpen && (
       <ul className="pl-4 mt-2 space-y-2 text-sm">
         <li>
-          <Link href={`/panel/portefeuille/profile?id=${id}`}>
+          <Link href={`/panel/portefeuille/profile`}>
             <button
               className={`block w-full py-2 px-2 ${
                 pathname.includes('/portefeuille/profile') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -190,7 +185,7 @@ const router=useRouter();
           </Link>
         </li>
         <li>
-          <Link href={`/panel/portefeuille/questionnaire?id=${id}`}>
+          <Link href={`/panel/portefeuille/questionnaire`}>
             <button
               className={`block w-full py-2 px-2 ${
                 pathname.includes('/portefeuille/questionnaire') ? 'bg-purple-500' : 'bg-indigo-500'
@@ -206,7 +201,7 @@ const router=useRouter();
 
   {/* KYC */}
   <li>
-    <Link href={`/panel/portefeuille/kyc?id=${id}`}>
+    <Link href={`/panel/portefeuille/kyc`}>
       <button
         className={`block w-full py-3 px-4 ${
           pathname.includes('/portefeuille/kyc') ? 'bg-purple-500' : 'bg-indigo-500'

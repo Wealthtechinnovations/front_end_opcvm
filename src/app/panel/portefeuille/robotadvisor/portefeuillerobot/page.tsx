@@ -3,6 +3,10 @@ import { urlconstant } from "@/app/constants";
 
 import Link from "next/link";
 import { Fragment, SetStateAction, useEffect, useState } from "react";
+import { useSearchParams } from 'next/navigation';
+import { useUserId } from '@/hooks/useUserId';
+import Sidebar from "@/app/sidebarportefeuille";
+import Headermenu from "@/app/Headermenu";
 import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
@@ -54,24 +58,17 @@ interface Option {
   value: string;
   label: string;
 }
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any;
-    simulation: any;
-    id: any
-  };
-}
 interface MyDataType {
   name: any;
   y: any;
-  InRef: any; // Remplacez "number" par le type appropriéf
+  InRef: any;
   // Autres propriétés
 }
 
-export default function PorteFeuile(props: PageProps) {
-  const selectedfunds = props?.searchParams?.selectedfund;
-  let id = props.searchParams.id;
+export default function PorteFeuile() {
+  const searchParams = useSearchParams();
+  const id = useUserId();
+  const selectedfunds = searchParams.get('selectedfund');
 
   useEffect(() => {
     Highcharts.setOptions({
@@ -80,7 +77,7 @@ export default function PorteFeuile(props: PageProps) {
       }
     });
   }, [id]);
-  let selectedportfeuille = props?.searchParams?.simulation;
+  const selectedportfeuille = searchParams.get('simulation');
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -153,79 +150,10 @@ export default function PorteFeuile(props: PageProps) {
 
 
     < Fragment >
-      <Header />
-      <aside className="main-sidebar">
-        <section className="sidebar position-relative">
-          <div className="multinav">
-            <div className="multinav-scroll" style={{ height: '97%' }}>
-              <ul className="sidebar-menu" data-widget="tree">
-
-
-                <li>
-                  <Link href={`/panel/portefeuille/home?id=${id}`} >
-                    <i data-feather="plus-square"></i>
-                    <span>PorteFeuile</span>
-                  </Link>
-                </li>
-                <li>
-                  <a href={`/panel/portefeuille/robotadvisor?id=${id}`} style={{ backgroundColor: "#3b82f6", color: "white" }}>
-                    <span style={{ marginLeft: '55px' }}>Robot Advisor</span></a>
-                </li>
-                <li>
-                  <Link href={`/panel/portefeuille/fondfavoris?id=${id}`}>
-                    <i data-feather="user"></i>
-                    <span>Favoris</span>
-                  </Link>
-                </li>
-
-                <li className={`dropdown ${isDropdownOpen ? 'open' : ''}`}>
-                  <a href="#" onClick={toggleDropdown} className="dropdown-toggle" data-toggle="dropdown" >
-                    <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
-                    <span>Profil investisseur</span>
-                  </a>
-                  {isDropdownOpen && (
-                    <>
-                      <li>
-                        <a href={`/panel/portefeuille/profile?id=${id}`}>   <i className="bi bi-check2"></i>
-                          <span style={{ marginLeft: '55px' }}>Profil</span></a>
-                      </li>
-                      <li>
-                        <a href={`/panel/portefeuille/questionnaire?id=${id}`}>
-                          <span style={{ marginLeft: '55px' }}>Questionnaire</span></a>
-                      </li>
-
-                    </>
-                  )}
-                </li>
-                <li>
-                  <a href={`/panel/portefeuille/kyc?id=${id}`}>
-                    <span style={{ marginLeft: '55px' }}>KYC</span></a>
-                </li>
-                <li>
-                  <Link href={`/accueil`}>
-                    <i data-feather="user"></i>
-                    <span>Se deconnecter</span>
-                  </Link>
-                </li>
-
-
-
-
-                {/* ... (autres éléments du menu) */}
-              </ul>
-
-              <div className="sidebar-widgets">
-                <div className="mx-25 mb-30 pb-20 side-bx bg-primary-light rounded20">
-                  <div className="text-center">
-                    <img src="../../../images/svg-icon/color-svg/custom-32.svg" className="sideimg p-5" alt="" />
-                    <h4 className="title-bx text-primary">Portefeuille Panel</h4>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </aside>
+    <div className="flex bg-gray-100">
+      <Sidebar id={id} />
+      <div className="flex-1 ml-64">
+        <Headermenu />
       <div className="content-wrapper2">
         <div className="container-full">
           {/* Main content */}
@@ -261,7 +189,7 @@ export default function PorteFeuile(props: PageProps) {
                     <div className="text-right">  <Link
                       href={{
                         pathname: '/portefeuille/robotadvisor/portefeuillerobot/roboadvisor',
-                        query: { id: id, simulation: selectedportfeuille }, // Passer les éléments sélectionnés comme paramètres de requête
+                        query: { simulation: selectedportfeuille }, // Passer les éléments sélectionnés comme paramètres de requête
                       }}
                       /*  as={`/about/${selectedRows ? selectedRows.join(',') : ''}`}
                         key={selectedRows.join(',')}*/
@@ -323,6 +251,8 @@ export default function PorteFeuile(props: PageProps) {
             </div>
           </section>
         </div>
+      </div>
+      </div >
       </div >
     </Fragment >
   );

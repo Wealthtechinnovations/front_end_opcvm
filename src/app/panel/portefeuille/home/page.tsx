@@ -12,7 +12,6 @@ import { useRouter } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';
 import usePortfolioStore from '@/stores/usePortfolioStore';
 import { Dropdown } from "react-bootstrap";
-import { magic } from "../../../../../magic";
 import Sidebar from "@/app/sidebarportefeuille";
 import Headermenu from "@/app/Headermenu";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
@@ -29,16 +28,10 @@ async function getPortefeuille(id: any) {
   if (!response.ok) throw new Error(`Failed to fetch portfolios: ${response.status}`);
   return response.json();
 }
-interface PageProps {
-  searchParams: {
-    id: any;
-  };
-}
-export default function Home(props: PageProps) {
+export default function Home() {
 
   const router = useRouter();
-  const storedUserId = useUserId();
-  const id = storedUserId || props.searchParams.id;
+  const id = useUserId();
   const { portfolios, fetchPortfolios, deletePortfolio, loading } = usePortfolioStore();
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [activeTab, setActiveTab] = useState("tabAccueil");
@@ -47,14 +40,14 @@ export default function Home(props: PageProps) {
   const [base100Data, setBase100Data] = useState([]); // Nouvel état pour les données en base 100
 
   const handleLinkClick = (item: any) => {
-    const href = `/panel/portefeuille/portefeuillereconstitution?id=${id}&selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
+    const href = `/panel/portefeuille/portefeuillereconstitution?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
 
     // Use the router.push method to navigate
     router.push(href);
   };
 
   const handleLinkClickrobot = (item: any) => {
-    const href = `/panel/portefeuille/portefeuillerobot?id=${id}&selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
+    const href = `/panel/portefeuille/portefeuillerobot?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
 
     // Use the router.push method to navigate
     router.push(href);
@@ -127,15 +120,12 @@ export default function Home(props: PageProps) {
     });
   };
 
-  const logout = async () => {
+  const logout = () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
     localStorage.removeItem('tokenEnCours');
     document.cookie = 'isLoggedIn=; path=/; max-age=0';
     document.cookie = 'tokenEnCours=; path=/; max-age=0';
-    if (magic && magic.auth) {
-      await magic.user.logout();
-    }
     router.push('/accueil');
   };
 
@@ -238,13 +228,13 @@ export default function Home(props: PageProps) {
                     <PageHeader
                       title="Mes portefeuilles"
                       breadcrumbs={[
-                        { label: 'Accueil', link: `/panel/portefeuille/home?id=${id}` },
+                        { label: 'Accueil', link: `/panel/portefeuille/home` },
                         { label: 'Portefeuilles' },
                       ]}
                       actions={
                         <Link
                           className="btn btn-primary"
-                          href={`/panel/portefeuille/ajoutportefeuille?id=${id}`}
+                          href={`/panel/portefeuille/ajoutportefeuille`}
                         >
                           Créer un portefeuille
                         </Link>

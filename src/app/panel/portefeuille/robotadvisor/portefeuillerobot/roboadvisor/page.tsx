@@ -9,8 +9,10 @@ import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 //import { router } from 'next/router';
 
-import { useRouter } from 'next/navigation';
-import { Console } from "console";
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useUserId } from '@/hooks/useUserId';
+import Sidebar from "@/app/sidebarportefeuille";
+import Headermenu from "@/app/Headermenu";
 import Swal from 'sweetalert2';
 import { Button } from "react-bootstrap";
 import Header from "@/app/Header";
@@ -47,15 +49,6 @@ type CategoryValues = {
 
 interface Option {
   value: string;
-}
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any;
-    funds: any;
-    simulation: any;
-    id: any
-  };
 }
 async function getlastvl1() {
   const data = (
@@ -114,7 +107,9 @@ interface PortfolioData {
   };
   frontier_image: string;
 }
-export default function RoboAdvisor(props: PageProps) {
+export default function RoboAdvisor() {
+  const searchParams = useSearchParams();
+  const id = useUserId();
 
   const [selectedOptions1, setSelectedOptions1] = useState<Option[]>([
     { value: "Actions", label: 'Actions' },
@@ -134,8 +129,8 @@ export default function RoboAdvisor(props: PageProps) {
   const router = useRouter();
   const minWeightArray: number[] = [];
   const maxWeightArray: number[] = [];
-  const simulation = props?.searchParams?.simulation;
-  const portefeuille = props?.searchParams?.portefeuille;
+  const simulation = searchParams.get('simulation');
+  const portefeuille = searchParams.get('portefeuille');
   const [isOpen, setIsOpen] = useState(false);
   const [fundsOptions, setFundsOptions] = useState([]);
 
@@ -216,7 +211,6 @@ export default function RoboAdvisor(props: PageProps) {
     );
   };
 
-  let id = props.searchParams.id;
 
   const [currentMinWeight, setCurrentMinWeight] = useState('');
   const [currentMaxWeight, setCurrentMaxWeight] = useState('');
@@ -584,7 +578,7 @@ export default function RoboAdvisor(props: PageProps) {
         Swal.close(); // Close the loading popup
 
         setTimeout(() => {
-          const href = `/panel/portefeuille/robotadvisor/portefeuillerobot?id=${id}`;
+          const href = `/panel/portefeuille/robotadvisor/portefeuillerobot`;
 
           router.push(href);
         }, 2000);
@@ -611,63 +605,10 @@ export default function RoboAdvisor(props: PageProps) {
 
 
     < Fragment >
-      <Header />
-      <aside className="main-sidebar">
-        <section className="sidebar position-relative">
-          <div className="multinav">
-            <div className="multinav-scroll" style={{ height: '97%' }}>
-              <ul className="sidebar-menu" data-widget="tree">
-
-
-                <li>
-                  <Link href={`/panel/portefeuille/home?id=${id}`} style={{ backgroundColor: "#3b82f6", color: "white" }} >
-                    <i data-feather="plus-square"></i>
-                    <span>PorteFeuile</span>
-                  </Link>
-                </li>
-                <li className={`dropdown ${isDropdownOpen ? 'open' : ''}`}>
-                  <a href="#" onClick={toggleDropdown} className="dropdown-toggle" data-toggle="dropdown" >
-                    <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
-                    <span>Profil investisseur</span>
-                  </a>
-                  {isDropdownOpen && (
-                    <>
-                      <li>
-                        <a href={`/panel/portefeuille/profile?id=${id}`}>   <i className="bi bi-check2"></i>
-                          <span style={{ marginLeft: '55px' }}>Profil</span></a>
-                      </li>
-                      <li>
-                        <a href={`/panel/portefeuille/questionnaire?id=${id}`}>
-                          <span style={{ marginLeft: '55px' }}>Questionnaire</span></a>
-                      </li>
-                    </>
-                  )}
-                </li>
-                <li>
-                  <Link href={`/accueil`}>
-                    <i data-feather="user"></i>
-                    <span>Se deconnecter</span>
-                  </Link>
-                </li>
-
-
-
-
-                {/* ... (autres éléments du menu) */}
-              </ul>
-
-              <div className="sidebar-widgets">
-                <div className="mx-25 mb-30 pb-20 side-bx bg-primary-light rounded20">
-                  <div className="text-center">
-                    <img src="../../../images/svg-icon/color-svg/custom-32.svg" className="sideimg p-5" alt="" />
-                    <h4 className="title-bx text-primary">Portefeuille Panel</h4>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </aside>
+    <div className="flex bg-gray-100">
+      <Sidebar id={id} />
+      <div className="flex-1 ml-64">
+        <Headermenu />
       <div className="content-wrapper2">
         <div className="container-full">
           {/* Main content */}
@@ -1422,6 +1363,8 @@ export default function RoboAdvisor(props: PageProps) {
             </div>
           </section>
         </div>
+      </div>
+      </div >
       </div >
     </Fragment >
   );
