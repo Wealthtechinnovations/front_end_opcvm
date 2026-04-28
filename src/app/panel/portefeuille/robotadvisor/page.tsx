@@ -1,6 +1,5 @@
 "use client";
 import { urlconstant } from "@/app/constants";
-import { useSession } from 'next-auth/react';
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
@@ -68,9 +67,7 @@ export default function RobotAdvisor() {
     }
     fetchData();
   }, []);
-  console.log("performanceData")
 
-  console.log(performanceData)
 
   return (
 

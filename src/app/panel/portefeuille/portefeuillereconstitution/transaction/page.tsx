@@ -9,7 +9,6 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from "@/app/Header";
 
 import Swal from 'sweetalert2';
@@ -151,7 +150,6 @@ export default function Transactions() {
   const selectedportfeuille = searchParams.get('portefeuille');
   const selectedValuename = searchParams.get('selectedValuename');
 
-  console.log(selectedValuename);
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [fundsOptions, setFundsOptions] = useState([]);
@@ -188,7 +186,6 @@ export default function Transactions() {
         try {
           const response = await fetch(`${urlconstant}/api/getfondbyid/${item}`);
           const data = await response.json();
-          console.log(fetchedData);
           fetchedData.push(data);
         } catch (error) {
           console.error("Erreur lors de l'appel API :", error);
@@ -201,8 +198,6 @@ export default function Transactions() {
 
       const response1 = await fetch(`${urlconstant}/api/gettransactions/${selectedportfeuille}`);
       const data1 = await response1.json();
-      console.log('dddddd');
-      console.log(data1.data.transactions);
       settransactioData(data1.data.transactions);
       const data = await getPortefeuille(selectedportfeuille);
       setPortefeuille(data);

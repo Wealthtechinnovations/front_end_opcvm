@@ -188,7 +188,6 @@ export default function Profile(): JSX.Element {
         if (result.ok) {
           const data = await result.json();
           setQuestionnaireForUser(data);
-          console.log("Data=>", data?.userId);
         } else {
           throw new Error('Erreur lors de la requête à l\'API');
         }

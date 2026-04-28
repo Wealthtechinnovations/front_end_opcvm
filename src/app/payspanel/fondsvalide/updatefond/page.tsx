@@ -9,7 +9,6 @@ import Select, { SingleValue } from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from '../../../Header';
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
@@ -323,7 +322,6 @@ export default function Ajoutvl(props: PageProps) {
           // Replace with the actual property name
         }));
         setOptionsPays(mappedOptions);
-        console.log(data.data.paysOptions);
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
       }
@@ -336,7 +334,6 @@ export default function Ajoutvl(props: PageProps) {
       const fetchRegulateur = async () => {
         try {
           const data = await getregulateur(selectedPays?.value)
-          console.log(data?.data);
 
           let mappedOptions = [];
           if (Array.isArray(data?.data.regulateur)) {
@@ -394,8 +391,6 @@ export default function Ajoutvl(props: PageProps) {
       if (selectedRegulateur)
         formData.regulateur = selectedRegulateur?.value
       formData.societe_gestion = societeconneted;
-      console.log(formData);
-      console.log(formData);
       // Envoyer les données du formulaire à l'API
       const response = await fetch(`${urlconstant}/api/updatefondmodif/${fondId}`, {
         method: 'POST',
@@ -417,7 +412,7 @@ export default function Ajoutvl(props: PageProps) {
 
         // Redirect the user to another page after a delay (e.g., 2 seconds)
         setTimeout(() => {
-          const href = `/payspanel/fonds?id=${societeconneted}`;
+          const href = `/payspanel/fonds`;
 
           router.push(href);
         }, 2000);
@@ -452,7 +447,7 @@ export default function Ajoutvl(props: PageProps) {
               <ul className="sidebar-menu" data-widget="tree">
 
                 <li>
-                  <Link href={`/payspanel/pagehome?id=${societeconneted}`} >
+                  <Link href={`/payspanel/pagehome`} >
                     <i data-feather="plus-square"></i>
                     <span>Tableau de bord</span>
                   </Link>
@@ -465,19 +460,19 @@ export default function Ajoutvl(props: PageProps) {
                   {isDropdownOpen && (
                     <>
                       <li>
-                        <a href={`/payspanel/fondsvalide?id=${societeconneted}`}>   <i className="bi bi-check2"></i>
+                        <a href={`/payspanel/fondsvalide`}>   <i className="bi bi-check2"></i>
                           <span style={{ marginLeft: '55px' }}>Fonds validés</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/fonds?id=${societeconneted}`}>
+                        <a href={`/payspanel/fonds`}>
                           <span style={{ marginLeft: '55px' }}>Fonds à validés</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/ajoutvl?id=${societeconneted}`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
+                        <a href={`/payspanel/ajoutvl`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                           <span style={{ marginLeft: '55px' }}>Ajouter un fond</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/importfondvl?id=${societeconneted}`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
+                        <a href={`/payspanel/importfondvl`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                           <span style={{ marginLeft: '55px' }}>Importer Fonds et Vl</span></a>
                       </li>
                     </>
@@ -486,14 +481,14 @@ export default function Ajoutvl(props: PageProps) {
 
 
                 <li>
-                  <Link href={`/payspanel/anomalie?id=${societeconneted}`}  >
+                  <Link href={`/payspanel/anomalie`}  >
                     <i data-feather="plus-square"></i>
                     <span>Anomalies</span>
                   </Link>
                 </li>
 
                 <li>
-                  <Link href={`/payspanel/actualite?id=${societeconneted}`} >
+                  <Link href={`/payspanel/actualite`} >
                     <i data-feather="user"></i>
                     <span>Actualités</span>
                   </Link>

@@ -145,11 +145,9 @@ export default function Fonds(props: PageProps) {
             Swal.showLoading();
           }
         });
-        console.log(props);
         const data = await getFonds(id);
 
         setFunds(data);
-        console.log(data)
         const data1 = await getMissingDates(id);
 
         setDates(data1);
@@ -281,7 +279,6 @@ export default function Fonds(props: PageProps) {
     e.preventDefault();
 
     try {
-      console.log(valuationRows);
       const valuationRowsWithFondId = valuationRows.map((row) => ({
         ...row,
         fund_id: id,
@@ -307,7 +304,7 @@ export default function Fonds(props: PageProps) {
 
         // Redirect to the same page
         setTimeout(() => {
-          const href = `/payspanel/fonds?id=${societeconneted}`;
+          const href = `/payspanel/fonds`;
 
           router.push(href);
         }, 2000);
@@ -360,7 +357,7 @@ export default function Fonds(props: PageProps) {
         });
 
         setTimeout(() => {
-          const href = `/payspanel/fonds?id=${societeconneted}`;
+          const href = `/payspanel/fonds`;
 
           router.push(href);
         }, 2000);
@@ -390,7 +387,6 @@ export default function Fonds(props: PageProps) {
     e.preventDefault();
 
     try {
-      console.log(valuationRows1);
       const valuationRowsWithFondId = valuationRows1.map((row) => ({
         ...row,
         fund_id: id,
@@ -413,7 +409,7 @@ export default function Fonds(props: PageProps) {
         });
         setSuccessMessage('Données inserées');
         setTimeout(() => {
-          const href = `/payspanel/fonds?id=${societeconneted}`;
+          const href = `/payspanel/fonds`;
 
           router.push(href);
         }, 2000);
@@ -470,7 +466,7 @@ export default function Fonds(props: PageProps) {
           showConfirmButton: false,
           timer: 5000,
         }); setTimeout(() => {
-          const href = `/payspanel/fonds?id=${societeconneted}`;
+          const href = `/payspanel/fonds`;
 
           router.push(href);
         }, 2000);
@@ -516,7 +512,7 @@ export default function Fonds(props: PageProps) {
               <ul className="sidebar-menu" data-widget="tree">
 
                 <li>
-                  <Link href={`/payspanel/pagehome?id=${societeconneted}`} >
+                  <Link href={`/payspanel/pagehome`} >
                     <i data-feather="plus-square"></i>
                     <span>Tableau de bord</span>
                   </Link>
@@ -529,19 +525,19 @@ export default function Fonds(props: PageProps) {
                   {isDropdownOpen && (
                     <>
                       <li>
-                        <a href={`/payspanel/fondsvalide?id=${societeconneted}`}>   <i className="bi bi-check2"></i>
+                        <a href={`/payspanel/fondsvalide`}>   <i className="bi bi-check2"></i>
                           <span style={{ marginLeft: '55px' }}>Fonds validés</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/fonds?id=${societeconneted}`}>
+                        <a href={`/payspanel/fonds`}>
                           <span style={{ marginLeft: '55px' }}>Fonds à validés</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/ajoutvl?id=${societeconneted}`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
+                        <a href={`/payspanel/ajoutvl`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                           <span style={{ marginLeft: '55px' }}>Ajouter un fond</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/importfondvl?id=${societeconneted}`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
+                        <a href={`/payspanel/importfondvl`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                           <span style={{ marginLeft: '55px' }}>Importer Fonds et Vl</span></a>
                       </li>
                     </>
@@ -550,14 +546,14 @@ export default function Fonds(props: PageProps) {
 
 
                 <li>
-                  <Link href={`/payspanel/anomalie?id=${societeconneted}`}  >
+                  <Link href={`/payspanel/anomalie`}  >
                     <i data-feather="plus-square"></i>
                     <span>Anomalies</span>
                   </Link>
                 </li>
 
                 <li>
-                  <Link href={`/payspanel/actualite?id=${societeconneted}`} >
+                  <Link href={`/payspanel/actualite`} >
                     <i data-feather="user"></i>
                     <span>Actualités</span>
                   </Link>

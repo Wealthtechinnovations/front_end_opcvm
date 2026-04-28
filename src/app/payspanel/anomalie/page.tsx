@@ -1,6 +1,5 @@
 "use client";
 import { urlconstant } from "@/app/constants";
-import { useSession } from 'next-auth/react';
 
 import Link from "next/link";
 import { Fragment, SetStateAction, useEffect, useState } from "react";
@@ -110,7 +109,7 @@ export default function Home(props: PageProps) {
     let href;
     if (typeAnomalie === 'ANOMALIE VL') {
       // Rediriger l'utilisateur vers la page des détails pour les VL manquantes
-      href = `/payspanel/anomalie/vlanomalie?id=${id}&fond=${item}`;
+      href = `/payspanel/anomalie/vlanomalie?fond=${item}`;
     } else {
       // Rediriger l'utilisateur vers une autre page pour d'autres types d'anomalies
       href = `/payspanel/fonds/detailsfond?societeconneted=${id}&Id=${item}`;
@@ -146,7 +145,6 @@ export default function Home(props: PageProps) {
 
         setFundsData(data.data);
 
-        console.log(data.data)
 
         Swal.close(); // Close the loading popup
 
@@ -159,9 +157,7 @@ export default function Home(props: PageProps) {
     }
     fetchData();
   }, []);
-  console.log("performanceData")
 
-  console.log(performanceData)
 
   const handleLogout = () => {
     // Remove items from localStorage
@@ -217,7 +213,7 @@ export default function Home(props: PageProps) {
               <ul className="sidebar-menu" data-widget="tree">
 
                 <li>
-                  <Link href={`/payspanel/pagehome?id=${societeconneted}`} >
+                  <Link href={`/payspanel/pagehome`} >
                     <i data-feather="plus-square"></i>
                     <span>Tableau de bord</span>
                   </Link>
@@ -230,19 +226,19 @@ export default function Home(props: PageProps) {
                   {isDropdownOpen && (
                     <>
                       <li>
-                        <a href={`/payspanel/fondsvalide?id=${societeconneted}`}>   <i className="bi bi-check2"></i>
+                        <a href={`/payspanel/fondsvalide`}>   <i className="bi bi-check2"></i>
                           <span style={{ marginLeft: '55px' }}>Fonds validés</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/fonds?id=${societeconneted}`}>
+                        <a href={`/payspanel/fonds`}>
                           <span style={{ marginLeft: '55px' }}>Fonds à validés</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/ajoutvl?id=${societeconneted}`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
+                        <a href={`/payspanel/ajoutvl`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                           <span style={{ marginLeft: '55px' }}>Ajouter un fond</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/importfondvl?id=${societeconneted}`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
+                        <a href={`/payspanel/importfondvl`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                           <span style={{ marginLeft: '55px' }}>Importer Fonds et Vl</span></a>
                       </li>
                     </>
@@ -251,14 +247,14 @@ export default function Home(props: PageProps) {
 
 
                 <li>
-                  <Link href={`/payspanel/anomalie?id=${societeconneted}`} style={{ backgroundColor: "#3b82f6", color: "white" }} >
+                  <Link href={`/payspanel/anomalie`} style={{ backgroundColor: "#3b82f6", color: "white" }} >
                     <i data-feather="plus-square"></i>
                     <span>Anomalies</span>
                   </Link>
                 </li>
 
                 <li>
-                  <Link href={`/payspanel/actualite?id=${societeconneted}`} >
+                  <Link href={`/payspanel/actualite`} >
                     <i data-feather="user"></i>
                     <span>Actualités</span>
                   </Link>

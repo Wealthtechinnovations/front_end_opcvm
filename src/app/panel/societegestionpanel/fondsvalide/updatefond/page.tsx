@@ -9,7 +9,6 @@ import Select, { SingleValue } from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import { useRouter, useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
 import Sidebar from "@/app/sidebar";
@@ -322,7 +321,6 @@ export default function Ajoutvl() {
           // Replace with the actual property name
         }));
         setOptionsPays(mappedOptions);
-        console.log(data.data.paysOptions);
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
       }
@@ -335,7 +333,6 @@ export default function Ajoutvl() {
       const fetchRegulateur = async () => {
         try {
           const data = await getregulateur(selectedPays?.value)
-          console.log(data?.data);
 
           let mappedOptions = [];
           if (Array.isArray(data?.data.regulateur)) {
@@ -393,8 +390,6 @@ export default function Ajoutvl() {
       if (selectedRegulateur)
         formData.regulateur = selectedRegulateur?.value
       formData.societe_gestion = societeconneted;
-      console.log(formData);
-      console.log(formData);
       // Envoyer les données du formulaire à l'API
       const response = await fetch(`${urlconstant}/api/updatefondmodif/${fondId}`, {
         method: 'POST',

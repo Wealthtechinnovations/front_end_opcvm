@@ -63,7 +63,6 @@ export default function CConditionsProfil(): JSX.Element {
       }
 
       const token = localStorage.getItem('tokenEnCours') //Le token récuperé
-      console.log(token)
       const result = await fetch(`${urlstableconstant}/api/profile/opcvm/update-field-conditions`, {
         method: "PUT",
         body: JSON.stringify(dataa),

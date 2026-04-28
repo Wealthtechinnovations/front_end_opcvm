@@ -64,7 +64,6 @@ export default function Profile() {
         const data = await getsociete();
 
         setManagementCompany(data.data.societe);
-        console.log(managementCompany);
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
       }
@@ -96,7 +95,6 @@ export default function Profile() {
       .catch((error) => console.error('Error updating management company data:', error));
   };
 
-  console.log(managementCompany);
   return (
 
 

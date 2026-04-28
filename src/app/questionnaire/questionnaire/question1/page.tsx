@@ -77,7 +77,6 @@ export default function Profile(props: PageProps): JSX.Element {
       try {
         const token = localStorage.getItem('tokenEnCours');
         ////const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ4LCJpc0FkbWluIjowLCJpYXQiOjE3MTE5NjI2ODcsImV4cCI6MTcxMjEzNTQ4N30.wiEHhYxqY0NtgxwUVGUYOD2vHih381Qf3KQh4_2CU2w";
-        console.log(localStorage);
 
         const result = await fetch(`${urlstableconstant}/api/mifid/find-quiz-mifid-of-user`, {
           headers: {
@@ -279,14 +278,14 @@ export default function Profile(props: PageProps): JSX.Element {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/portefeuille/login');
       }, 5);

@@ -10,7 +10,6 @@ import Select from 'react-select';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 
-//import { router } from 'next/router';
 import Header from '@/app/Header';
 import { useRouter } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';

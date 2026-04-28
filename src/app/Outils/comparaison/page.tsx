@@ -195,8 +195,6 @@ export default function Comparaison() {
       }
     });
     // Traitez les données du formulaire ici (selectedOptions et textInput)
-    console.log('Options sélectionnées :', formData);
-    console.log('Texte saisi :', textInput);
     const selectedValues = selectedOptions.map(option => option?.value);
     fetch(`${urlconstant}/api/recherchefonds?query=${selectedValues.join(',')}&selectedcategorie=${selectedcategorie}&selectedsociete=${selectedeSociete}`, {
       method: 'POST', // Assurez-vous que la méthode HTTP correspond à votre API
@@ -224,7 +222,6 @@ export default function Comparaison() {
         }
 
         // Traitez la réponse de l'API ici
-        console.log('Réponse de l\'API :', data);
       })
       .catch(error => {
         console.error('Erreur lors de l\'appel de l\'API :', error);
@@ -237,7 +234,6 @@ export default function Comparaison() {
 
   const handleTabClick = (tabName: any) => {
     setActiveTab(tabName);
-    console.log("Position de la nav : ", tabName);
   };
 
   const handleItemsPerPageChange = (e: { target: { value: string; }; }) => {
@@ -261,7 +257,6 @@ export default function Comparaison() {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
 
-    console.log("isLoggedIn")
     if (isLoggedIn === 'true' && userId !== null) {
       const userIdNumber = parseInt(userId, 10);
       setIsLoggedIn(true);
@@ -290,7 +285,6 @@ export default function Comparaison() {
   useEffect(() => {
 
 
-    console.log("Position de la nav : ", activeTab);
 
     // Appel à l'API lors du premier rendu du composant
     async function fetchData() {
@@ -307,9 +301,7 @@ export default function Comparaison() {
           // Replace with the actual property name
         }));
         setFundsOptions(mappedOptions);
-        console.log(mappedOptions);
 
-        console.log(fundsOptions);
         const data2 = await getsociete();
         const mappedOptions2 = data2?.data.societes.map((funds: any) => ({
 
@@ -329,13 +321,9 @@ export default function Comparaison() {
     if (selectedRows.includes(itemId)) {
       // L'élément est déjà sélectionné, donc le désélectionner
       setSelectedRows(selectedRows.filter((id) => id !== itemId));
-      console.log("aaaaa")
-      console.log(selectedRows)
     } else {
-      console.log("bbbb")
       // L'élément n'est pas sélectionné, donc le sélectionner
       setSelectedRows(selectedRows.concat(itemId));
-      console.log(selectedRows)
 
     }
   };
@@ -353,7 +341,6 @@ export default function Comparaison() {
       direction = 'desc';
 
     }
-    console.log(key)
 
     setSortConfig({ key, direction });
 
@@ -361,16 +348,13 @@ export default function Comparaison() {
 
       // Créez une copie triée des fonds en utilisant la méthode sort()
       const sortedFundsCopy = [...funds.data.funds];
-      console.log(sortedFundsCopy);
       const filteredFunds = sortedFundsCopy.filter(item =>
         item.performanceData &&
         item.performanceData[sortConfig.key] !== '-'
       );
-      console.log(filteredFunds)
 
 
       filteredFunds.sort((a, b) => {
-        console.log("filteredFunds")
 
         if (sortConfig.key == "type_investissement" || sortConfig.key == "nom_fond" || sortConfig.key == "categorie_national" || sortConfig.key == "datejour" || sortConfig.key == "datemoispre" || sortConfig.key == "dev_libelle" || sortConfig.key == "categorie_globale" || sortConfig.key == "code_ISIN" || sortConfig.key == "societe_gestion") {
           const aValue = a.fundData[sortConfig.key];
@@ -384,7 +368,6 @@ export default function Comparaison() {
           }
 
         } else {
-          console.log("filteredFunds")
 
           const aValue = a.performanceData[sortConfig.key];
           const bValue = b.performanceData[sortConfig.key];
@@ -474,14 +457,14 @@ const getValue = (fund, key) => {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/panel/societegestionpanel/login');
       }, 5);

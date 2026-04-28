@@ -9,7 +9,6 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 
 import { useRouter } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';
@@ -81,7 +80,6 @@ export default function Ajoutportefeuille() {
         },
         body: JSON.stringify(formData), // Convertissez votre objet formData en JSON
       });
-      console.log(response);
       // Gérer la réponse de l'API (par exemple, afficher un message de succès)
 
       if (response.status === 200) {

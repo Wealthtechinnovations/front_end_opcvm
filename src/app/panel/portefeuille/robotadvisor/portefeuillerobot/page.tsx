@@ -11,7 +11,6 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from "@/app/Header";
 
 import Swal from 'sweetalert2';

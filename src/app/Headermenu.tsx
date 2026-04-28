@@ -27,14 +27,14 @@ const Headermenu = () => {
 
         if (userConnected !== null) {
             setTimeout(() => {
-                const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+                const redirectUrl = `/panel/portefeuille/home`;
 
                 router.push(redirectUrl);
             }, 5);
 
         } else {
             setTimeout(() => {
-                // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+                // const redirectUrl = `/panel/portefeuille/home`;
 
                 router.push('/panel/societegestionpanel/login');
             }, 5);
@@ -44,14 +44,14 @@ const Headermenu = () => {
 
     //     if (userConnected !== null) {
     //         setTimeout(() => {
-    //             const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+    //             const redirectUrl = `/panel/portefeuille/home`;
 
     //             router.push(redirectUrl);
     //         }, 5);
 
     //     } else {
     //         setTimeout(() => {
-    //             // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+    //             // const redirectUrl = `/panel/portefeuille/home`;
 
     //             router.push('/panel/societegestionpanel/login');
     //         }, 5);
@@ -210,7 +210,6 @@ const Headermenu = () => {
     const handleMouseLeavecontact = () => {
         setIsHoveredcontact(false);
     };
-    console.log(pathname);
 
 
     return (

@@ -9,7 +9,6 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from "@/app/Header";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
@@ -173,7 +172,6 @@ export default function Ajoutvl() {
       for (const key in formData) {
         formDataToSend.append(key, formData[key]);
       }*/
-    console.log(formData)
     formData.societe = societeconneted;
 
     const formDatas = new FormData(); // Créez un nouvel objet FormData
@@ -190,7 +188,6 @@ export default function Ajoutvl() {
     formDatas.append('activite', formData.activite);
     formDatas.append('email', formData.email);
     formDatas.append('numero', formData.numero);
-    console.log(formDatas)
     const selectedValues = selectedOptions.map(option => option?.value);
 
     try {
@@ -201,7 +198,6 @@ export default function Ajoutvl() {
         body: /*JSON.stringify(formData)*/formDatas
       });
       const data = await response.json();
-      console.log(data);
       if (response.status === 200) {
         setIsModalOpen(true);
 

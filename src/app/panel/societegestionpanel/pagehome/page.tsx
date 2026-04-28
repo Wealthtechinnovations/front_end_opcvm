@@ -14,7 +14,6 @@ import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 import Headermenu from '@/app/Headermenu';
 import { Dropdown } from "react-bootstrap";
-import Head from "next/head";
 import { faThumbsUp } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";

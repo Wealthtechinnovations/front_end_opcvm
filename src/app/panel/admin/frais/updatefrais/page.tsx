@@ -105,7 +105,7 @@ export default function UpdateFonds() {
           timer: 5000
         });
         setTimeout(() => {
-          router.push(`/panel/admin/frais?id=${id}`);
+          router.push(`/panel/admin/frais`);
         }, 500)
       } else {
         console.error('Failed to update data:', result.error);

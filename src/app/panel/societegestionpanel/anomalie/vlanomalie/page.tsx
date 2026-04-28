@@ -104,7 +104,7 @@ export default function Home() {
   const handleLinkClick = (item: any, typeAnomalie: any) => {
     let href;
       // Rediriger l'utilisateur vers la page des détails pour les VL manquantes
-      href = `/panel/societegestionpanel/anomalie/vlanomalie/details?id=${id}&fond=${item}`;
+      href = `/panel/societegestionpanel/anomalie/vlanomalie/details?fond=${item}`;
   
 
     // Use the router.push method to navigate

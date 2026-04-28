@@ -1,70 +1,59 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useCallback, useEffect, useState } from "react";
-
-
-import Select from 'react-select';
-//import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
-import Head from 'next/head';
+import { Fragment, useState } from "react";
 import { urlconstant } from "@/app/constants";
-import { magic } from '../../../../magic'; // Importer correctement le module
 import { useRouter } from 'next/navigation';
 
 
-export default function LoginMagic() {
-
-  const [email, setEmail] = useState(""); // Ajout de l'état pour l'e-mail
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
-  // Fonction de connexion à magic
-  async function loginMagic(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setIsLoggingIn(true)
+    setIsLoggingIn(true);
+    setError("");
     try {
-      if (magic && magic.auth) {
-        const didToken = await magic.auth.loginWithMagicLink({
-          email,
-          redirectURI: new URL('/callback', window.location.origin).href,
-        })
-        setTimeout(() => {
-          window.location.reload()
-        }, 1000)
-      }
-    } catch (error) {
-      setIsLoggingIn(false)
-      console.error(error);
-    }
-  };
-
-
-  // Fonction de deconnexion
-  const logout = useCallback(() => {
-    if (magic && magic.user) {
-
-      magic.user.logout().then(() => {
-        // Actualisation et redirection
-        setTimeout(() => {
-          window.location.reload()
-        }, 1000)
-        router.push("/"); //Redirection après connexion
-
+      const response = await fetch(`${urlconstant}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
+      const data = await response.json();
+      if (data.code === 200 && data.data?.userExists) {
+        const user = data.data.userExists;
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userId', user.id);
+        localStorage.setItem('tokenEnCours', data.data.token);
+        document.cookie = `isLoggedIn=true; path=/; max-age=${60 * 60 * 24 * 7}`;
+        document.cookie = `tokenEnCours=${data.data.token}; path=/; max-age=${60 * 60 * 24 * 7}`;
+
+        if (user.typeusers_id === 0) {
+          router.push(`/panel/admin/home`);
+        } else if (user.typeusers_id === 2 || user.typeusers_id === 5) {
+          router.push(`/panel/societegestionpanel/pagehome`);
+        } else {
+          router.push(`/panel/portefeuille/home`);
+        }
+      } else {
+        setError(data.message || "Email ou mot de passe incorrect");
+      }
+    } catch (err) {
+      setError("Erreur de connexion au serveur");
+      console.error(err);
+    } finally {
+      setIsLoggingIn(false);
     }
-  }, [router]);
+  }
 
   return (
-
-
-
-    < Fragment >
+    <Fragment>
       <br />
-
       <div className="col-12 mt-3">
-
         <div className="container h-p100">
           <div className="row align-items-center justify-content-md-center h-p100">
             <div className="col-12">
@@ -73,10 +62,10 @@ export default function LoginMagic() {
                   <div className="bg-white rounded10 shadow-lg">
                     <div className="content-top-agile p-20 pb-0">
                       <h2 className="text-primary fw-600">Login</h2>
-                      <p className="mb-0 text-fade">Sign in</p>
+                      <p className="mb-0 text-fade">Connectez-vous</p>
                     </div>
                     <div className="p-40">
-                      <form onSubmit={loginMagic}>
+                      <form onSubmit={handleLogin}>
                         <div className="form-group">
                           <div className="input-group mb-3">
                             <span className="input-group-text bg-transparent"><i className="text-fade ti-user"></i></span>
@@ -84,11 +73,26 @@ export default function LoginMagic() {
                               type="email"
                               className="form-control ps-15 bg-transparent"
                               placeholder="Email"
-                              defaultValue={email}
-                              onChange={(event) => setEmail(event.target.value)}
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              required
                             />
                           </div>
                         </div>
+                        <div className="form-group">
+                          <div className="input-group mb-3">
+                            <span className="input-group-text bg-transparent"><i className="text-fade ti-lock"></i></span>
+                            <input
+                              type="password"
+                              className="form-control ps-15 bg-transparent"
+                              placeholder="Mot de passe"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                            />
+                          </div>
+                        </div>
+                        {error && <div className="text-center text-danger mb-3">{error}</div>}
                         <div className="text-center">
                           <button
                             style={{
@@ -98,25 +102,16 @@ export default function LoginMagic() {
                               padding: '10px 20px',
                               borderRadius: '5px',
                             }}
-                            className="btn text-center "
+                            className="btn text-center"
                             disabled={isLoggingIn}
                             type="submit"
                           >
-                            Connexion
+                            {isLoggingIn ? "Connexion..." : "Connexion"}
                           </button>
                         </div>
                       </form>
                       <div className="text-center">
-                        <p className="mt-15 mb-0 text-fade">Don t have an account? <Link href="" onClick={logout}>Deconnexion</Link></p>
-                      </div>
-
-                      <div className="text-center">
-                        <p className="mt-20 text-fade">- Sign With -</p>
-                        <p className="gap-items-2 mb-0">
-                          <a className="waves-effect waves-circle btn btn-social-icon btn-circle btn-facebook-light" href="#"><i className="fa fa-facebook"></i></a>
-                          <a className="waves-effect waves-circle btn btn-social-icon btn-circle btn-twitter-light" href="#"><i className="fa fa-twitter"></i></a>
-                          <a className="waves-effect waves-circle btn btn-social-icon btn-circle btn-instagram-light" href="#"><i className="fa fa-instagram"></i></a>
-                        </p>
+                        <p className="mt-15 mb-0 text-fade">Pas encore de compte ? <Link href="/panel/portefeuille/login/register">Inscription</Link></p>
                       </div>
                     </div>
                   </div>
@@ -125,8 +120,7 @@ export default function LoginMagic() {
             </div>
           </div>
         </div>
-      </div >
-    </Fragment >
+      </div>
+    </Fragment>
   );
 }
-LoginMagic.layout = false; // Désactive le layout par défaut pour cette page

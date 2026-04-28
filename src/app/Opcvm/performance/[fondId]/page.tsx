@@ -58,17 +58,14 @@ interface PerformancesState {
 export default function Performance(props: PageProps) {
   const [showDescription, setShowDescription] = useState(false);
   const handleMouseEnter = () => {
-    console.log("open")
     setShowDescription(true);
   };
 
   const handleMouseLeave = () => {
-    console.log("close")
 
     setShowDescription(false);
   };
   const selectedValues = props.params.fondId;
-  console.log(props.params);
   const [count, setCount] = useState(0);
 
   const incrementCount = () => {
@@ -79,7 +76,6 @@ export default function Performance(props: PageProps) {
 
   const toggleTable = () => {
     setActiveTable(activeTable === 'Glissantes' ? 'Calendaires' : 'Glissantes');
-    console.log(activeTable);
   };
 
   const [selectedFund, setSelectedFund] = useState<Option1>();
@@ -96,7 +92,6 @@ export default function Performance(props: PageProps) {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
 
-    console.log("isLoggedIn")
     if (isLoggedIn === 'true' && userId !== null) {
       const userIdNumber = parseInt(userId, 10);
       setIsLoggedIn(true);
@@ -127,7 +122,6 @@ export default function Performance(props: PageProps) {
             Swal.showLoading();
           }
         });
-        console.log("ddddddeee")
         const data = await getlastvl(selectedValues);
         setPost(data);
         const data2 = await getperfind(selectedValues);
@@ -189,7 +183,6 @@ export default function Performance(props: PageProps) {
   const [showPopup1, setShowPopup1] = useState(false);
   const handleToggleFavorite = async () => {
     try {
-      console.log("eee")
       if (isFavorite) {
         // Si déjà en favori, supprime-le
         await fetch(`${urlconstant}/api/favorites/remove/${selectedValues}/${userConnected}`, { method: 'GET' });
@@ -284,14 +277,14 @@ export default function Performance(props: PageProps) {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/portefeuille/login');
       }, 5);

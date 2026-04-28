@@ -138,9 +138,7 @@ export default function Profile(props: PageProps): JSX.Element {
         (Number(total6) || 0) +
         (Number(total7) || 0) +
         (Number(totalPoint) || 0);
-      console.log(total7);
 
-      console.log(totalPointGlobal);
 
       let categoryProfileGlobal = "";
       let fundtype = "";
@@ -300,14 +298,14 @@ export default function Profile(props: PageProps): JSX.Element {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/portefeuille/login');
       }, 5);

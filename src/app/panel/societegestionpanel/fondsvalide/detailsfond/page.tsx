@@ -146,11 +146,9 @@ export default function Fonds() {
             Swal.showLoading();
           }
         });
-        console.log(props);
         const data = await getFonds(id);
 
         setFunds(data);
-        console.log(data)
         const data1 = await getMissingDates(id);
 
         setDates(data1);
@@ -268,7 +266,6 @@ export default function Fonds() {
     e.preventDefault();
 
     try {
-      console.log(valuationRows);
       const valuationRowsWithFondId = valuationRows.map((row) => ({
         ...row,
         fund_id: id,
@@ -328,7 +325,6 @@ export default function Fonds() {
     e.preventDefault();
 
     try {
-      console.log(valuationRows);
       const valuationRowsWithFondId = valuationRows.map((row) => ({
         ...row,
         fund_id: id,
@@ -351,7 +347,7 @@ export default function Fonds() {
           timer: 5000,
         });
         setTimeout(() => {
-          const href = `/panel/societegestionpanel/fonds?id=${societeconneted}`;
+          const href = `/panel/societegestionpanel/fonds`;
           window.location.href = href;  // This will navigate and refresh the page
 
           //     router.push(href);
@@ -409,7 +405,7 @@ export default function Fonds() {
           timer: 5000,
         });
         setTimeout(() => {
-          const href = `/panel/societegestionpanel/pagehome?id=${societeconneted}`;
+          const href = `/panel/societegestionpanel/pagehome`;
           window.location.href = href;  // This will navigate and refresh the page
 
           //     router.push(href);

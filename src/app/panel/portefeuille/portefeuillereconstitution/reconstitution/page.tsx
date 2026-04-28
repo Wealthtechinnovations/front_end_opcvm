@@ -10,7 +10,6 @@ import { useUserId } from '@/hooks/useUserId';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from "@/app/Header";
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebarportefeuille";
@@ -52,7 +51,6 @@ export default function Reconstitution() {
   const id = useUserId();
 
   const selectedfunds = searchParams.get('selectedfund');
-  console.log(selectedfunds);
   const selectedportfeuille = searchParams.get('portefeuille');
   const router = useRouter();
 
@@ -107,10 +105,8 @@ export default function Reconstitution() {
           // Replace with the actual property name
         }));
         setSelectedOptions(mappedOptions);
-        console.log(mappedOptions);
         const selectedFundsArray = JSON.parse(selectedfunds);
         setSelectedFunds(selectedFundsArray);
-        console.log(selectedFunds);
 
 
       } catch (error) {
@@ -134,7 +130,6 @@ export default function Reconstitution() {
     e.preventDefault();
 
     try {
-      console.log(entries)
       fetch(`${urlconstant}/api/reconstitution`, {
         method: 'POST',
         headers: {
@@ -144,7 +139,6 @@ export default function Reconstitution() {
       })
         .then((response) => response.json()) // Convertir la réponse en JSON
         .then((data) => {
-          console.log(data);
 
           if (data.code === 200) {
 
@@ -162,7 +156,6 @@ export default function Reconstitution() {
       // Gérer la réponse de l'API (par exemple, afficher un message de succès)
       /*  if (datas.status === 200) {
           const data = datas;
-          console.log(data)
           setIsModalOpen(true);
   
           // Redirect the user to another page after a delay (e.g., 2 seconds)
@@ -171,7 +164,6 @@ export default function Reconstitution() {
           }, 2000);
         } else {
           const data = datas;
-          console.log(data)
         }*/
     } catch (error) {
       // Gérer les erreurs de l'API (par exemple, afficher une erreur)

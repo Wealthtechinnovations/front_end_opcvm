@@ -258,7 +258,6 @@ export default function Fond(props: PageProps) {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
 
-    console.log("isLoggedIn")
     if (isLoggedIn === 'true' && userId !== null) {
       const userIdNumber = parseInt(userId, 10);
       setIsLoggedIn(true);
@@ -312,7 +311,6 @@ export default function Fond(props: PageProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const handleToggleFavorite = async () => {
     try {
-      console.log("eee")
       if (isFavorite) {
         // Si déjà en favori, supprime-le
         await fetch(`${urlconstant}/api/favorites/remove/${id}/${userConnected}`, { method: 'GET' });
@@ -357,20 +355,14 @@ export default function Fond(props: PageProps) {
         setAvailableDates(data3.data);
 
         const data10 = await getfavoris(id)
-        console.log("data10")
 
-        console.log(data10)
 
-        console.log("data")
 
-        console.log(data)
         if (data10.success == true) {
           setIsFavorite(true)
         }
         const data1 = await getlastvl1();
-        console.log("data1")
 
-        console.log(data1)
         const mappedOptions = data1?.data?.funds.map((funds: any) => ({
 
           value: funds.value,
@@ -382,7 +374,6 @@ export default function Fond(props: PageProps) {
           y: item.values,
           InRef: item.valuesInd
         }));
-        console.log(datasgraph)
         setFundsOptions(mappedOptions);
         const currentDate = new Date(); // Date actuelle
         let filteredData = [];
@@ -397,24 +388,18 @@ export default function Fond(props: PageProps) {
             oneYearAgo.setFullYear(lastDate.getFullYear() - 1); // Date il y a 1 an
             return itemDate >= oneYearAgo && itemDate <= currentDate; // Sélectionner les dates dans la période d'1 an
           });
-          console.log('filteredData');
-          console.log(filteredData);
 
           // Calculer les données en base 100
           if (filteredData.length > 0) {
-            console.log('filteredData[0]');
 
-            console.log(filteredData[0]);
             const lastValue = filteredData[0].y; // Dernière valeur
             const lastValueInd = filteredData[0].InRef; // Dernière valeur
 
-            console.log(filteredData[0]);
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
               name: item.name,
               y: (item.y / lastValue) * 100, // Calcul en base 100
               InRef: (item.InRef / lastValueInd) * 100, // Calcul en base 100 pour InRef si nécessaire
             }));
-            console.log(base100Data)
 
             setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100
           }
@@ -431,7 +416,6 @@ export default function Fond(props: PageProps) {
             const lastValue = filteredData[0].y; // Dernière valeur
             const lastValueInd = filteredData[0].InRef; // Dernière valeur
 
-            console.log(filteredData[0]);
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
               name: item.name,
               y: (item.y / lastValue) * 100, // Calcul en base 100
@@ -453,7 +437,6 @@ export default function Fond(props: PageProps) {
             const lastValue = filteredData[0].y; // Dernière valeur
             const lastValueInd = filteredData[0].InRef; // Dernière valeur
 
-            console.log(filteredData[0]);
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
               name: item.name,
               y: (item.y / lastValue) * 100, // Calcul en base 100
@@ -466,9 +449,7 @@ export default function Fond(props: PageProps) {
         setFilteredData(filteredData);
         const datacl = await getclassement(id);
         setClassementlocal(datacl);
-        console.log("datacl")
 
-        console.log(datacl)
 
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
@@ -595,21 +576,20 @@ export default function Fond(props: PageProps) {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/portefeuille/login');
       }, 5);
     }
   };
   const quartile = Math.ceil(classementlocal?.data?.classementType1.rank5Ans / classementlocal?.data?.classementType1.rank5Anstotal * 4);
-  console.log(quartile)
   // Define quartile colors
   const quartileColors: {
     [key: number]: string;
@@ -642,7 +622,6 @@ export default function Fond(props: PageProps) {
       const date2 = selectedDate1.getTime();
       const differenceInTime = date2 - date1
       const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-      console.log(differenceInDays)
       if (date1 > date2) {
         setShowWarningModal(true);
         console.error('Erreur : La date de debut doit être postérieure à la date de fin.');
@@ -691,7 +670,6 @@ export default function Fond(props: PageProps) {
   const [showExportModal, setShowExportModal] = useState(false);
 
   const handleExportClick = () => {
-    console.log("ee")
     setShow(true);
   };
   const onChange = (date: any) => {

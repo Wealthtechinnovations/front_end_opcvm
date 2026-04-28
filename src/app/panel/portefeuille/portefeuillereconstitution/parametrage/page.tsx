@@ -9,7 +9,6 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from "@/app/Header";
 
 import Swal from 'sweetalert2';
@@ -236,7 +235,6 @@ export default function Transaction() {
   const [base100Data, setBase100Data] = useState<MyDataType[]>([]); // Nouvel état pour les données en base 100
   const [postc, setPostc] = useState<Funds | null>(null);
 
-  console.log(selectedValuename);
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [portfolios, setPortfolios] = useState([]);
   const [selectedPortfolio, setSelectedPortfolio] = useState(null);
@@ -293,7 +291,6 @@ export default function Transaction() {
         Swal.showLoading();
       }
     });
-    console.log(selectedIndices)
     setPost(null);
     const data = {
       portfolioId: selectedportfeuille,
@@ -316,9 +313,7 @@ export default function Transaction() {
 
       if (responseData.code == 200) {
 
-        console.log(responseData.data.performanceData);
 
-        console.log(responseData.data.performanceData.data.graphs);
         setPost(responseData.data.performanceData);
 
         const datasgraph = responseData?.data?.performanceData?.data.graphs.map((item: { date: any; value: any; indValueRef: any; }) => ({
@@ -326,7 +321,6 @@ export default function Transaction() {
           y: item.value,
           InRef: item.indValueRef
         }));
-        console.log(datasgraph)
         setdatasgraphall(datasgraph);
 
         const currentDate = new Date(); // Date actuelle
@@ -342,24 +336,18 @@ export default function Transaction() {
             oneYearAgo.setFullYear(lastDate.getFullYear() - 1); // Date il y a 1 an
             return itemDate >= oneYearAgo && itemDate <= currentDate; // Sélectionner les dates dans la période d'1 an
           });
-          console.log('filteredData');
-          console.log(filteredData);
 
           // Calculer les données en base 100
           if (filteredData.length > 0) {
-            console.log('filteredData[0]');
 
-            console.log(filteredData[0]);
             const lastValue = filteredData[0].y; // Dernière valeur
             const lastValueInd = filteredData[0].InRef; // Dernière valeur
 
-            console.log(filteredData[0]);
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
               name: item.name,
               y: (item.y / lastValue) * 100, // Calcul en base 100
               InRef: (item.InRef / lastValueInd) * 100, // Calcul en base 100 pour InRef si nécessaire
             }));
-            console.log(base100Data)
 
             setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100
           }
@@ -376,7 +364,6 @@ export default function Transaction() {
             const lastValue = filteredData[0].y; // Dernière valeur
             const lastValueInd = filteredData[0].InRef; // Dernière valeur
 
-            console.log(filteredData[0]);
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
               name: item.name,
               y: (item.y / lastValue) * 100, // Calcul en base 100
@@ -398,7 +385,6 @@ export default function Transaction() {
             const lastValue = filteredData[0].y; // Dernière valeur
             const lastValueInd = filteredData[0].InRef; // Dernière valeur
 
-            console.log(filteredData[0]);
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
               name: item.name,
               y: (item.y / lastValue) * 100, // Calcul en base 100
@@ -442,7 +428,6 @@ export default function Transaction() {
               const lastValue = filteredData[0].y; // Dernière valeur
               const lastValueInd = filteredData[0].InRef; // Dernière valeur
 
-              console.log(filteredData[0]);
               const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
                 name: item.name,
                 y: (item.y / lastValue) * 100, // Calcul en base 100
@@ -463,7 +448,6 @@ export default function Transaction() {
               const lastValue = filteredData[0].y; // Dernière valeur
               const lastValueInd = filteredData[0].InRef; // Dernière valeur
 
-              console.log(filteredData[0]);
               const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
                 name: item.name,
                 y: (item.y / lastValue) * 100, // Calcul en base 100
@@ -485,7 +469,6 @@ export default function Transaction() {
               const lastValue = filteredData[0].y; // Dernière valeur
               const lastValueInd = filteredData[0].InRef; // Dernière valeur
 
-              console.log(filteredData[0]);
               const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
                 name: item.name,
                 y: (item.y / lastValue) * 100, // Calcul en base 100

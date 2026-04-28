@@ -14,10 +14,8 @@ import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 import Header from '@/app/Header';
 import { Dropdown } from "react-bootstrap";
-import Head from "next/head";
 import { faThumbsUp } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from "next/navigation";
-import { magic } from '../../../../magic'; // Importer correctement le module
 import Swal from "sweetalert2";
 
 
@@ -112,9 +110,7 @@ export default function Pagehome(props: PageProps) {
         body: formDatass
       });
 
-      console.log('Article uploaded successfully');
       const data = await response.json();
-      console.log(data);
       if (response.status === 200) {
         Swal.fire({
           position: 'center',
@@ -124,7 +120,7 @@ export default function Pagehome(props: PageProps) {
           timer: 5000,
         });
         setTimeout(() => {
-          const href = `/payspanel/actualite?id=${societeconneted}`;
+          const href = `/payspanel/actualite`;
           window.location.href = href;  // This will navigate and refresh the page
 
           //     router.push(href);
@@ -147,17 +143,12 @@ export default function Pagehome(props: PageProps) {
   const logout = useCallback(() => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
-    if (magic && magic.user) {
-
-      magic.user.logout().then(() => {
-        // Actualisation et redirection
-        setTimeout(() => {
-          window.location.reload()
-        }, 1000)
-        router.push("/"); //Redirection après connexion
-
-      });
-    }
+    localStorage.removeItem('tokenEnCours');
+    document.cookie = 'isLoggedIn=; path=/; max-age=0';
+    document.cookie = 'tokenEnCours=; path=/; max-age=0';
+    setTimeout(() => {
+      router.push("/");
+    }, 200);
   }, [router]);
   return (
     < Fragment >
@@ -171,7 +162,7 @@ export default function Pagehome(props: PageProps) {
               <ul data-widget="tree" className='sidebar-menu'>
 
                 <li>
-                  <Link href={`/payspanel/pagehome?id=${societeconneted}`} >
+                  <Link href={`/payspanel/pagehome`} >
                     <i data-feather="plus-square"></i>
                     <span>Tableau de bord</span>
                   </Link>
@@ -185,19 +176,19 @@ export default function Pagehome(props: PageProps) {
                   {isDropdownOpen && (
                     <>
                       <li>
-                        <a href={`/payspanel/fondsvalide?id=${societeconneted}`}>   <i className="bi bi-check2"></i>
+                        <a href={`/payspanel/fondsvalide`}>   <i className="bi bi-check2"></i>
                           <span style={{ marginLeft: '55px' }}><FontAwesomeIcon icon={faThumbsUp} />Fonds validés</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/fonds?id=${societeconneted}`}>
+                        <a href={`/payspanel/fonds`}>
                           <span style={{ marginLeft: '55px' }}>Fonds à validés</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/ajoutvl?id=${societeconneted}`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
+                        <a href={`/payspanel/ajoutvl`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                           <span style={{ marginLeft: '55px' }}>Ajouter un fond</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/importfondvl?id=${societeconneted}`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
+                        <a href={`/payspanel/importfondvl`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                           <span style={{ marginLeft: '55px' }}>Importer Fonds et Vl</span></a>
                       </li>
                     </>
@@ -206,13 +197,13 @@ export default function Pagehome(props: PageProps) {
 
 
                 <li>
-                  <Link href={`/payspanel/anomalie?id=${societeconneted}`}  >
+                  <Link href={`/payspanel/anomalie`}  >
                     <i data-feather="plus-square"></i>
                     <span>Anomalies</span>
                   </Link>
                 </li>
                 <li>
-                  <Link href={`/payspanel/actualite?id=${societeconneted}`} style={{ backgroundColor: "#3b82f6", color: "white" }} >
+                  <Link href={`/payspanel/actualite`} style={{ backgroundColor: "#3b82f6", color: "white" }} >
                     <i data-feather="user"></i>
                     <span>Actualités</span>
                   </Link>

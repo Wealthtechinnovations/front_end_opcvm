@@ -64,7 +64,6 @@ export default function Importvl(props: PageProps) {
 
       const formData = new FormData();
       formData.append('fichier', file);
-      console.log(formData);
       const response = await fetch(`${urlconstant}/api/importfondsvl`, {
         method: 'POST',
         body: formData
@@ -99,7 +98,7 @@ export default function Importvl(props: PageProps) {
 
 
                 <li>
-                  <Link href={`/payspanel/pagehome?id=${societeconneted}`} >
+                  <Link href={`/payspanel/pagehome`} >
                     <i data-feather="plus-square"></i>
                     <span>Tableau de bord</span>
                   </Link>
@@ -112,19 +111,19 @@ export default function Importvl(props: PageProps) {
                   {isDropdownOpen && (
                     <>
                       <li>
-                        <a href={`/payspanel/fondsvalide?id=${societeconneted}`}>   <i className="bi bi-check2"></i>
+                        <a href={`/payspanel/fondsvalide`}>   <i className="bi bi-check2"></i>
                           <span style={{ marginLeft: '55px' }}>Fonds validés</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/fonds?id=${societeconneted}`}>
+                        <a href={`/payspanel/fonds`}>
                           <span style={{ marginLeft: '55px' }}>Fonds à validés</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/ajoutvl?id=${societeconneted}`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
+                        <a href={`/payspanel/ajoutvl`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                           <span style={{ marginLeft: '55px' }}>Ajouter un fond</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/importfondvl?id=${societeconneted}`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
+                        <a href={`/payspanel/importfondvl`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                           <span style={{ marginLeft: '55px' }}>Importer Fonds et Vl</span></a>
                       </li>
                     </>
@@ -133,14 +132,14 @@ export default function Importvl(props: PageProps) {
 
 
                 <li>
-                  <Link href={`/payspanel/anomalie?id=${societeconneted}`}  >
+                  <Link href={`/payspanel/anomalie`}  >
                     <i data-feather="plus-square"></i>
                     <span>Anomalies</span>
                   </Link>
                 </li>
 
                 <li>
-                  <Link href={`/payspanel/actualite?id=${societeconneted}`} >
+                  <Link href={`/payspanel/actualite`} >
                     <i data-feather="user"></i>
                     <span>Actualités</span>
                   </Link>

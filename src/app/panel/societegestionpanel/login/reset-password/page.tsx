@@ -6,15 +6,12 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-import Head from 'next/head';
 import { urlconstant, urlstableconstant, API_KEY_STABLECOIN, urlsite } from "@/app/constants";
 
 import { useRouter } from 'next/navigation';
-import { magic } from '../../../../../../magic'; // Importer correctement le module
 import { Dropdown } from "react-bootstrap";
 
 async function login(email: string, password: any) {
-  console.log(password);
   const data = (
     await fetch(`${urlconstant}/api/userlogin?email=${email}&password=${password}`)
   ).json();
@@ -79,7 +76,6 @@ export default function Logins(props: PageProps) {
 
   let tokenapp = props.searchParams.token;
 
-  console.log(tokenapp);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -91,14 +87,14 @@ export default function Logins(props: PageProps) {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/panel/societegestionpanel/login');
       }, 5);

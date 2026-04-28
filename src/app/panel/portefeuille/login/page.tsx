@@ -9,7 +9,6 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-import Head from 'next/head';
 import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
 
 import { useRouter } from 'next/navigation';
@@ -57,7 +56,6 @@ export default function Login() {
       if (data.code === 200) {
         //  router.push(`/panel/societegestionpanel/login/register?email=${email}&password=${password}`);
 
-        console.log(data);
         setisExist("OUI");
         setError("Vous existez deja en base")
         setShowPassword(true);
@@ -73,18 +71,17 @@ export default function Login() {
       const data = await login(email, password);
       setResponse(data);
       if (data.code === 200) {
-        console.log(data)
         let href: string = '';
         //  router.push(`/panel/societegestionpanel/login/register?email=${email}&password=${password}`);
         if (data.data.userExists.typeusers_id == 1) {
-          href = `/panel/portefeuille/home?id=${data.data.userExists.id}`;
+          href = `/panel/portefeuille/home`;
 
         } else if (data.data.userExists.typeusers_id == 2) {
-          href = `/panel/societegestionpanel/pagehome?id=${data.data.userExists.denomination}`;
+          href = `/panel/societegestionpanel/pagehome`;
 
         }
         else if (data.data.userExists.typeusers_id == 0) {
-          href = `/panel/admin/home?id=${data.data.userExists.denomination}`;
+          href = `/panel/admin/home`;
 
         }
         localStorage.setItem('isLoggedIn', 'true');

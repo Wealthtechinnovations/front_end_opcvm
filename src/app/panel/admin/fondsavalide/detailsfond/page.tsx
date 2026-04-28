@@ -147,11 +147,9 @@ export default function Fonds() {
             Swal.showLoading();
           }
         });
-        console.log(props);
         const data = await getFonds(id);
 
         setFunds(data);
-        console.log(data)
         const data1 = await getMissingDates(id);
 
         setDates(data1);
@@ -283,7 +281,6 @@ export default function Fonds() {
     e.preventDefault();
 
     try {
-      console.log(valuationRows);
       const valuationRowsWithFondId = valuationRows.map((row) => ({
         ...row,
         fund_id: id,
@@ -309,7 +306,7 @@ export default function Fonds() {
 
         // Redirect to the same page
         setTimeout(() => {
-          const href = `/panel/societegestionpanel/fondsavalide?id=${societeconneted}`;
+          const href = `/panel/societegestionpanel/fondsavalide`;
 
           router.push(href);
         }, 2000);
@@ -362,7 +359,7 @@ export default function Fonds() {
         });
 
         setTimeout(() => {
-          const href = `/panel/societegestionpanel/fondsavalide?id=${societeconneted}`;
+          const href = `/panel/societegestionpanel/fondsavalide`;
 
           router.push(href);
         }, 2000);
@@ -392,7 +389,6 @@ export default function Fonds() {
     e.preventDefault();
 
     try {
-      console.log(valuationRows1);
       const valuationRowsWithFondId = valuationRows1.map((row) => ({
         ...row,
         fund_id: id,
@@ -415,7 +411,7 @@ export default function Fonds() {
         });
         setSuccessMessage('Données inserées');
         setTimeout(() => {
-          const href = `/panel/societegestionpanel/fondsavalide?id=${societeconneted}`;
+          const href = `/panel/societegestionpanel/fondsavalide`;
 
           router.push(href);
         }, 2000);
@@ -472,7 +468,7 @@ export default function Fonds() {
           showConfirmButton: false,
           timer: 5000,
         }); setTimeout(() => {
-          const href = `/panel/societegestionpanel/fondsavalide?id=${societeconneted}`;
+          const href = `/panel/societegestionpanel/fondsavalide`;
 
           router.push(href);
         }, 2000);

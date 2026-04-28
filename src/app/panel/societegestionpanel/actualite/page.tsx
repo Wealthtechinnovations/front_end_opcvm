@@ -82,7 +82,7 @@ export default function Pagehome() {
           timer: 5000,
         });
         setTimeout(() => {
-          window.location.href = `/panel/societegestionpanel/actualite?id=${societeconneted}`;
+          window.location.href = `/panel/societegestionpanel/actualite`;
         }, 2000);
       }
     } catch (error) {

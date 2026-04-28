@@ -105,7 +105,7 @@ export default function Fonds() {
 
                     </div>
                     <div className="text-right">
-                      <Link href={`/panel/admin/frais/createfrais?id=${id}`} style={{
+                      <Link href={`/panel/admin/frais/createfrais`} style={{
                         textDecoration: 'none',
                         backgroundColor: '#6366f1',
                         color: 'white',

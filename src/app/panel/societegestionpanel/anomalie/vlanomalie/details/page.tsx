@@ -7,7 +7,6 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from "@/app/Header";
 
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -163,7 +162,6 @@ export default function Fondselected() {
   const selectedfunds = searchParams.get('selectedfund');
   const selectedportfeuille = searchParams.get('portefeuille');
   const selectedValuename = searchParams.get('selectedValuename');
-  console.log(selectedValuename);
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [fundsOptions, setFundsOptions] = useState([]);
@@ -195,9 +193,6 @@ export default function Fondselected() {
   const handleFondSelect = (fond: any) => {
     setSelectedFond(fond);
     setSelectedRows(selectedfunds.concat(fond));
-    console.log("s" + selectedfunds);
-    console.log(selectedRows.join(','));
-    console.log(fond);
 
   };
   const handleSearch = (e: any) => {
@@ -242,14 +237,12 @@ export default function Fondselected() {
 
       const response = await fetch(`${urlconstant}/api/vlspresui/${fondid}/${fundsData[index].now}/${fundsData[index].nowdate}`);  // Remplacez 'id' par l'identifiant du fonds
       const data = await response.json();
-      console.log(data.data);
       let { previousValues, nextValues } = data.data;
       //  const newLine = { id: fondid, date: '', value: '' };
 
 
       //   previousValues = [...previousValues, newLine],
       setFormValues({ previousValues, nextValues });
-      console.log()
 
       //  alert('Fond ajouté aux favoris !');
 
@@ -306,7 +299,7 @@ export default function Fondselected() {
       });
 
       setTimeout(() => {
-        const href = `/panel/societegestionpanel/anomalie?id=${societeconneted}`;
+        const href = `/panel/societegestionpanel/anomalie`;
 
         router.push(href);
       }, 2000);
@@ -327,30 +320,21 @@ export default function Fondselected() {
   };
 
   const handlePreviousChange = (index: number, value: string, date?: any) => {
-    console.log(index)
     let newValues;
     if (index != 5) {
       newValues = [...formValues.previousValues];
       newValues[index].value = value;
-      console.log("index")
-      console.log(newValues)
-      console.log(formValues.previousValues)
     } else {
       const newLine = { id: fondid, date: date, value: '' };
 
       if (formValues.previousValues.length <= 5) {
         formValues.previousValues.push(newLine);
       }
-      console.log("index1")
 
       newValues = [...formValues.previousValues];
-      console.log(newValues)
 
       //  newValues[5].value = value;
       newValues[index].value = value;
-      console.log(index)
-      console.log(value)
-      console.log(formValues.previousValues)
     }
 
     setFormValues({ ...formValues, previousValues: newValues });

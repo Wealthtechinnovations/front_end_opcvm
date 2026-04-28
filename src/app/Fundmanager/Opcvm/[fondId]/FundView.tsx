@@ -153,12 +153,10 @@ export default function Fond(props: PageProps) {
 
   const [showDescription, setShowDescription] = useState(false);
   const handleMouseEnter = () => {
-    console.log("open")
     setShowDescription(true);
   };
 
   const handleMouseLeave = () => {
-    console.log("close")
 
     setShowDescription(false);
   };
@@ -190,7 +188,6 @@ export default function Fond(props: PageProps) {
         const isLoggedIn = localStorage.getItem('isLoggedIn');
         const userId = localStorage.getItem('userId');
 
-        console.log("isLoggedIn", isLoggedIn);
 
         if (isLoggedIn === 'true' && userId !== null) {
           const userIdNumber = parseInt(userId, 10);
@@ -269,7 +266,6 @@ export default function Fond(props: PageProps) {
 
           setFunds(responseData);
           totalItems = responseData?.data.funds?.length || 0;
-          console.log(Math.ceil(totalItems / itemsPerPage))
           settotalPages(Math.ceil(totalItems / itemsPerPage));
 
         }else{
@@ -297,7 +293,6 @@ export default function Fond(props: PageProps) {
 
   const handleTabClick = (tabName: any) => {
     setActiveTab(tabName);
-    console.log("Position de la nav : ", tabName);
   };
 
   const handleItemsPerPageChange = (e: { target: { value: string; }; }) => {
@@ -335,7 +330,6 @@ export default function Fond(props: PageProps) {
       direction = 'desc';
 
     }
-    console.log(key)
 
     setSortConfig({ key, direction });
 
@@ -343,12 +337,10 @@ export default function Fond(props: PageProps) {
 
       // Créez une copie triée des fonds en utilisant la méthode sort()
       const sortedFundsCopy = [...funds.data.funds];
-      console.log(sortedFundsCopy);
       const filteredFunds = sortedFundsCopy.filter(item =>
         item.performanceData &&
         item.performanceData[sortConfig.key] !== '-'
       );
-      console.log(filteredFunds)
 
       filteredFunds.sort((a, b) => {
 
@@ -396,13 +388,9 @@ export default function Fond(props: PageProps) {
     if (selectedRows.includes(itemId)) {
       // L'élément est déjà sélectionné, donc le désélectionner
       setSelectedRows(selectedRows.filter((id) => id !== itemId));
-      console.log("aaaaa")
-      console.log(selectedRows)
     } else {
-      console.log("bbbb")
       // L'élément n'est pas sélectionné, donc le sélectionner
       setSelectedRows(selectedRows.concat(itemId));
-      console.log(selectedRows)
 
     }
   };
@@ -412,14 +400,14 @@ export default function Fond(props: PageProps) {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/panel/societegestionpanel/login');
       }, 5);
@@ -431,7 +419,6 @@ export default function Fond(props: PageProps) {
   const [showExportModal, setShowExportModal] = useState(false);
 
   const handleExportClick = () => {
-    console.log("ee")
     setShow(true);
   };
   const [menuOpen, setMenuOpen] = useState(false);
@@ -539,7 +526,6 @@ export default function Fond(props: PageProps) {
     });
 
     // Traitez les données du formulaire ici (selectedOptions et textInput)
-    console.log('Options sélectionnées :', formData);
     const selectedValues = selectedOptions.map(option => option?.value);
     fetch(`${urlconstant}/api/listeproduitsociete/${id}?query=${selectedValues.join(',')}&selectedcategorie=${selectedcategorie}`, {
       method: 'POST', // Assurez-vous que la méthode HTTP correspond à votre API
@@ -568,7 +554,6 @@ export default function Fond(props: PageProps) {
         }
 
         // Traitez la réponse de l'API ici
-        console.log('Réponse de l\'API :', data);
       })
       .catch(error => {
         // Display an error message

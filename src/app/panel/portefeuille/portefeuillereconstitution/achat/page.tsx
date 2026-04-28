@@ -11,7 +11,6 @@ import 'react-calendar/dist/Calendar.css';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from "@/app/Header";
 
 import { IntlProvider, FormattedDate } from 'react-intl';
@@ -113,7 +112,6 @@ export default function Achat() {
   const allfund = searchParams.get('allfund');
   const devise = searchParams.get('devise') || 'MAD';
   const selectedfunds = searchParams.get('selectedfund');
-  console.log(selectedfunds);
   const selectedportfeuille = searchParams.get('portefeuille');
   const router = useRouter();
   const [transactionData, settransactioData] = useState<Transaction[]>([]);
@@ -165,7 +163,6 @@ export default function Achat() {
         const paire = `${portefeuille?.data.portefeuille.devise}/${devise}`;
         const response8 = await fetch(`${urlconstant}/api/changedevise?date=${selectedDate}&paire=${paire}`);
         const data8 = await response8.json();
-        console.log(data8)
         if (data8.message != "Exchange rates not found for the given date") {
           const mont = portefeuille?.data.portefeuille.cash * data8
           setcashdev(mont.toFixed(2).toString());
@@ -236,18 +233,12 @@ export default function Achat() {
           // Replace with the actual property name
         }));
         setSelectedOptions(mappedOptions);
-        console.log(mappedOptions);
         const selectedFundsArray = JSON.parse(selectedfunds);
         setSelectedFunds(selectedFundsArray);
-        console.log(selectedFunds);
         const data3 = await getdateavailable(selectedfunds);
         setAvailableDates(data3.data);
-        console.log("ssssss")
-        console.log(data3.data)
         const response2 = await fetch(`${urlconstant}/api/gettransactions/${selectedportfeuille}`);
         const data2 = await response2.json();
-        console.log('dddddd');
-        console.log(data2.data.transactions);
         settransactioData(data2.data.transactions);
 
       } catch (error) {
@@ -295,10 +286,8 @@ export default function Achat() {
       );
 
       const netQuantite = sumQuantiteAchat - sumQuantiteVente;
-      console.log(transactionData);
       const netQuantiteRounded = parseFloat(netQuantite.toFixed(2));
 
-      console.log(matchingTransactionsAchat);
       return {
         date: '',
         type: 'achat',
@@ -321,7 +310,6 @@ export default function Achat() {
       .find((transaction) => transaction.type === 'ajoutcash');
     // const firstTransaction = transactionData[0]; // Get the first transaction
     //const selectedDate = new Date(); // Replace this with your actual selectedDate
-    console.log(firstTransaction)
     const year = selectedDate.getFullYear();
     const month = String(selectedDate.getMonth() + 1).padStart(2, '0'); // Adding 1 because months are zero-based
     const day = String(selectedDate.getDate()).padStart(2, '0');
@@ -334,7 +322,6 @@ export default function Achat() {
 
 
     setEntries(updatedEntries);
-    console.log(firstTransaction);
 
     const isInvalidQuantity = entries.some(entry => entry.montant === 0 || entry.montant > parseFloat(cashdev));
     const isInvalidQuantity1 = entries.some(entry => entry.quantiteachat > 0);
@@ -365,7 +352,6 @@ export default function Achat() {
 
     try {
       localStorage.setItem('message', 'Achat réussi !');
-      console.log(entries)
 
       const response = await fetch(`${urlconstant}/api/createtransactions`, {
         method: 'POST',
@@ -379,7 +365,6 @@ export default function Achat() {
 
 
 
-      console.log(responseData);
 
       if (responseData.code === 200) {
         localStorage.setItem('portefeuille', selectedportfeuille);

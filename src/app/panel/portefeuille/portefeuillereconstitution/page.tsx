@@ -8,7 +8,6 @@ import Select from 'react-select';
 import { FaBars, FaTimes } from 'react-icons/fa'; // Pour les icônes
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from '@/app/Header';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';
@@ -407,16 +406,13 @@ export default function PorteFeuile() {
   const handleDeviseChange = async (e: { target: { value: any; }; }) => {
     const selectedValue = e.target.value;
     setSelectedDevise(selectedValue);
-    console.log("ffffffffffffffffffffffffffffff")
     const response0 = await fetch(`${urlconstant}/api/portefeuillebase100dev/${selectedportfeuille}/${selectedValue}`);
     const data0 = await response0.json();
-    console.log(data0);
 
     const datasgraph = data0?.data.portefeuilleDatas.map((funds: any) => ({
       name: funds.date,
       y: parseFloat(selectedValue === 'EUR' ? funds.base_100_bis_EUR : funds.base_100_bis_USD),
     }));
-    console.log(datasgraph)
     let filteredData = [];
     const currentDate = new Date(); // Date actuelle
 
@@ -557,7 +553,6 @@ export default function PorteFeuile() {
     const nombreAchat = achatTransactions.length;
 
     const prixMoyen = totalPrix / nombreAchat;
-    console.log('Prix Moyen:', prixMoyen);
 
     // Calculer la quantité totale vendue
     const totalQuantiteVendue = venteTransactions.reduce((acc, transaction) => {
@@ -580,7 +575,6 @@ export default function PorteFeuile() {
       const data5 = await response1.json();
       const venteTransactions = data5.data.transactions.filter((transaction: { type: string; }) => transaction.type === 'vente');
       const plusValueEffective = venteTransactions.reduce((sum: any, transaction: { plus_moins_value: any; }) => sum + parseFloat(transaction.plus_moins_value), 0);
-      console.log(plusValueEffective);
 
       return plusValueEffective;
     };
@@ -740,8 +734,6 @@ export default function PorteFeuile() {
 
         if (data?.data.portefeuille.maj == 1) {
           const dataperf = await getperformancep(selectedportfeuille);
-          console.log('perfff')
-          console.log(dataperf)
 
 
           setperformanceP(dataperf);
@@ -759,9 +751,7 @@ export default function PorteFeuile() {
             const firstValue = datasgraph[0].y;
             const lastValue = datasgraph[datasgraph.length - 1].y;
             perfOrigin = (lastValue - firstValue) / firstValue;
-            console.log("lastValue, firstValue")
 
-            console.log(lastValue, firstValue)
 
           }
 
@@ -919,10 +909,7 @@ export default function PorteFeuile() {
             const itemDate = new Date(item.name); // Convertir la date de l'élément en objet Date
             return itemDate >= new Date(startDate || '2020-01-01') && itemDate <= new Date(endDate || '2100-12-31');
           });
-          console.log(startDate)
-          console.log(datasgraphall)
 
-          console.log(filteredData)
           // Calculer les données en base 100
           if (filteredData.length > 0) {
             const lastValue = filteredData[0].y; // Dernière valeur
@@ -990,7 +977,6 @@ export default function PorteFeuile() {
 
       const data = await response.json(); // Convertir la réponse en JSON
 
-      console.log(selectedportfeuille)
       if (data.code === 200) {
         Swal.close(); // Fermer le popup après que la requête est terminée
 

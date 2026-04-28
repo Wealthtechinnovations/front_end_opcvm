@@ -8,7 +8,6 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-import Head from 'next/head';
 import { urlconstant } from "@/app/constants";
 
 

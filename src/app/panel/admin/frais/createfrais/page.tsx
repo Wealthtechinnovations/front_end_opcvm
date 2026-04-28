@@ -64,7 +64,6 @@ export default function UpdateFonds() {
       try {
         const response = await fetch(`${urlconstant}/api/searchFunds`);
         const result = await response.json();
-        console.log(result);
         if (result.code === 200) {
           const options = result.data?.funds.map((fond: any) => ({
             value: fond.value,
@@ -101,7 +100,6 @@ export default function UpdateFonds() {
   const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     try {
-      console.log(formData)
       const response = await fetch(`${urlconstant}/api/createfrais`, {
         method: 'POST',
         headers: {
@@ -120,7 +118,7 @@ export default function UpdateFonds() {
           timer: 5000
         }),
           setTimeout(() => {
-            router.push(`/panel/admin/frais?id=${id}`);
+            router.push(`/panel/admin/frais`);
           }, 500)
       } else {
         console.error('Failed to create frais:', result.error);

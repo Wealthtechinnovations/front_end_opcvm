@@ -6,7 +6,6 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-import Head from 'next/head';
 import { urlconstant } from "@/app/constants";
 import { useRouter } from 'next/navigation';
 
@@ -208,7 +207,6 @@ export default function Register(props: PageProps) {
         typeusers,
         typeusers_id,
       });
-      console.log("formData");
 
       if (password != "" && confirmpassword != "" && password == confirmpassword) {
 
@@ -222,16 +220,14 @@ export default function Register(props: PageProps) {
           },
           body: JSON.stringify(formData), // Convertissez votre objet formData en JSON
         });
-        console.log(data)
 
         // Gérer la réponse de l'API (par exemple, afficher un message de succès)
         if (data.status === 200) {
           const responseData = await data.json();
-          console.log(responseData)
 
           const userId = responseData.data.userId;
 
-          const href = `/panel/portefeuille/home?id=${userId?.id}`;
+          const href = `/panel/portefeuille/home`;
           localStorage.setItem('isLoggedIn', 'true');
           localStorage.setItem('userId', userId?.id);
 

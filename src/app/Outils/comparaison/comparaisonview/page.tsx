@@ -171,7 +171,6 @@ export default function Comparaisonview(props: PageProps) {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
 
-    console.log("isLoggedIn")
     if (isLoggedIn === 'true' && userId !== null) {
       const userIdNumber = parseInt(userId, 10);
       setIsLoggedIn(true);
@@ -213,26 +212,19 @@ export default function Comparaisonview(props: PageProps) {
     if (selectedRows.includes(itemId)) {
       // L'élément est déjà sélectionné, donc le désélectionner
       setSelectedRows(selectedRows.filter((id) => id !== itemId));
-      console.log("aaaaa")
-      console.log(selectedRows)
     } else {
-      console.log("bbbb")
       // L'élément n'est pas sélectionné, donc le sélectionner
       setSelectedRows(selectedRows.concat(itemId));
-      console.log(selectedRows)
 
     }
   };
 
 
   const handleOkClick = () => {
-    console.log(selectedValues)
-    console.log(selectedOptions)
 
     const selectedValuess = selectedOptions ? selectedOptions.map((option: { value: any; }) => option.value).join(',') : '';
     const concatenatedValues = `${selectedValues},${selectedValuess}`;
 
-    console.log(concatenatedValues)
     setTimeout(() => {
       const redirectUrl = `/Outils/comparaison/comparaisonview?selectedRows=${concatenatedValues}`;
       window.location.href = redirectUrl;  // This will navigate and refresh the page
@@ -248,13 +240,10 @@ export default function Comparaisonview(props: PageProps) {
 
     setSelectedFond(fond.value);
     //setSelectedRows(selectedValues.concat(fond));
-    console.log(selectedValues);
-    console.log(fond);
 
   };
   const handleTabClick = (tabName: any) => {
     setActiveTab(tabName);
-    console.log("Position de la nav : ", tabName);
   };
 
   useEffect(() => {
@@ -288,9 +277,7 @@ export default function Comparaisonview(props: PageProps) {
         });
 
         const data1 = await getlastvl1();
-        console.log("data1")
 
-        console.log(data1)
         const mappedOptions = data1?.data?.funds.map((funds: any) => ({
 
           value: funds.value,
@@ -337,7 +324,6 @@ export default function Comparaisonview(props: PageProps) {
     }
     fetchData();
   }, [filterStartDate, filterEndDate]);
-  console.log(funds);
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -360,14 +346,14 @@ export default function Comparaisonview(props: PageProps) {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/portefeuille/login');
       }, 5);

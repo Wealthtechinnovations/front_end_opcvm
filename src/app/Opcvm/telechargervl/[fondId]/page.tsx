@@ -260,7 +260,6 @@ export default function Fond(props: PageProps) {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
 
-    console.log("isLoggedIn")
     if (isLoggedIn === 'true' && userId !== null) {
       const userIdNumber = parseInt(userId, 10);
       setIsLoggedIn(true);
@@ -314,7 +313,6 @@ export default function Fond(props: PageProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const handleToggleFavorite = async () => {
     try {
-      console.log("eee")
       if (isFavorite) {
         // Si déjà en favori, supprime-le
         await fetch(`${urlconstant}/api/favorites/remove/${id}/${userConnected}`, { method: 'GET' });
@@ -367,20 +365,14 @@ export default function Fond(props: PageProps) {
         setAvailableDates(data3.data);
 
         const data10 = await getfavoris(id)
-        console.log("data10")
 
-        console.log(data10)
 
-        console.log("data")
 
-        console.log(data)
         if (data10.success == true) {
           setIsFavorite(true)
         }
         const data1 = await getlastvl1();
-        console.log("data1")
 
-        console.log(data1)
         const mappedOptions = data1?.data?.funds.map((funds: any) => ({
 
           value: funds.value,
@@ -422,14 +414,14 @@ export default function Fond(props: PageProps) {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/portefeuille/login');
       }, 5);
@@ -456,7 +448,6 @@ export default function Fond(props: PageProps) {
       const date2 = selectedDate1.getTime();
       const differenceInTime = date2 - date1
       const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-      console.log(differenceInDays)
       if (date1 > date2) {
         setShowWarningModal(true);
         console.error('Erreur : La date de debut doit être postérieure à la date de fin.');
@@ -505,7 +496,6 @@ export default function Fond(props: PageProps) {
   const [showExportModal, setShowExportModal] = useState(false);
 
   const handleExportClick = () => {
-    console.log("ee")
     setShow(true);
   };
   const onChange = (date: any) => {

@@ -75,7 +75,6 @@ export default function TypeProfil(props: PageProps): JSX.Element {
         if (quizData) {
           // Convertir les données JSON en un objet JavaScript
           const quiz = JSON.parse(quizData);
-          console.log(quiz);
           // Mettre à jour l'état mifidForUser avec les données récupérées
           setQuestionnaireForUser({
             userId: "user_id",
@@ -95,19 +94,18 @@ export default function TypeProfil(props: PageProps): JSX.Element {
 
   // FIN
   const [userConnected, setUserConnected] = useState<number | null>(null);
-  console.log(questionnaireForUser);
   const handleLinkClick = () => {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/portefeuille/login');
       }, 5);

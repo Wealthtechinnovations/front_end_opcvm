@@ -145,12 +145,10 @@ export default function Fond(props: PageProps) {
   const randomPercentage2 = ((Math.random() * 200) - 100).toFixed(2);
   const [showDescription, setShowDescription] = useState(false);
   const handleMouseEnter = () => {
-    console.log("open")
     setShowDescription(true);
   };
 
   const handleMouseLeave = () => {
-    console.log("close")
 
     setShowDescription(false);
   };
@@ -181,7 +179,6 @@ export default function Fond(props: PageProps) {
         const isLoggedIn = localStorage.getItem('isLoggedIn');
         const userId = localStorage.getItem('userId');
 
-        console.log("isLoggedIn", isLoggedIn);
 
         if (isLoggedIn === 'true' && userId !== null) {
           const userIdNumber = parseInt(userId, 10);
@@ -223,7 +220,6 @@ export default function Fond(props: PageProps) {
       const response = await fetch(`${urlconstant}/api/getPaysbyidfisrt/${id}?query=${selectedValue}`);
       if (!response.ok) throw new Error('Error fetching data from getPaysbyidfisrt API');
       const data = await response.json();
-      console.log(data);
       setData(data.data.graph);
       setData1(data.data.fundCountByYear);
 
@@ -281,7 +277,6 @@ export default function Fond(props: PageProps) {
           }
         });
         const data = await getsociete(id);
-        console.log(data)
         setData(data.data.graph);
         setData1(data.data.fundCountByYear);
         setData2(data.data.performa);
@@ -293,7 +288,6 @@ export default function Fond(props: PageProps) {
           societeData: data.data.societeData,
           nbresocietes: data.data.nbresocietes,
         }));
-        console.log(data.data.paysData)
 
         const data1 = await getpays();
 
@@ -408,8 +402,6 @@ export default function Fond(props: PageProps) {
     }
     return false;
   });
-  console.log("filteredPerforma")
-  console.log(filteredPerforma)
   const categoriesColors = {
     'Actions': '#544fc5',
     'Diversifié': '#00e272',
@@ -531,14 +523,14 @@ export default function Fond(props: PageProps) {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/panel/societegestionpanel/login');
       }, 5);
@@ -550,7 +542,6 @@ export default function Fond(props: PageProps) {
   const [showExportModal, setShowExportModal] = useState(false);
 
   const handleExportClick = () => {
-    console.log("ee")
     setShow(true);
   };
   const [menuOpen, setMenuOpen] = useState(false);

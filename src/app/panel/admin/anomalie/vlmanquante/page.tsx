@@ -106,7 +106,7 @@ export default function Home() {
     let href;
   
       // Rediriger l'utilisateur vers une autre page pour d'autres types d'anomalies
-      href = `/panel/admin/fondsavalide/detailsfond?id=${id}&Id=${item}`;
+      href = `/panel/admin/fondsavalide/detailsfond?Id=${item}`;
     
 
     // Use the router.push method to navigate
@@ -139,7 +139,6 @@ export default function Home() {
 
         setFundsData(data.data);
 
-        console.log(data.data)
 
         Swal.close(); // Close the loading popup
 
@@ -152,9 +151,7 @@ export default function Home() {
     }
     fetchData();
   }, []);
-  console.log("performanceData")
 
-  console.log(performanceData)
 
   const handleLogout = () => {
     // Remove items from localStorage

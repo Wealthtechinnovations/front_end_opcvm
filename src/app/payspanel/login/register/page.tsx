@@ -6,7 +6,6 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-import Head from 'next/head';
 import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
 
 import { useRouter } from 'next/navigation';
@@ -57,7 +56,6 @@ async function register(formData: any) {
 export default function Register(props: PageProps) {
   const router = useRouter();
 
-  console.log(props);
   let email = props.searchParams.email;
   //let password = props.searchParams.password;
   const [passwordsMatch, setPasswordsMatch] = useState(true);
@@ -247,7 +245,6 @@ export default function Register(props: PageProps) {
           // Replace with the actual property name
         }));
         setOptionsSociete(mappedOptions1);
-        console.log(data1);
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
       }

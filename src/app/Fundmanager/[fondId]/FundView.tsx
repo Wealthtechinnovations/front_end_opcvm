@@ -137,7 +137,6 @@ export default function Fond(props: PageProps) {
   const randomPercentage2 = ((Math.random() * 200) - 100).toFixed(2);
   const [showDescription, setShowDescription] = useState(false);
   const handleMouseEnter = () => {
-    console.log("open")
     setShowDescription(true);
   };
   useEffect(() => {
@@ -148,7 +147,6 @@ export default function Fond(props: PageProps) {
     });
   }, [id]);
   const handleMouseLeave = () => {
-    console.log("close")
 
     setShowDescription(false);
   };
@@ -182,7 +180,6 @@ export default function Fond(props: PageProps) {
         const isLoggedIn = localStorage.getItem('isLoggedIn');
         const userId = localStorage.getItem('userId');
 
-        console.log("isLoggedIn", isLoggedIn);
 
         if (isLoggedIn === 'true' && userId !== null) {
           const userIdNumber = parseInt(userId, 10);
@@ -267,7 +264,6 @@ export default function Fond(props: PageProps) {
         }));
         setData(data.data.graph);
         setData1(data.data.fundCountByYear);
-        console.log(data.data.graph)
 
         const data1 = await getallsociete();
 
@@ -313,14 +309,14 @@ export default function Fond(props: PageProps) {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/panel/societegestionpanel/login');
       }, 5);
@@ -332,7 +328,6 @@ export default function Fond(props: PageProps) {
   const [showExportModal, setShowExportModal] = useState(false);
 
   const handleExportClick = () => {
-    console.log("ee")
     setShow(true);
   };
   const [menuOpen, setMenuOpen] = useState(false);
@@ -375,7 +370,6 @@ export default function Fond(props: PageProps) {
     }
   }
 
-  console.log(fundCountByYears)
   const years = Object.keys(filteredData);
   const actifNets = Object.values(filteredData);
   const fundsPerYear = Object.values(fundCountByYears);

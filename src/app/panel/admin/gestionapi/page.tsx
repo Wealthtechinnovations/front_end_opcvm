@@ -78,7 +78,6 @@ export default function Fonds() {
         throw new Error('Erreur lors de la génération de la clé API');
       }
       const data = await response.json();
-      console.log(response);
       if (data.code=200) {
         Swal.fire({
           icon: 'success',

@@ -77,7 +77,6 @@ export default function Profile() {
       try {
 
         /*const datttt = await getpath();
-        console.log(datttt)
         setpath(datttt);*/
         const response = await fetch(`${urlconstant}/api/personnel/${societeconneted}`);
         if (response.ok) {
@@ -153,7 +152,7 @@ export default function Profile() {
             <Link
               className={`btn btn-main active}`}
               style={{ backgroundColor: "#3b82f6", color: "white" }}
-              href={`/panel/societegestionpanel/personnel/ajout?id=${societeconneted}`}
+              href={`/panel/societegestionpanel/personnel/ajout`}
             >
               Ajouter un personnel
             </Link>

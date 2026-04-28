@@ -506,7 +506,6 @@ export default function Recherche() {
       direction = 'desc';
 
     }
-    console.log(key)
 
     setSortConfig({ key, direction });
 
@@ -514,12 +513,10 @@ export default function Recherche() {
 
       // Créez une copie triée des fonds en utilisant la méthode sort()
       const sortedFundsCopy = [...funds.data.funds];
-      console.log(sortedFundsCopy);
       const filteredFunds = sortedFundsCopy.filter(item =>
         item.performanceData &&
         item.performanceData[sortConfig.key] !== '-'
       );
-      console.log(filteredFunds)
 
       filteredFunds.sort((a, b) => {
 
@@ -862,10 +859,7 @@ export default function Recherche() {
 
     setError("");
     // Utilisez le tableau formData selon vos besoins (par exemple, envoyez-le à un serveur).
-    console.log(formData);
 
-    console.log('Options sélectionnées :', selectedOptions);
-    console.log('Texte saisi :', textInput);
     const selectedValues = selectedOptions.map(option => option?.value);
     const selectedcategorie = selectedOptions1?.value;
     const selectedcategorienationale = selectedOptions3?.value;
@@ -873,8 +867,6 @@ export default function Recherche() {
 
     const selectedsociete = selectedSociete?.value;
     const selecteddevise = selectedDevise?.value;
-    console.log("Freqvaloris");
-    console.log(Freqvaloris);
     Swal.fire({
       title: 'Veuillez patienter',
       html: 'Chargement des résultats en cours...',
@@ -911,7 +903,6 @@ export default function Recherche() {
         }
 
         // Traitez la réponse de l'API ici
-        console.log('Réponse de l\'API :', data);
       })
       .catch(error => {
         console.error('Erreur lors de l\'appel de l\'API :', error);
@@ -937,7 +928,6 @@ export default function Recherche() {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
 
-    console.log("isLoggedIn")
     if (isLoggedIn === 'true' && userId !== null) {
       const userIdNumber = parseInt(userId, 10);
       setIsLoggedIn(true);
@@ -953,7 +943,6 @@ export default function Recherche() {
 
   const handleTabClick = (tabName: any) => {
     setActiveTab(tabName);
-    console.log("Position de la nav : ", tabName);
   };
 
 
@@ -961,7 +950,6 @@ export default function Recherche() {
   useEffect(() => {
 
 
-    console.log("Position de la nav : ", activeTab);
 
     // Appel à l'API lors du premier rendu du composant
     async function fetchData() {
@@ -978,7 +966,6 @@ export default function Recherche() {
           // Replace with the actual property name
         }));
         setFundsOptions(mappedOptions);
-        console.log(mappedOptions);
 
         const data2 = await getsociete();
         const mappedOptions2 = data2?.data.societes.map((funds: any) => ({
@@ -988,7 +975,6 @@ export default function Recherche() {
           // Replace with the actual property name
         }));
         setOptionsSociete(mappedOptions2);
-        console.log(fundsOptions);
 
         const data5 = await getdevise();
         const mappedOptions5 = data5?.data.devises.map((funds: any) => ({
@@ -998,7 +984,6 @@ export default function Recherche() {
           // Replace with the actual property name
         }));
         setOptionsDevise(mappedOptions5);
-        console.log(fundsOptions);
 
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
@@ -1011,13 +996,9 @@ export default function Recherche() {
     if (selectedRows.includes(itemId)) {
       // L'élément est déjà sélectionné, donc le désélectionner
       setSelectedRows(selectedRows.filter((id) => id !== itemId));
-      console.log("aaaaa")
-      console.log(selectedRows)
     } else {
-      console.log("bbbb")
       // L'élément n'est pas sélectionné, donc le sélectionner
       setSelectedRows([...selectedRows, itemId]);
-      console.log(selectedRows)
 
     }
   };
@@ -1043,14 +1024,14 @@ export default function Recherche() {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/panel/societegestionpanel/login');
       }, 5);

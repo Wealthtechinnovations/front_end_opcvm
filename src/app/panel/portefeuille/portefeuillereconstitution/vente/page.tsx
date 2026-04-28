@@ -11,7 +11,6 @@ import Swal from 'sweetalert2';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from "@/app/Header";
 
 import Calendar from "react-calendar";
@@ -102,7 +101,6 @@ export default function Vente() {
   const allfund = searchParams.get('allfund');
 
   const selectedfunds = searchParams.get('selectedfund');
-  console.log(selectedfunds);
   const selectedportfeuille = searchParams.get('portefeuille');
   const router = useRouter();
   const [transactionData, settransactioData] = useState<Transaction[]>([]);
@@ -159,18 +157,12 @@ export default function Vente() {
           // Replace with the actual property name
         }));
         setSelectedOptions(mappedOptions);
-        console.log(mappedOptions);
         const selectedFundsArray = JSON.parse(selectedfunds);
         setSelectedFunds(selectedFundsArray);
-        console.log(selectedFunds);
         const data3 = await getdateavailable(selectedfunds);
         setAvailableDates(data3.data);
-        console.log("ssssss")
-        console.log(data3.data)
         const response2 = await fetch(`${urlconstant}/api/gettransactions/${selectedportfeuille}`);
         const data2 = await response2.json();
-        console.log('dddddd');
-        console.log(data2.data.transactions);
         settransactioData(data2.data.transactions);
 
       } catch (error) {
@@ -216,9 +208,7 @@ export default function Vente() {
       );
 
       const netQuantite = sumQuantiteAchat - sumQuantiteVente;
-      console.log("matchingTransactionsAchat");
 
-      console.log(matchingTransactionsAchat);
       const netQuantiteRounded = parseFloat(netQuantite.toFixed(2));
 
       return {
@@ -289,7 +279,6 @@ export default function Vente() {
       }
     });
     try {
-      console.log(entries)
 
       fetch(`${urlconstant}/api/createtransactions`, {
         method: 'POST',
@@ -300,7 +289,6 @@ export default function Vente() {
       })
         .then((response) => response.json()) // Convertir la réponse en JSON
         .then((data) => {
-          console.log(data);
 
           if (data.code === 200) {
             Swal.close(); // Close the loading popup
@@ -324,7 +312,6 @@ export default function Vente() {
       // Gérer la réponse de l'API (par exemple, afficher un message de succès)
       /*  if (datas.status === 200) {
           const data = datas;
-          console.log(data)
           setIsModalOpen(true);
   
           // Redirect the user to another page after a delay (e.g., 2 seconds)
@@ -333,7 +320,6 @@ export default function Vente() {
           }, 2000);
         } else {
           const data = datas;
-          console.log(data)
         }*/
     } catch (error) {
       // Gérer les erreurs de l'API (par exemple, afficher une erreur)

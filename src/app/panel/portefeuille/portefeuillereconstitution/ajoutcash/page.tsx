@@ -10,7 +10,6 @@ import { useUserId } from '@/hooks/useUserId';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from "@/app/Header";
 import Sidebar from "@/app/sidebarportefeuille";
 import Headermenu from "@/app/Headermenu";
@@ -84,7 +83,6 @@ export default function Ajoutcash() {
   const id = useUserId();
 
   const selectedfunds = searchParams.get('selectedfund');
-  console.log(selectedfunds);
   const selectedportfeuille = searchParams.get('portefeuille');
   const router = useRouter();
   const [transactionData, settransactioData] = useState<Transaction[]>([]);
@@ -164,15 +162,11 @@ export default function Ajoutcash() {
           // Replace with the actual property name
         }));
         setSelectedOptions(mappedOptions);
-        console.log(mappedOptions);
         const selectedFundsArray = JSON.parse(selectedfunds);
         setSelectedFunds(selectedFundsArray);
-        console.log(selectedFunds);
 
         const response2 = await fetch(`${urlconstant}/api/gettransactions/${selectedportfeuille}`);
         const data2 = await response2.json();
-        console.log('dddddd');
-        console.log(data2.data.transactions);
         settransactioData(data2.data.transactions);
 
       } catch (error) {
@@ -198,7 +192,6 @@ export default function Ajoutcash() {
       return;
     }
     try {
-      console.log(entries)
 
       fetch(`${urlconstant}/api/managecash`, {
         method: 'POST',
@@ -209,7 +202,6 @@ export default function Ajoutcash() {
       })
         .then((response) => response.json()) // Convertir la réponse en JSON
         .then((data) => {
-          console.log(data);
 
           if (data.code === 200) {
 
@@ -227,7 +219,6 @@ export default function Ajoutcash() {
       // Gérer la réponse de l'API (par exemple, afficher un message de succès)
       /*  if (datas.status === 200) {
           const data = datas;
-          console.log(data)
           setIsModalOpen(true);
   
           // Redirect the user to another page after a delay (e.g., 2 seconds)
@@ -236,7 +227,6 @@ export default function Ajoutcash() {
           }, 2000);
         } else {
           const data = datas;
-          console.log(data)
         }*/
     } catch (error) {
       // Gérer les erreurs de l'API (par exemple, afficher une erreur)

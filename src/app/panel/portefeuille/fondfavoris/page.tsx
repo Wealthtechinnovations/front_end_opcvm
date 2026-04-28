@@ -7,7 +7,6 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from '@/app/Header';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';
@@ -164,9 +163,6 @@ export default function Fondselected() {
   const handleFondSelect = (fond: any) => {
     setSelectedFond(fond);
     setSelectedRows(selectedfunds.concat(fond));
-    console.log("s" + selectedfunds);
-    console.log(selectedRows.join(','));
-    console.log(fond);
 
   };
   const handleSearch = (e: any) => {
@@ -189,7 +185,6 @@ export default function Fondselected() {
           try {
             const response = await fetch(`${urlconstant}/api/getfondbyid/${item.fund_id}`);
             const data = await response.json();
-            console.log(fetchedData);
             fetchedData.push(data);
           } catch (error) {
             console.error("Erreur lors de l'appel API :", error);

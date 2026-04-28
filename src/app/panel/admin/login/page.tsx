@@ -49,7 +49,6 @@ export default function Login() {
       if (data.code === 200) {
         //  router.push(`/panel/societegestionpanel/login/register?email=${email}&password=${password}`);
 
-        console.log(data);
         setisExist("OUI");
         setError("Vous existez deja en base")
         setShowPassword(true);
@@ -65,14 +64,13 @@ export default function Login() {
       const data = await login(email, password);
       setResponse(data);
       if (data.code === 200) {
-        console.log(data)
         let href: string = '';
         //  router.push(`/panel/societegestionpanel/login/register?email=${email}&password=${password}`);
         //   if (data.data.userExists.typeusers_id == 1) {
-        href = `/panel/admin/home?id=${data.data.userExists.id}`;
+        href = `/panel/admin/home`;
 
         /* } else if (data.data.userExists.typeusers_id == 2) {
-           href = `/panel/admin/pagehome?id=${data.data.userExists.id}`;
+           href = `/panel/admin/pagehome`;
  
          }*/
         localStorage.setItem('isLoggedIn', 'true');

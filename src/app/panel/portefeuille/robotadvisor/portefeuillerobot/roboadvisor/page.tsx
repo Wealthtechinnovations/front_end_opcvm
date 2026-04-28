@@ -7,7 +7,6 @@ import Select, { SingleValue } from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';
@@ -203,7 +202,6 @@ export default function RoboAdvisor() {
 
   };
   const handleCheckboxChange = (index: number) => {
-    console.log(index)
     setSelectedRows((prevSelectedRows) =>
       prevSelectedRows.includes(index)
         ? prevSelectedRows.filter((i) => i !== index)
@@ -220,7 +218,6 @@ export default function RoboAdvisor() {
 
   // Définissez les gestionnaires de changement pour mettre à jour les états minWeights et maxWeights
   const handleMinWeightChange = (value: number, index: number) => {
-    console.log(minWeights);
     const newMinWeights = [...minWeights];
     newMinWeights[index] = value;
     setMinWeights(newMinWeights);
@@ -286,7 +283,6 @@ export default function RoboAdvisor() {
     async function fetchData() {
       try {
         const data1 = await getlastvl1();
-        console.log(data1);
         const mappedOptions = data1?.data.funds.map((funds: any) => ({
           value: funds.value,
           label: funds.label,
@@ -306,7 +302,6 @@ export default function RoboAdvisor() {
     e.preventDefault();
 
     try {
-      console.log(formData)
       setError("");
       const formDatas = new URLSearchParams();
       formDatas.append("minReturn", formData.minReturn); // Remplacez "valeur-de-minReturn" par la valeur de minReturn
@@ -326,12 +321,10 @@ export default function RoboAdvisor() {
       const data1 = await datas;
 
       if (data1.data.filteredPortfolios.length === 0) {
-        console.log("datas")
 
         // Aucune donnée trouvée, affichez un message d'erreur
         setError("Aucun résultat trouvé. Réessayez avec d'autres critères.");
       } else {
-        console.log("datas1")
 
         // Réinitialisez le message d'erreur s'il y a des données
         setError("");
@@ -374,7 +367,6 @@ export default function RoboAdvisor() {
        const result = await response.json();
  
        if (result.code === 200) {
-         console.log(result.data)
          setFundData(result.data.fonds);
          setPeriodicite(result.data.periodicite);
        } else {
@@ -419,7 +411,6 @@ export default function RoboAdvisor() {
        // Extraire les rendements filtrés
        const filteredReturns = filteredFunds.map((fund: { rendementsFiltres: any; }) => fund.rendementsFiltres);
  
-       console.log(filteredReturns);
        // Extraire les détails des fonds filtrés
        const fundDetails = filteredFunds.map((fund: { nom_fond: any; idfond: any; pays: any; categorie: any; }) => ({
          nom_fond: fund.nom_fond,
@@ -475,8 +466,6 @@ export default function RoboAdvisor() {
         });
 
         const result1 = await response1.json();
-        console.log(result1);
-        console.log(result1.frontier);
         setEfficientFrontierData(result1.frontier);
         setPortefeuillePropose(result1);
       } catch (error) {
@@ -525,7 +514,6 @@ export default function RoboAdvisor() {
   const [categoryValues, setCategoryValues] = useState<CategoryValues>({});
 
   const toggleMenu = () => {
-    console.log(showAdvancedConditions);
     setShowAdvancedConditions(!showAdvancedConditions);
   };
 
@@ -553,7 +541,6 @@ export default function RoboAdvisor() {
         }
       });
 
-      console.log(selectedRows)
 
       const selectedPortfolios = selectedRows.map(index => ({
         poids: portefeuillePropose?.efficient_portfolios[index],
@@ -563,7 +550,6 @@ export default function RoboAdvisor() {
         nom: formData.nomportefeuille + " " + (index + 1).toString() // Correction ici
       }));
 
-      console.log(selectedPortfolios);
 
       const response = await fetch(`${urlconstant}/api/postportefeuillepropose`, {
         method: 'POST',

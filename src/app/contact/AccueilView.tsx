@@ -81,7 +81,6 @@ export default function Accueil(props: any) {
                 const isLoggedIn = localStorage.getItem('isLoggedIn');
                 const userId = localStorage.getItem('userId');
 
-                console.log("isLoggedIn")
                 if (isLoggedIn === 'true' && userId !== null) {
                     const userIdNumber = parseInt(userId, 10);
                     setIsLoggedIn(true);
@@ -125,7 +124,6 @@ export default function Accueil(props: any) {
         const targetElement = document.getElementById(targetId);
 
         if (targetElement) {
-            console.log(targetElement);
 
             targetElement.scrollIntoView({
                 behavior: 'smooth',
@@ -133,7 +131,6 @@ export default function Accueil(props: any) {
                 inline: 'nearest', // Adjust as needed: 'start', 'center', 'end', or 'nearest'
             });
 
-            console.log('After scroll');
         }
     };
     const [menuOpen, setMenuOpen] = useState(false);
@@ -148,14 +145,14 @@ export default function Accueil(props: any) {
 
         if (userConnected !== null) {
             setTimeout(() => {
-                const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+                const redirectUrl = `/panel/portefeuille/home`;
 
                 router.push(redirectUrl);
             }, 5);
 
         } else {
             setTimeout(() => {
-                // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+                // const redirectUrl = `/panel/portefeuille/home`;
 
                 router.push('/panel/societegestionpanel/login');
             }, 5);

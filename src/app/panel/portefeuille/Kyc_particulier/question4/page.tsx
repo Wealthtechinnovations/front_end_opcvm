@@ -15,7 +15,6 @@ import axios from 'axios';
 
 // Pour Magic
 import { ethers } from "ethers";
-import Router from "next/router";
 interface KycForParticular {
     userId: string;
     // Add other properties as needed

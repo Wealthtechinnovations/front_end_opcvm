@@ -147,8 +147,6 @@ export default function Comparaison(props: PageProps) {
       }
     });
     // Traitez les données du formulaire ici (selectedOptions et textInput)
-    console.log('Options sélectionnées :', formData);
-    console.log('Texte saisi :', selectedPays);
     const selectedValues = selectedSociete.map(option => option?.value);
     fetch(`${urlconstant}/api/listesocietepays/${id}?query=${selectedValues.join(',')}`, {
       method: 'POST', // Assurez-vous que la méthode HTTP correspond à votre API
@@ -162,8 +160,6 @@ export default function Comparaison(props: PageProps) {
         if (data && data.code === 200) {
           Swal.close(); // Close the loading popup
           setFunds(data);
-          console.log(data)
-          console.log("data")
 
         } else {
           // Affichez un message d'erreur ici
@@ -173,7 +169,6 @@ export default function Comparaison(props: PageProps) {
         }
 
         // Traitez la réponse de l'API ici
-        console.log('Réponse de l\'API :', data);
       })
       .catch(error => {
         console.error('Erreur lors de l\'appel de l\'API :', error);
@@ -186,7 +181,6 @@ export default function Comparaison(props: PageProps) {
 
   const handleTabClick = (tabName: any) => {
     setActiveTab(tabName);
-    console.log("Position de la nav : ", tabName);
   };
 
   const handleItemsPerPageChange = (e: { target: { value: string; }; }) => {
@@ -211,7 +205,6 @@ export default function Comparaison(props: PageProps) {
     const userId = localStorage.getItem('userId');
 
 
-    console.log("isLoggedIn")
     if (isLoggedIn === 'true' && userId !== null) {
       const userIdNumber = parseInt(userId, 10);
       setIsLoggedIn(true);
@@ -241,7 +234,6 @@ export default function Comparaison(props: PageProps) {
   useEffect(() => {
 
 
-    console.log("Position de la nav : ", activeTab);
 
     // Appel à l'API lors du premier rendu du composant
     async function fetchData() {
@@ -266,7 +258,6 @@ export default function Comparaison(props: PageProps) {
         setOptionsPays(mappedOptions);
 
 
-        console.log(fundsOptions);
         const data2 = await getsociete();
         const mappedOptions2 = data2?.data.societes.map((funds: any) => ({
 
@@ -288,7 +279,6 @@ export default function Comparaison(props: PageProps) {
         if (responseData && responseData.code === 200) {
           Swal.close(); // Close the loading popup
 
-          console.log(responseData)
           setFunds(responseData);
         }
 
@@ -303,13 +293,9 @@ export default function Comparaison(props: PageProps) {
     if (selectedRows.includes(itemId)) {
       // L'élément est déjà sélectionné, donc le désélectionner
       setSelectedRows(selectedRows.filter((id) => id !== itemId));
-      console.log("aaaaa")
-      console.log(selectedRows)
     } else {
-      console.log("bbbb")
       // L'élément n'est pas sélectionné, donc le sélectionner
       setSelectedRows(selectedRows.concat(itemId));
-      console.log(selectedRows)
 
     }
   };
@@ -322,7 +308,6 @@ export default function Comparaison(props: PageProps) {
       direction = 'desc';
 
     }
-    console.log(key)
 
     setSortConfig({ key, direction });
 
@@ -330,14 +315,11 @@ export default function Comparaison(props: PageProps) {
 
       // Créez une copie triée des fonds en utilisant la méthode sort()
       const sortedFundsCopy = [...funds.data.societes];
-      console.log(sortedFundsCopy);
       const filteredFunds = sortedFundsCopy.filter(item =>
         item[sortConfig.key] !== '-'
       );
-      console.log(filteredFunds)
 
       filteredFunds.sort((a, b) => {
-        console.log(sortConfig.key)
 
         if (sortConfig.key == "nom" || sortConfig.key == "pays") {
           const aValue = a[sortConfig.key];
@@ -393,14 +375,14 @@ export default function Comparaison(props: PageProps) {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/panel/societegestionpanel/login');
       }, 5);

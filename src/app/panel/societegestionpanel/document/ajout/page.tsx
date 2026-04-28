@@ -9,7 +9,6 @@ import Select, { SingleValue } from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Headermenu from '../../../../Headermenu';
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
@@ -142,7 +141,6 @@ export default function Ajoutvl() {
     formData.societe = societeconneted;
     try {
       const selectedfond = selectedOptions1?.value;
-      console.log(selectedfond)
       const formDataToSend = new FormData();
       formDataToSend.append('date', formData.date);
       formDataToSend.append('mois', formData.mois);
@@ -157,8 +155,6 @@ export default function Ajoutvl() {
       if (formData.fichier != null)
         formDataToSend.append('fichier', formData.fichier);
 
-      console.log(formData.fichier)
-      console.log(selectedfond)
 
       const response = await fetch(`${urlconstant}/api/doc`, {
         method: 'POST',
@@ -166,7 +162,6 @@ export default function Ajoutvl() {
         body: formDataToSend
       });
       const data = await response.json();
-      console.log(data);
       if (response.status === 200) {
         setIsModalOpen(true);
         Swal.fire({

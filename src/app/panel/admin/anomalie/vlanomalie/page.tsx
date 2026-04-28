@@ -105,7 +105,7 @@ export default function Home() {
   const handleLinkClick = (item: any, typeAnomalie: any) => {
     let href;
       // Rediriger l'utilisateur vers la page des détails pour les VL manquantes
-      href = `/panel/societegestionpanel/anomalie/vlanomalie/details?id=${id}&fond=${item}`;
+      href = `/panel/societegestionpanel/anomalie/vlanomalie/details?fond=${item}`;
   
 
     // Use the router.push method to navigate
@@ -138,7 +138,6 @@ export default function Home() {
 
         setFundsData(data.data);
 
-        console.log(data.data)
 
         Swal.close(); // Close the loading popup
 
@@ -151,9 +150,7 @@ export default function Home() {
     }
     fetchData();
   }, []);
-  console.log("performanceData")
 
-  console.log(performanceData)
 
   const handleLogout = () => {
     // Remove items from localStorage

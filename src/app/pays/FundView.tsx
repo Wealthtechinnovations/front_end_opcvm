@@ -87,12 +87,10 @@ export default function Comparaison() {
     setError("");
 
     // Traitez les données du formulaire ici (selectedOptions et textInput)
-    console.log('Options sélectionnées :', formData);
 
     if (selectedPays) {
 
       const filteredPays = pays?.data.countriesWithCompanies.filter(paysOption => paysOption.pays === selectedPays) as any[];
-      console.log(filteredPays);
       if (filteredPays.length > 0) {
         setPays({ data: { countriesWithCompanies: filteredPays } });
       } else {
@@ -110,7 +108,6 @@ export default function Comparaison() {
 
   const handleTabClick = (tabName: any) => {
     setActiveTab(tabName);
-    console.log("Position de la nav : ", tabName);
   };
 
   const handleItemsPerPageChange = (e: { target: { value: string; }; }) => {
@@ -135,7 +132,6 @@ export default function Comparaison() {
     const userId = localStorage.getItem('userId');
 
 
-    console.log("isLoggedIn")
     if (isLoggedIn === 'true' && userId !== null) {
       const userIdNumber = parseInt(userId, 10);
       setIsLoggedIn(true);
@@ -154,7 +150,6 @@ export default function Comparaison() {
   useEffect(() => {
 
 
-    console.log("Position de la nav : ", activeTab);
 
     // Appel à l'API lors du premier rendu du composant
     async function fetchData() {
@@ -164,9 +159,7 @@ export default function Comparaison() {
         const data = await getpays();
 
         setPays(data);
-        console.log(data);
         totalItems = data?.data?.countriesWithCompanies.length || 0;
-        console.log(Math.ceil(totalItems / itemsPerPage))
         settotalPages(Math.ceil(totalItems / itemsPerPage));
         const mappedOptions = data?.data.countriesWithCompanies.map((funds: any) => ({
 
@@ -176,7 +169,6 @@ export default function Comparaison() {
         }));
         setOptionsPays(mappedOptions);
 
-        console.log(fundsOptions);
 
 
 
@@ -187,7 +179,6 @@ export default function Comparaison() {
     fetchData();
   }, [activeTab]);
   const handlePaysChange = (selectedOption: any) => {
-    console.log(selectedOption)
     setSelectedPays(selectedOption.value); // Met à jour l'état selectedPays avec la nouvelle sélection
   };
 
@@ -208,7 +199,6 @@ export default function Comparaison() {
     let direction = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
-      console.log('ghhghhh')
 
     }
     setSortConfig({ key, direction });
@@ -218,10 +208,8 @@ export default function Comparaison() {
       // Créez une copie triée des fonds en utilisant la méthode sort()
       const sortedFundsCopy = [...pays.data.countriesWithCompanies];
       const filteredFunds = sortedFundsCopy.filter(item => item[sortConfig.key] !== '-');
-      console.log(filteredFunds)
 
       filteredFunds.sort((a, b) => {
-        console.log("filteredFunds")
 
         if (sortConfig.key == "nom" || sortConfig.key == "pays") {
           const aValue = a[sortConfig.key];
@@ -235,7 +223,6 @@ export default function Comparaison() {
           }
 
         } else {
-          console.log("filteredFunds")
 
           const aValue = a[sortConfig.key];
           const bValue = b[sortConfig.key];
@@ -276,14 +263,14 @@ export default function Comparaison() {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/panel/societegestionpanel/login');
       }, 5);

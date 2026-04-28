@@ -10,8 +10,6 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
-import Router from 'next/router';
 import Header from "@/app/Header";
 import { useRouter } from "next/navigation";
 import { Dropdown } from "react-bootstrap";
@@ -132,7 +130,6 @@ export default function Profile(props: PageProps) {
         if (quizData && commentPartSeven) {
           // Convertir les données JSON en un objet JavaScript
           const quiz = JSON.parse(quizData);
-          console.log(quiz);
           // Mettre à jour l'état mifidForUser avec les données récupérées
           setQuizMifidOfUser({
             userId: "your_user_id", // Remplacez "your_user_id" par l'ID de l'utilisateur approprié
@@ -229,14 +226,14 @@ export default function Profile(props: PageProps) {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/portefeuille/login');
       }, 5);

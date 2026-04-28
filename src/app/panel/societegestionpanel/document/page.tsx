@@ -8,7 +8,6 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { faFileDownload, faPhoneAlt, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
 //import * as XLSX from 'xlsx';
-//import { router } from 'next/router';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebar";

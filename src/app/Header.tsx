@@ -171,7 +171,7 @@ const Header = () => {
             items={
               userConnected
                 ? [
-                    { label: 'Mon espace', href: `/panel/portefeuille/home?id=${userConnected}` },
+                    { label: 'Mon espace', href: `/panel/portefeuille/home` },
                     { label: 'Espace société de gestion', href: '/panel/societegestionpanel/login' },
                   ]
                 : [

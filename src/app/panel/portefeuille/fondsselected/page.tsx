@@ -7,7 +7,6 @@ import Select, { OptionsOrGroups, GroupBase, Options } from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from '@/app/Header';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';

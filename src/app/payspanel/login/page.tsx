@@ -6,11 +6,9 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-import Head from 'next/head';
 import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
 
 import { useRouter } from 'next/navigation';
-import { magic } from '../../../../magic'; // Importer correctement le module
 
 async function login(email: string, password: string) {
   const response = await fetch(`${urlconstant}/api/userlogin`, {
@@ -63,7 +61,6 @@ async function getsociete(pays: string) {
 }
 export default function Login() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  // Fonction de connexion à magic
 
   const router = useRouter();
   const [passwordsMatch, setPasswordsMatch] = useState(true);
@@ -166,7 +163,6 @@ export default function Login() {
           // Replace with the actual property name
         }));
         setOptionsSociete(mappedOptions1);
-        console.log(data1);
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
       }
@@ -186,7 +182,6 @@ export default function Login() {
           // Replace with the actual property name
         }));
         setOptionsSociete(mappedOptions1);
-        console.log(data1);
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
       }
@@ -446,7 +441,6 @@ export default function Login() {
       if (data.message === "Aucun utilisateur trouvé") {
         //  router.push(`/panel/societegestionpanel/login/register?email=${email}&password=${password}`);
 
-        console.log(data);
         setisExist("NON EXIST");
         setError("Pour completer votre inscription merci de selectionner le type d utilisateur pour lequel vous voulez creer un compte")
 
@@ -476,7 +470,6 @@ export default function Login() {
           },
           body: JSON.stringify(datas), // Convert the data to JSON and include it in the request body
         });
-        console.log(JSON.stringify(datas));
 
         const data = await response.json();
         if (data.message === "Mot de passe invalide") {
@@ -500,41 +493,18 @@ export default function Login() {
             } else {
               localStorage.setItem('userId', user.id);
             }
-            setIsLoggingIn(true)
+            document.cookie = `isLoggedIn=true; path=/; max-age=${60 * 60 * 24 * 7}`;
+            document.cookie = `tokenEnCours=${data.token}; path=/; max-age=${60 * 60 * 24 * 7}`;
 
-            try {
-              if (magic && magic.auth) {
-                const didToken = await magic.auth.loginWithMagicLink({
-                  email,
-                  redirectURI: new URL('/callback', window.location.origin).href,
-                })
-                const reloadWithParam = (param: any) => {
-                  window.location.href = `${window.location.origin}/callback?param=${param}`;
-                };
-                setTimeout(() => {
-                  // window.location.reload()
-                  reloadWithParam(email);
-
-                }, 5)
-              }
-            } catch (error) {
-              setIsLoggingIn(false)
-              console.error(error);
+            let href;
+            if (user.typeusers_id == 2 || user.typeusers_id == 5) {
+              href = `/panel/societegestionpanel/pagehome`;
+            } else if (user.typeusers_id == 0) {
+              href = `/panel/admin/home`;
+            } else {
+              href = `/panel/portefeuille/home`;
             }
-            console.log(data1)
-            /* let href;
-             //  router.push(`/panel/societegestionpanel/login/register?email=${email}&password=${password}`);
-             if (data.data.userExists.typeusers_id == 2) {
-               href = `/panel/societegestionpanel/pagehome?id=${data.data.userExists.denomination}`;
-               localStorage.setItem('isLoggedIn', 'true');
-               localStorage.setItem('userId', data.data.userExists.denomination);
-             } else {
-               href = `/panel/portefeuille/home?id=${data.data.userExists.id}`;
-               localStorage.setItem('isLoggedIn', 'true');
-               localStorage.setItem('userId', data.data.userExists.id);
-             }
-             router.push(href);
- */
+            router.push(href);
           }
         }
       } catch (error) {
@@ -554,7 +524,6 @@ export default function Login() {
 
 
       try {
-        console.log(userType)
         const response = await fetch(`${urlstableconstant}/api/session/register-opcvm`, {
           method: 'POST',
           headers: {
@@ -563,7 +532,6 @@ export default function Login() {
           },
           body: JSON.stringify(formData), // Convert the data to JSON and include it in the request body
         });
-        console.log(JSON.stringify(formData));
 
         const data = await response.json();
         if (response.status === 200) {
@@ -574,7 +542,6 @@ export default function Login() {
           const pays = selectedPays?.value;
           let typeusers = userType;
           const typeusers_id = typeusers === "socGest" ? "2" : typeusers === "part" ? "1" : typeusers === "insti" ? "3" : "4";
-          console.log(typeusers_id)
 
           const formDatas = {
             email,
@@ -591,7 +558,6 @@ export default function Login() {
           // Convert the array to an object with key-value pairs
           const dataObject = Object.fromEntries(dataArray);
 
-          console.log(dataObject);
 
           const data = await fetch(`${urlconstant}/api/postuserportefeuille`, {
             method: 'POST',
@@ -617,16 +583,13 @@ export default function Login() {
               },
               body: JSON.stringify(datas), // Convert the data to JSON and include it in the request body
             });
-            console.log(JSON.stringify(datas));
 
             const data5 = await response5.json();
             if (data5.message === "Mot de passe invalide") {
 
             } else {
-              console.log(data5.token)
               localStorage.setItem('tokenEnCours', data5.token);
               localStorage.setItem('isLoggedIn', 'true');
-              console.log(localStorage.getItem('tokenEnCours'));
               const data1 = await login(email, password);
               setResponse(data1);
               if (data1.data.userExists.typeusers_id == 2) {
@@ -636,43 +599,20 @@ export default function Login() {
               }
             }
             const responseData = await data.json();
-            console.log(responseData)
 
             const userId = responseData.data.userId;
-            setIsLoggingIn(true)
-            try {
-              if (magic && magic.auth) {
-                const didToken = await magic.auth.loginWithMagicLink({
-                  email,
-                  redirectURI: new URL('/callback', window.location.origin).href,
-                })
-                const reloadWithParam = (param: any) => {
-                  window.location.href = `${window.location.origin}/callback?param=${param}`;
-                };
-                setTimeout(() => {
-                  // window.location.reload()
-                  reloadWithParam(email);
+            document.cookie = `isLoggedIn=true; path=/; max-age=${60 * 60 * 24 * 7}`;
+            document.cookie = `tokenEnCours=${data5.token}; path=/; max-age=${60 * 60 * 24 * 7}`;
 
-                }, 5)
-              }
-            } catch (error) {
-              setIsLoggingIn(false)
-              console.error(error);
+            let href: string;
+            if (userId.typeusers_id == 2 || userId.typeusers_id == 5) {
+              href = `/panel/societegestionpanel/pagehome`;
+            } else if (userId.typeusers_id == 0) {
+              href = `/panel/admin/home`;
+            } else {
+              href = `/panel/portefeuille/home`;
             }
-            /*   let href: string;
-               if (userId.typeusers_id == 2) {
-                 localStorage.setItem('isLoggedIn', 'true');
-                 localStorage.setItem('userId', userId.denomination);
-                 href = `/panel/societegestionpanel/pagehome?id=${userId.denomination}`;
-               } else {
-                 localStorage.setItem('isLoggedIn', 'true');
-                 localStorage.setItem('userId', userId.id);
-                 href = `/panel/portefeuille/home?id=${userId.id}`;
-               }
-               // Redirect the user to another page after a delay (e.g., 2 seconds)
-               setTimeout(() => {
-                 router.push(href); // Replace '/other-page' with your desired page URL
-               }, 2000);*/
+            router.push(href);
           }
 
         }
@@ -698,7 +638,6 @@ export default function Login() {
       body: JSON.stringify(formDat), // Convert the data to JSON and include it in the request body
 
     });
-    console.log(response);
     if (response.status === 200) {
 
       prevPage();

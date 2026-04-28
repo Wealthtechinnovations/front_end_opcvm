@@ -128,12 +128,10 @@ export default function Fond(props: PageProps) {
   const randomPercentage2 = ((Math.random() * 200) - 100).toFixed(2);
   const [showDescription, setShowDescription] = useState(false);
   const handleMouseEnter = () => {
-    console.log("open")
     setShowDescription(true);
   };
 
   const handleMouseLeave = () => {
-    console.log("close")
 
     setShowDescription(false);
   };
@@ -164,7 +162,6 @@ export default function Fond(props: PageProps) {
         const isLoggedIn = localStorage.getItem('isLoggedIn');
         const userId = localStorage.getItem('userId');
 
-        console.log("isLoggedIn", isLoggedIn);
 
         if (isLoggedIn === 'true' && userId !== null) {
           const userIdNumber = parseInt(userId, 10);
@@ -230,7 +227,6 @@ export default function Fond(props: PageProps) {
         setData(responseData.data.repartition);
         setData1(responseData.data.results2);
         setData2(responseData.data.performa);
-        console.log(responseData.data.performa);
         Swal.close(); // Close the loading popup
 
 
@@ -265,14 +261,14 @@ export default function Fond(props: PageProps) {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        const redirectUrl = `/panel/portefeuille/home`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
+        // const redirectUrl = `/panel/portefeuille/home`;
 
         router.push('/panel/societegestionpanel/login');
       }, 5);
@@ -284,7 +280,6 @@ export default function Fond(props: PageProps) {
   const [showExportModal, setShowExportModal] = useState(false);
 
   const handleExportClick = () => {
-    console.log("ee")
     setShow(true);
   };
   const [menuOpen, setMenuOpen] = useState(false);
@@ -330,7 +325,6 @@ export default function Fond(props: PageProps) {
       setData(responseData.data.repartition);
       setData1(responseData.data.results2);
       setData2(responseData.data.performa);
-      console.log(responseData.data.performa);
 
     } catch (error) {
       console.error('An error occurred:', error);
@@ -414,8 +408,6 @@ export default function Fond(props: PageProps) {
     }
     return false;
   });
-  console.log("filteredPerforma")
-  console.log(filteredPerforma)
   const categoriesColors = {
     'Actions': '#544fc5',
     'Diversifié': '#00e272',

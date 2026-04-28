@@ -90,7 +90,6 @@ export default function Profile() {
     e.preventDefault();
 
     try {
-      console.log(formData);
       // Envoyer les données du formulaire à l'API
       const response = await fetch(`${urlconstant}/api/postportefeuille`, {
         method: 'POST',
@@ -99,7 +98,6 @@ export default function Profile() {
         },
         body: JSON.stringify(formData), // Convertissez votre objet formData en JSON
       });
-      console.log(response);
       // Gérer la réponse de l'API (par exemple, afficher un message de succès)
 
       if (response.status === 200) {
@@ -135,7 +133,7 @@ export default function Profile() {
           <PageHeader
             title="Tableau de bord Admin"
             breadcrumbs={[
-              { label: 'Admin', link: `/panel/admin/home?id=${id}` },
+              { label: 'Admin', link: `/panel/admin/home` },
               { label: 'Accueil' },
             ]}
           />

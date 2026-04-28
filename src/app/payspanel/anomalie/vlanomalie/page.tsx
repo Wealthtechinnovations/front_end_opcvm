@@ -7,7 +7,6 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Header from "@/app/Header";
 
 import { useRouter } from 'next/navigation';
@@ -165,7 +164,6 @@ export default function Fondselected(props: PageProps) {
   let selectedfunds = props?.searchParams?.selectedfund;
   let selectedportfeuille = props?.searchParams?.portefeuille;
   let selectedValuename = props?.searchParams?.selectedValuename;
-  console.log(selectedValuename);
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [fundsOptions, setFundsOptions] = useState([]);
@@ -197,9 +195,6 @@ export default function Fondselected(props: PageProps) {
   const handleFondSelect = (fond: any) => {
     setSelectedFond(fond);
     setSelectedRows(selectedfunds.concat(fond));
-    console.log("s" + selectedfunds);
-    console.log(selectedRows.join(','));
-    console.log(fond);
 
   };
   const handleSearch = (e: any) => {
@@ -244,14 +239,12 @@ export default function Fondselected(props: PageProps) {
 
       const response = await fetch(`${urlconstant}/api/vlspresui/${fondid}/${fundsData[index].now}/${fundsData[index].nowdate}`);  // Remplacez 'id' par l'identifiant du fonds
       const data = await response.json();
-      console.log(data.data);
       let { previousValues, nextValues } = data.data;
       //  const newLine = { id: fondid, date: '', value: '' };
 
 
       //   previousValues = [...previousValues, newLine],
       setFormValues({ previousValues, nextValues });
-      console.log()
 
       //  alert('Fond ajouté aux favoris !');
 
@@ -308,7 +301,7 @@ export default function Fondselected(props: PageProps) {
       });
 
       setTimeout(() => {
-        const href = `/payspanel/anomalie?id=${societeconneted}`;
+        const href = `/payspanel/anomalie`;
 
         router.push(href);
       }, 2000);
@@ -329,30 +322,21 @@ export default function Fondselected(props: PageProps) {
   };
 
   const handlePreviousChange = (index: number, value: string, date?: any) => {
-    console.log(index)
     let newValues;
     if (index != 5) {
       newValues = [...formValues.previousValues];
       newValues[index].value = value;
-      console.log("index")
-      console.log(newValues)
-      console.log(formValues.previousValues)
     } else {
       const newLine = { id: fondid, date: date, value: '' };
 
       if (formValues.previousValues.length <= 5) {
         formValues.previousValues.push(newLine);
       }
-      console.log("index1")
 
       newValues = [...formValues.previousValues];
-      console.log(newValues)
 
       //  newValues[5].value = value;
       newValues[index].value = value;
-      console.log(index)
-      console.log(value)
-      console.log(formValues.previousValues)
     }
 
     setFormValues({ ...formValues, previousValues: newValues });
@@ -381,7 +365,7 @@ export default function Fondselected(props: PageProps) {
               <ul className="sidebar-menu" data-widget="tree">
 
                 <li>
-                  <Link href={`/payspanel/pagehome?id=${societeconneted}`} >
+                  <Link href={`/payspanel/pagehome`} >
                     <i data-feather="plus-square"></i>
                     <span>Tableau de bord</span>
                   </Link>
@@ -394,19 +378,19 @@ export default function Fondselected(props: PageProps) {
                   {isDropdownOpen && (
                     <>
                       <li>
-                        <a href={`/payspanel/fondsvalide?id=${societeconneted}`}>   <i className="bi bi-check2"></i>
+                        <a href={`/payspanel/fondsvalide`}>   <i className="bi bi-check2"></i>
                           <span style={{ marginLeft: '55px' }}>Fonds validés</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/fonds?id=${societeconneted}`}>
+                        <a href={`/payspanel/fonds`}>
                           <span style={{ marginLeft: '55px' }}>Fonds à validés</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/ajoutvl?id=${societeconneted}`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
+                        <a href={`/payspanel/ajoutvl`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                           <span style={{ marginLeft: '55px' }}>Ajouter un fond</span></a>
                       </li>
                       <li>
-                        <a href={`/payspanel/importfondvl?id=${societeconneted}`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
+                        <a href={`/payspanel/importfondvl`}> <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                           <span style={{ marginLeft: '55px' }}>Importer Fonds et Vl</span></a>
                       </li>
                     </>
@@ -415,14 +399,14 @@ export default function Fondselected(props: PageProps) {
 
 
                 <li>
-                  <Link href={`/payspanel/anomalie?id=${societeconneted}`} style={{ backgroundColor: "#3b82f6", color: "white" }} >
+                  <Link href={`/payspanel/anomalie`} style={{ backgroundColor: "#3b82f6", color: "white" }} >
                     <i data-feather="plus-square"></i>
                     <span>Anomalies</span>
                   </Link>
                 </li>
 
                 <li>
-                  <Link href={`/payspanel/actualite?id=${societeconneted}`} >
+                  <Link href={`/payspanel/actualite`} >
                     <i data-feather="user"></i>
                     <span>Actualités</span>
                   </Link>

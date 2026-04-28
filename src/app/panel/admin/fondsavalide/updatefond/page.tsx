@@ -9,7 +9,6 @@ import Select, { SingleValue } from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
 import Headermenu from '../../../../Headermenu';
 import { useRouter, useSearchParams } from "next/navigation";
 import Swal from "sweetalert2";
@@ -383,7 +382,6 @@ export default function Ajoutvl() {
     async function fetchData() {
       try {
         const data2 = await fondscharge(fondId);
-        console.log(data2)
         setFund(data2)
         if (data2 && data2.dev_libelle) {
           setSelectedDevise({ value: data2.dev_libelle, label: data2.dev_libelle });
@@ -402,7 +400,6 @@ export default function Ajoutvl() {
           // Replace with the actual property name
         }));
         setOptionsPays(mappedOptions);
-        console.log(data.data.paysOptions);
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
       }
@@ -415,7 +412,6 @@ export default function Ajoutvl() {
       const fetchRegulateur = async () => {
         try {
           const data = await getregulateur(selectedPays?.value)
-          console.log(data?.data);
 
           let mappedOptions = [];
           if (Array.isArray(data?.data.regulateur)) {
@@ -473,8 +469,6 @@ export default function Ajoutvl() {
       if (selectedRegulateur)
         formData.regulateur = selectedRegulateur?.value
       formData.societe_gestion = societeconneted;
-      console.log(formData);
-      console.log(formData);
       // Envoyer les données du formulaire à l'API
       const response = await fetch(`${urlconstant}/api/updatefondmodif/${fondId}`, {
         method: 'POST',
@@ -497,7 +491,7 @@ export default function Ajoutvl() {
 
         // Redirect the user to another page after a delay (e.g., 2 seconds)
         setTimeout(() => {
-          const href = `/panel/societegestionpanel/fondsavalide?id=${societeconneted}`;
+          const href = `/panel/societegestionpanel/fondsavalide`;
 
           router.push(href);
         }, 2000);
@@ -519,7 +513,6 @@ export default function Ajoutvl() {
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
-  console.log(fund)
   return (
 
 < Fragment >

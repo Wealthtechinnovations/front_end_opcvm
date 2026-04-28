@@ -1,13 +1,8 @@
 "use client";
-import Link from "next/link";
-import React, { Fragment, useEffect, useState } from "react";
-import router from "next/router";
+import React, { Fragment } from "react";
 import Header from "./Header";
 import SEO from '@/components/common/SEO';
 import { organizationSchema, websiteSchema } from '@/utils/structuredData';
-import Highcharts from 'highcharts';
-import HighchartsReact from 'highcharts-react-official';
-import Select from 'react-select';
 
 export default function Home() {
 
