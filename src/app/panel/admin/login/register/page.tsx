@@ -7,7 +7,7 @@ import Select from 'react-select';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 import { urlconstant } from "@/app/constants";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Pays {
   value: any[]; // ou un type spécifique pour les éléments du tableau 'funds'
@@ -38,8 +38,9 @@ async function getsociete() {
   ).json();
   return data;
 }
-export default function Register(props: PageProps) {
-  let emails = props?.searchParams?.email;
+export default function Register() {
+  const searchParams = useSearchParams();
+  let emails = searchParams.get('email');
   const [passwordsMatch, setPasswordsMatch] = useState(true);
 
   const [selectedPays, setSelectedPays] = useState<Pays | null>(null);
