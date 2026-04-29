@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import React, { Fragment, useEffect, useState, SetStateAction, ReactNode, Key } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import Select from 'react-select';
@@ -200,10 +200,11 @@ type Documents = Document[];
  * @function Fond
  * @param {PageProps} props - Propriétés de la page.
  */
-export default function Fond(props: PageProps) {
+export default function Fond() {
   const router = useRouter();
+  const params = useParams();
 
-  const id = props.params.fondId;
+  const id = params.fondId as string;
   const [activeIndex, setActiveIndex] = useState(0); // Initialisation avec 0
   const [filteredDocument, setFilteredDocument] = useState<Document[] | null>(null);
   const [documents, setDocuments] = useState<Documents | null>(null);

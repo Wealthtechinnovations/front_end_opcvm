@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import React, { Fragment, useEffect, useState } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Highcharts, { color } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import Select from 'react-select';
@@ -342,10 +342,11 @@ interface MyDataType {
  * @param {PageProps} props - Propriétés de la page.
  */
 
-export default function Fond(props: PageProps) {
+export default function Fond() {
     const router = useRouter();
+    const params = useParams();
 
-    const id = extractIdFromSlug(props.params.fondId) || props.params.fondId;
+    const id = extractIdFromSlug(params.fondId as string) || (params.fondId as string);
     const randomPercentage: string = ((Math.random() * 200) - 100).toFixed(2);
 
     const randomPercentage1 = ((Math.random() * 200) - 100).toFixed(2);
@@ -1117,7 +1118,7 @@ export default function Fond(props: PageProps) {
                 title={`${post?.data?.libelle_fond} ${post?.data?.symboledevise} ${post?.data?.code_ISIN} ${post?.data?.pays} - Synthèse OPCVM Afrique`}
                 description={`Analyse du fond ${post?.data?.libelle_fond} - Performance, VL, classement. Géré par ${post?.data?.societe_gestion}.`}
                 keywords={`${post?.data?.libelle_fond}, OPCVM, ${post?.data?.pays}, ${post?.data?.symboledevise}, investissement`}
-                canonicalUrl={`${urlsite}/Opcvm/${props.params.fondId}`}
+                canonicalUrl={`${urlsite}/Opcvm/${params.fondId as string}`}
                 ogImage={`${urlsite}/images/logo.png`}
                 structuredData={[
                     fundSchema({
@@ -1131,7 +1132,7 @@ export default function Fond(props: PageProps) {
                     breadcrumbSchema([
                         { name: 'Accueil', url: `${urlsite}/accueil` },
                         { name: 'Recherche OPCVM', url: `${urlsite}/Opcvm/recherche` },
-                        { name: post?.data?.libelle_fond || 'Fond', url: `${urlsite}/Opcvm/${props.params.fondId}` },
+                        { name: post?.data?.libelle_fond || 'Fond', url: `${urlsite}/Opcvm/${params.fondId as string}` },
                     ]),
                 ]}
             />
@@ -1146,7 +1147,7 @@ export default function Fond(props: PageProps) {
                 <meta property="og:url" content={canonicalUrl} />
                 <meta property="og:image" content={`${urlsite}/images/logo.png`} />
                 <meta property="og:type" content="website" />
-                <link rel="canonical" href={`${urlsite}/Opcvm/${props.params.fondId}`} />
+                <link rel="canonical" href={`${urlsite}/Opcvm/${params.fondId as string}`} />
 
                 <script
                     type="application/ld+json"

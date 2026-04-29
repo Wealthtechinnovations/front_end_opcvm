@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import React, { Fragment, useEffect, useState } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Highcharts, { color } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import Select, { SingleValue } from 'react-select';
@@ -139,10 +139,11 @@ interface FormData {
  * @function Fond
  * @param {PageProps} props - Propriétés de la page.
  */
-export default function Fond(props: PageProps) {
+export default function Fond() {
   const router = useRouter();
+  const params = useParams();
 
-  const id = props.params.fondId.replace(/-/g, ' ');
+  const id = (params.fondId as string).replace(/-/g, ' ');
   const [funds, setFunds] = useState<Funds | null>(null);
 
   const [showDescription, setShowDescription] = useState(false);

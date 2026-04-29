@@ -2,14 +2,11 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
-import { useRouter } from 'next/navigation';
-import { generateFundSlug } from "@/lib/utils";
+import { useRouter, useSearchParams } from 'next/navigation';
 import { generateFundSlug } from "@/lib/utils";
 
 
 import Select, { MultiValue } from 'react-select';
-import { generateFundSlug } from "@/lib/utils";
-//import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
 import Header from '../../../Header';
@@ -69,8 +66,9 @@ oneYearAgo.setFullYear(today.getFullYear() - 1);
 const startDateDefault = formatDate(oneYearAgo);
 const endDateDefault = formatDate(today);
 
-export default function Comparaisonview(props: PageProps) {
-  let selectedValues = props?.searchParams?.selectedRows;
+export default function Comparaisonview() {
+  const searchParams = useSearchParams();
+  let selectedValues = searchParams.get('selectedRows');
   const [endDate, setEndDate] = useState<string | null>(endDateDefault);
   const [startDate, setStartDate] = useState<string | null>(startDateDefault);
   const [funds, setFunds] = useState<Funds | null>(null);

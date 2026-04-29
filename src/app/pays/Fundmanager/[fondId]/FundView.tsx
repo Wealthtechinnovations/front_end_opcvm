@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Modal, Button } from 'react-bootstrap'; // Assurez-vous d'importer les composants de Bootstrap nécessaires
 import { DropdownButton, Dropdown } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
@@ -89,7 +89,8 @@ interface PageProps {
     fondId: string;
   };
 }
-export default function Comparaison(props: PageProps) {
+export default function Comparaison() {
+  const params = useParams();
   const headers = {
     tabAccueil: [
       { label: 'Nom', key: 'nom' },
@@ -99,7 +100,7 @@ export default function Comparaison(props: PageProps) {
     ],
 
   };
-  const id = props.params.fondId.replace(/-/g, ' ');
+  const id = (params.fondId as string).replace(/-/g, ' ');
 
   const [selectedOptions, setSelectedOptions] = useState<Option[]>([]);
   const [selectedOptions1, setSelectedOptions1] = useState<SingleValue<Option> | null>(null);

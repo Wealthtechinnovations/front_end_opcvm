@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Fragment, JSXElementConstructor, Key, PromiseLikeOfReactNode, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import Header from '../../../Header';
 import { urlconstant, urlsite } from "@/app/constants";
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Select from 'react-select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faSquare } from '@fortawesome/free-solid-svg-icons';
@@ -41,11 +41,6 @@ async function getlastvl1() {
   ).json();
   return data;
 }
-interface PageProps {
-  params: {
-    fondId: number;
-  };
-}
 interface Option1 {
 
   value: any;
@@ -55,7 +50,8 @@ interface PerformancesState {
   monthlyPerformance: { [key: string]: number };
   annualPerformance: { [key: string]: number };
 }
-export default function Performance(props: PageProps) {
+export default function Performance() {
+  const params = useParams();
   const [showDescription, setShowDescription] = useState(false);
   const handleMouseEnter = () => {
     setShowDescription(true);
@@ -65,7 +61,7 @@ export default function Performance(props: PageProps) {
 
     setShowDescription(false);
   };
-  const selectedValues = props.params.fondId;
+  const selectedValues = params.fondId as string;
   const [count, setCount] = useState(0);
 
   const incrementCount = () => {

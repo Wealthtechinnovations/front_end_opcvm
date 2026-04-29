@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import React, { Fragment, useEffect, useState } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import Select from 'react-select';
@@ -248,10 +248,11 @@ interface MyDataType {
  * @function Fond
  * @param {PageProps} props - Propriétés de la page.
  */
-export default function Fond(props: PageProps) {
+export default function Fond() {
   const router = useRouter();
+  const params = useParams();
 
-  const id = props.params.fondId;
+  const id = params.fondId as string;
   const randomPercentage: string = ((Math.random() * 200) - 100).toFixed(2);
 
   const randomPercentage1 = ((Math.random() * 200) - 100).toFixed(2);
