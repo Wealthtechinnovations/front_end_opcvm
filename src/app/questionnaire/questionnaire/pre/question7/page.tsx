@@ -1,14 +1,14 @@
 "use client";
 import { useUserId } from '@/hooks/useUserId';
-import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
+import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/lib/constants";
 
 import React, { useState, useEffect, Fragment } from 'react';
 import { useRouter } from "next/navigation";
 import Swal from 'sweetalert2';
 //import ProgressBar from 'react-bootstrap/ProgressBar';
-import ProgressBar from '../../../../ProgressBar';
+import ProgressBar from '@/components/common/ProgressBar';
 import 'react-step-progress-bar/styles.css'; // Assurez-vous d'importer les styles CSS si nécessaire
-import Header from "@/app/Header";
+import Header from '@/components/layout/Header';
 import Link from "next/link";
 import { Dropdown } from "react-bootstrap";
 // FIN
@@ -155,7 +155,7 @@ export default function Profile(): JSX.Element {
 
 
     setTimeout(() => {
-      const redirectUrl = `/Fundmanager/recherche`;
+      const redirectUrl = `/fund-managers/search`;
 
       router.push(redirectUrl);
     }, 1);
@@ -176,7 +176,7 @@ export default function Profile(): JSX.Element {
 
 
     setTimeout(() => {
-      const redirectUrl = `/accueil`;
+      const redirectUrl = `/home`;
 
       router.push(redirectUrl);
     }, 1);
@@ -198,16 +198,16 @@ export default function Profile(): JSX.Element {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home`;
+        const redirectUrl = `/panel/portfolio/dashboard`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home`;
+        // const redirectUrl = `/panel/portfolio/dashboard`;
 
-        router.push('/portefeuille/login');
+        router.push('/panel/portfolio/login');
       }, 5);
     }
   };
@@ -224,7 +224,7 @@ export default function Profile(): JSX.Element {
 
 
     setTimeout(() => {
-      const redirectUrl = `/actualite`;
+      const redirectUrl = `/news`;
 
       router.push(redirectUrl);
     }, 1);

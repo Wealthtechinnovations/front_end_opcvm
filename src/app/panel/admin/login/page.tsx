@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
-import { urlconstant } from "@/app/constants";
+import { urlconstant } from "@/lib/constants";
 
 import { useRouter } from 'next/navigation';
 interface Res {
@@ -47,7 +47,7 @@ export default function Login() {
       const data = await emailexist(email);
       setResponse(data);
       if (data.code === 200) {
-        //  router.push(`/panel/societegestionpanel/login/register?email=${email}&password=${password}`);
+        //  router.push(`/panel/management/login/register?email=${email}&password=${password}`);
 
         setisExist("OUI");
         setError("Vous existez deja en base")
@@ -55,7 +55,7 @@ export default function Login() {
 
 
       } else {
-        const href = `/panel/portefeuille/login/register?email=${email}`;
+        const href = `/panel/portfolio/login/register?email=${email}`;
 
         router.push(href);
       }
@@ -65,12 +65,12 @@ export default function Login() {
       setResponse(data);
       if (data.code === 200) {
         let href: string = '';
-        //  router.push(`/panel/societegestionpanel/login/register?email=${email}&password=${password}`);
+        //  router.push(`/panel/management/login/register?email=${email}&password=${password}`);
         //   if (data.data.userExists.typeusers_id == 1) {
-        href = `/panel/admin/home`;
+        href = `/panel/admin/dashboard`;
 
         /* } else if (data.data.userExists.typeusers_id == 2) {
-           href = `/panel/admin/pagehome`;
+           href = `/panel/admin/dashboard`;
  
          }*/
         localStorage.setItem('isLoggedIn', 'true');
@@ -111,12 +111,12 @@ export default function Login() {
         </label>
 
         <ul id="main-menu" className="sm sm-blue">
-          <li><Link className="link-style" href="/accueil"> Accueil</Link>
+          <li><Link className="link-style" href="/home"> Accueil</Link>
 
           </li>
 
           <li>  <Link className="link-style"
-            href="/Opcvm/recherche"
+            href="/funds/search"
 
           >
             Fonds
@@ -141,7 +141,7 @@ export default function Login() {
 
           </li>
           <li><Link className="link-style"
-            href="/portefeuille/login"
+            href="/panel/portfolio/login"
           //href="/auth/login"
 
           >
@@ -151,7 +151,7 @@ export default function Login() {
           </li>
           <li>
             <Link className="link-style"
-              href="/societegestionpanel/login"
+              href="/panel/management/login"
 
             >
               Espace membre

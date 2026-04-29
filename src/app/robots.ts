@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { urlsite } from "@/app/constants";
+import { urlsite } from "@/lib/constants";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           "/panel/admin",
           "/panel/portefeuille",
-          "/panel/societegestionpanel",
+          "/panel/panel/management",
           "/api",
           "/auth",
           "/callback",

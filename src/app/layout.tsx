@@ -4,7 +4,7 @@ import React from "react";
 import "./style/css/style.css";
 import "./style/css/skin_color.css";
 import "./style/css/vendors_css.css";
-import { urlsite } from "./constants";
+import { urlsite } from '@/lib/constants';
 import { Metadata } from "next";
 import Providers from "./providers";
 
@@ -67,7 +67,7 @@ export default function RootLayout({
               url: urlsite,
               potentialAction: {
                 '@type': 'SearchAction',
-                target: `${urlsite}/Opcvm/recherche?q={search_term_string}`,
+                target: `${urlsite}/funds/search?q={search_term_string}`,
                 'query-input': 'required name=search_term_string',
               },
             }),
@@ -79,7 +79,7 @@ export default function RootLayout({
           <div className="wrapper bg-white" style={{ overflowY: 'scroll' }}>
             {children}
             <footer className="main-footer text-center" style={{ padding: '16px', borderTop: '1px solid #e5e7eb' }}>
-              &copy; {new Date().getFullYear()} <a href="/accueil" style={{ color: '#3b82f6', textDecoration: 'none' }}>Fundafrique</a>. Tous droits réservés.
+              &copy; {new Date().getFullYear()} <a href="/home" style={{ color: '#3b82f6', textDecoration: 'none' }}>Fundafrique</a>. Tous droits réservés.
             </footer>
           </div>
         </Providers>

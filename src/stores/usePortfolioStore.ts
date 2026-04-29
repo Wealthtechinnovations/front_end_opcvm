@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import axios from 'axios';
-import { urlconstant } from '@/app/constants';
+import { urlconstant } from '@/lib/constants';
 
 const authHeaders = () => {
   const token =

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useState } from "react";
-import { urlconstant } from "@/app/constants";
+import { urlconstant } from "@/lib/constants";
 import { useRouter } from 'next/navigation';
 
 
@@ -33,11 +33,11 @@ export default function Login() {
         document.cookie = `tokenEnCours=${data.data.token}; path=/; max-age=${60 * 60 * 24 * 7}`;
 
         if (user.typeusers_id === 0) {
-          router.push(`/panel/admin/home`);
+          router.push(`/panel/admin/dashboard`);
         } else if (user.typeusers_id === 2 || user.typeusers_id === 5) {
-          router.push(`/panel/societegestionpanel/pagehome`);
+          router.push(`/panel/management/dashboard`);
         } else {
-          router.push(`/panel/portefeuille/home`);
+          router.push(`/panel/portfolio/dashboard`);
         }
       } else {
         setError(data.message || "Email ou mot de passe incorrect");
@@ -111,7 +111,7 @@ export default function Login() {
                         </div>
                       </form>
                       <div className="text-center">
-                        <p className="mt-15 mb-0 text-fade">Pas encore de compte ? <Link href="/panel/portefeuille/login/register">Inscription</Link></p>
+                        <p className="mt-15 mb-0 text-fade">Pas encore de compte ? <Link href="/panel/portfolio/login/register">Inscription</Link></p>
                       </div>
                     </div>
                   </div>

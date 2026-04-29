@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
-import Header from '../Header';
-import { urlconstant, urlsite } from "@/app/constants";
+import Header from '@/components/layout/Header';
+import { urlconstant, urlsite } from "@/lib/constants";
 import Slider from "react-slick";
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
@@ -145,16 +145,16 @@ export default function Accueil(props: any) {
 
         if (userConnected !== null) {
             setTimeout(() => {
-                const redirectUrl = `/panel/portefeuille/home`;
+                const redirectUrl = `/panel/portfolio/dashboard`;
 
                 router.push(redirectUrl);
             }, 5);
 
         } else {
             setTimeout(() => {
-                // const redirectUrl = `/panel/portefeuille/home`;
+                // const redirectUrl = `/panel/portfolio/dashboard`;
 
-                router.push('/panel/societegestionpanel/login');
+                router.push('/panel/management/login');
             }, 5);
         }
     };
@@ -163,7 +163,7 @@ export default function Accueil(props: any) {
 
 
         setTimeout(() => {
-            const redirectUrl = `/Fundmanager/recherche`;
+            const redirectUrl = `/fund-managers/search`;
 
             router.push(redirectUrl);
         }, 1);
@@ -174,7 +174,7 @@ export default function Accueil(props: any) {
 
 
         setTimeout(() => {
-            const redirectUrl = `/Opcvm/questionnaire`;
+            const redirectUrl = `/funds/questionnaire`;
 
             router.push(redirectUrl);
         }, 1);
@@ -215,7 +215,7 @@ export default function Accueil(props: any) {
 
 
         setTimeout(() => {
-            const redirectUrl = `/actualite`;
+            const redirectUrl = `/news`;
 
             router.push(redirectUrl);
         }, 1);
@@ -265,7 +265,7 @@ export default function Accueil(props: any) {
 
 
         setTimeout(() => {
-            const redirectUrl = `/accueil`;
+            const redirectUrl = `/home`;
 
             router.push(redirectUrl);
         }, 1);
@@ -373,7 +373,7 @@ export default function Accueil(props: any) {
             <Header />
             <Head>
 
-                <link rel="canonical" href="${urlsite}/Opcvm/accueil" />
+                <link rel="canonical" href="${urlsite}/home" />
 
             </Head>
             <br />

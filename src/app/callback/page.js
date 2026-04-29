@@ -7,7 +7,7 @@ export default function Callback() {
     const router = useRouter();
 
     useEffect(() => {
-        router.push('/panel/portefeuille/login');
+        router.push('/panel/portfolio/login');
     }, [router]);
 
     return <div>Redirection...</div>;

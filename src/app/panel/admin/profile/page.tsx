@@ -1,12 +1,12 @@
 "use client";
-import { urlconstant } from "@/app/constants";
+import { urlconstant } from "@/lib/constants";
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
 import Select from 'react-select';
-import Headermenu from "@/app/Headermenu";
-import Sidebar from "@/app/sidebaradmin";
+import Headermenu from '@/components/layout/HeaderMenu';
+import Sidebar from '@/components/layout/AdminSidebar';
 
 const options = [
   { value: 1, label: 'Option 1' },
@@ -109,7 +109,7 @@ export default function Profile() {
 
         // Redirect the user to another page after a delay (e.g., 2 seconds)
         setTimeout(() => {
-          router.push('/panel/admin/home');
+          router.push('/panel/admin/dashboard');
         }, 2000);
       }
 

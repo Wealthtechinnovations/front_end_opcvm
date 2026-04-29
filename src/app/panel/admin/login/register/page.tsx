@@ -6,7 +6,7 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-import { urlconstant } from "@/app/constants";
+import { urlconstant } from "@/lib/constants";
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Pays {
@@ -228,7 +228,7 @@ export default function Register() {
 
           const userId = responseData.data.userId;
 
-          const href = `/panel/portefeuille/home`;
+          const href = `/panel/portfolio/dashboard`;
           localStorage.setItem('isLoggedIn', 'true');
           localStorage.setItem('userId', userId?.id);
 

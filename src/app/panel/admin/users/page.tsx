@@ -1,5 +1,5 @@
 "use client";
-import { urlconstant } from "@/app/constants";
+import { urlconstant } from "@/lib/constants";
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
@@ -8,8 +8,8 @@ import { useRouter } from 'next/navigation';
 
 import Select from 'react-select';
 import Swal from "sweetalert2";
-import Headermenu from "@/app/Headermenu";
-import Sidebar from "@/app/sidebaradmin";
+import Headermenu from '@/components/layout/HeaderMenu';
+import Sidebar from '@/components/layout/AdminSidebar';
 interface Funds {
   data: {
     userss: any[]; // ou un type spécifique pour les éléments du tableau 'funds'

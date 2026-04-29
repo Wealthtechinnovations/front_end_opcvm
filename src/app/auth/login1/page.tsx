@@ -8,7 +8,7 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-import { urlconstant } from "@/app/constants";
+import { urlconstant } from "@/lib/constants";
 
 
 export default function Login() {
@@ -78,7 +78,7 @@ export default function Login() {
                           <div className="col-12 text-center">
                             <Link
                               href={{
-                                pathname: '/pagehome',
+                                pathname: '/dashboard',
                               }}
                               /*  as={`/about/${selectedRows ? selectedRows.join(',') : ''}`}
                                 key={selectedRows.join(',')}*/

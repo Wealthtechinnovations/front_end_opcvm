@@ -11,12 +11,12 @@ const panelConfig: Record<string, PanelConfig> = {
     loginPath: '/panel/admin/login',
     allowedTypes: [0],
   },
-  '/panel/portefeuille': {
-    loginPath: '/panel/portefeuille/login',
+  '/panel/portfolio': {
+    loginPath: '/panel/portfolio/login',
     allowedTypes: [1, 3],
   },
-  '/panel/societegestionpanel': {
-    loginPath: '/panel/societegestionpanel/login',
+  '/panel/management': {
+    loginPath: '/panel/management/login',
     allowedTypes: [2, 5],
   },
 };

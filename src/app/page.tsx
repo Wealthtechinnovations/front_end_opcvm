@@ -1,6 +1,6 @@
 "use client";
 import React, { Fragment } from "react";
-import Header from "./Header";
+import Header from '@/components/layout/Header';
 import SEO from '@/components/common/SEO';
 import { organizationSchema, websiteSchema } from '@/utils/structuredData';
 

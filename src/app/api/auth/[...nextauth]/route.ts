@@ -58,7 +58,7 @@ const handler = NextAuth({
     },
   },
   pages: {
-    signIn: '/panel/portefeuille/login',
+    signIn: '/panel/portfolio/login',
   },
   secret: process.env.NEXTAUTH_SECRET || 'fundafrique-secret-key',
 });

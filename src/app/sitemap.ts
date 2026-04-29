@@ -1,6 +1,6 @@
 import { Fund, FundsResponse, Pays, PaysResponse, Societe, SocieteResponse } from "@/models/Fund";
 import { MetadataRoute } from "next";
-import { urlconstant, urlsite } from "@/app/constants";
+import { urlconstant, urlsite } from "@/lib/constants";
 import { generateFundSlug, generateSlug } from "@/lib/utils";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -9,7 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { data }: FundsResponse = await response.json();
 
   const fundEntries: MetadataRoute.Sitemap = data.funds.map((fund: Fund) => ({
-    url: `${urlsite}/Opcvm/${fund.slug || generateFundSlug(fund.nom_fond || '', fund.code_ISIN || '', fund.value)}`,
+    url: `${urlsite}/funds/${fund.slug || generateFundSlug(fund.nom_fond || '', fund.code_ISIN || '', fund.value)}`,
     lastModified: new Date(),
     changeFrequency: 'daily',
     priority: 0.8,
@@ -29,7 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const response2 = await fetch(`${urlconstant}/api/getSocietes`);
   const societeResponse: SocieteResponse = await response2.json();
   const societeEntries: MetadataRoute.Sitemap = societeResponse.data.societes.map((societe: Societe) => ({
-    url: `${urlsite}/Fundmanager/${societe.slug || generateSlug(societe.name)}`,
+    url: `${urlsite}/fund-managers/${societe.slug || generateSlug(societe.name)}`,
     lastModified: new Date(),
     changeFrequency: 'weekly',
     priority: 0.7,
@@ -43,13 +43,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1.0,
     },
     {
-      url: `${urlsite}/Opcvm/recherche`,
+      url: `${urlsite}/funds/search`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
-      url: `${urlsite}/Fundmanager/recherche`,
+      url: `${urlsite}/fund-managers/search`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
@@ -61,19 +61,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
-      url: `${urlsite}/Outils/comparaison`,
+      url: `${urlsite}/tools/comparison`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.6,
     },
     {
-      url: `${urlsite}/Outils/recherche`,
+      url: `${urlsite}/tools/search`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.6,
     },
     {
-      url: `${urlsite}/actualite`,
+      url: `${urlsite}/news`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,

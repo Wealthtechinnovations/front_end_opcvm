@@ -1,6 +1,6 @@
 "use client";
 import { useUserId } from '@/hooks/useUserId';
-import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
+import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/lib/constants";
 
 
 import Link from "next/link";
@@ -11,7 +11,7 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-import Header from "@/app/Header";
+import Header from '@/components/layout/Header';
 import { useRouter } from "next/navigation";
 import { Dropdown } from "react-bootstrap";
 
@@ -184,7 +184,7 @@ export default function Profile() {
 
 
     setTimeout(() => {
-      const redirectUrl = `/Fundmanager/recherche`;
+      const redirectUrl = `/fund-managers/search`;
 
       router.push(redirectUrl);
     }, 1);
@@ -205,7 +205,7 @@ export default function Profile() {
 
 
     setTimeout(() => {
-      const redirectUrl = `/accueil`;
+      const redirectUrl = `/home`;
 
       router.push(redirectUrl);
     }, 1);
@@ -227,16 +227,16 @@ export default function Profile() {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home`;
+        const redirectUrl = `/panel/portfolio/dashboard`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home`;
+        // const redirectUrl = `/panel/portfolio/dashboard`;
 
-        router.push('/portefeuille/login');
+        router.push('/panel/portfolio/login');
       }, 5);
     }
   };
@@ -254,7 +254,7 @@ export default function Profile() {
 
 
     setTimeout(() => {
-      const redirectUrl = `/actualite`;
+      const redirectUrl = `/news`;
 
       router.push(redirectUrl);
     }, 1);
