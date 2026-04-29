@@ -1,14 +1,4 @@
 import { urlconstant, urlsite } from "@/lib/constants";
-import { FundsResponse, Pays } from "@/models/Fund";
-import { generateSlug } from "@/lib/utils";
-
-export async function generateStaticParams() {
-    const response = await fetch(`${urlconstant}/api/getPays`);
-    const { data }: FundsResponse = await response.json();
-    return data.paysOptions.map((pays: Pays) => ({
-        paysId: generateSlug(pays.value),
-    }));
-}
 
 export async function generateMetadata({ params }: { params: { paysId: string } }) {
     const paysName = params.paysId.replace(/-/g, ' ');

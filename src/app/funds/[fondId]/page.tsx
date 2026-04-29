@@ -1,4 +1,5 @@
 import FundView from './FundView';
-export { generateStaticParams, generateMetadata } from './page.server';
+export { generateMetadata } from './page.server';
+export const dynamic = 'force-dynamic';
 
 export default FundView;

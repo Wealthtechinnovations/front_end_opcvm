@@ -1,14 +1,4 @@
 import { urlconstant, urlsite } from "@/lib/constants";
-import { FundsResponse, Societe } from "@/models/Fund";
-import { generateSlug } from "@/lib/utils";
-
-export async function generateStaticParams() {
-    const response = await fetch(`${urlconstant}/api/getSocietes`);
-    const { data }: FundsResponse = await response.json();
-    return data.societes.map((societe: Societe) => ({
-        fondId: societe.slug || generateSlug(societe.name),
-    }));
-}
 
 export async function generateMetadata({ params }: { params: { fondId: string } }) {
     const societeNom = params.fondId.replace(/-/g, ' ');

@@ -3,41 +3,12 @@ import { MetadataRoute } from "next";
 import { urlconstant, urlsite } from "@/lib/constants";
 import { generateFundSlug, generateSlug } from "@/lib/utils";
 
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Fetch funds
-  const response = await fetch(`${urlconstant}/api/searchFunds`);
-  const { data }: FundsResponse = await response.json();
-
-  const fundEntries: MetadataRoute.Sitemap = data.funds.map((fund: Fund) => ({
-    url: `${urlsite}/funds/${fund.slug || generateFundSlug(fund.nom_fond || '', fund.code_ISIN || '', fund.value)}`,
-    lastModified: new Date(),
-    changeFrequency: 'daily',
-    priority: 0.8,
-  }));
-
-  // Fetch countries
-  const response1 = await fetch(`${urlconstant}/api/getPays`);
-  const paysData: PaysResponse = await response1.json();
-  const paysEntries: MetadataRoute.Sitemap = paysData.data.paysOptions.map((pays: Pays) => ({
-    url: `${urlsite}/pays/${generateSlug(pays.value)}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly',
-    priority: 0.7,
-  }));
-
-  // Fetch management companies
-  const response2 = await fetch(`${urlconstant}/api/getSocietes`);
-  const societeResponse: SocieteResponse = await response2.json();
-  const societeEntries: MetadataRoute.Sitemap = societeResponse.data.societes.map((societe: Societe) => ({
-    url: `${urlsite}/fund-managers/${societe.slug || generateSlug(societe.name)}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly',
-    priority: 0.7,
-  }));
-
-  return [
+  const staticEntries: MetadataRoute.Sitemap = [
     {
-      url: `${urlsite}/accueil`,
+      url: `${urlsite}/home`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 1.0,
@@ -55,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
-      url: `${urlsite}/pays`,
+      url: `${urlsite}/countries`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
@@ -84,8 +55,41 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.4,
     },
-    ...fundEntries,
-    ...paysEntries,
-    ...societeEntries,
   ];
+
+  try {
+    const [fundsRes, paysRes, societesRes] = await Promise.all([
+      fetch(`${urlconstant}/api/searchFunds`),
+      fetch(`${urlconstant}/api/getPays`),
+      fetch(`${urlconstant}/api/getSocietes`),
+    ]);
+
+    const { data }: FundsResponse = await fundsRes.json();
+    const fundEntries: MetadataRoute.Sitemap = data.funds.map((fund: Fund) => ({
+      url: `${urlsite}/funds/${fund.slug || generateFundSlug(fund.nom_fond || '', fund.code_ISIN || '', fund.value)}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.8,
+    }));
+
+    const paysData: PaysResponse = await paysRes.json();
+    const paysEntries: MetadataRoute.Sitemap = paysData.data.paysOptions.map((pays: Pays) => ({
+      url: `${urlsite}/countries/${generateSlug(pays.value)}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    }));
+
+    const societeResponse: SocieteResponse = await societesRes.json();
+    const societeEntries: MetadataRoute.Sitemap = societeResponse.data.societes.map((societe: Societe) => ({
+      url: `${urlsite}/fund-managers/${societe.slug || generateSlug(societe.name)}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    }));
+
+    return [...staticEntries, ...fundEntries, ...paysEntries, ...societeEntries];
+  } catch {
+    return staticEntries;
+  }
 }
