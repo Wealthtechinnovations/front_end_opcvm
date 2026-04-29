@@ -117,7 +117,7 @@ type ValuationRow1 = {
 };
 export default function Fonds() {
   const searchParams = useSearchParams();
-  const id = searchParams.get('Id');
+  const id = Number(searchParams.get('Id'));
   const societeconneted = useUserId();
 
   const router = useRouter();

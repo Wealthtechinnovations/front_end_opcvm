@@ -188,8 +188,8 @@ export default function Ajoutvl() {
     ).json();
     return data;
   }
-  let id = searchParams.get('id');
-  let fondId = searchParams.get('fondId');
+  const id = Number(searchParams.get('id'));
+  const fondId = Number(searchParams.get('fondId'));
   const router = useRouter();
   const [selectedFund, setSelectedFund] = useState(null);
   const [fund, setFund] = useState<FormData>({

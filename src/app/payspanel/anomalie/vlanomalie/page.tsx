@@ -91,7 +91,7 @@ interface PageProps {
 interface MyDataType {
   name: any;
   y: any;
-  InRef: any; // Remplacez "number" par le type approprié
+  InRef?: any; // Remplacez "number" par le type approprié
   // Autres propriétés
 }
 interface Fund {
@@ -195,7 +195,7 @@ export default function Fondselected() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const handleFondSelect = (fond: any) => {
     setSelectedFond(fond);
-    setSelectedRows(selectedfunds.concat(fond));
+    setSelectedRows([...(selectedfunds ? selectedfunds.split(',') : []), fond]);
 
   };
   const handleSearch = (e: any) => {

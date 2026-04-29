@@ -28,7 +28,7 @@ interface Devise {
 
 export default function UpdateFonds() {
   const searchParams = useSearchParams();
-  const fondId = searchParams.get('fondId');
+  const fondId = Number(searchParams.get('fondId'));
   const [id, setId] = useState<string>('');
   useEffect(() => {
     const stored = localStorage.getItem('userId');

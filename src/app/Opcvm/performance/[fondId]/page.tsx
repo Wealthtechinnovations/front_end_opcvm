@@ -61,7 +61,7 @@ export default function Performance() {
 
     setShowDescription(false);
   };
-  const selectedValues = params.fondId as string;
+  const selectedValues = Number(params.fondId);
   const [count, setCount] = useState(0);
 
   const incrementCount = () => {

@@ -329,8 +329,7 @@ interface PageProps {
 interface MyDataType {
     name: any;
     y: any;
-    InRef: any; // Remplacez "number" par le type approprié
-    // Autres propriétés
+    InRef?: any;
 }
 
 
@@ -346,7 +345,7 @@ export default function Fond() {
     const router = useRouter();
     const params = useParams();
 
-    const id = extractIdFromSlug(params.fondId as string) || (params.fondId as string);
+    const id = Number(extractIdFromSlug(params.fondId as string) || params.fondId);
     const randomPercentage: string = ((Math.random() * 200) - 100).toFixed(2);
 
     const randomPercentage1 = ((Math.random() * 200) - 100).toFixed(2);
@@ -1312,7 +1311,7 @@ export default function Fond() {
                                                                 <FontAwesomeIcon
                                                                     className="text-right"
                                                                     key={index}
-                                                                    icon={faStar}
+                                                                    icon={faStar as any}
                                                                     onClick={() => handleRatingClick(index)}
                                                                     style={{ color: index <= rating ? 'gold' : 'gray', cursor: 'pointer' }}
                                                                 />
@@ -1505,7 +1504,7 @@ export default function Fond() {
                                                                         >&nbsp;
                                                                             <FontAwesomeIcon
                                                                                 className="text-right"
-                                                                                icon={faSquare}></FontAwesomeIcon>
+                                                                                icon={faSquare as any}></FontAwesomeIcon>
                                                                             {showDescription && (
                                                                                 <div className="description">
                                                                                     Le risque est mesuré par l écart-type des rendements hebdomadaires du fonds sur différentes périodes

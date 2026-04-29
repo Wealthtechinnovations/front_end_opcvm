@@ -117,7 +117,7 @@ interface PageProps {
 interface MyDataType {
   name: any;
   y: any;
-  InRef: any; // Remplacez "number" par le type approprié
+  InRef?: any; // Remplacez "number" par le type approprié
   // Autres propriétés
 }
 

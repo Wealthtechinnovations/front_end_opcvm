@@ -3,6 +3,7 @@ import { urlconstant } from "@/app/constants";
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
+import { useRouter } from 'next/navigation';
 import Select from 'react-select';
 import Headermenu from "@/app/Headermenu";
 import Sidebar from "@/app/sidebaradmin";
@@ -30,6 +31,7 @@ interface Option {
   value: string;
 }
 export default function Profile() {
+  const router = useRouter();
   const [id, setId] = useState<string>('');
   useEffect(() => {
     const stored = localStorage.getItem('userId');
@@ -107,7 +109,7 @@ export default function Profile() {
 
         // Redirect the user to another page after a delay (e.g., 2 seconds)
         setTimeout(() => {
-          Router.push('https://example.com/pagehome');
+          router.push('/panel/admin/home');
         }, 2000);
       }
 

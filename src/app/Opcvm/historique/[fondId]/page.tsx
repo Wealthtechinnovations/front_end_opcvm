@@ -113,7 +113,7 @@ interface PageProps {
 interface MyDataType {
   name: any;
   y: any;
-  InRef: any; // Remplacez "number" par le type approprié
+  InRef?: any; // Remplacez "number" par le type approprié
   // Autres propriétés
 }
 
@@ -221,7 +221,7 @@ export default function Fond() {
     annualPerformance: {}
   });
 
-  const id = params.fondId as string;
+  const id = Number(params.fondId);
   const [activeIndex, setActiveIndex] = useState(0); // Initialisation avec 0
   const [filteredDocument, setFilteredDocument] = useState<Document[] | null>(null);
   const [documents, setDocuments] = useState<Documents | null>(null);

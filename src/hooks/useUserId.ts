@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
-export function useUserId(): string | null {
-  const [userId, setUserId] = useState<string | null>(null);
+export function useUserId(): string {
+  const [userId, setUserId] = useState<string>('');
 
   useEffect(() => {
     const stored = localStorage.getItem('userId');

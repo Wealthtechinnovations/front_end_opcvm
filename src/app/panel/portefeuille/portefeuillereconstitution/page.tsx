@@ -232,7 +232,7 @@ export default function PorteFeuile() {
   const searchParams = useSearchParams();
 
   const selectedfunds = searchParams.get('selectedfund');
-  const selectedportfeuille = searchParams.get('portefeuille');
+  const selectedportfeuille = searchParams.get('portefeuille') || '';
   const selectedValuename = searchParams.get('selectedValuename');
   const id = useUserId();
 
@@ -733,7 +733,7 @@ export default function PorteFeuile() {
 
 
         if (data?.data.portefeuille.maj == 1) {
-          const dataperf = await getperformancep(selectedportfeuille);
+          const dataperf = await getperformancep(Number(selectedportfeuille));
 
 
           setperformanceP(dataperf);

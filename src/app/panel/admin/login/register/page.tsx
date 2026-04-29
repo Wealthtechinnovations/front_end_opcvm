@@ -40,7 +40,7 @@ async function getsociete() {
 }
 export default function Register() {
   const searchParams = useSearchParams();
-  let emails = searchParams.get('email');
+  const emails = searchParams.get('email') || '';
   const [passwordsMatch, setPasswordsMatch] = useState(true);
 
   const [selectedPays, setSelectedPays] = useState<Pays | null>(null);

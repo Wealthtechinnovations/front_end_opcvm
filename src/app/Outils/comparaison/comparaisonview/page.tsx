@@ -13,7 +13,6 @@ import Header from '../../../Header';
 import { urlconstant } from "../../../constants";
 import { DropdownButton, Dropdown, Modal, Button } from 'react-bootstrap';
 import Swal from 'sweetalert2';
-import { generateFundSlug } from "@/lib/utils";
 
 interface Option {
   value: string;

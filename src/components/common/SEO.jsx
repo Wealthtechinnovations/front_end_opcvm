@@ -4,11 +4,11 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
 const SEO = ({
-  title,
-  description,
-  keywords,
-  canonicalUrl,
-  ogImage,
+  title = '',
+  description = '',
+  keywords = '',
+  canonicalUrl = '',
+  ogImage = '',
   ogType = 'website',
   structuredData,
   noIndex = false,

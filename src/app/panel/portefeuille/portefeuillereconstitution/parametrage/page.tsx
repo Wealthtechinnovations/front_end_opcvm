@@ -139,7 +139,7 @@ interface Option {
 interface MyDataType {
   name: any;
   y: any;
-  InRef: any; // Remplacez "number" par le type approprié
+  InRef?: any; // Remplacez "number" par le type approprié
   // Autres propriétés
 }
 interface Index {
@@ -222,7 +222,7 @@ interface Fundss {
 interface MyDataType {
   name: any;
   y: any;
-  InRef: any; // Remplacez "number" par le type approprié
+  InRef?: any; // Remplacez "number" par le type approprié
   // Autres propriétés
 }
 export default function Transaction() {

@@ -4,18 +4,14 @@ import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
 import { generateFundSlug } from "@/lib/utils";
-import { Modal, Button } from 'react-bootstrap'; // Assurez-vous d'importer les composants de Bootstrap nécessaires
+import { Modal, Button } from 'react-bootstrap';
 import { DropdownButton, Dropdown } from 'react-bootstrap';
-import { generateFundSlug } from "@/lib/utils";
-import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
+import 'bootstrap/dist/css/bootstrap.min.css';
 import Select, { SingleValue } from 'react-select';
-import { generateFundSlug } from "@/lib/utils";
-//import * as XLSX from 'xlsx';
 import Header from '../../Header';
 import { urlconstant } from '../../constants';
 import { color } from "highcharts";
 import Swal from 'sweetalert2';
-import { generateFundSlug } from "@/lib/utils";
 
 interface Societe {
   value: any[]; // ou un type spécifique pour les éléments du tableau 'funds'

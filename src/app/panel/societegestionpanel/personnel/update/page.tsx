@@ -117,7 +117,7 @@ export default function Ajoutvl() {
     const stored = localStorage.getItem('userId');
     if (stored) setSocieteconneted(stored);
   }, []);
-  const id = searchParams.get('personid');
+  const id = Number(searchParams.get('personid'));
   const router = useRouter();
   const [selectedFund, setSelectedFund] = useState(null);
   const [fundsOptions, setFundsOptions] = useState([]);
@@ -186,7 +186,7 @@ export default function Ajoutvl() {
   
     // Ajout des champs de formData à formDatas
     formDatas.append('page', formData.page.toString()); 
-    formDatas.append('id', id);
+    formDatas.append('id', String(id));
     formDatas.append('nom', formData.nom || personnel.nom); // Si modifié, prendre formData.nom, sinon personnel.nom
     formDatas.append('prenom', formData.prenom || personnel.prenom); 
     formDatas.append('fonction', formData.fonction || personnel.fonction);

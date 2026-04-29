@@ -9,10 +9,8 @@ import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import Select, { SingleValue } from 'react-select';
 import { generateFundSlug } from "@/lib/utils";
-//import * as XLSX from 'xlsx';
 import Header from '../../Header';
 import { urlconstant } from '../../constants';
-import { generateFundSlug } from "@/lib/utils";
 interface Option {
   value: string;
   // Autres propriétés si nécessaire
@@ -489,7 +487,7 @@ export default function Recherche() {
   // Other state variables and functions for your form fields (periode, operation, value, etc.)
 
   const handleToggleFieldset = (fieldsetName: any) => {
-    setOpenFieldset((prevOpenFieldset) =>
+    setOpenFieldset((prevOpenFieldset: any) =>
       prevOpenFieldset === fieldsetName ? null : fieldsetName
     );
   };

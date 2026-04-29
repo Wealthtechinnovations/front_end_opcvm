@@ -60,7 +60,7 @@ interface Option {
 interface MyDataType {
   name: any;
   y: any;
-  InRef: any;
+  InRef?: any;
   // Autres propriétés
 }
 
