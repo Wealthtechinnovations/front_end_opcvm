@@ -27,7 +27,7 @@ config.autoAddCss = false; // Disable the automatic styles insertion
 
 async function getclassement(id: number) {
     try {
-        const response = await fetch(`${urlconstant}/api/classementquartile/${id}`, {
+        const response = await fetch(`${urlconstant}/api/classementquartilemysql/${id}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
