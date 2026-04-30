@@ -60,7 +60,7 @@ const handler = NextAuth({
   pages: {
     signIn: '/panel/portfolio/login',
   },
-  secret: process.env.NEXTAUTH_SECRET || 'fundafrique-secret-key',
+  secret: process.env.NEXTAUTH_SECRET,
 });
 
 export { handler as GET, handler as POST };
