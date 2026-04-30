@@ -1,5 +1,5 @@
 "use client";
-import { urlconstant } from "@/lib/constants";
+import { urlconstant, urlconstantpython } from "@/lib/constants";
 
 import Link from "next/link";
 import { Fragment, JSXElementConstructor, Key, PromiseLikeOfReactNode, ReactElement, ReactNode, ReactPortal, SetStateAction, useEffect, useState } from "react";
@@ -428,7 +428,7 @@ export default function RoboAdvisor() {
         }));
 
         //   console.log(fundDetails);
-        const response1 = await fetch('http://localhost:5000/efficient-frontier', {
+        const response1 = await fetch(`${urlconstantpython}/efficient-frontier`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

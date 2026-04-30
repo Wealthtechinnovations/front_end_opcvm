@@ -88,9 +88,9 @@ export default function Accueil(props: any) {
                 } else {
                     // If storedIsLoggedIn is null or any other value, set the state to false
                     setIsLoggedIn(false);
-                } console.log(isLoggedIn)
+                }
             } catch (error) {
-                console.error('Erreur lors de l’appel à l’API :', error);
+                console.error('API call error:', error);
             }
         };
         fetchData();

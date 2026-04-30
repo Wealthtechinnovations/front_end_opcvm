@@ -586,7 +586,7 @@ export default function Fond() {
     } else {
       // If storedIsLoggedIn is null or any other value, set the state to false
       setIsLoggedIn(false);
-    } console.log(isLoggedIn)
+    }
     /*if (!isLoggedIn) {
       router.push('/home');
     }*/

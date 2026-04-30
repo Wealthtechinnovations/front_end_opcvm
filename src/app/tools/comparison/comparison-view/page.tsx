@@ -175,7 +175,7 @@ export default function Comparaisonview() {
     } else {
       // If storedIsLoggedIn is null or any other value, set the state to false
       setIsLoggedIn(false);
-    } console.log(isLoggedIn)
+    }
 
   }, []);
   const handleSort = (key: string) => {

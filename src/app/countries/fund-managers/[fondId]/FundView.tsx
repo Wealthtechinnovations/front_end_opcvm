@@ -213,7 +213,7 @@ export default function Comparaison() {
     } else {
       // If storedIsLoggedIn is null or any other value, set the state to false
       setIsLoggedIn(false);
-    } console.log(isLoggedIn)
+    }
 
   }, []);
 

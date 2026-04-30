@@ -89,7 +89,6 @@ export default function Profile() {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log(data); // Data received from the backend
         // You can show a success message or handle the response as needed
       })
       .catch((error) => console.error('Error updating management company data:', error));

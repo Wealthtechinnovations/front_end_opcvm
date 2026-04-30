@@ -95,7 +95,7 @@ export default function Performance() {
     } else {
       // If storedIsLoggedIn is null or any other value, set the state to false
       setIsLoggedIn(false);
-    } console.log(isLoggedIn)
+    }
 
   }, []);
   const [performances, setPerformances] = useState<PerformancesState>({

@@ -63,7 +63,7 @@ export default function TypeProfil(): JSX.Element {
     // Appel à l'API lors du premier rendu du composant
     async function getQuestionnaireForUser() {
       try {
-        const token = "gg";
+        const token = localStorage.getItem('tokenEnCours');
         const response = await fetch(`${urlstableconstant}/api/profile/opcvm/find-profile-opcvm-questionnaire-of-user-signIn`, {
           headers: {
             'x-api-key': API_KEY_STABLECOIN, // Utiliser directement la variable sans ${}
