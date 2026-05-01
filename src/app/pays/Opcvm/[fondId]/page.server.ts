@@ -3,11 +3,15 @@ import { FundsResponse, Pays } from "@/models/Fund";
 import { generateSlug } from "@/lib/utils";
 
 export async function generateStaticParams() {
-    const response = await fetch(`${urlconstant}/api/getPays`);
-    const { data }: FundsResponse = await response.json();
-    return data.paysOptions.map((pays: Pays) => ({
-        fondId: generateSlug(pays.value),
-    }));
+    try {
+        const response = await fetch(`${urlconstant}/api/getPays`);
+        const { data }: FundsResponse = await response.json();
+        return data.paysOptions.map((pays: Pays) => ({
+            fondId: generateSlug(pays.value),
+        }));
+    } catch {
+        return [];
+    }
 }
 
 export async function generateMetadata({ params }: { params: { fondId: string } }) {

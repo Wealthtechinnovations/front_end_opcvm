@@ -6,8 +6,8 @@ import "./style/css/skin_color.css";
 import "./style/css/vendors_css.css";
 import { urlsite } from "./constants";
 import { Metadata } from "next";
-import Providers from "./providers";
 import Script from "next/script";
+import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: {
