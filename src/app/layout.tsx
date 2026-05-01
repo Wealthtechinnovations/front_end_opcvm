@@ -7,6 +7,7 @@ import "./style/css/vendors_css.css";
 import { urlsite } from "./constants";
 import { Metadata } from "next";
 import Providers from "./providers";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: {
@@ -44,7 +45,6 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <head>
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-F4F52HS3TF"></script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -52,7 +52,7 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'Organization',
               name: 'Fundafrique',
-              description: 'Plateforme d\'analyse et de sélection des OPCVM Africains',
+              description: "Plateforme d'analyse et de sélection des OPCVM Africains",
               url: urlsite,
             }),
           }}
@@ -75,6 +75,18 @@ export default function RootLayout({
         />
       </head>
       <body className="layout-top-nav light-skin theme-primary fixed" style={{ height: '100%', width: '100%' }}>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-26P2WDEBF6"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-26P2WDEBF6');
+          `}
+        </Script>
         <Providers>
           <div className="wrapper bg-white" style={{ overflowY: 'scroll' }}>
             {children}
