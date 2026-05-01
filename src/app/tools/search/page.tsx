@@ -903,6 +903,8 @@ export default function Recherche() {
         // Traitez la réponse de l'API ici
       })
       .catch(error => {
+        Swal.close();
+        setError("Erreur de connexion au serveur.");
         console.error('Erreur lors de l\'appel de l\'API :', error);
       });
   };
@@ -984,6 +986,7 @@ export default function Recherche() {
         setOptionsDevise(mappedOptions5);
 
       } catch (error) {
+        Swal.close();
         console.error("Erreur lors de l'appel à l'API :", error);
       }
     }

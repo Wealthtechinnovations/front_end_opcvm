@@ -220,6 +220,8 @@ export default function Comparaison() {
         // Traitez la réponse de l'API ici
       })
       .catch(error => {
+        Swal.close();
+        setError("Erreur de connexion au serveur.");
         console.error('Erreur lors de l\'appel de l\'API :', error);
       });
   };
@@ -307,6 +309,7 @@ export default function Comparaison() {
         }));
         setOptionsSociete(mappedOptions2);
       } catch (error) {
+        Swal.close();
         console.error("Erreur lors de l'appel à l'API :", error);
       }
     }

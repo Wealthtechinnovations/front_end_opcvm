@@ -168,15 +168,13 @@ export default function Comparaison() {
           settotalPages(Math.ceil(totalItems / itemsPerPage));
 
         } else {
-          // Affichez un message d'erreur ici
+          Swal.close();
           setError("Aucun résultat trouvé. Réessayez avec d'autres critères.");
-
-          console.error('Aucun fonds trouvé ou erreur de l\'API.');
         }
-
-        // Traitez la réponse de l'API ici
       })
       .catch(error => {
+        Swal.close();
+        setError("Erreur de connexion au serveur.");
         console.error('Erreur lors de l\'appel de l\'API :', error);
       });
   };
@@ -300,6 +298,7 @@ export default function Comparaison() {
         }
 
       } catch (error) {
+        Swal.close();
         console.error("Erreur lors de l'appel à l'API :", error);
       }
     }
