@@ -375,7 +375,7 @@ export default function Fond() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const data3 = await getperfcategorieannuel(id);
+                const data3 = await getperfcategorieannuel(Number(id));
                 setPostc(data3);
 
                 const isLoggedIn = localStorage.getItem('isLoggedIn');
@@ -490,12 +490,12 @@ export default function Fond() {
                         Swal.showLoading();
                     }
                 });
-                const data = await getPost(id);
+                const data = await getPost(Number(id));
                 setPost(data);
-                const data3 = await getdateavailable(id);
+                const data3 = await getdateavailable(Number(id));
                 setAvailableDates(data3.data);
 
-                const data10 = await getfavoris(id)
+                const data10 = await getfavoris(Number(id))
 
 
 
@@ -629,7 +629,7 @@ export default function Fond() {
                     }
                 }
                 setFilteredData(filteredData);
-                const datacl = await getclassement(id);
+                const datacl = await getclassement(Number(id));
                 setClassementlocal(datacl);
                 Swal.close(); // Close the loading popup
 
