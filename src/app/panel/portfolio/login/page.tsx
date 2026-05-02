@@ -19,10 +19,12 @@ async function emailexist(email: string) {
 }
 
 async function login(email: string, password: string) {
-  const data = (
-    await fetch(`${urlconstant}/api/userlogin?email=${email}&password=${password}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/userlogin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  return response.json();
 }
 
 export default function Login() {
@@ -54,18 +56,21 @@ export default function Login() {
       const data = await login(email, password);
       setResponse(data);
       if (data.code === 200) {
+        const userData = data.data.userExists || data.data.user;
+        const token = data.data?.token || data.token;
         let href: string = '';
-        if (data.data.userExists.typeusers_id == 1) {
+        if (userData.typeusers_id == 1) {
           href = `/panel/portfolio/dashboard`;
-        } else if (data.data.userExists.typeusers_id == 2) {
+        } else if (userData.typeusers_id == 2) {
           href = `/panel/management/dashboard`;
-        } else if (data.data.userExists.typeusers_id == 0) {
+        } else if (userData.typeusers_id == 0) {
           href = `/panel/admin/dashboard`;
+        } else {
+          href = `/panel/portfolio/dashboard`;
         }
         localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userId', data.data.userExists.id);
-        if (data.token || data.data?.token) {
-          const token = data.token || data.data.token;
+        localStorage.setItem('userId', userData.id);
+        if (token) {
           localStorage.setItem('tokenEnCours', token);
           document.cookie = `tokenEnCours=${token}; path=/; max-age=86400; SameSite=Lax`;
         }
