@@ -290,11 +290,14 @@ export default function Comparaison() {
 
         const responseData = await response.json();
         if (responseData && responseData.code === 200) {
-          Swal.close(); // Close the loading popup
+          Swal.close();
 
           totalItems = responseData?.data.fonds.length || 0;
           settotalPages(Math.ceil(totalItems / itemsPerPage));
           setFunds(responseData);
+        } else {
+          Swal.close();
+          setError("Aucun résultat trouvé. Réessayez avec d'autres critères.");
         }
 
       } catch (error) {
