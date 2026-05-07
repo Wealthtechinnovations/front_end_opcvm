@@ -646,16 +646,16 @@ export default function Fond() {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portfolio/dashboard`;
+        const redirectUrl = `/panel/investor/dashboard`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portfolio/dashboard`;
+        // const redirectUrl = `/panel/investor/dashboard`;
 
-        router.push('/panel/portfolio/login');
+        router.push('/panel/investor/login');
       }, 5);
     }
   };

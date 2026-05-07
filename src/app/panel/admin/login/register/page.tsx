@@ -229,7 +229,7 @@ export default function Register() {
           }
           document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
 
-          let href = '/panel/portfolio/dashboard';
+          let href = '/panel/investor/dashboard';
           if (typeusers_id === "2") href = '/panel/management/dashboard';
 
           setTimeout(() => {

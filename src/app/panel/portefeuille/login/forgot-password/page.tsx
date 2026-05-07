@@ -66,7 +66,7 @@ export default function ForgotPassword() {
                             {message}
                           </p>
                           <Link
-                            href="/panel/portefeuille/login"
+                            href="/panel/investor/login"
                             style={{
                               color: '#6366f1',
                               textDecoration: 'underline',
@@ -122,7 +122,7 @@ export default function ForgotPassword() {
 
                           <div className="col-12 text-center mt-3">
                             <Link
-                              href="/panel/portefeuille/login"
+                              href="/panel/investor/login"
                               style={{ color: '#6366f1', fontSize: '14px', textDecoration: 'underline' }}
                             >
                               Retour à la connexion

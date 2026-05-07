@@ -37,7 +37,7 @@ export default function Login() {
         } else if (user.typeusers_id === 2 || user.typeusers_id === 5) {
           router.push(`/panel/management/dashboard`);
         } else {
-          router.push(`/panel/portfolio/dashboard`);
+          router.push(`/panel/investor/dashboard`);
         }
       } else {
         setError(data.message || "Email ou mot de passe incorrect");
@@ -111,7 +111,7 @@ export default function Login() {
                         </div>
                       </form>
                       <div className="text-center">
-                        <p className="mt-15 mb-0 text-fade">Pas encore de compte ? <Link href="/panel/portfolio/login/register">Inscription</Link></p>
+                        <p className="mt-15 mb-0 text-fade">Pas encore de compte ? <Link href="/panel/investor/login/register">Inscription</Link></p>
                       </div>
                     </div>
                   </div>

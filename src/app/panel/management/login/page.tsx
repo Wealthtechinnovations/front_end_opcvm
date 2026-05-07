@@ -559,18 +559,30 @@ export default function Logins() {
           document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
 
           let href: string;
-          if (userData.typeusers_id == 2) {
+          if (userData.typeusers_id == 0) {
+            localStorage.setItem('userId', userData.id);
+            href = `/panel/admin/dashboard`;
+          } else if (userData.typeusers_id == 1) {
+            localStorage.setItem('userId', userData.id);
+            href = `/panel/investor/dashboard`;
+          } else if (userData.typeusers_id == 2) {
             localStorage.setItem('userId', userData.denomination);
             href = `/panel/management/dashboard`;
+          } else if (userData.typeusers_id == 3) {
+            localStorage.setItem('userId', userData.id);
+            href = `/panel/institutional/dashboard`;
+          } else if (userData.typeusers_id == 4) {
+            localStorage.setItem('userId', userData.id);
+            href = `/panel/data-requester/dashboard`;
           } else if (userData.typeusers_id == 5) {
             localStorage.setItem('userId', userData.pays);
             href = `/country-panel/dashboard`;
-          } else if (userData.typeusers_id == 0) {
+          } else if (userData.typeusers_id == 6) {
             localStorage.setItem('userId', userData.id);
-            href = `/panel/admin/dashboard`;
+            href = `/panel/distributor/dashboard`;
           } else {
             localStorage.setItem('userId', userData.id);
-            href = `/panel/portfolio/dashboard`;
+            href = `/panel/investor/dashboard`;
           }
           router.push(href);
         } else {
@@ -616,15 +628,28 @@ export default function Logins() {
           document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
 
           let href: string;
-          if (typeusers_id == "2") {
+          const uid = regResult.data?.userId?.id || '';
+          if (typeusers_id == "1") {
+            localStorage.setItem('userId', uid);
+            href = `/panel/investor/dashboard`;
+          } else if (typeusers_id == "2") {
             localStorage.setItem('userId', denomination || pays);
             href = `/panel/management/dashboard`;
+          } else if (typeusers_id == "3") {
+            localStorage.setItem('userId', uid);
+            href = `/panel/institutional/dashboard`;
+          } else if (typeusers_id == "4") {
+            localStorage.setItem('userId', uid);
+            href = `/panel/data-requester/dashboard`;
           } else if (typeusers_id == "5") {
             localStorage.setItem('userId', pays || denomination);
             href = `/country-panel/dashboard`;
+          } else if (typeusers_id == "6") {
+            localStorage.setItem('userId', uid);
+            href = `/panel/distributor/dashboard`;
           } else {
-            localStorage.setItem('userId', regResult.data?.userId?.id || '');
-            href = `/panel/portfolio/dashboard`;
+            localStorage.setItem('userId', uid);
+            href = `/panel/investor/dashboard`;
           }
           router.push(href);
         } else {
@@ -668,7 +693,7 @@ export default function Logins() {
   const [userConnected, setUserConnected] = useState(null);
   const handleLinkClick = () => {
     if (userConnected !== null) {
-        router.push('/panel/portfolio/dashboard');
+        router.push('/panel/investor/dashboard');
     } else {
         router.push('/panel/management/login');
     }

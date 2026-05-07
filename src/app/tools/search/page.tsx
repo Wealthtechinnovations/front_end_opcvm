@@ -1025,14 +1025,14 @@ export default function Recherche() {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portfolio/dashboard`;
+        const redirectUrl = `/panel/investor/dashboard`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portfolio/dashboard`;
+        // const redirectUrl = `/panel/investor/dashboard`;
 
         router.push('/panel/management/login');
       }, 5);

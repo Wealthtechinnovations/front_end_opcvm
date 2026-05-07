@@ -51,7 +51,7 @@ function ResetPasswordForm() {
       if (data.code === 200) {
         setIsSuccess(true);
         setMessage("Votre mot de passe a été réinitialisé avec succès.");
-        setTimeout(() => router.push('/panel/portefeuille/login'), 3000);
+        setTimeout(() => router.push('/panel/investor/login'), 3000);
       } else {
         setIsError(true);
         setMessage(data.message || "Une erreur est survenue.");
@@ -81,7 +81,7 @@ function ResetPasswordForm() {
               </p>
               <p style={{ color: '#888', fontSize: '13px' }}>Redirection automatique dans 3 secondes...</p>
               <Link
-                href="/panel/portefeuille/login"
+                href="/panel/investor/login"
                 style={{ color: '#6366f1', textDecoration: 'underline', fontSize: '14px' }}
               >
                 Se connecter maintenant
@@ -92,7 +92,7 @@ function ResetPasswordForm() {
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
               <p style={{ color: 'red', marginBottom: '16px' }}>{message}</p>
               <Link
-                href="/panel/portefeuille/login/forgot-password"
+                href="/panel/investor/login/forgot-password"
                 style={{ color: '#6366f1', textDecoration: 'underline', fontSize: '14px' }}
               >
                 Faire une nouvelle demande
@@ -158,7 +158,7 @@ function ResetPasswordForm() {
 
               <div className="col-12 text-center mt-3">
                 <Link
-                  href="/panel/portefeuille/login"
+                  href="/panel/investor/login"
                   style={{ color: '#6366f1', fontSize: '14px', textDecoration: 'underline' }}
                 >
                   Retour à la connexion

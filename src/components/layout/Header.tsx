@@ -148,7 +148,7 @@ const Header = () => {
             items={[
               { label: 'Questionnaire court', href: '/questionnaire/questionnaire/pre/question1' },
               { label: 'Profil investisseur (MIFID)', href: '/questionnaire/questionnaire/question1' },
-              { label: 'KYC Particulier', href: '/panel/portfolio/questionnaire/Kyc_particulier/question1' },
+              { label: 'KYC Particulier', href: '/panel/investor/questionnaire/Kyc_particulier/question1' },
             ]}
           />
           <NavDropdownMenu
@@ -157,7 +157,7 @@ const Header = () => {
             items={[
               { label: 'Comparaison de fonds', href: '/tools/comparison' },
               { label: 'Sélection OPCVM', href: '/tools/search' },
-              { label: 'Robot Advisor', href: '/panel/portfolio/questionnaire/robotadvisor' },
+              { label: 'Robot Advisor', href: '/panel/investor/questionnaire/robotadvisor' },
             ]}
           />
           <NavButton
@@ -171,11 +171,11 @@ const Header = () => {
             items={
               userConnected
                 ? [
-                    { label: 'Mon espace', href: `/panel/portfolio/dashboard` },
+                    { label: 'Mon espace', href: `/panel/investor/dashboard` },
                     { label: 'Espace société de gestion', href: '/panel/management/login' },
                   ]
                 : [
-                    { label: 'Espace investisseur', href: '/panel/portfolio/login' },
+                    { label: 'Espace investisseur', href: '/panel/investor/login' },
                     { label: 'Espace société de gestion', href: '/panel/management/login' },
                   ]
             }
@@ -230,7 +230,7 @@ const Header = () => {
             <NavButton label="Pays" pathMatch="/pays" href="/pays" />
             <NavButton label="Outils" pathMatch="/tools" href="/tools/comparison" />
             <NavButton label="Actualités" pathMatch="/news" href="/news" />
-            <NavButton label="Connexion" pathMatch="/panel" href="/panel/portfolio/login" />
+            <NavButton label="Connexion" pathMatch="/panel" href="/panel/investor/login" />
             <NavButton label="Contact" pathMatch="/contact" href="/contact" />
           </ul>
         </nav>

@@ -122,16 +122,16 @@ export default function TypeProfil(): JSX.Element {
 
     if (userConnected !== null) {
       setTimeout(() => {
-        const redirectUrl = `/panel/portfolio/dashboard`;
+        const redirectUrl = `/panel/investor/dashboard`;
 
         router.push(redirectUrl);
       }, 5);
 
     } else {
       setTimeout(() => {
-        // const redirectUrl = `/panel/portfolio/dashboard`;
+        // const redirectUrl = `/panel/investor/dashboard`;
 
-        router.push('/panel/portfolio/login');
+        router.push('/panel/investor/login');
       }, 5);
     }
   };
@@ -304,7 +304,7 @@ export default function TypeProfil(): JSX.Element {
                                       <Button
                                         color="primary"
                                         type="button"
-                                        href='/panel/portfolio/first'
+                                        href='/panel/investor/first'
                                       >
                                         Cliquez ici pour nous donner votre avis sur votre résultat
                                       </Button>
@@ -315,7 +315,7 @@ export default function TypeProfil(): JSX.Element {
                                       <Button
                                         color="primary"
                                         type="button"
-                                        href='/panel/portfolio/profile'
+                                        href='/panel/investor/profile'
                                       >
                                         Voir profil MIFID
                                       </Button>

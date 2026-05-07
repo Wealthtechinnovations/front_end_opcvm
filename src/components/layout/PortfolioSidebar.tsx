@@ -73,7 +73,7 @@ const router=useRouter();
       setIsLoggedIn(false);
     }
     if (!isLoggedIn) {
-      router.push('/panel/portfolio/login');
+      router.push('/panel/investor/login');
     }
    
   }, []);
@@ -122,10 +122,10 @@ const router=useRouter();
     <ul className="space-y-4">
   {/* PorteFeuille */}
   <li>
-    <Link href={`/panel/portfolio/dashboard`}>
+    <Link href={`/panel/investor/dashboard`}>
       <button
         className={`block w-full py-3 px-4 ${
-          pathname.includes('/panel/portfolio/home') ? 'bg-purple-500' : 'bg-indigo-500'
+          pathname.includes('/panel/investor/home') ? 'bg-purple-500' : 'bg-indigo-500'
         } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
       >
         PorteFeuille
@@ -135,10 +135,10 @@ const router=useRouter();
 
   {/* Robot Advisor */}
   <li>
-    <Link href={`/panel/portfolio/robot-advisor`}>
+    <Link href={`/panel/investor/robot-advisor`}>
       <button
         className={`block w-full py-3 px-4 ${
-          pathname.includes('/panel/portfolio/robotadvisor') ? 'bg-purple-500' : 'bg-indigo-500'
+          pathname.includes('/panel/investor/robotadvisor') ? 'bg-purple-500' : 'bg-indigo-500'
         } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
       >
         Robot Advisor
@@ -148,10 +148,10 @@ const router=useRouter();
 
   {/* Favoris */}
   <li>
-    <Link href={`/panel/portfolio/favorites`}>
+    <Link href={`/panel/investor/favorites`}>
       <button
         className={`block w-full py-3 px-4 ${
-          pathname.includes('/panel/portfolio/favorites') ? 'bg-purple-500' : 'bg-indigo-500'
+          pathname.includes('/panel/investor/favorites') ? 'bg-purple-500' : 'bg-indigo-500'
         } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
       >
         Favoris
@@ -164,7 +164,7 @@ const router=useRouter();
     <button
       onClick={toggleDropdown}
       className={`w-full text-left py-3 px-4 ${
-        pathname.includes('/panel/portfolio/profile') || pathname.includes('/panel/portfolio/questionnaire') 
+        pathname.includes('/panel/investor/profile') || pathname.includes('/panel/investor/questionnaire') 
           ? 'bg-purple-500' : 'bg-indigo-500'
       } hover:bg-blue-500 text-white font-semibold rounded-lg flex justify-between items-center transition duration-300 shadow-md`}
     >
@@ -174,10 +174,10 @@ const router=useRouter();
     {isDropdownOpen && (
       <ul className="pl-4 mt-2 space-y-2 text-sm">
         <li>
-          <Link href={`/panel/portfolio/profile`}>
+          <Link href={`/panel/investor/profile`}>
             <button
               className={`block w-full py-2 px-2 ${
-                pathname.includes('/panel/portfolio/profile') ? 'bg-purple-500' : 'bg-indigo-500'
+                pathname.includes('/panel/investor/profile') ? 'bg-purple-500' : 'bg-indigo-500'
               } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
             >
               Profil
@@ -185,10 +185,10 @@ const router=useRouter();
           </Link>
         </li>
         <li>
-          <Link href={`/panel/portfolio/questionnaire`}>
+          <Link href={`/panel/investor/questionnaire`}>
             <button
               className={`block w-full py-2 px-2 ${
-                pathname.includes('/panel/portfolio/questionnaire') ? 'bg-purple-500' : 'bg-indigo-500'
+                pathname.includes('/panel/investor/questionnaire') ? 'bg-purple-500' : 'bg-indigo-500'
               } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
             >
               Questionnaire
@@ -201,10 +201,10 @@ const router=useRouter();
 
   {/* KYC */}
   <li>
-    <Link href={`/panel/portfolio/kyc`}>
+    <Link href={`/panel/investor/kyc`}>
       <button
         className={`block w-full py-3 px-4 ${
-          pathname.includes('/panel/portfolio/kyc') ? 'bg-purple-500' : 'bg-indigo-500'
+          pathname.includes('/panel/investor/kyc') ? 'bg-purple-500' : 'bg-indigo-500'
         } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
       >
         KYC

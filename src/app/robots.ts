@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         disallow: [
           "/panel/admin",
-          "/panel/portfolio",
+          "/panel/investor",
           "/panel/management",
           "/country-panel",
           "/api",

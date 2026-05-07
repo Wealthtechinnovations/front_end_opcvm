@@ -57,9 +57,7 @@ export default function Login() {
 
 
       } else {
-        const href = `/panel/portfolio/login/register?email=${email}`;
-
-        router.push(href);
+        router.push(`/panel/admin/login/register?email=${email}`);
       }
 
     } else {
@@ -138,7 +136,7 @@ export default function Login() {
 
           </li>
           <li><Link className="link-style"
-            href="/panel/portfolio/login"
+            href="/panel/investor/login"
           //href="/auth/login"
 
           >
