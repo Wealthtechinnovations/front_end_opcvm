@@ -480,7 +480,7 @@ export default function Login() {
           }
           router.push(href);
         } else {
-          setError("Mot de passe incorrect");
+          setError(data1.message || "Mot de passe incorrect");
         }
       } catch (error) {
         console.error('Erreur lors de la soumission du formulaire :', error);

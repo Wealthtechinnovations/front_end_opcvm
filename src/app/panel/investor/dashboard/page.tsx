@@ -304,7 +304,7 @@ export default function Home() {
                               <div className="action-buttons">
                                 <Link
                                   href={{
-                                    pathname: '/panel/investor/fondsselected',
+                                    pathname: '/panel/investor/selected-funds',
                                     query: { id: id, selectedValuename: item?.funds, selectedfund: item?.fundids, portefeuille: item.id },
                                   }}
                                 >

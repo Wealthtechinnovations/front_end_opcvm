@@ -1,23 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import Select from 'react-select';
-//import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
-import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/lib/constants";
+import { urlconstant } from "@/lib/constants";
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Pays {
-  value: any[]; // ou un type spécifique pour les éléments du tableau 'funds'
-
+  value: any[];
 }
 
 interface Societe {
-  value: any[]; // ou un type spécifique pour les éléments du tableau 'funds'
-
+  value: any[];
 }
 
 async function getpays() {
@@ -31,25 +25,6 @@ async function getsociete() {
   const data = (
     await fetch(`${urlconstant}/api/getSocietes`)
   ).json();
-  return data;
-}
-interface PageProps {
-  searchParams: {
-    email: any;
-    password: any;
-
-  };
-}
-async function register(email: string, password: string, confirmPassword: string, codeTypeProfil: string, platform: string, typeBusiness: string) {
-  const response = await fetch(`${urlstableconstant}/api/session/register-opcvm`, {
-    method: 'GET',
-    headers: {
-      'x-api-key': API_KEY_STABLECOIN, // Ajouter votre en-tête personnalisé
-      'Content-Type': 'application/json', // Vous pouvez également ajouter d'autres en-têtes si nécessaire
-    },
-  });
-
-  const data = await response.json();
   return data;
 }
 export default function Register() {
@@ -221,28 +196,24 @@ export default function Register() {
         // fetchCompaniesInCountry(selectedCountry);
       }
     }, [selectedCountry]);*/
-  const [formData, setFormData] = useState({
-    email: email, password: password, confirmPassword: password, codeTypeProfil: '', platform: '', typeBusiness: ''
-  });
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
         const data = await getpays();
         const mappedOptions = data?.data.paysOptions.map((funds: any) => ({
-
           value: funds.value,
-          label: funds.label, // Replace with the actual property name
-          // Replace with the actual property name
+          label: funds.label,
         }));
         setOptionsPays(mappedOptions);
 
         const data1 = await getsociete();
         const mappedOptions1 = data1?.data.societes.map((funds: any) => ({
-
           value: funds.name,
-          label: funds.name, // Replace with the actual property name
-          // Replace with the actual property name
+          label: funds.name,
         }));
         setOptionsSociete(mappedOptions1);
       } catch (error) {
@@ -254,31 +225,76 @@ export default function Register() {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    setError(null);
 
-    formData.codeTypeProfil = userType;
-    formData.platform = "OPCVM";
+    if (password !== confirmpassword) {
+      setPasswordsMatch(false);
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Le mot de passe doit contenir au moins 8 caractères");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${urlstableconstant}/api/session/register-opcvm`, {
+      const typeusersMap: Record<string, { typeusers: string; typeusers_id: number }> = {
+        'socGest': { typeusers: 'Societe de gestion', typeusers_id: 2 },
+        'Societe de gestion': { typeusers: 'Societe de gestion', typeusers_id: 2 },
+        'part': { typeusers: 'Particulier', typeusers_id: 1 },
+        'Particulier': { typeusers: 'Particulier', typeusers_id: 1 },
+        'insti': { typeusers: 'Investisseur institutionnel', typeusers_id: 3 },
+        'Investisseur institutionnel': { typeusers: 'Investisseur institutionnel', typeusers_id: 3 },
+        'Data requester': { typeusers: 'Data requester', typeusers_id: 4 },
+      };
+
+      const typeInfo = typeusersMap[userType] || { typeusers: userType, typeusers_id: 1 };
+
+      if (typeInfo.typeusers_id === 2 && !selectedSociete) {
+        setError("Veuillez sélectionner une société de gestion");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const response = await fetch(`${urlconstant}/api/postuserportefeuille`, {
         method: 'POST',
-        headers: {
-          'x-api-key': API_KEY_STABLECOIN, // Utiliser directement la variable sans ${}
-          'Content-Type': 'application/json', // Set the content type to JSON
-        },
-        body: JSON.stringify(formData), // Convert the data to JSON and include it in the request body
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          denomination: (selectedSociete as any)?.value || '',
+          pays: (selectedPays as any)?.value || '',
+          typeusers: typeInfo.typeusers,
+          typeusers_id: typeInfo.typeusers_id,
+        }),
       });
 
       const data = await response.json();
-      if (response.status === 200) {
 
-        // Redirect the user to another page after a delay (e.g., 2 seconds)
-        setTimeout(() => {
-          router.push('/panel/management/dashboard'); // Replace '/other-page' with your desired page URL
-        }, 2000);
+      if (response.ok) {
+        if (typeInfo.typeusers_id === 2) {
+          setSuccessMessage("Votre compte société de gestion a été créé. Il sera activé après validation par un administrateur.");
+          setTimeout(() => {
+            router.push('/panel/management/login');
+          }, 4000);
+        } else {
+          if (data.data?.token) {
+            localStorage.setItem('tokenEnCours', data.data.token);
+            document.cookie = `tokenEnCours=${data.data.token}; path=/; max-age=86400; SameSite=Lax`;
+          }
+          localStorage.setItem('isLoggedIn', 'true');
+          document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
+          router.push('/panel/management/login');
+        }
+      } else {
+        setError(data.message || "Erreur lors de l'inscription");
       }
-    } catch (error) {
-      // Gérer les erreurs de l'API (par exemple, afficher une erreur)
-      console.error('Erreur lors de la soumission du formulaire :', error);
+    } catch (err) {
+      setError("Erreur de connexion au serveur. Veuillez réessayer.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -317,19 +333,34 @@ export default function Register() {
                         <br />
                         {renderRegistrationFields()}
                         <br />
-                        <div className="row">
-
-                          {/* /.col */}
-                          <div className="col-12 text-center">
-                            <button className="text-right" style={{
-                              textDecoration: 'none', // Remove underline
-                              backgroundColor: '#6366f1', // Background color
-                              color: 'white', // Text color
-                              padding: '10px 20px', // Padding
-                              borderRadius: '5px', // Rounded corners
-                            }} type="submit">Enregistrer</button>
+                        {error && (
+                          <div className="alert alert-danger text-center" role="alert">
+                            {error}
                           </div>
-                          {/* /.col */}
+                        )}
+                        {successMessage && (
+                          <div className="alert alert-success text-center" role="alert">
+                            {successMessage}
+                          </div>
+                        )}
+                        <div className="row">
+                          <div className="col-12 text-center">
+                            <button
+                              className="text-right"
+                              style={{
+                                textDecoration: 'none',
+                                backgroundColor: isSubmitting ? '#9ca3af' : '#6366f1',
+                                color: 'white',
+                                padding: '10px 20px',
+                                borderRadius: '5px',
+                                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                              }}
+                              type="submit"
+                              disabled={isSubmitting}
+                            >
+                              {isSubmitting ? 'Inscription en cours...' : 'Enregistrer'}
+                            </button>
+                          </div>
                         </div>
                       </form>
 

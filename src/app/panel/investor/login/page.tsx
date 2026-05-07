@@ -85,7 +85,7 @@ export default function Login() {
         document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
         router.push(href);
       } else {
-        setError("Login ou mot de passe incorrect");
+        setError(data.message || "Login ou mot de passe incorrect");
       }
     }
   };

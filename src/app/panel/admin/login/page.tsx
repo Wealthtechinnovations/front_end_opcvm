@@ -82,7 +82,7 @@ export default function Login() {
 
         router.push('/panel/admin/dashboard');
       } else {
-        setError("Login ou mot de passe incorrect")
+        setError(data.message || "Login ou mot de passe incorrect")
       }
 
     }

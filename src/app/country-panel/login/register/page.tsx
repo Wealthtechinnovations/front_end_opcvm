@@ -266,6 +266,12 @@ export default function Register() {
 
       const typeInfo = typeusersMap[userType] || { typeusers: userType, typeusers_id: 1 };
 
+      if (typeInfo.typeusers_id === 2 && !selectedSociete) {
+        setError("Veuillez sélectionner une société de gestion");
+        setIsSubmitting(false);
+        return;
+      }
+
       const response = await fetch(`${urlconstant}/api/postuserportefeuille`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -282,6 +288,12 @@ export default function Register() {
       const data = await response.json();
 
       if (response.ok) {
+        if (typeInfo.typeusers_id === 2) {
+          setError(null);
+          alert("Votre compte société de gestion a été créé. Il sera activé après validation par un administrateur.");
+          router.push('/country-panel/login');
+          return;
+        }
         if (data.data?.token) {
           localStorage.setItem('tokenEnCours', data.data.token);
           document.cookie = `tokenEnCours=${data.data.token}; path=/; max-age=86400; SameSite=Lax`;

@@ -154,37 +154,58 @@ export default function Fonds() {
                   <hr />
 
                   <br />
-                  <table className="table">
-                    <thead>
+                  <div className="table-responsive">
+                  <table className="table table-bordered table-hover">
+                    <thead className="table-header">
                       <tr>
                         <th>Email</th>
-                        <th>Active</th>
+                        <th>Type</th>
+                        <th>Dénomination</th>
+                        <th>Pays</th>
+                        <th>Statut</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {funds?.data?.userss.map((item: any) => (
+                      {funds?.data?.userss.map((item: any) => {
+                        const typeLabels: Record<string, string> = {
+                          '0': 'Admin', '1': 'Particulier', '2': 'Soc. gestion',
+                          '3': 'Institutionnel', '4': 'Data requester',
+                          '5': 'Régulateur', '6': 'Distributeur',
+                        };
+                        return (
                         <tr key={item.id}>
                           <td>{item?.email}</td>
-                         
-                          <td>{item?.active}</td>
+                          <td>{typeLabels[String(item?.typeusers_id)] || item?.typeusers || '-'}</td>
+                          <td>{item?.denomination || '-'}</td>
+                          <td>{item?.pays || '-'}</td>
                           <td>
-                            {/* Bouton pour activer l'utilisateur */}
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              color: 'white',
+                              backgroundColor: item?.active === 1 ? '#22c55e' : '#ef4444',
+                            }}>
+                              {item?.active === 1 ? 'Actif' : 'En attente'}
+                            </span>
+                          </td>
+                          <td>
                             {item?.active === 0 && (
-  <button
-    className="btn btn-success"
-    style={{ width: '150px' }}
-    onClick={() => handleActivateUser(item.id)}
-  >
-    Activer
-  </button>
-)}
-
+                              <button
+                                className="btn btn-success btn-sm"
+                                onClick={() => handleActivateUser(item.id)}
+                              >
+                                Activer
+                              </button>
+                            )}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
+                  </div>
 
                   {/* <div className="table-responsive">
 

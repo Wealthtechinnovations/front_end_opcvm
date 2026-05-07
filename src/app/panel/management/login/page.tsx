@@ -14,7 +14,6 @@ async function login(email: string, password: any) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
-  if (!response.ok) throw new Error(`Login failed: ${response.status}`);
   return response.json();
 }
 async function emailexist(email: string) {
@@ -586,7 +585,7 @@ export default function Logins() {
           }
           router.push(href);
         } else {
-          setError("Mot de passe incorrect");
+          setError(data1.message || "Mot de passe incorrect");
         }
       } catch (error) {
         console.error('Erreur lors de la soumission du formulaire :', error);
