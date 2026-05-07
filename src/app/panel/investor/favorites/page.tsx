@@ -172,13 +172,18 @@ export default function Fondselected() {
 
 
   useEffect(() => {
-    // Fonction pour effectuer l'appel à l'API
     async function fetchData() {
+      if (!id) return;
 
       try {
         const response = await fetch(`${urlconstant}/api/favoritesdataall/${id}`);
         const data = await response.json();
-        //  setFundsData(data.data);
+
+        if (!data || !data.data) {
+          setFundsData([]);
+          return;
+        }
+
         const fetchedData = [];
 
         for (const item of data.data) {
@@ -191,19 +196,14 @@ export default function Fondselected() {
           }
         }
 
-        // Mettez à jour l'état avec les données récupérées
         setFundsData(fetchedData);
       } catch (error) {
         console.error("Erreur lors de l'appel API :", error);
       }
-
-
-      // Mettez à jour l'état avec les données récupérées
     }
 
-    // Appelez la fonction pour récupérer les données lorsque le composant est monté
     fetchData();
-  }, []); // A
+  }, [id]);
 
   const [formData, setFormData] = useState({
     page: 1,

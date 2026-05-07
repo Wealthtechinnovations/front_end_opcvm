@@ -234,7 +234,7 @@ export default function Home() {
                       actions={
                         <Link
                           className="btn btn-primary"
-                          href={`/panel/investor/ajoutportefeuille`}
+                          href={`/panel/investor/create`}
                         >
                           Créer un portefeuille
                         </Link>

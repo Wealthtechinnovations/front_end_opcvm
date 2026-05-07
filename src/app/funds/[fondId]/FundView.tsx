@@ -495,12 +495,15 @@ export default function Fond() {
                 const data3 = await getdateavailable(Number(id));
                 setAvailableDates(data3.data);
 
-                const data10 = await getfavoris(Number(id))
+                const data10 = await getfavoris(Number(id));
 
-
-
-                if (data10.success == true) {
-                    setIsFavorite(true)
+                if (data10?.success === true && data10.data) {
+                    const storedUserId = localStorage.getItem('userId');
+                    if (storedUserId) {
+                        const userIdNum = parseInt(storedUserId, 10);
+                        const userFavorite = data10.data.some((fav: any) => fav.user_id === userIdNum);
+                        setIsFavorite(userFavorite);
+                    }
                 }
                 const data1 = await getlastvl1();
 
