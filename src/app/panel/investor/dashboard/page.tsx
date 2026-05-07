@@ -62,7 +62,7 @@ export default function Home() {
   };
 
   const handleLinkClick = (item: any) => {
-    const href = `/panel/investor/reconstruction?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
+    const href = `/panel/investor/reconstruction/reconstitution?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
 
     // Use the router.push method to navigate
     router.push(href);

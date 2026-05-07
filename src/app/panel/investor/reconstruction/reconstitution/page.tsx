@@ -6,6 +6,7 @@ import { Fragment, JSXElementConstructor, PromiseLikeOfReactNode, ReactElement, 
 import Select from 'react-select';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserId } from '@/hooks/useUserId';
+import Swal from 'sweetalert2';
 
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
@@ -71,11 +72,7 @@ export default function Reconstitution() {
   const [selectedFunds, setSelectedFunds] = useState([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleSearch = (e: any) => {
-    e.preventDefault();
-    // Effectuez votre recherche ici si nécessaire
-  };
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
 
   const [formData, setFormData] = useState({
@@ -129,45 +126,54 @@ export default function Reconstitution() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
+    const hasEmptyDate = entries.some(entry => !entry.date);
+    const hasZeroAmount = entries.some(entry => !entry.montantInvesti || entry.montantInvesti <= 0);
+
+    if (hasEmptyDate || hasZeroAmount) {
+      Swal.fire('Champs requis', 'Veuillez remplir la date et le montant pour chaque fonds.', 'warning');
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      fetch(`${urlconstant}/api/reconstitution`, {
+      Swal.fire({
+        title: 'Veuillez patienter',
+        html: 'Enregistrement en cours...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const response = await fetch(`${urlconstant}/api/reconstitution`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json', // Définir le type de contenu JSON
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(entries), // Convertir l'objet en JSON
-      })
-        .then((response) => response.json()) // Convertir la réponse en JSON
-        .then((data) => {
+        body: JSON.stringify(entries),
+      });
 
-          if (data.code === 200) {
+      const data = await response.json();
 
-            setTimeout(() => {
-              const href = `/panel/investor/dashboard`;
-
-              router.push(href);
-            }, 2000);
-          }
-        })
-        .catch((error) => {
-          console.error('Une erreur s\'est produite :', error);
+      if (data.code === 200) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Reconstitution effectuée',
+          text: 'Le portefeuille a été reconstitué avec succès.',
+          timer: 2000,
+          showConfirmButton: false,
+        }).then(() => {
+          router.push(`/panel/investor/reconstruction?selectedValuename=${searchParams.get('selectedValuename') || ''}&selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`);
         });
-
-      // Gérer la réponse de l'API (par exemple, afficher un message de succès)
-      /*  if (datas.status === 200) {
-          const data = datas;
-          setIsModalOpen(true);
-  
-          // Redirect the user to another page after a delay (e.g., 2 seconds)
-          setTimeout(() => {
-            //     router.push('/dashboard'); // Replace '/other-page' with your desired page URL
-          }, 2000);
-        } else {
-          const data = datas;
-        }*/
+      } else {
+        Swal.fire('Erreur', data.message || 'Une erreur est survenue.', 'error');
+      }
     } catch (error) {
-      // Gérer les erreurs de l'API (par exemple, afficher une erreur)
+      Swal.fire('Erreur', 'Impossible de contacter le serveur.', 'error');
       console.error('Erreur lors de la soumission du formulaire :', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -298,14 +304,14 @@ export default function Reconstitution() {
 
 
                       <div className="text-center">
-                        <button style={{
-                          textDecoration: 'none', // Remove underline
-                          backgroundColor: '#6366f1', // Background color
-                          color: 'white', // Text color
-                          padding: '10px 20px', // Padding
-                          borderRadius: '5px', // Rounded corners
-                        }} onClick={() => {
-                          // Vous pouvez laisser cette fonction vide, elle n'effectuera aucune action.
+                        <button type="submit" style={{
+                          textDecoration: 'none',
+                          backgroundColor: '#6366f1',
+                          color: 'white',
+                          padding: '10px 20px',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          border: 'none',
                         }}>Calculer la valorisation</button>
 
                       </div>
