@@ -39,6 +39,28 @@ export default function Home() {
   const [endDate, setEndDate] = useState(null);
   const [base100Data, setBase100Data] = useState([]); // Nouvel état pour les données en base 100
 
+  const handleDeletePortfolio = (item: any) => {
+    Swal.fire({
+      title: 'Supprimer ce portefeuille ?',
+      text: `"${item.nom_portefeuille}" sera supprimé définitivement.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui, supprimer',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#ef4444',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deletePortfolio(item.id);
+          Swal.fire('Supprimé', 'Le portefeuille a été supprimé.', 'success');
+          if (id) fetchPortfolios(id);
+        } catch {
+          Swal.fire('Erreur', 'Impossible de supprimer le portefeuille.', 'error');
+        }
+      }
+    });
+  };
+
   const handleLinkClick = (item: any) => {
     const href = `/panel/investor/reconstruction?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
 
@@ -352,6 +374,20 @@ export default function Home() {
                                       </Link>
                                     </>
                                   ))}
+                                <button
+                                  style={{
+                                    width: '150px',
+                                    backgroundColor: '#ef4444',
+                                    color: 'white',
+                                    padding: '6px 12px',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer',
+                                    border: 'none',
+                                  }}
+                                  onClick={() => handleDeletePortfolio(item)}
+                                >
+                                  Supprimer
+                                </button>
                               </div>
                             </td>
                           </tr>

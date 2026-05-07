@@ -86,8 +86,8 @@ const usePortfolioStore = create<PortfolioState>()((set, get) => ({
     try {
       set({ loading: true, error: null });
       await axios.post(
-        `${urlconstant}/api/updateportefeuille`,
-        { id, deleted: true },
+        `${urlconstant}/api/deleteportefeuille/${id}`,
+        {},
         { headers: authHeaders() }
       );
       set((state) => ({
