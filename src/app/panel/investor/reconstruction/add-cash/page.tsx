@@ -206,7 +206,7 @@ export default function Ajoutcash() {
           if (data.code === 200) {
 
             setTimeout(() => {
-              const href = `/panel/investor/portefeuillereconstitution?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`;
+              const href = `/panel/investor/reconstruction?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`;
 
               router.push(href);
             }, 2000);

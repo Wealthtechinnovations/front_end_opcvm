@@ -35,7 +35,7 @@ export default function RobotAdvisor() {
 
 
   const handleLinkClick = (item: any) => {
-    const href = `/panel/investor/robot-advisor/portefeuillerobot?simulation=${item.id}`;
+    const href = `/panel/investor/robot-advisor/robot-portfolio?simulation=${item.id}`;
 
     // Use the router.push method to navigate
     router.push(href);

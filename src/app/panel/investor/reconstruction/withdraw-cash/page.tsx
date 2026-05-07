@@ -212,7 +212,7 @@ export default function Retraitcash() {
           if (data.code === 200) {
 
             setTimeout(() => {
-              const href = `/panel/investor/portefeuillereconstitution`;
+              const href = `/panel/investor/reconstruction`;
 
               router.push(href);
             }, 2000);

@@ -564,7 +564,7 @@ export default function RoboAdvisor() {
         Swal.close(); // Close the loading popup
 
         setTimeout(() => {
-          const href = `/panel/investor/robot-advisor/portefeuillerobot`;
+          const href = `/panel/investor/robot-advisor/robot-portfolio`;
 
           router.push(href);
         }, 2000);

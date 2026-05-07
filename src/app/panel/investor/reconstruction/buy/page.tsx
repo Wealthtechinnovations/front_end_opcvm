@@ -370,7 +370,7 @@ export default function Achat() {
         localStorage.setItem('portefeuille', selectedportfeuille);
 
         setTimeout(() => {
-          const href = `/panel/investor/portefeuillereconstitution?selectedfund=${allfund}&portefeuille=${selectedportfeuille}`;
+          const href = `/panel/investor/reconstruction?selectedfund=${allfund}&portefeuille=${selectedportfeuille}`;
           router.push(href);
         }, 500);
       }

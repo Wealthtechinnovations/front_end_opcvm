@@ -938,7 +938,7 @@ export default function PorteFeuile() {
 
   const [reconstitutionEnCours, setReconstitutionEnCours] = useState(false);
   const handletransactionClick = async () => {
-    const href = `/panel/investor/portefeuillereconstitution/transaction?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`
+    const href = `/panel/investor/reconstruction/transaction?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`
     setTimeout(() => {
       window.location.href = href;
     }, 500);
@@ -946,7 +946,7 @@ export default function PorteFeuile() {
 
   };
   const handleparamClick = async () => {
-    const href = `/panel/investor/portefeuillereconstitution/parametrage?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`
+    const href = `/panel/investor/reconstruction/settings?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`
     setTimeout(() => {
       window.location.href = href;
     }, 500);
@@ -981,7 +981,7 @@ export default function PorteFeuile() {
         Swal.close(); // Fermer le popup après que la requête est terminée
 
         setTimeout(() => {
-          const href = `/panel/investor/portefeuillereconstitution?selectedValuename=${selectedValuename}&selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`;
+          const href = `/panel/investor/reconstruction?selectedValuename=${selectedValuename}&selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`;
           window.location.href = href;
         }, 500);
       } else {
@@ -1172,7 +1172,7 @@ export default function PorteFeuile() {
 
                     <div className="text-right">
                       <a
-                        href={`/panel/investor/portefeuillereconstitution/ajoutcash?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`}
+                        href={`/panel/investor/reconstruction/add-cash?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`}
                         /*  as={`/about/${selectedRows ? selectedRows.join(',') : ''}`}
                           key={selectedRows.join(',')}*/
                         style={{
@@ -1188,7 +1188,7 @@ export default function PorteFeuile() {
                       </a>
                       &nbsp;
                       <a
-                        href={`/panel/investor/portefeuillereconstitution/retraitcash?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`}
+                        href={`/panel/investor/reconstruction/withdraw-cash?selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`}
                         /*  as={`/about/${selectedRows ? selectedRows.join(',') : ''}`}
                           key={selectedRows.join(',')}*/
                         style={{
@@ -1667,7 +1667,7 @@ export default function PorteFeuile() {
                             <div className="text-center">
                               <Link
                                 href={{
-                                  pathname: '/panel/investor/portefeuillereconstitution/achat',
+                                  pathname: '/panel/investor/reconstruction/buy',
                                   query: {
                                     id: id, allfund: selectedfunds, selectedfund: data.data.funds[0]?.id, portefeuille: selectedportfeuille, devise: data.data.funds[0]?.devise
                                   },
@@ -1685,7 +1685,7 @@ export default function PorteFeuile() {
                               </Link>
                               <Link
                                 href={{
-                                  pathname: '/panel/investor/portefeuillereconstitution/vente',
+                                  pathname: '/panel/investor/reconstruction/sell',
                                   query: { id: id, allfund: selectedfunds, selectedfund: data.data.funds[0]?.id, portefeuille: selectedportfeuille },
                                 }}
                                 style={{

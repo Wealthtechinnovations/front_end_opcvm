@@ -40,14 +40,14 @@ export default function Home() {
   const [base100Data, setBase100Data] = useState([]); // Nouvel état pour les données en base 100
 
   const handleLinkClick = (item: any) => {
-    const href = `/panel/investor/portefeuillereconstitution?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
+    const href = `/panel/investor/reconstruction?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
 
     // Use the router.push method to navigate
     router.push(href);
   };
 
   const handleLinkClickrobot = (item: any) => {
-    const href = `/panel/investor/portefeuillerobot?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
+    const href = `/panel/investor/robot-advisor/robot-portfolio?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
 
     // Use the router.push method to navigate
     router.push(href);
@@ -325,14 +325,32 @@ export default function Home() {
                                       Appliquer le Robot advisor
                                     </button>
                                   ) : (
-                                    <button style={{
-                                      width: '150px',
-                                    }}
-                                      className="reconstitution-button"
-                                      onClick={() => handleLinkClick(item)}
-                                    >
-                                      Reconstitution
-                                    </button>
+                                    <>
+                                      <button style={{
+                                        width: '150px',
+                                      }}
+                                        className="reconstitution-button"
+                                        onClick={() => handleLinkClick(item)}
+                                      >
+                                        Reconstitution
+                                      </button>
+                                      <Link
+                                        href={`/panel/investor/reconstruction?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`}
+                                      >
+                                        <button className="select-funds-button" style={{
+                                          width: '150px',
+                                          backgroundColor: '#6366f1',
+                                        }}>Voir le portefeuille</button>
+                                      </Link>
+                                      <Link
+                                        href={`/panel/investor/reconstruction/transaction?selectedfund=${item?.fundids}&portefeuille=${item.id}`}
+                                      >
+                                        <button className="select-funds-button" style={{
+                                          width: '150px',
+                                          backgroundColor: '#8b5cf6',
+                                        }}>Transactions</button>
+                                      </Link>
+                                    </>
                                   ))}
                               </div>
                             </td>
