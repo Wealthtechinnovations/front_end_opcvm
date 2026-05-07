@@ -17,10 +17,12 @@ async function emailexist(email: string) {
   return data;
 }
 async function login(email: string, password: string) {
-  const data = (
-    await fetch(`${urlconstant}/api/userlogin?email=${email}&password=${password}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/userlogin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  return response.json();
 }
 export default function Login() {
   const [response, setResponse] = useState<Res | null>(null);
@@ -64,28 +66,23 @@ export default function Login() {
       const data = await login(email, password);
       setResponse(data);
       if (data.code === 200) {
-        let href: string = '';
-        //  router.push(`/panel/management/login/register?email=${email}&password=${password}`);
-        //   if (data.data.userExists.typeusers_id == 1) {
-        href = `/panel/admin/dashboard`;
+        const userData = data.data.userExists || data.data.user;
+        const token = data.data?.token || data.token;
 
-        /* } else if (data.data.userExists.typeusers_id == 2) {
-           href = `/panel/admin/dashboard`;
- 
-         }*/
+        if (userData.typeusers_id != 0) {
+          setError("Accès réservé aux administrateurs");
+          return;
+        }
+
         localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userId', data.data.userExists.id);
-        if (data.token || data.data?.token) {
-          const token = data.token || data.data.token;
+        localStorage.setItem('userId', userData.id);
+        if (token) {
           localStorage.setItem('tokenEnCours', token);
           document.cookie = `tokenEnCours=${token}; path=/; max-age=86400; SameSite=Lax`;
         }
         document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
 
-        router.push(href);
-
-
-
+        router.push('/panel/admin/dashboard');
       } else {
         setError("Login ou mot de passe incorrect")
       }

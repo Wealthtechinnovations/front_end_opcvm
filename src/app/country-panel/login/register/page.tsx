@@ -1,12 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import Select from 'react-select';
-//import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
-import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/lib/constants";
+import { urlconstant } from "@/lib/constants";
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -39,19 +35,6 @@ interface PageProps {
     password: any;
 
   };
-}
-async function register(formData: any) {
-  const response = await fetch(`${urlstableconstant}/api/session/register-opcvm`, {
-    method: 'POST',
-    headers: {
-      'x-api-key': API_KEY_STABLECOIN,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(formData),
-  });
-
-  const data = await response.json();
-  return data;
 }
 export default function Register() {
   const router = useRouter();
@@ -272,45 +255,22 @@ export default function Register() {
     }
 
     setIsSubmitting(true);
-    formData.codeTypeProfil = userType;
-    formData.platform = "OPCVM";
-    formData.password = password;
-    formData.confirmPassword = confirmpassword;
 
     try {
-      // 1. Inscription sur l'API stablecoin
-      const response = await fetch(`${urlstableconstant}/api/session/register-opcvm`, {
-        method: 'POST',
-        headers: {
-          'x-api-key': API_KEY_STABLECOIN,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "Erreur lors de l'inscription");
-        setIsSubmitting(false);
-        return;
-      }
-
-      // 2. Créer aussi le compte sur le backend principal
       const typeusersMap: Record<string, { typeusers: string; typeusers_id: number }> = {
         'socGest': { typeusers: 'Societe de gestion', typeusers_id: 2 },
-        'part': { typeusers: 'Particulier', typeusers_id: 0 },
-        'insti': { typeusers: 'Investisseur institutionnel', typeusers_id: 1 },
-        'Data requester': { typeusers: 'Data requester', typeusers_id: 3 },
+        'part': { typeusers: 'Particulier', typeusers_id: 1 },
+        'insti': { typeusers: 'Investisseur institutionnel', typeusers_id: 3 },
+        'Data requester': { typeusers: 'Data requester', typeusers_id: 4 },
       };
 
-      const typeInfo = typeusersMap[userType] || { typeusers: userType, typeusers_id: 0 };
+      const typeInfo = typeusersMap[userType] || { typeusers: userType, typeusers_id: 1 };
 
-      const mainApiResponse = await fetch(`${urlconstant}/api/postuserportefeuille`, {
+      const response = await fetch(`${urlconstant}/api/postuserportefeuille`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: formData.email,
+          email: email,
           password: password,
           denomination: (selectedSociete as any)?.value || '',
           pays: (selectedPays as any)?.value || '',
@@ -319,17 +279,18 @@ export default function Register() {
         }),
       });
 
-      const mainData = await mainApiResponse.json();
+      const data = await response.json();
 
-      if (mainApiResponse.ok) {
-        // Stocker le token si retourné
-        if (mainData.data?.token) {
-          localStorage.setItem('authToken', mainData.data.token);
+      if (response.ok) {
+        if (data.data?.token) {
+          localStorage.setItem('tokenEnCours', data.data.token);
+          document.cookie = `tokenEnCours=${data.data.token}; path=/; max-age=86400; SameSite=Lax`;
         }
+        localStorage.setItem('isLoggedIn', 'true');
+        document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
         router.push('/country-panel/login');
       } else {
-        setError(mainData.message || "Compte créé partiellement. Veuillez vous connecter.");
-        setTimeout(() => router.push('/country-panel/login'), 3000);
+        setError(data.message || "Erreur lors de l'inscription");
       }
     } catch (err) {
       setError("Erreur de connexion au serveur. Veuillez réessayer.");

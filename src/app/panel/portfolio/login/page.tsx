@@ -59,12 +59,12 @@ export default function Login() {
         const userData = data.data.userExists || data.data.user;
         const token = data.data?.token || data.token;
         let href: string = '';
-        if (userData.typeusers_id == 1) {
-          href = `/panel/portfolio/dashboard`;
+        if (userData.typeusers_id == 0) {
+          href = `/panel/admin/dashboard`;
         } else if (userData.typeusers_id == 2) {
           href = `/panel/management/dashboard`;
-        } else if (userData.typeusers_id == 0) {
-          href = `/panel/admin/dashboard`;
+        } else if (userData.typeusers_id == 5) {
+          href = `/country-panel/dashboard`;
         } else {
           href = `/panel/portfolio/dashboard`;
         }

@@ -6,7 +6,7 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/lib/constants";
+import { urlconstant } from "@/lib/constants";
 
 import { useRouter } from 'next/navigation';
 
@@ -20,14 +20,7 @@ async function login(email: string, password: string) {
   return data;
 }
 async function emailexist(email: string) {
-  const response = await fetch(`${urlstableconstant}/api/user/find-user-by-email?email=${email}`, {
-    method: 'GET',
-    headers: {
-      'x-api-key': API_KEY_STABLECOIN, // Ajouter votre en-tête personnalisé
-      'Content-Type': 'application/json', // Vous pouvez également ajouter d'autres en-têtes si nécessaire
-    },
-  });
-
+  const response = await fetch(`${urlconstant}/api/userexist?email=${email}`);
   const data = await response.json();
   return data;
 }
@@ -438,187 +431,107 @@ export default function Login() {
       const data = await emailexist(email);
       setResponse(data);
 
-      if (data.message === "Aucun utilisateur trouvé") {
-        //  router.push(`/panel/management/login/register?email=${email}&password=${password}`);
-
+      if (data.code !== 200 || !data.data?.userExists) {
         setisExist("NON EXIST");
         setError("Pour completer votre inscription merci de selectionner le type d utilisateur pour lequel vous voulez creer un compte")
-
-
       } else {
         setisExist("OUI");
         setError("Vous existez deja en base")
-
       }
     } else if (isexist == "OUI") {
-      const datas = {
-        email: email,
-        password: password,
-
-      };
-
-
-
-
-
       try {
-        const response = await fetch(`${urlstableconstant}/api/session/login`, {
-          method: 'POST',
-          headers: {
-            'x-api-key': API_KEY_STABLECOIN, // Utiliser directement la variable sans ${}
-            'Content-Type': 'application/json', // Set the content type to JSON
-          },
-          body: JSON.stringify(datas), // Convert the data to JSON and include it in the request body
-        });
-
-        const data = await response.json();
-        if (data.message === "Mot de passe invalide") {
-          setError("Mot de passe incorrect")
-          // Redirect the user to another page after a delay (e.g., 2 seconds)
-
-        } else {
-
-          const data1 = await login(email, password);
-          setResponse(data1);
-          if (data1.code === 200) {
-            // Stocker le token JWT du backend principal
-            if (data1.data.token) {
-              localStorage.setItem('authToken', data1.data.token);
-            }
-            localStorage.setItem('tokenEnCours', data.token);
-            localStorage.setItem('isLoggedIn', 'true');
-            const user = data1.data.user;
-            if (user.typeusers_id == 2) {
-              localStorage.setItem('userId', user.denomination);
-            } else {
-              localStorage.setItem('userId', user.id);
-            }
-            document.cookie = `isLoggedIn=true; path=/; max-age=${60 * 60 * 24 * 7}`;
-            document.cookie = `tokenEnCours=${data.token}; path=/; max-age=${60 * 60 * 24 * 7}`;
-
-            let href;
-            if (user.typeusers_id == 2 || user.typeusers_id == 5) {
-              href = `/panel/management/dashboard`;
-            } else if (user.typeusers_id == 0) {
-              href = `/panel/admin/dashboard`;
-            } else {
-              href = `/panel/portfolio/dashboard`;
-            }
-            router.push(href);
+        const data1 = await login(email, password);
+        setResponse(data1);
+        if (data1.code === 200) {
+          const userData = data1.data.userExists || data1.data.user;
+          const token = data1.data?.token || data1.token;
+          if (token) {
+            localStorage.setItem('tokenEnCours', token);
+            document.cookie = `tokenEnCours=${token}; path=/; max-age=86400; SameSite=Lax`;
           }
+          localStorage.setItem('isLoggedIn', 'true');
+          document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
+
+          if (userData.typeusers_id == 2) {
+            localStorage.setItem('userId', userData.denomination);
+          } else if (userData.typeusers_id == 5) {
+            localStorage.setItem('userId', userData.pays || userData.id);
+          } else {
+            localStorage.setItem('userId', userData.id);
+          }
+
+          let href;
+          if (userData.typeusers_id == 5) {
+            href = `/country-panel/dashboard`;
+          } else if (userData.typeusers_id == 2) {
+            href = `/panel/management/dashboard`;
+          } else if (userData.typeusers_id == 0) {
+            href = `/panel/admin/dashboard`;
+          } else {
+            href = `/panel/portfolio/dashboard`;
+          }
+          router.push(href);
+        } else {
+          setError("Mot de passe incorrect");
         }
       } catch (error) {
-        // Gérer les erreurs de l'API (par exemple, afficher une erreur)
         console.error('Erreur lors de la soumission du formulaire :', error);
+        setError("Erreur de connexion au serveur");
       }
     }
     else if (password != "" && confirmpassword != "" && password == confirmpassword) {
-      formData.codeTypeProfil = userType;
-      formData.platform = "OPCVM";
-      formData.email = email;
-      formData.confirmPassword = confirmpassword;
-      formData.password = password;
-
       setPasswordsMatch(true);
 
-
-
       try {
-        const response = await fetch(`${urlstableconstant}/api/session/register-opcvm`, {
+        const denomination = selectedSociete?.value || '';
+        const pays = selectedPays?.value || '';
+        const typeusers_id = userType === "socGest" ? "2" : userType === "part" ? "1" : userType === "insti" ? "3" : userType === "Data requester" ? "4" : "5";
+
+        const registerData = {
+          email,
+          password,
+          denomination,
+          pays,
+          typeusers: userType,
+          typeusers_id,
+        };
+
+        const response = await fetch(`${urlconstant}/api/postuserportefeuille`, {
           method: 'POST',
-          headers: {
-            'x-api-key': API_KEY_STABLECOIN, // Utiliser directement la variable sans ${}
-            'Content-Type': 'application/json', // Set the content type to JSON
-          },
-          body: JSON.stringify(formData), // Convert the data to JSON and include it in the request body
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(registerData),
         });
 
-        const data = await response.json();
-        if (response.status === 200) {
+        if (response.ok) {
+          const regResult = await response.json();
+          const token = regResult.data?.token;
 
-          const email = formData.email;
-          const password = formData.password;
-          const denomination = selectedSociete?.value;
-          const pays = selectedPays?.value;
-          let typeusers = userType;
-          const typeusers_id = typeusers === "socGest" ? "2" : typeusers === "part" ? "1" : typeusers === "insti" ? "3" : "4";
-
-          const formDatas = {
-            email,
-            password,
-            denomination,
-            pays,
-            typeusers,
-            typeusers_id,
-          };
-
-          // Convert the object to an array
-          const dataArray = Object.entries(formDatas);
-
-          // Convert the array to an object with key-value pairs
-          const dataObject = Object.fromEntries(dataArray);
-
-
-          const data = await fetch(`${urlconstant}/api/postuserportefeuille`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json', // Spécifiez le type de contenu que vous envoyez
-            },
-            body: JSON.stringify(dataObject), // Convertissez votre objet formData en JSON
-          });
-
-          // Gérer la réponse de l'API (par exemple, afficher un message de succès)
-          if (data.status === 200) {
-            const datas = {
-              email: email,
-              password: password,
-
-            };
-
-            const response5 = await fetch(`${urlstableconstant}/api/session/login`, {
-              method: 'POST',
-              headers: {
-                'x-api-key': API_KEY_STABLECOIN, // Utiliser directement la variable sans ${}
-                'Content-Type': 'application/json', // Set the content type to JSON
-              },
-              body: JSON.stringify(datas), // Convert the data to JSON and include it in the request body
-            });
-
-            const data5 = await response5.json();
-            if (data5.message === "Mot de passe invalide") {
-
-            } else {
-              localStorage.setItem('tokenEnCours', data5.token);
-              localStorage.setItem('isLoggedIn', 'true');
-              const data1 = await login(email, password);
-              setResponse(data1);
-              if (data1.data.userExists.typeusers_id == 2) {
-                localStorage.setItem('userId', data1.data.userExists.denomination);
-              } else {
-                localStorage.setItem('userId', data1.data.userExists.id);
-              }
-            }
-            const responseData = await data.json();
-
-            const userId = responseData.data.userId;
-            document.cookie = `isLoggedIn=true; path=/; max-age=${60 * 60 * 24 * 7}`;
-            document.cookie = `tokenEnCours=${data5.token}; path=/; max-age=${60 * 60 * 24 * 7}`;
-
-            let href: string;
-            if (userId.typeusers_id == 2 || userId.typeusers_id == 5) {
-              href = `/panel/management/dashboard`;
-            } else if (userId.typeusers_id == 0) {
-              href = `/panel/admin/dashboard`;
-            } else {
-              href = `/panel/portfolio/dashboard`;
-            }
-            router.push(href);
+          if (token) {
+            localStorage.setItem('tokenEnCours', token);
+            document.cookie = `tokenEnCours=${token}; path=/; max-age=86400; SameSite=Lax`;
           }
+          localStorage.setItem('isLoggedIn', 'true');
+          document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
 
+          let href: string;
+          if (typeusers_id == "5") {
+            localStorage.setItem('userId', pays || denomination);
+            href = `/country-panel/dashboard`;
+          } else if (typeusers_id == "2") {
+            localStorage.setItem('userId', denomination || pays);
+            href = `/panel/management/dashboard`;
+          } else {
+            localStorage.setItem('userId', regResult.data?.userId?.id || '');
+            href = `/panel/portfolio/dashboard`;
+          }
+          router.push(href);
+        } else {
+          const errData = await response.json();
+          setError(errData.message || "Erreur lors de la création du compte");
         }
       } catch (error) {
-        // Gérer les erreurs de l'API (par exemple, afficher une erreur)
         console.error('Erreur lors de la soumission du formulaire :', error);
+        setError("Erreur de connexion au serveur");
       }
     } else if (password != "" && confirmpassword != "" && password != confirmpassword) {
       setPasswordsMatch(false);

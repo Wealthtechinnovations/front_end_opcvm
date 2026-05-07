@@ -564,13 +564,13 @@ export default function Logins() {
             href = `/panel/management/dashboard`;
           } else if (userData.typeusers_id == 5) {
             localStorage.setItem('userId', userData.pays);
-            href = `/panel/management/dashboard`;
-          } else if (userData.typeusers_id == 1) {
-            localStorage.setItem('userId', userData.id);
-            href = `/panel/portfolio/dashboard`;
-          } else {
+            href = `/country-panel/dashboard`;
+          } else if (userData.typeusers_id == 0) {
             localStorage.setItem('userId', userData.id);
             href = `/panel/admin/dashboard`;
+          } else {
+            localStorage.setItem('userId', userData.id);
+            href = `/panel/portfolio/dashboard`;
           }
           router.push(href);
         } else {
@@ -616,9 +616,12 @@ export default function Logins() {
           document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
 
           let href: string;
-          if (typeusers_id == "2" || typeusers_id == "5") {
+          if (typeusers_id == "2") {
             localStorage.setItem('userId', denomination || pays);
             href = `/panel/management/dashboard`;
+          } else if (typeusers_id == "5") {
+            localStorage.setItem('userId', pays || denomination);
+            href = `/country-panel/dashboard`;
           } else {
             localStorage.setItem('userId', regResult.data?.userId?.id || '');
             href = `/panel/portfolio/dashboard`;

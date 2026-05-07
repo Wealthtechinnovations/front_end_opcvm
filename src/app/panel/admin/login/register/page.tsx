@@ -187,55 +187,57 @@ export default function Register() {
     e.preventDefault();
 
     try {
-      const nom = e.target.nom.value;
-      const prenoms = e.target.prenoms.value;
+      const nom = e.target.nom?.value || '';
+      const prenoms = e.target.prenoms?.value || '';
       const email = emails;
-      const password = e.target.password.value;
-      const denomination = "e.target.denomination.value";
-      const pays = e.target.pays.value;
+      const pwd = e.target.password.value;
+      const denomination = e.target.denomination?.value || '';
+      const pays = selectedPays?.value || '';
       const typeusers = userType;
-      const typeusers_id = "1";
+      const typeusers_id = userType === "Particulier" ? "1" : userType === "Investisseur institutionnel" ? "3" : userType === "Societe de gestion" ? "2" : "4";
 
-      // Update formData object
-      setFormData({
-        ...formData,
-        nom,
-        prenoms,
-        email,
-        password,
-        denomination,
-        pays,
-        typeusers,
-        typeusers_id,
-      });
+      if (pwd != "" && confirmpassword != "" && pwd == confirmpassword) {
+        const bodyData = {
+          nom,
+          prenoms,
+          email,
+          password: pwd,
+          denomination,
+          pays,
+          typeusers,
+          typeusers_id,
+        };
 
-      if (password != "" && confirmpassword != "" && password == confirmpassword) {
-
-
-        // Envoyer les données du formulaire à l'API
-        // Envoyer les données du formulaire à l'API
         const data = await fetch(`${urlconstant}/api/postuserportefeuille`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json', // Spécifiez le type de contenu que vous envoyez
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify(formData), // Convertissez votre objet formData en JSON
+          body: JSON.stringify(bodyData),
         });
 
-        // Gérer la réponse de l'API (par exemple, afficher un message de succès)
-        if (data.status === 200) {
+        if (data.ok) {
           const responseData = await data.json();
+          const token = responseData.data?.token;
+          const userId = responseData.data?.userId;
 
-          const userId = responseData.data.userId;
-
-          const href = `/panel/portfolio/dashboard`;
           localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('userId', userId?.id);
+          if (userId?.id) localStorage.setItem('userId', userId.id);
+          if (token) {
+            localStorage.setItem('tokenEnCours', token);
+            document.cookie = `tokenEnCours=${token}; path=/; max-age=86400; SameSite=Lax`;
+          }
+          document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
 
-          // Redirect the user to another page after a delay (e.g., 2 seconds)
+          let href = '/panel/portfolio/dashboard';
+          if (typeusers_id === "2") href = '/panel/management/dashboard';
+
           setTimeout(() => {
-            router.push(href); // Replace '/other-page' with your desired page URL
-          }, 2000);
+            router.push(href);
+          }, 1500);
+        } else {
+          const errData = await data.json();
+          alert(errData.message || 'Erreur lors de la création du compte');
         }
       } else {
 

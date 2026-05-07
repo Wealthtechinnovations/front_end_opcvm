@@ -13,11 +13,15 @@ const panelConfig: Record<string, PanelConfig> = {
   },
   '/panel/portfolio': {
     loginPath: '/panel/portfolio/login',
-    allowedTypes: [1, 3],
+    allowedTypes: [1, 3, 4],
   },
   '/panel/management': {
     loginPath: '/panel/management/login',
-    allowedTypes: [2, 5],
+    allowedTypes: [2],
+  },
+  '/country-panel': {
+    loginPath: '/country-panel/login',
+    allowedTypes: [5],
   },
 };
 
@@ -60,5 +64,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/panel/:path*'],
+  matcher: ['/panel/:path*', '/country-panel/:path*'],
 };
