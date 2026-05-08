@@ -1,9 +1,37 @@
-// components/DataRequesterSidebar.tsx
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from 'next/navigation';
 import Swal from "sweetalert2";
+
+interface SidebarLinkProps {
+  href: string;
+  label: string;
+  pathMatch: string;
+}
+
+const SidebarLink = ({ href, label, pathMatch }: SidebarLinkProps) => {
+  const pathname = usePathname();
+  const isActive = pathname?.includes(pathMatch);
+  return (
+    <li>
+      <Link href={href} style={{
+        display: 'block',
+        padding: '10px 16px',
+        fontSize: '14px',
+        fontWeight: isActive ? 600 : 500,
+        color: isActive ? '#FFFFFF' : '#4A5568',
+        backgroundColor: isActive ? '#1B3A5C' : 'transparent',
+        borderRadius: '8px',
+        textDecoration: 'none',
+        transition: 'all 0.2s ease',
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+      }}>
+        {label}
+      </Link>
+    </li>
+  );
+};
 
 export default function DataRequesterSidebar() {
   const pathname = usePathname();
@@ -35,29 +63,23 @@ export default function DataRequesterSidebar() {
             resetInactivityTimeout();
           });
         }
-
         timerInterval = setInterval(() => {
           const timeLeft = Swal.getTimerLeft();
           if (timeLeft !== undefined && timeLeft > 0) {
-            if (b) {
-              b.textContent = (timeLeft / 1000).toFixed(0);
-            }
+            if (b) b.textContent = (timeLeft / 1000).toFixed(0);
           } else {
             clearInterval(timerInterval);
             handleLogout();
           }
         }, 1000);
       },
-      willClose: () => {
-        clearInterval(timerInterval);
-      }
+      willClose: () => { clearInterval(timerInterval); }
     });
   };
 
   useEffect(() => {
     const loggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
-
     if (loggedIn === 'true' && userId !== null) {
       setIsLoggedIn(true);
     } else {
@@ -74,104 +96,98 @@ export default function DataRequesterSidebar() {
     localStorage.removeItem('tokenEnCours');
     document.cookie = 'tokenEnCours=; path=/; max-age=0';
     document.cookie = 'isLoggedIn=; path=/; max-age=0';
-
-    setTimeout(() => {
-      router.push('/home');
-    }, 200);
+    setTimeout(() => { router.push('/home'); }, 200);
   };
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   return (
-    <aside className="bg-gradient-to-b from-white to-blue-200 h-screen border-r border-gray-300 p-4 text-white fixed z-50 ">
-      <br />  <br />  <br />  <br />
-      (
     <div>
-      {/* Bouton hamburger pour afficher/masquer la sidebar sur mobile */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 bg-blue-500 text-white p-3 rounded-md shadow-md"
+        className="lg:hidden fixed top-4 left-4 z-50"
         onClick={toggleSidebar}
+        style={{
+          padding: '10px 14px',
+          backgroundColor: '#1B3A5C',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: 600,
+          cursor: 'pointer',
+          boxShadow: '0 2px 8px rgba(27,58,92,0.3)',
+        }}
       >
-        {isSidebarOpen ? 'Masquer le menu' : 'Afficher le menu'}
+        {isSidebarOpen ? 'Fermer' : 'Menu'}
       </button>
 
-      {/* Sidebar */}
       <aside
-        className={`bg-gradient-to-b from-white to-blue-200 h-screen border-r border-gray-300 p-2 text-white fixed z-40 transform transition-transform ${
+        className={`h-screen fixed z-40 transform transition-transform ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 lg:relative lg:w-64`}
+        } lg:translate-x-0`}
+        style={{
+          width: '256px',
+          backgroundColor: '#FFFFFF',
+          borderRight: '1px solid #E2E8F0',
+          padding: '80px 16px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+          overflowY: 'auto',
+        }}
       >
-        <ul className="space-y-4">
-          {/* Dashboard */}
-          <li>
-            <Link href={`/panel/data-requester/dashboard`}>
-              <button
-                className={`block w-full py-3 px-4 ${
-                  pathname.includes('/data-requester/dashboard') ? 'bg-purple-500' : 'bg-indigo-500'
-                } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
-              >
-                Dashboard
-              </button>
-            </Link>
-          </li>
-
-          {/* Données */}
-          <li>
-            <Link href={`/panel/data-requester/data`}>
-              <button
-                className={`block w-full py-3 px-4 ${
-                  pathname.includes('/data-requester/data') ? 'bg-purple-500' : 'bg-indigo-500'
-                } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
-              >
-                Données
-              </button>
-            </Link>
-          </li>
-
-          {/* Profil */}
-          <li>
-            <Link href={`/panel/data-requester/profile`}>
-              <button
-                className={`block w-full py-3 px-4 ${
-                  pathname.includes('/data-requester/profile') ? 'bg-purple-500' : 'bg-indigo-500'
-                } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
-              >
-                Profil
-              </button>
-            </Link>
-          </li>
-
-          {/* Se déconnecter */}
-          <li>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+          <SidebarLink href="/panel/data-requester/dashboard" label="Dashboard" pathMatch="/data-requester/dashboard" />
+          <SidebarLink href="/panel/data-requester/data" label="Données" pathMatch="/data-requester/data" />
+          <SidebarLink href="/panel/data-requester/profile" label="Profil" pathMatch="/data-requester/profile" />
+          <li style={{ marginTop: '16px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
             <button
               onClick={handleLogout}
-              className={`block w-full py-3 px-4 ${
-                pathname === '/' ? 'bg-purple-500' : 'bg-indigo-500'
-              } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '10px 16px',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#DC2626',
+                backgroundColor: 'transparent',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+              }}
             >
               Se déconnecter
             </button>
           </li>
         </ul>
 
-        {/* Widgets supplémentaires */}
-        <div className="sidebar-widgets mt-10">
-          <div className="p-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg text-center text-white shadow-lg">
-            <img src="../../../images/svg-icon/color-svg/custom-32.svg" className="sideimg mx-auto p-5" alt="Logo" />
-            <h4 className="text-lg font-bold mt-4">Panel Data Requester</h4>
-          </div>
+        <div style={{
+          marginTop: '24px',
+          padding: '20px 16px',
+          background: 'linear-gradient(135deg, #1B3A5C, #2A5A8C)',
+          borderRadius: '12px',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            width: '40px', height: '40px', margin: '0 auto 12px',
+            background: 'rgba(255,255,255,0.15)', borderRadius: '10px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '18px', color: '#D4A843', fontWeight: 700,
+          }}>F</div>
+          <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'white', margin: 0 }}>Panel Data Requester</h4>
         </div>
       </aside>
-      </div>
-      {/* Background overlay pour masquer la Sidebar en cliquant à l'extérieur */}
+
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black opacity-50 lg:hidden"
+          className="fixed inset-0 lg:hidden"
+          style={{ backgroundColor: 'rgba(0,0,0,0.3)', zIndex: 30 }}
           onClick={toggleSidebar}
-        ></div>
+        />
       )}
-    </aside>
+    </div>
   );
 }

@@ -1,248 +1,227 @@
-// components/Sidebar.tsx
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from 'next/navigation';
 import Swal from "sweetalert2";
 
+interface SidebarLinkProps {
+  href: string;
+  label: string;
+  pathMatch: string;
+  sub?: boolean;
+}
+
+const SidebarLink = ({ href, label, pathMatch, sub }: SidebarLinkProps) => {
+  const pathname = usePathname();
+  const isActive = pathname?.includes(pathMatch);
+  return (
+    <li>
+      <Link href={href} style={{
+        display: 'block',
+        padding: sub ? '8px 12px 8px 24px' : '10px 16px',
+        fontSize: sub ? '13px' : '14px',
+        fontWeight: isActive ? 600 : 500,
+        color: isActive ? '#FFFFFF' : '#4A5568',
+        backgroundColor: isActive ? '#1B3A5C' : 'transparent',
+        borderRadius: '8px',
+        textDecoration: 'none',
+        transition: 'all 0.2s ease',
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+      }}>
+        {label}
+      </Link>
+    </li>
+  );
+};
+
 export default function Sidebar({ id }: { id: string }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const pathname = usePathname(); // Obtenir le chemin actuel
-const router=useRouter();
+  const pathname = usePathname();
+  const router = useRouter();
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [userConnected, setUserConnected] = useState<number | null>(null);
 
-  const timeoutRef = useRef(null); // Pour stocker l'ID du timer d'inactivité
-  let timerInterval: string | number | NodeJS.Timeout | undefined; // Pour stocker l'ID du timer de compte à rebours de SweetAlert
+  const timeoutRef = useRef(null);
+  let timerInterval: string | number | NodeJS.Timeout | undefined;
 
-  // Fonction pour réinitialiser le timer d'inactivité
   const resetInactivityTimeout = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current); // Annuler le précédent timer d'inactivité si existant
-    timeoutRef.current = setTimeout(handleInactive, 360000) as unknown as null; // 6 minutes (360000ms)
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(handleInactive, 360000) as unknown as null;
   }, []);
 
-  // Fonction appelée après 6 minutes d'inactivité
   const handleInactive = () => {
     Swal.fire({
       title: 'Déconnexion automatique',
       html: 'Vous serez déconnecté dans <b>60</b> secondes si vous ne cliquez pas sur le bouton pour rester connecté.<br><br><br><button id="stayConnected" >Rester connecté</button>',
-      timer: 60000, // 1 minute de compte à rebours
+      timer: 60000,
       timerProgressBar: true,
       didOpen: () => {
         Swal.showLoading();
         const b = Swal.getHtmlContainer()?.querySelector('b');
         const stayConnectedButton = document.getElementById('stayConnected');
-        // Si l'utilisateur clique sur "Rester connecté"
         if (stayConnectedButton) {
           stayConnectedButton.addEventListener('click', () => {
-            clearInterval(timerInterval); // Arrêtez également le timer de compte à rebours
-            Swal.close(); // Fermer le pop-up SweetAlert
-            resetInactivityTimeout(); // Réinitialiser le délai d'inactivité
+            clearInterval(timerInterval);
+            Swal.close();
+            resetInactivityTimeout();
           });
         }
-
-        // Démarrer le compte à rebours visuel
         timerInterval = setInterval(() => {
           const timeLeft = Swal.getTimerLeft();
           if (timeLeft !== undefined && timeLeft > 0) {
-            if (b) {
-              b.textContent = (timeLeft / 1000).toFixed(0); // Affiche le temps restant en secondes
-            }
+            if (b) b.textContent = (timeLeft / 1000).toFixed(0);
           } else {
-            clearInterval(timerInterval); // Nettoyage du timer une fois terminé
-            handleLogout(); // Appeler la fonction de déconnexion ici
+            clearInterval(timerInterval);
+            handleLogout();
           }
         }, 1000);
       },
-      willClose: () => {
-        clearInterval(timerInterval); // Nettoyage si l'utilisateur ferme le pop-up manuellement
-      }
+      willClose: () => { clearInterval(timerInterval); }
     });
   };
-  
+
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
-
     if (isLoggedIn === 'true' && userId !== null) {
-      // const userIdNumber = parseInt(userId, 10);
-      // setIsLoggedIn(true);
-      // setUserConnected(userIdNumber)
     } else {
       setIsLoggedIn(false);
     }
     if (!isLoggedIn) {
       router.push('/panel/investor/login');
     }
-   
   }, []);
-  
+
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
     localStorage.removeItem('tokenEnCours');
     document.cookie = 'isLoggedIn=; path=/; max-age=0';
     document.cookie = 'tokenEnCours=; path=/; max-age=0';
-
-    setTimeout(() => {
-      router.push('/home');
-    }, 200);
+    setTimeout(() => { router.push('/home'); }, 200);
   };
 
-   // State pour gérer l'affichage de la sidebar
-   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-   const [isSidebarOpenanomalie, setIsSidebarOpenanomalie] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-   // Fonction pour basculer l'affichage de la sidebar
-   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-   const toggleSidebaranomalie = () => setIsSidebarOpenanomalie(!isSidebarOpenanomalie);
-
-   // Chemin de l'URL actuel
- 
   return (
-    <aside className="bg-gradient-to-b from-white to-blue-200 h-screen border-r border-gray-300 p-4 text-white fixed z-50 ">
-      <br />  <br />  <br />  <br />
-      (
     <div>
-      {/* Bouton hamburger pour afficher/masquer la sidebar sur mobile */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 bg-blue-500 text-white p-3 rounded-md shadow-md"
+        className="lg:hidden fixed top-4 left-4 z-50"
         onClick={toggleSidebar}
+        style={{
+          padding: '10px 14px',
+          backgroundColor: '#1B3A5C',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: 600,
+          cursor: 'pointer',
+          boxShadow: '0 2px 8px rgba(27,58,92,0.3)',
+        }}
       >
-        {isSidebarOpen ? 'Masquer le menu' : 'Afficher le menu'}
+        {isSidebarOpen ? 'Fermer' : 'Menu'}
       </button>
 
-      {/* Sidebar */}
       <aside
-        className={`bg-gradient-to-b from-white to-blue-200 h-screen border-r border-gray-300 p-2 text-white fixed z-40 transform transition-transform ${
+        className={`h-screen fixed z-40 transform transition-transform ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 lg:relative lg:w-64`}
+        } lg:translate-x-0`}
+        style={{
+          width: '256px',
+          backgroundColor: '#FFFFFF',
+          borderRight: '1px solid #E2E8F0',
+          padding: '80px 16px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+          overflowY: 'auto',
+        }}
       >
-    <ul className="space-y-4">
-  {/* PorteFeuille */}
-  <li>
-    <Link href={`/panel/investor/dashboard`}>
-      <button
-        className={`block w-full py-3 px-4 ${
-          pathname.includes('/panel/investor/home') ? 'bg-purple-500' : 'bg-indigo-500'
-        } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
-      >
-        PorteFeuille
-      </button>
-    </Link>
-  </li>
-
-  {/* Robot Advisor */}
-  <li>
-    <Link href={`/panel/investor/robot-advisor`}>
-      <button
-        className={`block w-full py-3 px-4 ${
-          pathname.includes('/panel/investor/robotadvisor') ? 'bg-purple-500' : 'bg-indigo-500'
-        } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
-      >
-        Robot Advisor
-      </button>
-    </Link>
-  </li>
-
-  {/* Favoris */}
-  <li>
-    <Link href={`/panel/investor/favorites`}>
-      <button
-        className={`block w-full py-3 px-4 ${
-          pathname.includes('/panel/investor/favorites') ? 'bg-purple-500' : 'bg-indigo-500'
-        } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
-      >
-        Favoris
-      </button>
-    </Link>
-  </li>
-
-  {/* Profil Investisseur avec dropdown */}
-  <li>
-    <button
-      onClick={toggleDropdown}
-      className={`w-full text-left py-3 px-4 ${
-        pathname.includes('/panel/investor/profile') || pathname.includes('/panel/investor/questionnaire') 
-          ? 'bg-purple-500' : 'bg-indigo-500'
-      } hover:bg-blue-500 text-white font-semibold rounded-lg flex justify-between items-center transition duration-300 shadow-md`}
-    >
-      <span>Profil Investisseur</span>
-      <span>{isDropdownOpen ? '▲' : '▼'}</span>
-    </button>
-    {isDropdownOpen && (
-      <ul className="pl-4 mt-2 space-y-2 text-sm">
-        <li>
-          <Link href={`/panel/investor/profile`}>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+          <SidebarLink href="/panel/investor/dashboard" label="Portefeuille" pathMatch="/panel/investor/dashboard" />
+          <SidebarLink href="/panel/investor/robot-advisor" label="Robot Advisor" pathMatch="/panel/investor/robot" />
+          <SidebarLink href="/panel/investor/favorites" label="Favoris" pathMatch="/panel/investor/favorites" />
+          <li>
             <button
-              className={`block w-full py-2 px-2 ${
-                pathname.includes('/panel/investor/profile') ? 'bg-purple-500' : 'bg-indigo-500'
-              } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
+              onClick={toggleDropdown}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '10px 16px',
+                fontSize: '14px',
+                fontWeight: (pathname?.includes('/panel/investor/profile') || pathname?.includes('/panel/investor/questionnaire')) ? 600 : 500,
+                color: (pathname?.includes('/panel/investor/profile') || pathname?.includes('/panel/investor/questionnaire')) ? '#FFFFFF' : '#4A5568',
+                backgroundColor: (pathname?.includes('/panel/investor/profile') || pathname?.includes('/panel/investor/questionnaire')) ? '#1B3A5C' : 'transparent',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                transition: 'all 0.2s ease',
+                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+              }}
             >
-              Profil
+              <span>Profil Investisseur</span>
+              <span style={{ fontSize: '10px' }}>{isDropdownOpen ? '▲' : '▼'}</span>
             </button>
-          </Link>
-        </li>
-        <li>
-          <Link href={`/panel/investor/questionnaire`}>
+            {isDropdownOpen && (
+              <ul style={{ listStyle: 'none', padding: '4px 0 0', margin: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <SidebarLink href="/panel/investor/profile" label="Profil" pathMatch="/panel/investor/profile" sub />
+                <SidebarLink href="/panel/investor/questionnaire" label="Questionnaire" pathMatch="/panel/investor/questionnaire" sub />
+              </ul>
+            )}
+          </li>
+          <SidebarLink href="/panel/investor/kyc" label="KYC" pathMatch="/panel/investor/kyc" />
+          <li style={{ marginTop: '16px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
             <button
-              className={`block w-full py-2 px-2 ${
-                pathname.includes('/panel/investor/questionnaire') ? 'bg-purple-500' : 'bg-indigo-500'
-              } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
+              onClick={handleLogout}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '10px 16px',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#DC2626',
+                backgroundColor: 'transparent',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+              }}
             >
-              Questionnaire
+              Se déconnecter
             </button>
-          </Link>
-        </li>
-      </ul>
-    )}
-  </li>
+          </li>
+        </ul>
 
-  {/* KYC */}
-  <li>
-    <Link href={`/panel/investor/kyc`}>
-      <button
-        className={`block w-full py-3 px-4 ${
-          pathname.includes('/panel/investor/kyc') ? 'bg-purple-500' : 'bg-indigo-500'
-        } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
-      >
-        KYC
-      </button>
-    </Link>
-  </li>
-
-  {/* Se déconnecter */}
-  <li>
-    <Link href={`/home`}>
-      <button
-        className={`block w-full py-3 px-4 ${
-          pathname === '/' ? 'bg-purple-500' : 'bg-indigo-500'
-        } hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md transition duration-300`}
-      >
-        Se déconnecter
-      </button>
-    </Link>
-  </li>
-</ul>
-
-
-        {/* Widgets supplémentaires */}
-        <div className="sidebar-widgets mt-10">
-          <div className="p-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg text-center text-white shadow-lg">
-            <img src="../../../images/svg-icon/color-svg/custom-32.svg" className="sideimg mx-auto p-5" alt="Logo" />
-            <h4 className="text-lg font-bold mt-4">Panel Portefeuille</h4>
-          </div>
+        <div style={{
+          marginTop: '24px',
+          padding: '20px 16px',
+          background: 'linear-gradient(135deg, #1B3A5C, #2A5A8C)',
+          borderRadius: '12px',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            width: '40px', height: '40px', margin: '0 auto 12px',
+            background: 'rgba(255,255,255,0.15)', borderRadius: '10px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '18px', color: '#D4A843', fontWeight: 700,
+          }}>F</div>
+          <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'white', margin: 0 }}>Panel Portefeuille</h4>
         </div>
       </aside>
-      </div>
-      {/* Background overlay pour masquer la Sidebar en cliquant à l'extérieur */}
+
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black opacity-50 lg:hidden"
+          className="fixed inset-0 lg:hidden"
+          style={{ backgroundColor: 'rgba(0,0,0,0.3)', zIndex: 30 }}
           onClick={toggleSidebar}
-        ></div>
+        />
       )}
-    </aside>
+    </div>
   );
 }

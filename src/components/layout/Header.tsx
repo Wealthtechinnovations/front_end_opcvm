@@ -2,39 +2,34 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import { Button, Dropdown } from 'react-bootstrap';
+import { usePathname } from 'next/navigation';
+import { Dropdown } from 'react-bootstrap';
 
-interface NavButtonProps {
+interface NavLinkProps {
   label: string;
   pathMatch: string;
   href: string;
 }
 
-const NavButton: React.FC<NavButtonProps> = ({ label, pathMatch, href }) => {
+const NavLink: React.FC<NavLinkProps> = ({ label, pathMatch, href }) => {
   const pathname = usePathname();
   const isActive = pathname?.includes(pathMatch);
 
   return (
-    <li className="nav-item">
+    <li>
       <Link
         href={href}
-        className={`nav-btn ${isActive ? 'nav-btn-active' : ''}`}
         style={{
-          width: '150px',
-          backgroundColor: isActive ? '#3b82f6' : 'white',
-          color: isActive ? 'white' : 'black',
-          display: 'block',
-          height: '100%',
-          padding: '10px',
-          textAlign: 'center',
-          textDecoration: 'none',
-          border: '1px solid #e5e7eb',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease',
+          padding: '8px 14px',
           fontSize: '14px',
-          fontWeight: 500,
+          fontWeight: isActive ? 600 : 500,
+          color: isActive ? '#1B3A5C' : '#4A5568',
+          textDecoration: 'none',
+          borderRadius: '6px',
+          transition: 'all 0.2s ease',
+          position: 'relative',
+          display: 'block',
+          background: isActive ? '#EBF0F5' : 'transparent',
         }}
       >
         {label}
@@ -54,29 +49,42 @@ const NavDropdownMenu: React.FC<NavDropdownProps> = ({ label, pathMatch, items }
   const isActive = pathname?.includes(pathMatch);
 
   return (
-    <li className="nav-item">
+    <li>
       <Dropdown>
         <Dropdown.Toggle
           id={`dropdown-${pathMatch}`}
           style={{
-            border: '1px solid #e5e7eb',
-            borderRadius: '8px',
-            width: '150px',
-            backgroundColor: isActive ? '#3b82f6' : 'white',
-            color: isActive ? 'white' : 'black',
-            display: 'block',
-            height: '100%',
-            padding: '10px',
-            textDecoration: 'none',
+            border: 'none',
+            borderRadius: '6px',
+            backgroundColor: isActive ? '#EBF0F5' : 'transparent',
+            color: isActive ? '#1B3A5C' : '#4A5568',
+            padding: '8px 14px',
             fontSize: '14px',
-            fontWeight: 500,
+            fontWeight: isActive ? 600 : 500,
+            boxShadow: 'none',
+            transition: 'all 0.2s ease',
           }}
         >
           {label}
         </Dropdown.Toggle>
-        <Dropdown.Menu>
+        <Dropdown.Menu style={{
+          border: '1px solid #E2E8F0',
+          borderRadius: '8px',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.06), 0 4px 10px rgba(0,0,0,0.04)',
+          padding: '4px',
+          marginTop: '4px',
+        }}>
           {items.map((item, idx) => (
-            <Dropdown.Item key={idx} href={item.href}>
+            <Dropdown.Item
+              key={idx}
+              href={item.href}
+              style={{
+                borderRadius: '4px',
+                padding: '8px 12px',
+                fontSize: '14px',
+                color: '#4A5568',
+              }}
+            >
               {item.label}
             </Dropdown.Item>
           ))}
@@ -91,7 +99,6 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [userConnected, setUserConnected] = React.useState<number | null>(null);
 
-  // Check user connection status from localStorage
   React.useEffect(() => {
     const userId = localStorage.getItem('userId');
     if (userId) {
@@ -100,48 +107,61 @@ const Header = () => {
   }, []);
 
   return (
-    <header className="bg-white text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-50">
+    <header style={{
+      backgroundColor: '#FFFFFF',
+      borderBottom: '1px solid #E2E8F0',
+      padding: '0 32px',
+      height: '64px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      position: 'sticky',
+      top: 0,
+      zIndex: 50,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+    }}>
       {/* Logo */}
-      <Link href="/home" style={{ textDecoration: 'none', marginRight: '16px' }}>
-        <span style={{ fontSize: '20px', fontWeight: 700, color: '#3b82f6' }}>
-          Fund<span style={{ color: '#1e3a5f' }}>afrique</span>
+      <Link href="/home" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <span style={{
+          width: '32px',
+          height: '32px',
+          background: 'linear-gradient(135deg, #1B3A5C, #2A5A8C)',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontWeight: 700,
+          fontSize: '15px',
+          fontFamily: 'Inter, sans-serif',
+        }}>
+          F
+        </span>
+        <span style={{
+          fontSize: '18px',
+          fontWeight: 700,
+          fontFamily: 'Inter, sans-serif',
+          color: '#1B3A5C',
+          letterSpacing: '-0.01em',
+        }}>
+          Fund<span style={{ color: '#B8860B' }}>afrique</span>
         </span>
       </Link>
 
       {/* Desktop Navigation */}
-      <nav role="navigation" className={menuOpen ? 'hidden md:block' : ''}>
-        <ul
-          className="sm sm-blue"
-          style={{
-            display: 'flex',
-            listStyle: 'none',
-            gap: '4px',
-            margin: 0,
-            padding: 0,
-            flexWrap: 'wrap',
-            alignItems: 'center',
-          }}
-        >
-          <NavButton
-            label="Accueil"
-            pathMatch="/home"
-            href="/home"
-          />
-          <NavButton
-            label="Fonds"
-            pathMatch="/funds"
-            href="/funds/search"
-          />
-          <NavButton
-            label="Sociétés de gestion"
-            pathMatch="/fund-managers"
-            href="/fund-managers/search"
-          />
-          <NavButton
-            label="Pays"
-            pathMatch="/pays"
-            href="/pays"
-          />
+      <nav role="navigation" className="hidden md:block">
+        <ul style={{
+          display: 'flex',
+          listStyle: 'none',
+          gap: '2px',
+          margin: 0,
+          padding: 0,
+          alignItems: 'center',
+        }}>
+          <NavLink label="Accueil" pathMatch="/home" href="/home" />
+          <NavLink label="OPCVM" pathMatch="/funds" href="/funds/search" />
+          <NavLink label="Soc. de gestion" pathMatch="/fund-managers" href="/fund-managers/search" />
+          <NavLink label="Pays" pathMatch="/pays" href="/pays" />
           <NavDropdownMenu
             label="Services"
             pathMatch="/questionnaire"
@@ -160,18 +180,14 @@ const Header = () => {
               { label: 'Robot Advisor', href: '/panel/investor/questionnaire/robotadvisor' },
             ]}
           />
-          <NavButton
-            label="Actualités"
-            pathMatch="/news"
-            href="/news"
-          />
+          <NavLink label="Actualités" pathMatch="/news" href="/news" />
           <NavDropdownMenu
             label="Connexion"
             pathMatch="/panel"
             items={
               userConnected
                 ? [
-                    { label: 'Mon espace', href: `/panel/investor/dashboard` },
+                    { label: 'Mon espace', href: '/panel/investor/dashboard' },
                     { label: 'Espace société de gestion', href: '/panel/management/login' },
                   ]
                 : [
@@ -180,30 +196,27 @@ const Header = () => {
                   ]
             }
           />
-          <NavButton
-            label="Contact"
-            pathMatch="/contact"
-            href="/contact"
-          />
+          <NavLink label="Contact" pathMatch="/contact" href="/contact" />
         </ul>
       </nav>
 
       {/* Mobile menu toggle */}
-      <div className="align-right md:hidden">
+      <div className="md:hidden">
         <button
           type="button"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
           style={{
             background: 'none',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #E2E8F0',
             borderRadius: '6px',
             padding: '8px 12px',
             cursor: 'pointer',
             fontSize: '18px',
+            color: '#1B3A5C',
           }}
         >
-          {menuOpen ? '\u2715' : '\u2630'}
+          {menuOpen ? '✕' : '☰'}
         </button>
       </div>
 
@@ -218,20 +231,21 @@ const Header = () => {
             left: 0,
             right: 0,
             backgroundColor: 'white',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.06)',
             padding: '16px',
             zIndex: 100,
+            borderBottom: '1px solid #E2E8F0',
           }}
         >
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <NavButton label="Accueil" pathMatch="/home" href="/home" />
-            <NavButton label="Fonds" pathMatch="/funds" href="/funds/search" />
-            <NavButton label="Sociétés de gestion" pathMatch="/fund-managers" href="/fund-managers/search" />
-            <NavButton label="Pays" pathMatch="/pays" href="/pays" />
-            <NavButton label="Outils" pathMatch="/tools" href="/tools/comparison" />
-            <NavButton label="Actualités" pathMatch="/news" href="/news" />
-            <NavButton label="Connexion" pathMatch="/panel" href="/panel/investor/login" />
-            <NavButton label="Contact" pathMatch="/contact" href="/contact" />
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <NavLink label="Accueil" pathMatch="/home" href="/home" />
+            <NavLink label="OPCVM" pathMatch="/funds" href="/funds/search" />
+            <NavLink label="Sociétés de gestion" pathMatch="/fund-managers" href="/fund-managers/search" />
+            <NavLink label="Pays" pathMatch="/pays" href="/pays" />
+            <NavLink label="Outils" pathMatch="/tools" href="/tools/comparison" />
+            <NavLink label="Actualités" pathMatch="/news" href="/news" />
+            <NavLink label="Connexion" pathMatch="/panel" href="/panel/investor/login" />
+            <NavLink label="Contact" pathMatch="/contact" href="/contact" />
           </ul>
         </nav>
       )}
