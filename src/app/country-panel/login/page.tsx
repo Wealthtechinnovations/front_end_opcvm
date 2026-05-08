@@ -379,7 +379,7 @@ export default function Login() {
                   </div>
                   <div className="col-12">Si elle n existe pas cliquer ici pour l enregistrer  <button style={{
                     textDecoration: 'none', // Remove underline
-                    backgroundColor: '#6366f1', // Background color
+                    backgroundColor: '#1B3A5C', // Background color
                     color: 'white', // Text color
                     padding: '10px 20px', // Padding
                     borderRadius: '5px', // Rounded corners
@@ -635,7 +635,7 @@ export default function Login() {
 
           </li>
           <li>
-            <Link className="link-style" style={{ backgroundColor: "#3b82f6", color: "white" }}
+            <Link className="link-style" style={{ backgroundColor: "#1B3A5C", color: "white" }}
               href="/panel/management/login"
 
             >
@@ -719,7 +719,7 @@ export default function Login() {
                           <div className="text-center">
                             <button className="text-right" style={{
                               textDecoration: 'none', // Remove underline
-                              backgroundColor: '#6366f1', // Background color
+                              backgroundColor: '#1B3A5C', // Background color
                               color: 'white', // Text color
                               padding: '10px 20px', // Padding
                               borderRadius: '5px', // Rounded corners
@@ -760,7 +760,7 @@ export default function Login() {
                             }} onClick={prevPage}>Précédent</button>
                             <button className="text-right" style={{
                               textDecoration: 'none', // Remove underline
-                              backgroundColor: '#6366f1', // Background color
+                              backgroundColor: '#1B3A5C', // Background color
                               color: 'white', // Text color
                               padding: '10px 20px', // Padding
                               borderRadius: '5px', // Rounded corners

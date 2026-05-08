@@ -97,7 +97,7 @@ export default function Login() {
                           <button
                             style={{
                               textDecoration: 'none',
-                              backgroundColor: '#6366f1',
+                              backgroundColor: '#1B3A5C',
                               color: 'white',
                               padding: '10px 20px',
                               borderRadius: '5px',

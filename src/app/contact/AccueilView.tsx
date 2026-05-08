@@ -1,368 +1,73 @@
 "use client";
 
-import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import Header from '@/components/layout/Header';
 import { urlconstant, urlsite } from "@/lib/constants";
-import Slider from "react-slick";
-import { Carousel } from 'react-responsive-carousel';
-import 'react-responsive-carousel/lib/styles/carousel.min.css';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { library } from '@fortawesome/fontawesome-svg-core';
-import { faMapMarkerAlt, faPhoneAlt, faEnvelope } from '@fortawesome/free-solid-svg-icons';
-import { DropdownButton, Dropdown } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import { useRouter } from 'next/navigation';
-
-library.add(faMapMarkerAlt, faPhoneAlt, faEnvelope);
-import '@fortawesome/fontawesome-svg-core/styles.css'; // Import the styles
-import { config } from '@fortawesome/fontawesome-svg-core';
-import Head from "next/head";
 import SEO from '@/components/common/SEO';
 import { breadcrumbSchema } from '@/utils/structuredData';
 import Swal from "sweetalert2";
-config.autoAddCss = false; // Disable the automatic styles insertion
 
-
-
-
-async function getclassement(id: number) {
-    try {
-        const response = await fetch(`${urlconstant}/api/classementquartilemysql/${id}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Erreur ${response.status}: ${errorData.message || 'Erreur inconnue'}`);
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Erreur lors de la récupération des données de classement:', error);
-        // Affichez un message d'erreur à l'utilisateur si nécessaire
-    }
-}
-
-export default function Accueil(props: any) {
-    const [userConnected, setUserConnected] = useState<number | null>(null);
-    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-
-    // useEffect(() => {
-    //     // Désactiver le clic droit
-    //     const handleContextMenu = (e: { preventDefault: () => void; }) => {
-    //       e.preventDefault();
-    //     };
-    //     // Désactiver les raccourcis clavier (F12, Ctrl+Shift+I, Ctrl+U, etc.)
-    //     const handleKeyDown = (e: { ctrlKey: any; shiftKey: any; keyCode: number; preventDefault: () => void; }) => {
-    //       if (
-    //         (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
-    //         (e.ctrlKey && e.shiftKey && e.keyCode === 67) || // Ctrl+Shift+C
-    //         (e.ctrlKey && e.keyCode === 85) || // Ctrl+U
-    //         (e.keyCode === 123) // F12
-    //       ) {
-    //         e.preventDefault();
-    //       }
-    //     };
-    //     document.addEventListener('contextmenu', handleContextMenu);
-    //     document.addEventListener('keydown', handleKeyDown);
-
-    //     return () => {
-    //       document.removeEventListener('contextmenu', handleContextMenu);
-    //       document.removeEventListener('keydown', handleKeyDown);
-    //     };
-    //   }, []);
-
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const isLoggedIn = localStorage.getItem('isLoggedIn');
-                const userId = localStorage.getItem('userId');
-
-                if (isLoggedIn === 'true' && userId !== null) {
-                    const userIdNumber = parseInt(userId, 10);
-                    setIsLoggedIn(true);
-                    setUserConnected(userIdNumber)
-                } else {
-                    // If storedIsLoggedIn is null or any other value, set the state to false
-                    setIsLoggedIn(false);
-                }
-            } catch (error) {
-                console.error('API call error:', error);
-            }
-        };
-        fetchData();
-    }, []);
-    const settings = {
-        dots: true,
-        infinite: true,
-        speed: 500,
-        slidesToShow: 1,
-        slidesToScroll: 1,
-    };
-    const textArray = ["Bénéficiez de l'expertise du Conseil Institutionnel. Nos professionnels chevronnés fournissent des conseils stratégiques et personnalisés pour optimiser votre stratégie d'investissement", "Votre sécurité est notre priorité. Nous respectons les normes les plus élevées de la conformité Know Your Customer (KYC), assurant un environnement d'investissement sûr et transparent.", "Explorez le monde des OPCVM - Organisme de Placement Collectif en Valeurs Mobilières, géré intelligemment avec la technologie de Robo-Advisor pour des rendements optimaux.", /* Add more texts as needed */];
-    const [showQuiSommesNous, setShowQuiSommesNous] = useState(true);
-    const [showNotreVision, setShowNotreVision] = useState(false);
-    const images = [
-        '/images/new/accueilafri.jfif',
-        '/images/new/KYC.jfif',
-        '/images/new/robot2.jfif',
-        // Add more image paths as needed
-    ];
-
-    const carouselSettings = {
-        showThumbs: false, // Hide small images at the bottom
-        autoPlay: true, // Enable automatic scrolling
-        interval: 5000, // Set the interval for automatic scrolling (in milliseconds)
-        infiniteLoop: true, // Loop back to the beginning after the last slide
-    };
-    const smoothScroll = (e: any) => {
-        e.preventDefault();
-        const targetId = e.currentTarget.getAttribute('data-target');
-        const targetElement = document.getElementById(targetId);
-
-        if (targetElement) {
-
-            targetElement.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest', // Adjust as needed: 'start', 'center', 'end', or 'nearest'
-                inline: 'nearest', // Adjust as needed: 'start', 'center', 'end', or 'nearest'
-            });
-
-        }
-    };
-    const [menuOpen, setMenuOpen] = useState(false);
-
-    const toggleMenu = () => {
-        setMenuOpen(!menuOpen);
-    };
-    const router = useRouter();
-
-
-    const handleLinkClick = () => {
-
-        if (userConnected !== null) {
-            setTimeout(() => {
-                const redirectUrl = `/panel/investor/dashboard`;
-
-                router.push(redirectUrl);
-            }, 5);
-
-        } else {
-            setTimeout(() => {
-                // const redirectUrl = `/panel/investor/dashboard`;
-
-                router.push('/panel/management/login');
-            }, 5);
-        }
-    };
-
-    const handleLinksociete = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/fund-managers/search`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-    const handleLinkquestionnaire = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/funds/questionnaire`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-
-    const [isHovered, setIsHovered] = useState(false);
-
-    const handleMouseEnter = () => {
-        setIsHovered(true);
-    };
-
-    const handleMouseLeave = () => {
-        setIsHovered(false);
-    };
-
-    const [isHoveredq, setIsHoveredq] = useState(false);
-
-    const handleMouseEnterq = () => {
-        setIsHoveredq(true);
-    };
-
-    const handleMouseLeaveq = () => {
-        setIsHoveredq(false);
-    };
-
-    const [isHovereda, setIsHovereda] = useState(false);
-
-    const handleMouseEntera = () => {
-        setIsHovereda(true);
-    };
-
-    const handleMouseLeavea = () => {
-        setIsHovereda(false);
-    };
-    const handleLinkactualite = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/news`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-
-    const [isHoveredp, setIsHoveredp] = useState(false);
-
-    const handleMouseEnterp = () => {
-        setIsHoveredp(true);
-    };
-
-    const handleMouseLeavep = () => {
-        setIsHoveredp(false);
-    };
-    const handleLinkpays = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/pays`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-
-    const [isHoveredc, setIsHoveredc] = useState(false);
-
-    const handleMouseEnterc = () => {
-        setIsHoveredc(true);
-    };
-
-    const handleMouseLeavec = () => {
-        setIsHoveredc(false);
-    };
-
-    const handleMouseEnters = () => {
-        setIsHovered(true);
-    };
-
-    const handleMouseLeaves = () => {
-        setIsHovered(false);
-    };
-    const handleLinkaccueil = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/home`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-
-    const handleLinkcontact = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/contact`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-
-
-
-    const handleMouseEntersa = () => {
-        setIsHovereda(true);
-    };
-
-    const handleMouseLeavesa = () => {
-        setIsHovereda(false);
-    };
-    const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-    const handleMouseEnteraa = () => {
-        setIsHoveredaa(true);
-    };
-
-    const handleMouseLeaveaa = () => {
-        setIsHoveredaa(false);
-    };
-
-    const [isHoveredcontact, setIsHoveredcontact] = useState(false);
-
-    const handleMouseEntercontact = () => {
-        setIsHoveredcontact(true);
-    };
-
-    const handleMouseLeavecontact = () => {
-        setIsHoveredcontact(false);
-    };
-
-
+export default function Accueil() {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         description: '',
     });
-    const [message, setMessage] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e: { target: { name: any; value: any; }; }) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value,
-        });
+        setFormData({ ...formData, [name]: value });
     };
 
     const handleSubmit = async (e: { preventDefault: () => void; }) => {
         e.preventDefault();
+        setIsSubmitting(true);
 
-        // Send form data to backend
-        const res = await fetch(`${urlconstant}/api/contact`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData),
-        });
+        try {
+            const res = await fetch(`${urlconstant}/api/contact`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
 
-        const result = await res.json();
-        if (result.success) {
+            const result = await res.json();
+            if (result.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Message envoyé',
+                    text: 'Votre message a bien été transmis. Nous reviendrons vers vous rapidement.',
+                    confirmButtonColor: '#1B3A5C',
+                    timer: 4000,
+                    showConfirmButton: false,
+                });
+                setFormData({ name: '', email: '', description: '' });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible d’envoyer le message. Veuillez réessayer.',
+                    confirmButtonColor: '#1B3A5C',
+                });
+            }
+        } catch {
             Swal.fire({
-                position: 'center',
-                icon: 'success',
-                html: `<p> Message envoyé.</p>`,
-                showConfirmButton: false,
-                timer: 5000,
-              });
-            setFormData({ name: '', email: '', description: '' });
-        } else {
-            setMessage('There was an error. Please try again.');
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Impossible de contacter le serveur. Veuillez réessayer plus tard.',
+                confirmButtonColor: '#1B3A5C',
+            });
+        } finally {
+            setIsSubmitting(false);
         }
     };
-
 
     return (
         <Fragment>
             <SEO
                 title="Contact - Fundafrique"
-                description="Contactez l'équipe Fundafrique pour toute question sur les OPCVM en Afrique et l'investissement dans les fonds africains."
+                description="Contactez l&apos;équipe Fundafrique pour toute question sur les OPCVM en Afrique et l&apos;investissement dans les fonds africains."
                 keywords="contact, Fundafrique, OPCVM, Afrique"
                 canonicalUrl={`${urlsite}/contact`}
                 structuredData={breadcrumbSchema([
@@ -371,123 +76,165 @@ export default function Accueil(props: any) {
                 ])}
             />
             <Header />
-            <Head>
 
-                <link rel="canonical" href="${urlsite}/home" />
+            <div style={{ background: 'linear-gradient(135deg, #F8F9FB 0%, #EBF0F5 50%, #F0F2F5 100%)', minHeight: '80vh', padding: '60px 24px' }}>
+                <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+                    {/* Page title */}
+                    <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+                        <h1 style={{ fontSize: '32px', fontWeight: 700, color: '#1B3A5C', marginBottom: '12px', fontFamily: 'Inter, sans-serif' }}>
+                            Nous contacter
+                        </h1>
+                        <p style={{ fontSize: '16px', color: '#4A5568', maxWidth: '500px', margin: '0 auto' }}>
+                            Une question, un partenariat, ou besoin d&apos;assistance ? Notre &eacute;quipe est &agrave; votre &eacute;coute.
+                        </p>
+                    </div>
 
-            </Head>
-            <br />
-
-          
-            <div className="">
-                <div className="container-full">
-                    <section className="content">
-                        <div className="row">
-                        <div className="flex justify-center items-center ">
-
-                            <div className="bg-white col-6 p-10 rounded shadow-md w-full max-w-md ">
-                                <h1 className="text-2xl font-bold mb-6 text-center">Nous contacter</h1>
-                                {message && <p className="mb-4 text-green-600">{message}</p>}
-                                <form onSubmit={handleSubmit}>
-                                    <div className="row">
-                                        <div className="mb-4 col-6">
-                                            <label className="block text-sm font-bold mb-2" htmlFor="name">
-                                                Name
-                                            </label>
-                                            <input
-                                                className="w-full p-2 border border-gray-300 rounded"
-                                                type="text"
-                                                id="name"
-                                                name="name"
-                                                value={formData.name}
-                                                onChange={handleChange}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="mb-4 col-6">
-                                            <label className="block text-sm font-bold mb-2" htmlFor="email">
-                                                Email
-                                            </label>
-                                            <input
-                                                className="w-full p-2 border border-gray-300 rounded"
-                                                type="email"
-                                                id="email"
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <label className="block text-sm font-bold mb-2" htmlFor="description">
-                                            Message
-                                        </label>
-                                        <textarea
-                                            className="w-full p-2 border border-gray-300 rounded"
-                                            id="description"
-                                            name="description"
-                                            value={formData.description}
-                                            onChange={handleChange}
-                                            rows={4}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="flex justify-center w-full">
-                                        <button
-                                            type="submit"
-                                            className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                                        >
-                                            Envoyer
-                                        </button>
-                                    </div>
-
-
-                                </form>
-                            </div>
-                            </div>
-
-
-                            <br />
-                            <br />
-
-
-
-                            <section className="content">
-                                <div className="section-center-heading">
-                                    <h2>
-                                        <span>NOUS CONTACTER</span>
-                                    </h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+                        {/* Contact form */}
+                        <div style={{
+                            background: 'white',
+                            borderRadius: '12px',
+                            padding: '32px',
+                            border: '1px solid #E2E8F0',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                        }}>
+                            <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1B3A5C', marginBottom: '24px' }}>
+                                Envoyez-nous un message
+                            </h2>
+                            <form onSubmit={handleSubmit}>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#4A5568', marginBottom: '6px' }}>
+                                        Nom complet
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        required
+                                        style={{
+                                            width: '100%', padding: '10px 14px', border: '1px solid #E2E8F0',
+                                            borderRadius: '8px', fontSize: '14px', outline: 'none',
+                                            transition: 'border-color 0.2s', fontFamily: 'Inter, sans-serif',
+                                        }}
+                                    />
                                 </div>
-                                <div className="row">
-                                    <div className="col-lg-4">
-                                        <div className="contact-info">
-                                            <FontAwesomeIcon icon="map-marker-alt" style={{ color: '#3b82f6' }} />                                            <h3 style={{ color: '#3b82f6' }}>Localisation</h3>
-                                            <h6  >Abidjan, cocody, riviera palmeraie Immeuble Gold Africa Côte d ivoire <span> </span></h6>
-                                        </div>
-                                    </div>
-                                    <div className="col-lg-4">
-                                        <div className="contact-info">
-                                            <FontAwesomeIcon icon="phone-alt" style={{ color: '#3b82f6' }} />                                            <h3 style={{ color: '#3b82f6' }}>Tel</h3>
-                                            <p   >(+225) 25 21 00 61 21 </p>
-                                        </div>
-                                    </div>
-                                    <div className="col-lg-4">
-                                        <div className="contact-info">
-                                            <FontAwesomeIcon icon="envelope" style={{ color: '#3b82f6' }} />
-                                            <h3 style={{ color: '#3b82f6' }} > Mail</h3>
-                                            <p> Contact@Wealthtechinnovations.Com </p>
-                                        </div>
-                                    </div>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#4A5568', marginBottom: '6px' }}>
+                                        Adresse email
+                                    </label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        required
+                                        style={{
+                                            width: '100%', padding: '10px 14px', border: '1px solid #E2E8F0',
+                                            borderRadius: '8px', fontSize: '14px', outline: 'none',
+                                            transition: 'border-color 0.2s', fontFamily: 'Inter, sans-serif',
+                                        }}
+                                    />
                                 </div>
-                            </section>
-
+                                <div style={{ marginBottom: '20px' }}>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#4A5568', marginBottom: '6px' }}>
+                                        Message
+                                    </label>
+                                    <textarea
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleChange}
+                                        rows={5}
+                                        required
+                                        style={{
+                                            width: '100%', padding: '10px 14px', border: '1px solid #E2E8F0',
+                                            borderRadius: '8px', fontSize: '14px', outline: 'none', resize: 'vertical',
+                                            fontFamily: 'Inter, sans-serif',
+                                        }}
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    style={{
+                                        width: '100%', padding: '12px', backgroundColor: '#1B3A5C', color: 'white',
+                                        border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600,
+                                        cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1,
+                                        transition: 'all 0.2s', fontFamily: 'Inter, sans-serif',
+                                    }}
+                                >
+                                    {isSubmitting ? 'Envoi en cours...' : 'Envoyer le message'}
+                                </button>
+                            </form>
                         </div>
-                    </section >
-                </div >
-            </div >
 
-        </Fragment >
+                        {/* Contact info */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {[
+                                {
+                                    icon: '📍',
+                                    title: 'Localisation',
+                                    content: 'Abidjan, Cocody, Riviera Palmeraie\nImmeuble Gold Africa\nCôte d’Ivoire',
+                                },
+                                {
+                                    icon: '📞',
+                                    title: 'Téléphone',
+                                    content: '(+225) 25 21 00 61 21',
+                                },
+                                {
+                                    icon: '✉️',
+                                    title: 'Email',
+                                    content: 'contact@chainsolutions.fr',
+                                },
+                            ].map((info, idx) => (
+                                <div key={idx} style={{
+                                    background: 'white',
+                                    borderRadius: '12px',
+                                    padding: '24px',
+                                    border: '1px solid #E2E8F0',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                                    flex: 1,
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                                        <span style={{
+                                            width: '44px', height: '44px', borderRadius: '10px',
+                                            background: '#EBF0F5', display: 'flex', alignItems: 'center',
+                                            justifyContent: 'center', fontSize: '20px', flexShrink: 0,
+                                        }}>
+                                            {info.icon}
+                                        </span>
+                                        <div>
+                                            <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#1B3A5C', margin: '0 0 6px' }}>
+                                                {info.title}
+                                            </h3>
+                                            <p style={{ fontSize: '14px', color: '#4A5568', margin: 0, lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                                                {info.content}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Availability info */}
+                            <div style={{
+                                background: 'linear-gradient(135deg, #1B3A5C, #2A5A8C)',
+                                borderRadius: '12px',
+                                padding: '24px',
+                                color: 'white',
+                                flex: 1,
+                            }}>
+                                <h3 style={{ fontSize: '15px', fontWeight: 600, margin: '0 0 8px', color: '#D4A843' }}>
+                                    Horaires
+                                </h3>
+                                <p style={{ fontSize: '14px', margin: 0, lineHeight: 1.7, color: 'rgba(255,255,255,0.85)' }}>
+                                    Lundi - Vendredi : 8h00 - 18h00 (GMT)<br />
+                                    Samedi - Dimanche : Ferm&eacute;
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Fragment>
     );
 }

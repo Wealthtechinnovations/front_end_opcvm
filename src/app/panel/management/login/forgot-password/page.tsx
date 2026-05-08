@@ -403,7 +403,7 @@ export default function Logins() {
           <li style={{ height: '40px' }}>
             <Dropdown>
               <Dropdown.Toggle id="dropdown-basic" style={{
-                width: '150px', backgroundColor: '#3b82f6',
+                width: '150px', backgroundColor: '#1B3A5C',
                 color: 'white', display: 'block', height: '100%', padding: '10px', textDecoration: 'none'
               }}>
                 Connexion
@@ -449,7 +449,7 @@ export default function Logins() {
  <div className="text-center">
                             <button className="text-right" style={{
                               textDecoration: 'none', // Remove underline
-                              backgroundColor: '#6366f1', // Background color
+                              backgroundColor: '#1B3A5C', // Background color
                               color: 'white', // Text color
                               padding: '10px 20px', // Padding
                               borderRadius: '5px', // Rounded corners

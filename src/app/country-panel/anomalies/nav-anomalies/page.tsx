@@ -400,7 +400,7 @@ export default function Fondselected() {
 
 
                 <li>
-                  <Link href={`/country-panel/anomalies`} style={{ backgroundColor: "#3b82f6", color: "white" }} >
+                  <Link href={`/country-panel/anomalies`} style={{ backgroundColor: "#1B3A5C", color: "white" }} >
                     <i data-feather="plus-square"></i>
                     <span>Anomalies</span>
                   </Link>
@@ -540,7 +540,7 @@ export default function Fondselected() {
           <Modal.Footer>
             <Button variant="primary" style={{
               textDecoration: 'none',
-              backgroundColor: '#6366f1',
+              backgroundColor: '#1B3A5C',
               color: 'white',
               padding: '10px 20px',
               borderRadius: '5px',

@@ -481,7 +481,7 @@ export default function Fondselected() {
                 <div className="box-body pb-lg-0">
                   {portefeuille?.data.portefeuille.portefeuilletype == 'Robot advisor' ?
                     <div className="mt-10 mt-md-0">
-                      <button className="btn btn-main" style={{ backgroundColor: "#3b82f6", color: "white" }} onClick={toggleMenu}>Ajouter un Fonds</button>
+                      <button className="btn btn-main" style={{ backgroundColor: "#1B3A5C", color: "white" }} onClick={toggleMenu}>Ajouter un Fonds</button>
                       {isOpen && (
 
 
@@ -506,7 +506,7 @@ export default function Fondselected() {
 
                               <button style={{
                                 textDecoration: 'none', // Remove underline
-                                backgroundColor: '#6366f1', // Background color
+                                backgroundColor: '#1B3A5C', // Background color
                                 color: 'white', // Text color
                                 padding: '10px 20px', // Padding
                                 borderRadius: '5px', // Rounded corners
@@ -569,7 +569,7 @@ export default function Fondselected() {
                         <div className="text-center" >
                           <button style={{
                             textDecoration: 'none', // Remove underline
-                            backgroundColor: '#6366f1', // Background color
+                            backgroundColor: '#1B3A5C', // Background color
                             color: 'white', // Text color
                             padding: '10px 20px', // Padding
                             borderRadius: '5px', // Rounded corners

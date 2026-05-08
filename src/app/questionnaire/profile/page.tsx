@@ -354,7 +354,7 @@ export default function Profile() {
                               <button
                                 className={toggleState === 1 ? "tabs active-tabs" : "tabs"}
                                 onClick={() => setToggleState(1)}
-                                style={{ width: "250px", backgroundColor: toggleState === 1 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState === 1 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>profil investisseur</span>
                               </button>
@@ -362,7 +362,7 @@ export default function Profile() {
                               <button
                                 className={toggleState === 2 ? "tabs active-tabs" : "tabs"}
                                 onClick={() => setToggleState(2)}
-                                style={{ width: "250px", backgroundColor: toggleState === 2 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState === 2 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Capacité financière</span>
                               </button>
@@ -370,7 +370,7 @@ export default function Profile() {
                               <button
                                 className={toggleState === 3 ? "tabs active-tabs" : "tabs"}
                                 onClick={() => setToggleState(3)}
-                                style={{ width: "250px", backgroundColor: toggleState === 3 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState === 3 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Connaissances financières</span>
                               </button>
@@ -378,7 +378,7 @@ export default function Profile() {
                               <button
                                 className={toggleState === 4 ? "tabs active-tabs" : "tabs"}
                                 onClick={() => setToggleState(4)}
-                                style={{ width: "250px", backgroundColor: toggleState === 4 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState === 4 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Expérience en investissement</span>
                               </button>
@@ -445,7 +445,7 @@ export default function Profile() {
                               <button
                                 className={toggleState1 === 5 ? "tabs active-tabs gr-text-8 text-color-opacity" : "tabs gr-text-8 text-color-opacity"}
                                 onClick={() => toggleTab1(5)}
-                                style={{ width: "250px", backgroundColor: toggleState1 === 5 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState1 === 5 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Besoin d investissement</span>
                               </button>
@@ -453,7 +453,7 @@ export default function Profile() {
                               <button
                                 className={toggleState1 === 6 ? "tabs active-tabs gr-text-8 text-color-opacity" : "tabs gr-text-8 text-color-opacity"}
                                 onClick={() => toggleTab1(6)}
-                                style={{ width: "250px", backgroundColor: toggleState1 === 6 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState1 === 6 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Objectifs et motivations</span>
                               </button>
@@ -461,7 +461,7 @@ export default function Profile() {
                               <button
                                 className={toggleState1 === 7 ? "tabs active-tabs gr-text-8 text-color-opacity" : "tabs gr-text-8 text-color-opacity"}
                                 onClick={() => toggleTab1(7)}
-                                style={{ width: "250px", backgroundColor: toggleState1 === 7 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState1 === 7 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Préférence </span>
                               </button>
@@ -469,7 +469,7 @@ export default function Profile() {
                               <button
                                 className={toggleState1 === 8 ? "tabs active-tabs gr-text-8 text-color-opacity" : "tabs gr-text-8 text-color-opacity"}
                                 onClick={() => toggleTab1(8)}
-                                style={{ width: "250px", backgroundColor: toggleState1 === 8 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState1 === 8 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Aversion au risque</span>
                               </button>

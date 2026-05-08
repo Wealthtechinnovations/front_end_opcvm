@@ -3,829 +3,320 @@
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
-import { Modal, Button } from 'react-bootstrap'; // Assurez-vous d'importer les composants de Bootstrap nécessaires
-import { DropdownButton, Dropdown } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
+import { Modal, Button } from 'react-bootstrap';
 import Select, { SingleValue } from 'react-select';
-//import * as XLSX from 'xlsx';
 import Header from '@/components/layout/Header';
-import Head from 'next/head';
 import { urlconstant, urlsite } from "@/lib/constants";
-import { color } from "highcharts";
 import Swal from "sweetalert2";
-interface Societe {
-  value: any[]; // ou un type spécifique pour les éléments du tableau 'funds'
-  label: any[]; // ou un type spécifique pour les éléments du tableau 'funds'
 
-}
 interface Funds {
   data: {
-    societes: any[]; // ou un type spécifique pour les éléments du tableau 'funds'
+    societes: any[];
   };
 }
-async function getsociete() {
-  const data = (
-    await fetch(`${urlconstant}/api/getsocieterecherche`)
-  ).json();
-  return data;
-}
-const optionsCategorie = [
-  { value: "Obligations", label: 'Obligations' },
-  { value: "Actions", label: 'Actions' },
-  { value: "Diversifié", label: 'Diversifié' },
-  { value: "Monétaire", label: 'Monétaire' },
-  { value: "ETF", label: 'ETF' },
-  { value: "Infrastructure", label: 'Infrastructure' },
-  { value: "Immobilier", label: 'Immobilier' },
-  { value: "Private equity", label: 'Private equity' },
-  { value: "Alternatif", label: 'Alternatif' },
-
-  { value: "Autres", label: 'Autres' },
-
-
-
-
-
-  // Ajoutez plus d'options au besoin
-];
-
-const optionsSociete = [
-  { value: "WINEO GESTION", label: 'WINEO GESTION' },
-  { value: "WAFA GESTION", label: 'WAFA GESTION' },
-  { value: "TWIN CAPITAL GESTION", label: 'TWIN CAPITAL GESTION' },
-  { value: "CFG GESTION", label: 'CFG GESTION' }
-
-  // Ajoutez plus d'options au besoin
-];
 interface Pays {
-  value: string; // ou un type spécifique pour les éléments du tableau 'funds'
-
+  value: string;
 }
 interface Option {
   value: string;
   label: string;
 }
-interface FormData {
-  societe?: Option;
-  categorie?: Option;
-}
 
-async function getlastvl1() {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFunds`)
-  ).json();
+async function getsociete() {
+  const data = (await fetch(`${urlconstant}/api/getsocieterecherche`)).json();
   return data;
 }
+
 async function getpays() {
-  const data = (
-    await fetch(`${urlconstant}/api/getPays`)
-  ).json();
+  const data = (await fetch(`${urlconstant}/api/getPays`)).json();
   return data;
 }
+
 export default function Comparaison() {
-  const headers = {
-    tabAccueil: [
-      { label: 'Nom', key: 'nom' },
-      { label: 'Pays', key: 'pays' },
-      { label: 'Nombre de fonds', key: 'nombreFonds' },
-      { label: 'En cours', key: 'sommeActifNet' },
-    ],
+  const headers = [
+    { label: 'Nom', key: 'nom' },
+    { label: 'Pays', key: 'pays' },
+    { label: 'Nombre de fonds', key: 'nombreFonds' },
+    { label: 'Encours', key: 'sommeActifNet' },
+  ];
 
-  };
-  const [selectedOptions, setSelectedOptions] = useState<Option[]>([]);
-  const [selectedOptions1, setSelectedOptions1] = useState<SingleValue<Option> | null>(null);
-  const [selectedOptions2, setSelectedOptions2] = useState<SingleValue<Option> | null>(null);
-  const [selectedRows, setSelectedRows] = useState<string[]>([]); // Tableau pour stocker les lignes sélectionnées
-  const [sortConfig, setSortConfig] = useState({ key: '', direction: '' });
-  const [sortedFunds, setSortedFunds] = useState<Funds | null>(null); // État pour les fonds triés
-  const [searchResults, setSearchResults] = useState([]); // État pour stocker les résultats de la recherche
-  const [error, setError] = useState(""); // État pour stocker le message d'erreur
-  const [optionsSociete, setOptionsSociete] = useState([]);
   const [selectedSociete, setSelectedSociete] = useState<Option[]>([]);
-  const [optionsPays, setOptionsPays] = useState([]);
-
   const [selectedPays, setSelectedPays] = useState<Pays | null>(null);
-
-
-
-  const [textInput, setTextInput] = useState('');
-  const [fundsOptions, setFundsOptions] = useState([]);
+  const [optionsSociete, setOptionsSociete] = useState([]);
+  const [optionsPays, setOptionsPays] = useState([]);
   const [funds, setFunds] = useState<Funds | null>(null);
-  const [showPopup, setShowPopup] = useState(false);
-
-  const handleClosePopup = () => setShowPopup(false);
-  const [modalIsOpen, setModalIsOpen] = useState(false);
-
-  const handleFormSubmit = (e: any) => {
-    e.preventDefault();
-    setFunds({ data: { societes: [] } });
-    const formData: FormData = {}; // Initialisation de l'objet formData
-    let selectedpays;
-    // Ajouter les valeurs des critères "Sharpe" à l'objet formData
-    if (selectedOptions1) {
-
-
-      selectedpays = selectedOptions1.value;
-    }
-
-    setError("");
-    Swal.fire({
-      title: 'Veuillez patienter',
-      html: 'Chargement des résultats en cours...',
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      }
-    });
-    // Traitez les données du formulaire ici (selectedOptions et textInput)
-    const selectedValues = selectedSociete.map(option => option?.value);
-    fetch(`${urlconstant}/api/listesociete?query=${selectedValues.join(',')}&selectedpays=${selectedPays?.value}`, {
-      method: 'POST', // Assurez-vous que la méthode HTTP correspond à votre API
-      headers: {
-        'Content-Type': 'application/json', // Spécifiez le type de contenu JSON
-      },
-      body: JSON.stringify({ formData }), // Convertissez formData en format JSON
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data && data.code === 200) {
-          Swal.close(); // Close the loading popup
-
-          setFunds(data);
-          totalItems = data?.data.societes.length || 0;
-          settotalPages(Math.ceil(totalItems / itemsPerPage));
-
-        } else {
-          Swal.close();
-          setError("Aucun résultat trouvé. Réessayez avec d'autres critères.");
-        }
-      })
-      .catch(error => {
-        Swal.close();
-        setError("Erreur de connexion au serveur.");
-        console.error('Erreur lors de l\'appel de l\'API :', error);
-      });
-  };
-
-
-
-  const [activeTab, setActiveTab] = useState("tabAccueil");
-
-  const handleTabClick = (tabName: any) => {
-    setActiveTab(tabName);
-  };
-
-  const handleItemsPerPageChange = (e: { target: { value: string; }; }) => {
-    const selectedValue = parseInt(e.target.value, 10);
-
-    if (selectedValue === 100) {
-      setShowPopup(true);
-      setItemsPerPage(20);
-      setCurrentPage(1);
-
-    } else {
-
-      setItemsPerPage(selectedValue);
-      setCurrentPage(1);
-    } // Reset to the fi
-  };
-  const [post, setPost] = useState(null);
-  const [userConnected, setUserConnected] = useState<number | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    const userId = localStorage.getItem('userId');
-
-
-    if (isLoggedIn === 'true' && userId !== null) {
-      const userIdNumber = parseInt(userId, 10);
-      setIsLoggedIn(true);
-      setUserConnected(userIdNumber)
-    } else {
-      // If storedIsLoggedIn is null or any other value, set the state to false
-      setIsLoggedIn(false);
-    }
-
-  }, []);
+  const [error, setError] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: '', direction: '' });
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, settotalPages] = useState(1);
-  var totalItems: any;
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
+  const [showPopup, setShowPopup] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-
-
-
-    // Appel à l'API lors du premier rendu du composant
     async function fetchData() {
       try {
         Swal.fire({
           title: 'Veuillez patienter',
           html: 'Chargement des résultats en cours...',
           allowOutsideClick: false,
-          didOpen: () => {
-            Swal.showLoading();
-          }
+          didOpen: () => { Swal.showLoading(); }
         });
-        /* const data = await getlastvl();
-         setPost(data);*/
-        const data = await getpays();
-        const mappedOptions = data?.data.paysOptions.map((funds: any) => ({
 
-          value: funds.value,
-          label: funds.label, // Replace with the actual property name
-          // Replace with the actual property name
+        const data = await getpays();
+        const mappedOptions = data?.data.paysOptions.map((f: any) => ({
+          value: f.value,
+          label: f.label,
         }));
         setOptionsPays(mappedOptions);
 
-
         const data2 = await getsociete();
-        const mappedOptions2 = data2?.data.societes.map((funds: any) => ({
-
-          value: funds.nom,
-          label: funds.nom, // Replace with the actual property name
-          // Replace with the actual property name
+        const mappedOptions2 = data2?.data.societes.map((f: any) => ({
+          value: f.nom,
+          label: f.nom,
         }));
         setOptionsSociete(mappedOptions2);
 
         const response = await fetch(`${urlconstant}/api/listesociete`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          //body: JSON.stringify(requestBody),
+          headers: { 'Content-Type': 'application/json' },
         });
-
         const responseData = await response.json();
         if (responseData && responseData.code === 200) {
           Swal.close();
-
-          totalItems = responseData?.data.societes.length || 0;
+          const totalItems = responseData?.data.societes.length || 0;
           settotalPages(Math.ceil(totalItems / itemsPerPage));
           setFunds(responseData);
         } else {
           Swal.close();
-          setError("Aucun résultat trouvé. Réessayez avec d'autres critères.");
+          setError("Aucun résultat trouvé.");
         }
-
-      } catch (error) {
+      } catch (err) {
         Swal.close();
-        console.error("Erreur lors de l'appel à l'API :", error);
+        console.error("Erreur lors de l'appel à l'API :", err);
       }
     }
     fetchData();
-  }, [activeTab]);
+  }, []);
 
-  const handleCheckboxChange = (itemId: any) => {
-    if (selectedRows.includes(itemId)) {
-      // L'élément est déjà sélectionné, donc le désélectionner
-      setSelectedRows(selectedRows.filter((id) => id !== itemId));
-    } else {
-      // L'élément n'est pas sélectionné, donc le sélectionner
-      setSelectedRows(selectedRows.concat(itemId));
-
-    }
-  };
-
-  const getSortClasses = (key: string) => {
-    if (sortConfig.key === key) {
-      return `text-center ${sortConfig.direction === 'asc' ? 'asc-icon' : 'desc-icon'}`;
-    }
-    return 'text-center';
+  const handleFormSubmit = (e: any) => {
+    e.preventDefault();
+    setFunds({ data: { societes: [] } });
+    setError("");
+    Swal.fire({
+      title: 'Veuillez patienter',
+      html: 'Chargement des résultats en cours...',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
+    const selectedValues = selectedSociete.map(option => option?.value);
+    fetch(`${urlconstant}/api/listesociete?query=${selectedValues.join(',')}&selectedpays=${selectedPays?.value}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+      .then(response => response.json())
+      .then(data => {
+        Swal.close();
+        if (data && data.code === 200) {
+          setFunds(data);
+          const totalItems = data?.data.societes.length || 0;
+          settotalPages(Math.ceil(totalItems / itemsPerPage));
+        } else {
+          setError("Aucun résultat trouvé. Réessayez avec d'autres critères.");
+        }
+      })
+      .catch(err => {
+        Swal.close();
+        setError("Erreur de connexion au serveur.");
+        console.error('Erreur lors de l\'appel de l\'API :', err);
+      });
   };
 
   const handleSort = (key: string) => {
     let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-
-    }
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
     setSortConfig({ key, direction });
-
     if (funds && funds.data.societes) {
-
-      // Créez une copie triée des fonds en utilisant la méthode sort()
-      const sortedFundsCopy = [...funds.data.societes];
-      const filteredFunds = sortedFundsCopy.filter(item => item[sortConfig.key] !== '-');
-
-      filteredFunds.sort((a, b) => {
-
-        if (sortConfig.key == "nom" || sortConfig.key == "pays") {
-          const aValue = a[sortConfig.key];
-          const bValue = b[sortConfig.key];
-          if (aValue < bValue) {
-            return sortConfig.direction === 'asc' ? -1 : 1;
-          } else if (aValue > bValue) {
-            return sortConfig.direction === 'asc' ? 1 : -1;
-          } else {
-            return 0;
-          }
-
-        } else {
-
-          const aValue = a[sortConfig.key];
-          const bValue = b[sortConfig.key];
-          const numericAValue = parseFloat(aValue);
-          const numericBValue = parseFloat(bValue);
-
-          if (isNaN(numericAValue) || isNaN(numericBValue) || aValue === '-' || bValue === '-') {
-            // Handle cases where the values are not valid numbers
-            // For example, if aValue or bValue are non-numeric strings
-            return 0; // or handle this case based on your requirements
-          }
-
-          if (numericAValue < numericBValue) {
-            return direction === 'asc' ? -1 : 1;
-          } else if (numericAValue > numericBValue) {
-            return direction === 'asc' ? 1 : -1;
-          } else {
-            return 0;
-          }
+      const sorted = [...funds.data.societes].filter(item => item[key] !== '-');
+      sorted.sort((a, b) => {
+        if (key === 'nom' || key === 'pays') {
+          return direction === 'asc' ? (a[key] || '').localeCompare(b[key] || '') : (b[key] || '').localeCompare(a[key] || '');
         }
+        const numA = parseFloat(a[key]), numB = parseFloat(b[key]);
+        if (isNaN(numA) || isNaN(numB)) return 0;
+        return direction === 'asc' ? numA - numB : numB - numA;
       });
-
-      // Mettre à jour sortedFunds avec la version triée
-      setSortedFunds({ data: { societes: filteredFunds } });
-      setFunds({ data: { societes: filteredFunds } });
+      setFunds({ data: { societes: sorted } });
     }
   };
 
-  /*const getSortClasses = (key: string) => {
-  if (sortConfig.key === key) {
-    return `text-center ${sortConfig.direction === 'asc' ? 'asc-icon' : 'desc-icon'}`;
-  }
-  return 'text-center';
-};
+  const paginatedData = funds?.data?.societes?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage) || [];
 
-const handleSort = (key: string) => {
-  let direction = 'asc';
-  if (sortConfig.key === key && sortConfig.direction === 'asc') {
-    direction = 'desc';
-  }
-  setSortConfig({ key, direction });
-
-  if (funds && funds.data.funds) {
-    // Create a sorted copy of the funds using the sort() method
-    const sortedFundsCopy = [...funds.data.funds];
-    sortedFundsCopy.sort((a, b) => {
-      const aValue = getValue(a, key); // Get the value based on the provided key
-      const bValue = getValue(b, key);
-      if (aValue < bValue) {
-        return direction === 'asc' ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return direction === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-
-    // Update sortedFunds with the sorted version
-    setSortedFunds({ data: { funds: sortedFundsCopy } });
-    setFunds({ data: { funds: sortedFundsCopy } });
-  }
-};
-
-// Helper function to get values from the funds based on the given key
-const getValue = (fund, key) => {
-  // Assuming your data structure allows nested keys like "firstData.data.key"
-  const keys = key.split('.');
-  let value = fund;
-  for (const nestedKey of keys) {
-    value = value ? value[nestedKey] : undefined;
-  }
-  return value;
-};*/
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
-  const router = useRouter();
-
-
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push('/panel/management/login');
-      }, 5);
-    }
-  };
-
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/fund-managers/search`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/home`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
-  const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-  const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-  };
-
-  const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-  };
-  const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/news`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
-  const [isHoveredp, setIsHoveredp] = useState(false);
-
-  const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-  };
-
-  const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-  };
-  const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/pays`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHoveredc, setIsHoveredc] = useState(false);
-
-  const handleMouseEnterc = () => {
-      setIsHoveredc(true);
-  };
-
-  const handleMouseLeavec = () => {
-      setIsHoveredc(false);
-  };
-  
   return (
-
-
-
-    < Fragment >
+    <Fragment>
       <Header />
-      <Head>
-        <title>Rechercher une société de gestion</title>
-        <meta name="description" content="Rechercher une société de gestion" />
-        <meta name="robots" content="index, follow" />
-        <meta property="og:title" content={`Rechercher une société de gestion`} />
-        <meta property="og:description" content="Rechercher une société de gestion" />
-        <meta property="og:image" content={`${urlsite}/images/logo.png`} />
-        <meta property="og:type" content="website" />
-        <link rel="canonical" href={`${urlsite}/fund-managers/search`} />
-        {/* Ajoutez ici d'autres métadonnées spécifiques au SEO */}     
-       
-      </Head>
-      <br />
 
-      <div className="">
-        <Modal show={showPopup} onHide={handleClosePopup} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>Action</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            Pour sélectionner 100 éléments par page, vous devez être membre.
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" style={{
-              textDecoration: 'none',
-              backgroundColor: '#6366f1',
-              color: 'white',
-              padding: '10px 20px',
-              borderRadius: '5px',
-            }} onClick={handleClosePopup}>
-              Fermer
-            </Button>
-          </Modal.Footer>
-        </Modal>
-        <div className="container-full">
-          {/* Main content */}
-          <section className="content">
-            <div className="row">
+      <Modal show={showPopup} onHide={() => setShowPopup(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Action</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Pour s&eacute;lectionner 100 &eacute;l&eacute;ments par page, vous devez &ecirc;tre membre.</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowPopup(false)} style={{ backgroundColor: '#1B3A5C', border: 'none', borderRadius: '6px' }}>
+            Fermer
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
-              <div className="col-12">
-                <div className="box ">
-                  <div className="box-body">
-                    <div className="d-md-flex justify-content-between align-items-center">
-                      <div>
-                        <p><span className="text-primary">Recherche</span> | <span className="text-fade"></span></p>
+      <div style={{ background: 'linear-gradient(135deg, #F8F9FB 0%, #EBF0F5 50%, #F0F2F5 100%)', minHeight: '80vh', padding: '48px 24px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          {/* Page header */}
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#B8860B', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Annuaire
+            </span>
+            <h1 style={{ fontSize: '32px', fontWeight: 700, color: '#1B3A5C', marginTop: '8px', marginBottom: '12px', fontFamily: 'Inter, sans-serif' }}>
+              Soci&eacute;t&eacute;s de gestion
+            </h1>
+            <p style={{ fontSize: '16px', color: '#4A5568' }}>
+              Recherchez et comparez les soci&eacute;t&eacute;s de gestion op&eacute;rant sur les march&eacute;s africains.
+            </p>
+          </div>
 
-                      </div>
-
-                    </div>
-                    <hr />
-
-
-                    <div className="row">
-
-
-
-
-                      <form onSubmit={handleFormSubmit}>
-
-                        <div className="row ">
-
-                          <div className="col-md-6">
-                            <label htmlFor="select">Societés de gestion :</label>
-                            <Select className="select-component"
-                              isMulti
-                              options={optionsSociete}
-                              value={selectedSociete}
-                              onChange={(newValue, actionMeta) => setSelectedSociete(newValue.map(option => option as Option))}
-                              placeholder="Sélectionnez une Societe"
-                            />
-
-                          </div>
-
-                          <div className="col-md-6">
-                            <label>
-                              pays :
-                            </label>
-
-                            <Select className="select-component"
-                              options={optionsPays}
-                              value={selectedPays}
-                              onChange={setSelectedPays}
-                              placeholder="Sélectionnez un pays"
-                            />
-                          </div>
-                        </div>
-                        <br />
-                        {/* <div>
-                          <label htmlFor="textInput">Autre champ :</label>
-                          <input
-                            className="form-control"
-                            type="text"
-                            id="textInput"
-                            value={textInput}
-                            onChange={(e) => setTextInput(e.target.value)}
-                          />
-  </div>*/}
-                        <div className=" text-center">
-                          <button style={{ width: '150px', backgroundColor: "#3b82f6", color: "white" }} className="btn btn-main">Rechercher</button>
-                        </div>
-                      </form>
-                      {error && <div className=" text-center error-message" style={{ color: "red" }}>{error}</div>}
-
-                      {/* Affichez les résultats de la recherche */}
-                      {searchResults.length > 0 && (
-                        <div className="search-results">
-                          {/* Affichez les résultats ici */}
-                          {/* ... */}
-                        </div>
-                      )}
-                      <div className="row text-center">
-
-                        <div className="text-center mt-3">
-                          <label>Nombre de ligne par page:</label>
-                          <select
-                            value={itemsPerPage}
-                            onChange={handleItemsPerPageChange}
-                          >
-                            <option value={20}>20</option>
-                            <option value={50}>50</option>
-                            <option value={100}>100</option>
-                          </select>
-                        </div>
-                        <div className="text-center">
-                          <button
-                            className={`btn btn-main active}`}
-                            style={{ width: '150px', backgroundColor: "#3b82f6", color: "white" }}
-                          // onClick={exportTableToCSV}
-                          >
-                            Exporter
-                          </button>
-                        </div>
-
-                        <div className="table-responsive">
-
-                          <table
-                            id="example11"
-                            className="table-striped text-fade table-bordered table-hover display nowrap margin-top-10 w-p100">
-                            <thead className="table-header">
-                              <tr className="text-center">
-                                {headers.tabAccueil.map((header) => (
-                                  <th className="text-center" key={header.key} onClick={() => handleSort(header.key)}>
-                                    {header.label}
-                                    {sortConfig.key === header.key && (
-                                      <span>{sortConfig.direction === 'asc' ? ' ▲' : ' ▼'}</span>
-                                    )}
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {funds?.data?.societes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item) => (
-                                <tr className="text-center" key={item.id}>
-                                  <td className="text-center"><Link href={`/fund-managers/${item.nom.replace(/ /g, '-')}`}>{item?.nom}</Link></td>
-                                  <td>{item.pays}</td>
-                                  <td>{item.nombreFonds}</td>
-                                  <td>{item.sommeActifNet}</td>
-
-                                </tr>
-                              ))}
-
-                            </tbody>
-                          </table>
-                        </div>
-
-
-                        <div className="text-center">
-
-                          <div className="row justify-content-center">
-                            <div className="col-2">
-                              {currentPage < totalPages && (
-                                <button
-                                  style={{
-                                    width: '150px',
-
-                                    textDecoration: 'none',
-                                    backgroundColor: '#6366f1',
-                                    color: 'white',
-                                    padding: '10px 20px',
-                                    borderRadius: '5px',
-                                  }}
-                                  onClick={handleNextPage}
-                                >
-                                  Page suivante
-                                </button>
-                              )}
-                            </div>
-                            <div className="col-2 text-center">
-                              {currentPage}/{totalPages}
-                            </div>
-                            <div className="col-2">
-                              {currentPage > 1 && (
-                                <button
-                                  style={{
-                                    width: '150px',
-
-                                    textDecoration: 'none',
-                                    backgroundColor: '#6366f1',
-                                    color: 'white',
-                                    padding: '10px 20px',
-                                    borderRadius: '5px',
-                                  }}
-                                  onClick={handlePreviousPage}
-                                >
-                                  Page précédente
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                      </div>
-
-                    </div>
-                  </div>
-
+          {/* Search card */}
+          <div style={{
+            background: 'white', borderRadius: '12px', padding: '24px',
+            border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            marginBottom: '32px',
+          }}>
+            <form onSubmit={handleFormSubmit}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#4A5568', marginBottom: '6px' }}>
+                    Soci&eacute;t&eacute;s de gestion
+                  </label>
+                  <Select
+                    isMulti
+                    options={optionsSociete}
+                    value={selectedSociete}
+                    onChange={(newValue) => setSelectedSociete(newValue.map(option => option as Option))}
+                    placeholder="Sélectionnez..."
+                    styles={{
+                      control: (base: any) => ({ ...base, borderColor: '#E2E8F0', borderRadius: '8px', fontSize: '14px' }),
+                    }}
+                  />
                 </div>
-
-
-
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#4A5568', marginBottom: '6px' }}>
+                    Pays
+                  </label>
+                  <Select
+                    options={optionsPays}
+                    value={selectedPays}
+                    onChange={setSelectedPays}
+                    placeholder="Sélectionnez un pays"
+                    styles={{
+                      control: (base: any) => ({ ...base, borderColor: '#E2E8F0', borderRadius: '8px', fontSize: '14px' }),
+                    }}
+                  />
+                </div>
               </div>
+              <div style={{ textAlign: 'center' }}>
+                <button type="submit" style={{
+                  padding: '10px 32px', backgroundColor: '#1B3A5C', color: 'white',
+                  border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                }}>
+                  Rechercher
+                </button>
+              </div>
+            </form>
+            {error && <p style={{ textAlign: 'center', color: '#DC2626', marginTop: '12px', fontSize: '14px' }}>{error}</p>}
+          </div>
 
-
-
-
+          {/* Results table */}
+          <div style={{
+            background: 'white', borderRadius: '12px',
+            border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            overflow: 'hidden',
+          }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#1B3A5C' }}>
+                {funds?.data?.societes?.length || 0} soci&eacute;t&eacute;s
+              </p>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  if (v === 100) { setShowPopup(true); return; }
+                  setItemsPerPage(v); setCurrentPage(1);
+                }}
+                style={{ padding: '6px 10px', border: '1px solid #E2E8F0', borderRadius: '6px', fontSize: '13px', color: '#4A5568' }}
+              >
+                <option value={20}>20 / page</option>
+                <option value={50}>50 / page</option>
+                <option value={100}>100 / page</option>
+              </select>
             </div>
-          </section>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#F8F9FB' }}>
+                    {headers.map((header) => (
+                      <th key={header.key} onClick={() => handleSort(header.key)} style={{
+                        padding: '12px 20px', textAlign: header.key === 'nom' ? 'left' : 'center',
+                        fontSize: '13px', fontWeight: 600, color: '#1B3A5C', cursor: 'pointer',
+                        borderBottom: '2px solid #E2E8F0', whiteSpace: 'nowrap',
+                      }}>
+                        {header.label} {sortConfig.key === header.key && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedData.map((item: any, idx: number) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #EDF2F7' }}>
+                      <td style={{ padding: '12px 20px' }}>
+                        <Link href={`/fund-managers/${item.nom.replace(/ /g, '-')}`} style={{
+                          color: '#1B3A5C', textDecoration: 'none', fontWeight: 500, fontSize: '14px',
+                        }}>
+                          {item.nom}
+                        </Link>
+                      </td>
+                      <td style={{ padding: '12px 20px', textAlign: 'center', fontSize: '14px', color: '#4A5568' }}>{item.pays}</td>
+                      <td style={{ padding: '12px 20px', textAlign: 'center', fontSize: '14px', color: '#4A5568' }}>{item.nombreFonds}</td>
+                      <td style={{ padding: '12px 20px', textAlign: 'center', fontSize: '14px', color: '#4A5568' }}>{item.sommeActifNet}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div style={{ padding: '16px 20px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px' }}>
+                {currentPage > 1 && (
+                  <button onClick={() => setCurrentPage(currentPage - 1)} style={{
+                    padding: '8px 16px', backgroundColor: '#EBF0F5', color: '#1B3A5C',
+                    border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                  }}>
+                    Pr&eacute;c&eacute;dent
+                  </button>
+                )}
+                <span style={{ fontSize: '13px', color: '#4A5568' }}>{currentPage} / {totalPages}</span>
+                {currentPage < totalPages && (
+                  <button onClick={() => setCurrentPage(currentPage + 1)} style={{
+                    padding: '8px 16px', backgroundColor: '#1B3A5C', color: 'white',
+                    border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                  }}>
+                    Suivant
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-
-      </div >
-
-    </Fragment >
+      </div>
+    </Fragment>
   );
 }
-
-
-/*
-function exportTableToCSV() {
-  // Sélectionnez le tableau HTML par son ID
-  var table = document.getElementById("example");
-
-  // Créez une chaîne vide pour stocker les données CSV
-  var csv = [];
-
-  // Parcourez les lignes du tableau
-  for (var i = 0; i < table?.rows.length; i++) {
-    var row = [];
-    var cells = table?.rows[i].querySelectorAll("td, th");
-
-    // Parcourez les cellules de chaque ligne
-    for (var j = 0; j < cells.length; j++) {
-      row.push(cells[j].textContent);
-    }
-
-    // Joignez les valeurs de la ligne avec des virgules pour créer une ligne CSV
-    csv.push(row.join(","));
-  }
-
-  // Joignez les lignes CSV avec des sauts de ligne
-  var csvString = csv.join("\n");
-
-  // Créez un objet Blob pour le fichier CSV
-  var blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
-
-  // Générez un URL pour le Blob
-  var url = URL.createObjectURL(blob);
-
-  // Créez un élément d'ancrage pour le téléchargement du fichier
-  var link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "tableau.csv");
-
-  // Cliquez sur le lien pour déclencher le téléchargement
-  link.click();
-}*/
-/*
-function exportTableToXLSX() {
-  // Sélectionnez le tableau HTML par son ID
-  var table = document.getElementById("example");
-
-  // Créez un objet Workbook
-  var wb = XLSX.utils.table_to_book(table);
-
-  // Générez un blob à partir du Workbook
-  const blob = XLSX.write(wb, { bookType: 'xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', type: 'blob' });
-
-  // Créez un URL pour le Blob
-  var url = URL.createObjectURL(blob);
-
-  // Créez un élément d'ancrage pour le téléchargement du fichier
-  var link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "tableau.xlsx");
-
-  // Cliquez sur le lien pour déclencher le téléchargement
-  link.click();
-}
-*/

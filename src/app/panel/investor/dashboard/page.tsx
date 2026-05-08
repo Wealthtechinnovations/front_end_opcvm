@@ -361,7 +361,7 @@ export default function Home() {
                                       >
                                         <button className="select-funds-button" style={{
                                           width: '150px',
-                                          backgroundColor: '#6366f1',
+                                          backgroundColor: '#1B3A5C',
                                         }}>Voir le portefeuille</button>
                                       </Link>
                                       <Link

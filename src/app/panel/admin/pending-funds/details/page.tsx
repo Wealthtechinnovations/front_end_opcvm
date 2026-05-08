@@ -92,7 +92,7 @@ async function getFonds(id: number) {
 }
 
 const buttonStyle = {
-  backgroundColor: "#3b82f6",
+  backgroundColor: "#1B3A5C",
   color: "white",
   padding: "10px 20px", // Adjust padding to control the button size
   borderRadius: "5px", // Add rounded corners for a consistent look

@@ -248,7 +248,7 @@ export default function Home() {
 
 
                 <li>
-                  <Link href={`/country-panel/anomalies`} style={{ backgroundColor: "#3b82f6", color: "white" }} >
+                  <Link href={`/country-panel/anomalies`} style={{ backgroundColor: "#1B3A5C", color: "white" }} >
                     <i data-feather="plus-square"></i>
                     <span>Anomalies</span>
                   </Link>

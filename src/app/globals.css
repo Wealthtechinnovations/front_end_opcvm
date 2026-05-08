@@ -200,6 +200,22 @@ a:hover {
   align-items: center;
 }
 
+/* ── Nav dropdown toggle override ── */
+.nav-dropdown-toggle,
+.nav-dropdown-toggle:hover,
+.nav-dropdown-toggle:focus,
+.nav-dropdown-toggle:active,
+.nav-dropdown-toggle.show,
+.btn-light.nav-dropdown-toggle,
+.btn-light.nav-dropdown-toggle:hover,
+.btn-light.nav-dropdown-toggle:focus,
+.btn-light.nav-dropdown-toggle:active {
+  background-color: #FFFFFF !important;
+  color: #4A5568 !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: none !important;
+}
+
 /* ── Dropdown styling ── */
 .dropdown-menu {
   border: 1px solid var(--color-border);

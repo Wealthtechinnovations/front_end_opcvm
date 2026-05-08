@@ -421,7 +421,7 @@ export default function Pagehome() {
               <ul data-widget="tree" className='sidebar-menu'>
 
                 <li>
-                  <Link href={`/country-panel/dashboard`} style={{ backgroundColor: "#3b82f6", color: "white" }}>
+                  <Link href={`/country-panel/dashboard`} style={{ backgroundColor: "#1B3A5C", color: "white" }}>
                     <i data-feather="plus-square"></i>
                     <span>Tableau de bord</span>
                   </Link>

@@ -113,7 +113,7 @@ export default function Fonds() {
                   </Link>
                 </li>
                 <li className={`dropdown ${isDropdownOpen ? 'open' : ''}`}>
-                  <a href="#" onClick={toggleDropdown} className="dropdown-toggle" data-toggle="dropdown" style={{ backgroundColor: "#3b82f6", color: "white" }}>
+                  <a href="#" onClick={toggleDropdown} className="dropdown-toggle" data-toggle="dropdown" style={{ backgroundColor: "#1B3A5C", color: "white" }}>
                     <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                     <span>Fonds</span>
                   </a>
@@ -239,7 +239,7 @@ export default function Fonds() {
                           <td>
                             <Link
                               className="btn btn-main active"
-                              style={{ backgroundColor: "#3b82f6", color: "white", width: "150px" }} // Largeur fixe définie ici
+                              style={{ backgroundColor: "#1B3A5C", color: "white", width: "150px" }} // Largeur fixe définie ici
                               href={{
                                 pathname: '/country-panel/fonds/update',
                                 query: { societeconneted: societeconneted, fondId: item?.id },
@@ -249,7 +249,7 @@ export default function Fonds() {
                             </Link> &nbsp;
                             <Link
                               className="btn btn-main active"
-                              style={{ backgroundColor: "#3b82f6", color: "white", width: "150px" }} // Largeur fixe définie ici
+                              style={{ backgroundColor: "#1B3A5C", color: "white", width: "150px" }} // Largeur fixe définie ici
                               href={{
                                 pathname: '/country-panel/fonds/details',
                                 query: { societeconneted: societeconneted, Id: item?.id },

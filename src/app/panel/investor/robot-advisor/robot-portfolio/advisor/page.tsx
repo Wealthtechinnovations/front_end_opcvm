@@ -726,7 +726,7 @@ export default function RoboAdvisor() {
 
                             <button style={{
                               textDecoration: 'none', // Remove underline
-                              backgroundColor: '#6366f1', // Background color
+                              backgroundColor: '#1B3A5C', // Background color
                               color: 'white', // Text color
                               padding: '10px 20px', // Padding
                               borderRadius: '5px', // Rounded corners
@@ -811,7 +811,7 @@ export default function RoboAdvisor() {
                                 <button className="btn btn-main" style={{ backgroundColor: "RED", color: "white" }} onClick={viderinput}>Vider</button>
                               </div>
                               <div className=" col-6 text-right">
-                                <button className="btn btn-main" style={{ backgroundColor: "#6366f1", color: "white" }} onClick={toggleMenu}>Conditions d allocation avancée</button>
+                                <button className="btn btn-main" style={{ backgroundColor: "#1B3A5C", color: "white" }} onClick={toggleMenu}>Conditions d allocation avancée</button>
                               </div>
                             </div>
 
@@ -822,7 +822,7 @@ export default function RoboAdvisor() {
                             <div className="text-center">
                               <button style={{
                                 textDecoration: 'none', // Remove underline
-                                backgroundColor: '#6366f1', // Background color
+                                backgroundColor: '#1B3A5C', // Background color
                                 color: 'white', // Text color
                                 padding: '10px 20px', // Padding
                                 borderRadius: '5px', // Rounded corners
@@ -1159,7 +1159,7 @@ export default function RoboAdvisor() {
                         <div className="text-center">
                           <button style={{
                             textDecoration: 'none',
-                            backgroundColor: '#6366f1',
+                            backgroundColor: '#1B3A5C',
                             color: 'white',
                             padding: '10px 20px',
                             borderRadius: '5px',
@@ -1268,7 +1268,7 @@ export default function RoboAdvisor() {
                               className="btn btn-main"
                               style={{
                                 textDecoration: 'none',
-                                backgroundColor: '#6366f1',
+                                backgroundColor: '#1B3A5C',
                                 color: 'white',
 
                                 padding: '10px 20px',
@@ -1333,7 +1333,7 @@ export default function RoboAdvisor() {
                           &nbsp;
                           <button style={{
                             textDecoration: 'none', // Remove underline
-                            backgroundColor: '#6366f1', // Background color
+                            backgroundColor: '#1B3A5C', // Background color
                             color: 'white', // Text color
                             padding: '10px 20px', // Padding
                             borderRadius: '5px', // Rounded corners

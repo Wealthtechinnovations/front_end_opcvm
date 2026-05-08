@@ -4,10 +4,6 @@ import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import Header from '@/components/layout/Header';
 import { urlconstant, urlconstantimage, urlsite } from "@/lib/constants";
-import { useRouter } from 'next/navigation';
-import Swal from "sweetalert2";
-import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
-import Head from "next/head";
 import SEO from '@/components/common/SEO';
 import { breadcrumbSchema } from '@/utils/structuredData';
 
@@ -35,13 +31,11 @@ export default function Accueil() {
                 const data8 = await getactualite();
                 setActualites(data8);
             } catch (error) {
-                console.error('Erreur lors de l’appel à l’API :', error);
+                console.error('Erreur lors de l\'appel à l\'API :', error);
             }
         };
         fetchData();
     }, []);
-
-    const router = useRouter();
 
     return (
         <Fragment>
@@ -56,49 +50,80 @@ export default function Accueil() {
                 ])}
             />
             <Header />
-            <Head>
-                <title>Opcvm Afrique: Guide Complet</title>
-                <meta name="description" content="Découvrez notre sélection d'Opcvm en Afrique pour optimiser votre portefeuille d'investissement." />
-                <meta name="viewport" content="width=device-width, initial-scale=1" />
-            </Head>
 
-            {/* Section Actualités */}
-            <div className="bg-gradient-to-br from-blue-50 via-white to-gray-100 min-h-screen py-10">
-                <div className="container">
-                    <div className="text-center mb-12">
-                        <h1 className="text-4xl font-bold text-gray-700 mb-3">Les Actualités</h1>
-                        <p className="text-lg text-gray-600">Restez informé avec les dernières nouvelles et annonces de notre communauté.</p>
+            <div style={{ background: 'linear-gradient(135deg, #F8F9FB 0%, #EBF0F5 50%, #F0F2F5 100%)', minHeight: '80vh', padding: '48px 24px' }}>
+                <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+                    {/* Page header */}
+                    <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#B8860B', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                            Actualit&eacute;s
+                        </span>
+                        <h1 style={{ fontSize: '32px', fontWeight: 700, color: '#1B3A5C', marginTop: '8px', marginBottom: '12px', fontFamily: 'Inter, sans-serif' }}>
+                            Les derni&egrave;res nouvelles
+                        </h1>
+                        <p style={{ fontSize: '16px', color: '#4A5568', maxWidth: '500px', margin: '0 auto' }}>
+                            Restez inform&eacute; avec les derni&egrave;res actualit&eacute;s et analyses de la communaut&eacute; financi&egrave;re africaine.
+                        </p>
                     </div>
 
-                    {/* Boucle pour afficher les actualités */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {actualites.map((actualite, index) => (
-                            <div key={index} className="p-6 border border-gray-200 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
-                                <div className="d-flex align-items-center mb-4">
-                                    <img className="rounded-circle bg-light" src="/images/avatar/avatar-1.png" alt="Avatar" height="50" width="50" />
-                                    <div className="ml-3">
-                                        <h5 className="text-lg font-semibold text-gray-800">{actualite.username}</h5>
-                                        <p className="text-gray-500 text-sm"><i className="fa fa-clock"></i> {actualite.date}</p>
+                    {/* News grid */}
+                    {actualites.length > 0 ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
+                            {actualites.map((actualite, index) => (
+                                <article key={index} style={{
+                                    background: 'white',
+                                    borderRadius: '12px',
+                                    border: '1px solid #E2E8F0',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                                    transition: 'box-shadow 0.2s, transform 0.2s',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                }}>
+                                    {actualite.image && (
+                                        <div style={{ height: '200px', overflow: 'hidden', borderBottom: '1px solid #E2E8F0' }}>
+                                            <img
+                                                src={`${urlconstantimage}/${actualite.image}`}
+                                                alt="Image actualité"
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                        </div>
+                                    )}
+                                    <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                                            <div style={{
+                                                width: '36px', height: '36px', borderRadius: '50%',
+                                                background: '#EBF0F5', display: 'flex', alignItems: 'center',
+                                                justifyContent: 'center', fontSize: '14px', fontWeight: 600, color: '#1B3A5C',
+                                            }}>
+                                                {actualite.username?.charAt(0)?.toUpperCase() || 'F'}
+                                            </div>
+                                            <div>
+                                                <p style={{ fontSize: '14px', fontWeight: 600, color: '#1A1A2E', margin: 0 }}>{actualite.username}</p>
+                                                <p style={{ fontSize: '12px', color: '#8896A6', margin: 0 }}>{actualite.date}</p>
+                                            </div>
+                                            {actualite.type && (
+                                                <span style={{
+                                                    marginLeft: 'auto', fontSize: '11px', fontWeight: 600,
+                                                    color: '#B8860B', background: 'rgba(184,134,11,0.08)',
+                                                    padding: '3px 8px', borderRadius: '4px', textTransform: 'uppercase',
+                                                }}>
+                                                    {actualite.type}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p style={{ fontSize: '14px', color: '#4A5568', lineHeight: 1.7, flex: 1 }}>
+                                            {actualite.description}
+                                        </p>
                                     </div>
-                                </div>
-                                <p className="text-gray-700 mb-4">{actualite.description}</p>
-                                {actualite.image && (
-                                    <img className="img-fluid rounded-lg mb-4" src={`${urlconstantimage}/${actualite.image}`} alt="Image" style={{ maxHeight: "300px", maxWidth: "100%" }} />
-                                )}
-                                <div className="flex justify-between items-center">
-                                    <button className="btn btn-outline-primary btn-sm px-4 rounded-full">J aime</button>
-                                    <button className="btn btn-outline-secondary btn-sm px-4 rounded-full">Commenter</button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Bouton Charger plus */}
-                    <div className="text-center mt-12">
-                        <button className="px-8 py-3 bg-blue-500 text-white font-semibold rounded-full shadow-md hover:bg-blue-600 transition-all duration-300">
-                            Charger plus
-                        </button>
-                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    ) : (
+                        <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+                            <p style={{ fontSize: '16px', color: '#8896A6' }}>Aucune actualit&eacute; pour le moment.</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </Fragment>

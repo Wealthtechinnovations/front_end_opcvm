@@ -196,7 +196,7 @@ export default function Profile(): JSX.Element {
                                     </Link>
                                 </li>
                                 <li className={`dropdown ${isDropdownOpen ? 'open' : ''}`}>
-                                    <a href="#" onClick={toggleDropdown} className="dropdown-toggle" data-toggle="dropdown" style={{ backgroundColor: "#3b82f6", color: "white" }}>
+                                    <a href="#" onClick={toggleDropdown} className="dropdown-toggle" data-toggle="dropdown" style={{ backgroundColor: "#1B3A5C", color: "white" }}>
                                         <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                                         <span>Profil investisseur</span>
                                     </a>

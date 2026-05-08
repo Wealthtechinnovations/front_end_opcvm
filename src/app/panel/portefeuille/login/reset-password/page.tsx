@@ -82,7 +82,7 @@ function ResetPasswordForm() {
               <p style={{ color: '#888', fontSize: '13px' }}>Redirection automatique dans 3 secondes...</p>
               <Link
                 href="/panel/investor/login"
-                style={{ color: '#6366f1', textDecoration: 'underline', fontSize: '14px' }}
+                style={{ color: '#1B3A5C', textDecoration: 'underline', fontSize: '14px' }}
               >
                 Se connecter maintenant
               </Link>
@@ -93,7 +93,7 @@ function ResetPasswordForm() {
               <p style={{ color: 'red', marginBottom: '16px' }}>{message}</p>
               <Link
                 href="/panel/investor/login/forgot-password"
-                style={{ color: '#6366f1', textDecoration: 'underline', fontSize: '14px' }}
+                style={{ color: '#1B3A5C', textDecoration: 'underline', fontSize: '14px' }}
               >
                 Faire une nouvelle demande
               </Link>
@@ -142,7 +142,7 @@ function ResetPasswordForm() {
                     type="submit"
                     disabled={loading}
                     style={{
-                      backgroundColor: '#6366f1',
+                      backgroundColor: '#1B3A5C',
                       color: 'white',
                       padding: '10px 20px',
                       borderRadius: '5px',
@@ -159,7 +159,7 @@ function ResetPasswordForm() {
               <div className="col-12 text-center mt-3">
                 <Link
                   href="/panel/investor/login"
-                  style={{ color: '#6366f1', fontSize: '14px', textDecoration: 'underline' }}
+                  style={{ color: '#1B3A5C', fontSize: '14px', textDecoration: 'underline' }}
                 >
                   Retour à la connexion
                 </Link>

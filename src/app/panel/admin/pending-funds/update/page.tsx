@@ -846,7 +846,7 @@ export default function Ajoutvl() {
                                 <br />
                                 <button style={{
                                   textDecoration: 'none', // Remove underline
-                                  backgroundColor: '#6366f1', // Background color
+                                  backgroundColor: '#1B3A5C', // Background color
                                   color: 'white', // Text color
                                   padding: '10px 20px', // Padding
                                   borderRadius: '5px', // Rounded corners
@@ -1244,7 +1244,7 @@ export default function Ajoutvl() {
                                 &nbsp;
                                 <button className="text-right" style={{
                                   textDecoration: 'none', // Remove underline
-                                  backgroundColor: '#6366f1', // Background color
+                                  backgroundColor: '#1B3A5C', // Background color
                                   color: 'white', // Text color
                                   padding: '10px 20px', // Padding
                                   borderRadius: '5px', // Rounded corners

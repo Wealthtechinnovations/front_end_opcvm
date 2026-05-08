@@ -653,7 +653,7 @@ export default function Fond() {
           <Modal.Footer>
             <Button variant="secondary" style={{
               textDecoration: 'none',
-              backgroundColor: '#6366f1',
+              backgroundColor: '#1B3A5C',
               color: 'white',
               padding: '10px 20px',
               borderRadius: '5px',
@@ -746,7 +746,7 @@ borderColor:'grey',
                             href={`/pays/statistique/${id.replace(/ /g, '-')}`}
                             style={{
                               width: '100%',
-                              backgroundColor: '#6366f1', // Background color
+                              backgroundColor: '#1B3A5C', // Background color
                               textDecoration: 'none', // Remove underline
                               color: 'white', // Text color
                               padding: '10px 20px', // Padding

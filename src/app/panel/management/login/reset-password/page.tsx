@@ -425,7 +425,7 @@ export default function Logins() {
           <li style={{ height: '40px' }}>
             <Dropdown>
               <Dropdown.Toggle id="dropdown-basic" style={{
-                width: '150px', backgroundColor: '#3b82f6',
+                width: '150px', backgroundColor: '#1B3A5C',
                 color: 'white', display: 'block', height: '100%', padding: '10px', textDecoration: 'none'
               }}>
                 Connexion
@@ -503,7 +503,7 @@ export default function Logins() {
         <div style={{ textAlign: 'center' }}>
           <button style={{
             textDecoration: 'none',
-            backgroundColor: '#6366f1',
+            backgroundColor: '#1B3A5C',
             color: 'white',
             padding: '10px 20px',
             borderRadius: '5px',

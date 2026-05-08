@@ -9,7 +9,7 @@ import { urlconstant } from "@/lib/constants";
 import { Button } from "react-bootstrap";
 
 const buttonStyle = {
-  backgroundColor: "#3b82f6",
+  backgroundColor: "#1B3A5C",
   color: "white",
   padding: "10px 20px",
   borderRadius: "5px",

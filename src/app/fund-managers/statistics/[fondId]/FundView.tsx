@@ -635,7 +635,7 @@ export default function Fond() {
           <Modal.Footer>
             <Button variant="secondary" style={{
               textDecoration: 'none',
-              backgroundColor: '#6366f1',
+              backgroundColor: '#1B3A5C',
               color: 'white',
               padding: '10px 20px',
               borderRadius: '5px',
@@ -710,7 +710,7 @@ borderColor:'grey',
                             href={`/fund-managers/statistique/${id.replace(/ /g, '-')}`}
                             style={{
                               width: '100%',
-                              backgroundColor: '#6366f1', // Background color
+                              backgroundColor: '#1B3A5C', // Background color
 
                               textDecoration: 'none', // Remove underline
                               color: 'white', // Text color
@@ -749,10 +749,10 @@ borderColor:'grey',
                           {/* KPIs - Indicateurs clés */}
                           <div className="row mb-4">
                             <div className="col-md-4">
-                              <div className="card text-center shadow-sm border-0" style={{ borderLeft: '4px solid #6366f1' }}>
+                              <div className="card text-center shadow-sm border-0" style={{ borderLeft: '4px solid #1B3A5C' }}>
                                 <div className="card-body">
                                   <h6 className="text-muted mb-1">Total des fonds</h6>
-                                  <h3 className="fw-bold" style={{ color: '#6366f1' }}>{totalfonds ?? '-'}</h3>
+                                  <h3 className="fw-bold" style={{ color: '#1B3A5C' }}>{totalfonds ?? '-'}</h3>
                                 </div>
                               </div>
                             </div>

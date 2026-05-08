@@ -91,7 +91,7 @@ async function getFonds(id: number) {
 }
 
 const buttonStyle = {
-  backgroundColor: "#3b82f6",
+  backgroundColor: "#1B3A5C",
   color: "white",
   padding: "10px 20px", // Adjust padding to control the button size
   borderRadius: "5px", // Add rounded corners for a consistent look
@@ -714,7 +714,7 @@ export default function Fonds() {
                         </div>
                         <br />
                         <div className="text-center">
-                          <button className="btn btn-main" style={{ backgroundColor: "#3b82f6", color: "white" }} type="submit">
+                          <button className="btn btn-main" style={{ backgroundColor: "#1B3A5C", color: "white" }} type="submit">
                             Enregistrer
                           </button>
                         </div>
@@ -805,7 +805,7 @@ export default function Fonds() {
                         </div>
                         <br />
                         <div className="text-center">
-                          <button className="btn btn-main" style={{ backgroundColor: "#3b82f6", color: "white" }} type="submit">
+                          <button className="btn btn-main" style={{ backgroundColor: "#1B3A5C", color: "white" }} type="submit">
                             Enregistrer
                           </button>
                         </div>

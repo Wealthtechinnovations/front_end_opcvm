@@ -527,7 +527,7 @@ export default function Comparaison() {
           <Modal.Footer>
             <Button variant="secondary" style={{
               textDecoration: 'none',
-              backgroundColor: '#6366f1',
+              backgroundColor: '#1B3A5C',
               color: 'white',
               padding: '10px 20px',
               borderRadius: '5px',
@@ -583,7 +583,7 @@ borderColor:'grey',
                             href={`/pays/fund-managers/${id.replace(/ /g, '-')}`}
                             style={{
                               width: '100%',
-                              backgroundColor: '#6366f1', // Background color
+                              backgroundColor: '#1B3A5C', // Background color
                               textDecoration: 'none', // Remove underline
                               color: 'white', // Text color
                               padding: '10px 20px', // Padding
@@ -685,7 +685,7 @@ borderColor:'grey',
                           />
   </div>*/}
                         <div className=" text-center">
-                          <button style={{ width: '150px', backgroundColor: "#3b82f6", color: "white" }} className="btn btn-main">Rechercher</button>
+                          <button style={{ width: '150px', backgroundColor: "#1B3A5C", color: "white" }} className="btn btn-main">Rechercher</button>
                         </div>
                       </form>
                       {error && <div className=" text-center error-message" style={{ color: "red" }}>{error}</div>}
@@ -713,7 +713,7 @@ borderColor:'grey',
                         <div className="text-center">
                           <button
                             className={`btn btn-main active}`}
-                            style={{ width: '150px', backgroundColor: "#3b82f6", color: "white" }}
+                            style={{ width: '150px', backgroundColor: "#1B3A5C", color: "white" }}
                           // onClick={exportTableToCSV}
                           >
                             Exporter
@@ -763,7 +763,7 @@ borderColor:'grey',
                                     width: '150px',
 
                                     textDecoration: 'none',
-                                    backgroundColor: '#6366f1',
+                                    backgroundColor: '#1B3A5C',
                                     color: 'white',
                                     padding: '10px 20px',
                                     borderRadius: '5px',
@@ -784,7 +784,7 @@ borderColor:'grey',
                                     width: '150px',
 
                                     textDecoration: 'none',
-                                    backgroundColor: '#6366f1',
+                                    backgroundColor: '#1B3A5C',
                                     color: 'white',
                                     padding: '10px 20px',
                                     borderRadius: '5px',

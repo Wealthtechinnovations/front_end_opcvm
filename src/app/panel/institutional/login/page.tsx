@@ -96,7 +96,7 @@ export default function Login() {
           <li><Link className="link-style" href="/comparaison">Comparaison</Link></li>
           <li><Link className="link-style" href="/recherche">Selection OPCVM</Link></li>
           <li>
-            <Link className="link-style" href="/panel/institutional/login" style={{ backgroundColor: "#3b82f6", color: "white" }}>
+            <Link className="link-style" href="/panel/institutional/login" style={{ backgroundColor: "#1B3A5C", color: "white" }}>
               Espace Institutionnel
             </Link>
           </li>
@@ -156,7 +156,7 @@ export default function Login() {
                               type="submit"
                               style={{
                                 textDecoration: 'none',
-                                backgroundColor: '#6366f1',
+                                backgroundColor: '#1B3A5C',
                                 color: 'white',
                                 padding: '10px 20px',
                                 borderRadius: '5px',

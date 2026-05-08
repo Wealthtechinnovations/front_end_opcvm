@@ -26,7 +26,7 @@ interface PageProps {
   };
 }
 const buttonStyle = {
-  backgroundColor: "#3b82f6",
+  backgroundColor: "#1B3A5C",
   color: "white",
   padding: "10px 20px", // Adjust padding to control the button size
   borderRadius: "5px", // Add rounded corners for a consistent look
@@ -105,7 +105,7 @@ export default function Importvl() {
                   </Link>
                 </li>
                 <li className={`dropdown ${isDropdownOpen ? 'open' : ''}`}>
-                  <a href="#" onClick={toggleDropdown} className="dropdown-toggle" data-toggle="dropdown" style={{ backgroundColor: "#3b82f6", color: "white" }}>
+                  <a href="#" onClick={toggleDropdown} className="dropdown-toggle" data-toggle="dropdown" style={{ backgroundColor: "#1B3A5C", color: "white" }}>
                     <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                     <span>Fonds</span>
                   </a>
@@ -239,7 +239,7 @@ export default function Importvl() {
 
                       <button onClick={handleUpload} className="text-right" style={{
                         textDecoration: 'none', // Remove underline
-                        backgroundColor: '#6366f1', // Background color
+                        backgroundColor: '#1B3A5C', // Background color
                         color: 'white', // Text color
                         padding: '10px 20px', // Padding
                         borderRadius: '5px', // Rounded corners

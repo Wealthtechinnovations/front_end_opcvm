@@ -26,7 +26,7 @@ interface Pays {
 
 }
 const buttonStyle = {
-  backgroundColor: "#3b82f6",
+  backgroundColor: "#1B3A5C",
   color: "white",
   padding: "10px 20px", // Adjust padding to control the button size
   borderRadius: "5px", // Add rounded corners for a consistent look
@@ -238,7 +238,7 @@ export default function Profile() {
                     <div className="box-header-actions" style={{ marginTop: '-30px' }}>
                       <Link href={`/panel/management/document/ajout`} style={{
                         textDecoration: 'none',
-                        backgroundColor: '#6366f1',
+                        backgroundColor: '#1B3A5C',
                         color: 'white',
                         padding: '10px 20px',
                         borderRadius: '5px',

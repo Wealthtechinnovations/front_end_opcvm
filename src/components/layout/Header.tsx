@@ -52,11 +52,13 @@ const NavDropdownMenu: React.FC<NavDropdownProps> = ({ label, pathMatch, items }
     <li>
       <Dropdown>
         <Dropdown.Toggle
+          variant="light"
           id={`dropdown-${pathMatch}`}
+          className="nav-dropdown-toggle"
           style={{
-            border: 'none',
+            border: '1px solid #E2E8F0',
             borderRadius: '6px',
-            backgroundColor: isActive ? '#EBF0F5' : 'transparent',
+            backgroundColor: isActive ? '#EBF0F5' : '#FFFFFF',
             color: isActive ? '#1B3A5C' : '#4A5568',
             padding: '8px 14px',
             fontSize: '14px',
@@ -119,6 +121,7 @@ const Header = () => {
       top: 0,
       zIndex: 50,
       boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
     }}>
       {/* Logo */}
       <Link href="/home" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -133,14 +136,12 @@ const Header = () => {
           color: 'white',
           fontWeight: 700,
           fontSize: '15px',
-          fontFamily: 'Inter, sans-serif',
         }}>
           F
         </span>
         <span style={{
           fontSize: '18px',
           fontWeight: 700,
-          fontFamily: 'Inter, sans-serif',
           color: '#1B3A5C',
           letterSpacing: '-0.01em',
         }}>

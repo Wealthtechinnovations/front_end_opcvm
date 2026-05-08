@@ -96,7 +96,7 @@ interface PageProps {
   };
 }
 const buttonStyle = {
-  backgroundColor: "#3b82f6",
+  backgroundColor: "#1B3A5C",
   color: "white",
   padding: "10px 20px", // Adjust padding to control the button size
   borderRadius: "5px", // Add rounded corners for a consistent look
@@ -459,7 +459,7 @@ export default function Fonds() {
                   </Link>
                 </li>
                 <li className={`dropdown ${isDropdownOpen ? 'open' : ''}`}>
-                  <a href="#" onClick={toggleDropdown} className="dropdown-toggle" data-toggle="dropdown" style={{ backgroundColor: "#3b82f6", color: "white" }}>
+                  <a href="#" onClick={toggleDropdown} className="dropdown-toggle" data-toggle="dropdown" style={{ backgroundColor: "#1B3A5C", color: "white" }}>
                     <i data-feather={isDropdownOpen ? "minus-square" : "plus-square"}></i>
                     <span>Fonds</span>
                   </a>
@@ -788,7 +788,7 @@ export default function Fonds() {
                         </div>
                         <br />
                         <div className="text-center">
-                          <button className="btn btn-main" style={{ backgroundColor: "#3b82f6", color: "white" }} type="submit">
+                          <button className="btn btn-main" style={{ backgroundColor: "#1B3A5C", color: "white" }} type="submit">
                             Enregistrer
                           </button>
                         </div>
@@ -879,7 +879,7 @@ export default function Fonds() {
                         </div>
                         <br />
                         <div className="text-center">
-                          <button className="btn btn-main" style={{ backgroundColor: "#3b82f6", color: "white" }} type="submit">
+                          <button className="btn btn-main" style={{ backgroundColor: "#1B3A5C", color: "white" }} type="submit">
                             Enregistrer
                           </button>
                         </div>

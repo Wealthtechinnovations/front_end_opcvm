@@ -39,7 +39,7 @@ async function getfavoris(id: number) {
 }
 
 const buttonStyle = {
-  backgroundColor: "#3b82f6",
+  backgroundColor: "#1B3A5C",
   color: "white",
   padding: "10px 20px", // Adjust padding to control the button size
   borderRadius: "5px", // Add rounded corners for a consistent look
@@ -530,7 +530,7 @@ export default function Fond() {
           <Modal.Footer>
             <Button variant="secondary" style={{
               textDecoration: 'none',
-              backgroundColor: '#6366f1',
+              backgroundColor: '#1B3A5C',
               color: 'white',
               padding: '10px 20px',
               borderRadius: '5px',
@@ -549,7 +549,7 @@ export default function Fond() {
           <Modal.Footer>
             <Button variant="secondary" style={{
               textDecoration: 'none',
-              backgroundColor: '#6366f1',
+              backgroundColor: '#1B3A5C',
               color: 'white',
               padding: '10px 20px',
               borderRadius: '5px',
@@ -593,7 +593,7 @@ export default function Fond() {
                                 key={selectedFund?.value}
                                 style={{
                                   textDecoration: 'none', // Remove underline
-                                  backgroundColor: '#6366f1', // Background color
+                                  backgroundColor: '#1B3A5C', // Background color
                                   color: 'white', // Text color
                                   padding: '10px 20px', // Padding
                                 borderRadius: '5px', // Rounded corners
@@ -776,7 +776,7 @@ borderColor:'grey'
                             style={{
                               width: '135px',
                               textDecoration: 'none', // Remove underline
-                              backgroundColor: '#6366f1', // Background color
+                              backgroundColor: '#1B3A5C', // Background color
                               color: 'white', // Text color
                               padding: '10px 20px', // Padding
                             borderRadius: '5px', // Rounded corners

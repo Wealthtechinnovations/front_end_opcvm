@@ -383,7 +383,7 @@ export default function Vente() {
                     {/*   <div className="text-right">
                       <button style={{
                         textDecoration: 'none', // Remove underline
-                        backgroundColor: '#6366f1', // Background color
+                        backgroundColor: '#1B3A5C', // Background color
                         color: 'white', // Text color
                         padding: '10px 20px', // Padding
                         borderRadius: '5px', // Rounded corners

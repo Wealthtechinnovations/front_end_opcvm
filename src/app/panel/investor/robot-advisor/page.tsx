@@ -115,7 +115,7 @@ export default function RobotAdvisor() {
                   <div className="text-right">
                     <Link
                       className={`btn btn-main active}`}
-                      style={{ backgroundColor: "#3b82f6", color: "white" }}
+                      style={{ backgroundColor: "#1B3A5C", color: "white" }}
                       href={`/panel/investor/robot-advisor/add-simulation`}
                     >
                       Nouvelle simulation

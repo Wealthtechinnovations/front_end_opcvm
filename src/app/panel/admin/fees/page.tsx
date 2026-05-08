@@ -107,7 +107,7 @@ export default function Fonds() {
                     <div className="text-right">
                       <Link href={`/panel/admin/fees/create`} style={{
                         textDecoration: 'none',
-                        backgroundColor: '#6366f1',
+                        backgroundColor: '#1B3A5C',
                         color: 'white',
                         padding: '10px 20px',
                         borderRadius: '5px',
@@ -144,7 +144,7 @@ export default function Fonds() {
                           <td>
                             <Link
                               className="btn btn-main active"
-                              style={{ backgroundColor: "#3b82f6", color: "white", width: "150px" }} // Largeur fixe définie ici
+                              style={{ backgroundColor: "#1B3A5C", color: "white", width: "150px" }} // Largeur fixe définie ici
                               href={{
                                 pathname: '/admin/fees/update',
                                 query: { fondId: item?.fond_id, id: id, fond: item?.fond },

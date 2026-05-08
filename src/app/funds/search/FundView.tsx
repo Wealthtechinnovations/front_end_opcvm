@@ -588,7 +588,7 @@ const getValue = (fund, key) => {
           <Modal.Footer>
             <Button variant="secondary" style={{
               textDecoration: 'none',
-              backgroundColor: '#6366f1',
+              backgroundColor: '#1B3A5C',
               color: 'white',
               padding: '10px 20px',
               borderRadius: '5px',
@@ -669,7 +669,7 @@ const getValue = (fund, key) => {
                           />
   </div>*/}
                         <div className=" text-center">
-                          <button style={{ width: '150px', backgroundColor: "#3b82f6", color: "white" }} className="btn btn-main">Rechercher</button>
+                          <button style={{ width: '150px', backgroundColor: "#1B3A5C", color: "white" }} className="btn btn-main">Rechercher</button>
                         </div>
                       </form>
                       {error && <div className=" text-center error-message" style={{ color: "red" }}>{error}</div>}
@@ -697,7 +697,7 @@ const getValue = (fund, key) => {
                         <div className="text-center">
                           <button
                             className={`btn btn-main active}`}
-                            style={{ width: '150px', backgroundColor: "#3b82f6", color: "white" }}
+                            style={{ width: '150px', backgroundColor: "#1B3A5C", color: "white" }}
                           // onClick={exportTableToCSV}
                           >
                             Exporter
@@ -745,7 +745,7 @@ const getValue = (fund, key) => {
                                     width: '150px',
 
                                     textDecoration: 'none',
-                                    backgroundColor: '#6366f1',
+                                    backgroundColor: '#1B3A5C',
                                     color: 'white',
                                     padding: '10px 20px',
                                     borderRadius: '5px',
@@ -766,7 +766,7 @@ const getValue = (fund, key) => {
                                     width: '150px',
 
                                     textDecoration: 'none',
-                                    backgroundColor: '#6366f1',
+                                    backgroundColor: '#1B3A5C',
                                     color: 'white',
                                     padding: '10px 20px',
                                     borderRadius: '5px',

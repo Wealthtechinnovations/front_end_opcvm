@@ -522,7 +522,7 @@ export default function Comparaisonview() {
                     <div>
                       <Button
                         className="btn btn-main"
-                        style={{ width: "150px", backgroundColor: "#3b82f6", color: "white" }}
+                        style={{ width: "150px", backgroundColor: "#1B3A5C", color: "white" }}
                         onClick={toggleMenu}
                       >
                         Ajouter un Fonds
@@ -554,7 +554,7 @@ export default function Comparaisonview() {
                                 className="btn btn-main"
                                 style={{
                                   textDecoration: 'none',
-                                  backgroundColor: '#6366f1',
+                                  backgroundColor: '#1B3A5C',
                                   color: 'white',
                                   padding: '10px 20px',
                                   borderRadius: '5px',
@@ -577,63 +577,63 @@ export default function Comparaisonview() {
                       <div className="btn-group" style={{ display: "inline-block" }}>
                         <button
                           className={`btn btn-main ${activeTab === "tabAccueil" ? "active" : ""} `}
-                          style={activeTab === "tabAccueil" ? { width: "150px", backgroundColor: "#3b82f6", color: "white" } : {}}
+                          style={activeTab === "tabAccueil" ? { width: "150px", backgroundColor: "#1B3A5C", color: "white" } : {}}
                           onClick={() => handleTabClick("tabAccueil")}
                         >
                           Accueil
                         </button>
                         <button
                           className={`btn btn-main ${activeTab === "tabPerfCT" ? "active" : ""}`}
-                          style={activeTab === "tabPerfCT" ? { width: "150px", backgroundColor: "#3b82f6", color: "white" } : {}}
+                          style={activeTab === "tabPerfCT" ? { width: "150px", backgroundColor: "#1B3A5C", color: "white" } : {}}
                           onClick={() => handleTabClick("tabPerfCT")}
                         >
                           Perf CT
                         </button>
                         <button
                           className={`btn btn-main ${activeTab === "tabPerfMTLT" ? "active" : ""}`}
-                          style={activeTab === "tabPerfMTLT" ? { width: "150px", backgroundColor: "#3b82f6", color: "white" } : {}}
+                          style={activeTab === "tabPerfMTLT" ? { width: "150px", backgroundColor: "#1B3A5C", color: "white" } : {}}
                           onClick={() => handleTabClick("tabPerfMTLT")}
                         >
                           Perf MT / LT
                         </button>
                         <button
                           className={`btn btn-main ${activeTab === "tabPerfRatios1a" ? "active" : ""}`}
-                          style={activeTab === "tabPerfRatios1a" ? { width: "150px", backgroundColor: "#3b82f6", color: "white" } : {}}
+                          style={activeTab === "tabPerfRatios1a" ? { width: "150px", backgroundColor: "#1B3A5C", color: "white" } : {}}
                           onClick={() => handleTabClick("tabPerfRatios1a")}
                         >
                           Ratios 1A
                         </button>
                         <button
                           className={`btn btn-main ${activeTab === "tabPerfRatios3a" ? "active" : ""}`}
-                          style={activeTab === "tabPerfRatios3a" ? { width: "150px", backgroundColor: "#3b82f6", color: "white" } : {}}
+                          style={activeTab === "tabPerfRatios3a" ? { width: "150px", backgroundColor: "#1B3A5C", color: "white" } : {}}
                           onClick={() => handleTabClick("tabPerfRatios3a")}
                         >
                           Ratios 3A
                         </button>
                         <button
                           className={`btn btn-main ${activeTab === "tabPerfRatios5a" ? "active" : ""}`}
-                          style={activeTab === "tabPerfRatios5a" ? { width: "150px", backgroundColor: "#3b82f6", color: "white" } : {}}
+                          style={activeTab === "tabPerfRatios5a" ? { width: "150px", backgroundColor: "#1B3A5C", color: "white" } : {}}
                           onClick={() => handleTabClick("tabPerfRatios5a")}
                         >
                           Ratios 5A
                         </button>
                         <button
                           className={`btn btn-main ${activeTab === "tabFrais" ? "active" : ""}`}
-                          style={activeTab === "tabFrais" ? { width: "150px", backgroundColor: "#3b82f6", color: "white" } : {}}
+                          style={activeTab === "tabFrais" ? { width: "150px", backgroundColor: "#1B3A5C", color: "white" } : {}}
                           onClick={() => handleTabClick("tabFrais")}
                         >
                           Frais
                         </button>
                         <button
                           className={`btn btn-main ${activeTab === "tabGestion" ? "active" : ""}`}
-                          style={activeTab === "tabGestion" ? { width: "150px", backgroundColor: "#3b82f6", color: "white" } : {}}
+                          style={activeTab === "tabGestion" ? { width: "150px", backgroundColor: "#1B3A5C", color: "white" } : {}}
                           onClick={() => handleTabClick("tabGestion")}
                         >
                           Gestion
                         </button>
                         {/*                   <button
                             className={`btn btn-main ${activeTab === "tabISR" ? "active" : ""}`}
-                            style={activeTab === "tabISR" ? { backgroundColor: "#3b82f6", color: "white" } : {}}
+                            style={activeTab === "tabISR" ? { backgroundColor: "#1B3A5C", color: "white" } : {}}
                             onClick={() => handleTabClick("tabISR")}
                           >
                             ESG

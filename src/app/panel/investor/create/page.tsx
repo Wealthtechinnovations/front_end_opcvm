@@ -405,7 +405,7 @@ export default function Ajoutportefeuille() {
                             disabled={isSubmitting}
                             style={{
                               textDecoration: 'none',
-                              backgroundColor: isSubmitting ? '#9ca3af' : '#6366f1',
+                              backgroundColor: isSubmitting ? '#9ca3af' : '#1B3A5C',
                               color: 'white',
                               padding: '10px 20px',
                               borderRadius: '5px',

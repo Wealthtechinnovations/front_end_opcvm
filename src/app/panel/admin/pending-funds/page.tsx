@@ -193,7 +193,7 @@ export default function Fonds() {
                           <td>
                             <Link
                               className="btn btn-main active"
-                              style={{ backgroundColor: "#3b82f6", color: "white", width: "150px" }} // Largeur fixe définie ici
+                              style={{ backgroundColor: "#1B3A5C", color: "white", width: "150px" }} // Largeur fixe définie ici
                               href={{
                                 pathname: '/panel/admin/pending-funds/update',
                                 query: { societeconneted: societeconneted, fondId: item?.id },
@@ -203,7 +203,7 @@ export default function Fonds() {
                             </Link> &nbsp;
                             <Link
                               className="btn btn-main active"
-                              style={{ backgroundColor: "#3b82f6", color: "white", width: "150px" }} // Largeur fixe définie ici
+                              style={{ backgroundColor: "#1B3A5C", color: "white", width: "150px" }} // Largeur fixe définie ici
                               href={{
                                 pathname: '/panel/admin/pending-funds/details',
                                 query: { societeconneted: societeconneted, Id: item?.id },

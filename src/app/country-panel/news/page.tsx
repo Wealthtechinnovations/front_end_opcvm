@@ -204,7 +204,7 @@ export default function Pagehome() {
                   </Link>
                 </li>
                 <li>
-                  <Link href={`/country-panel/news`} style={{ backgroundColor: "#3b82f6", color: "white" }} >
+                  <Link href={`/country-panel/news`} style={{ backgroundColor: "#1B3A5C", color: "white" }} >
                     <i data-feather="user"></i>
                     <span>Actualités</span>
                   </Link>
