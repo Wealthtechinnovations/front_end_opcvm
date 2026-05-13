@@ -37,7 +37,6 @@ interface MifidForUser {
 }
 
 
-
 interface PageProps {
   searchParams: {
     selectedfund: any;
@@ -118,74 +117,10 @@ export default function TypeProfil(): JSX.Element {
   // FIN
   const [userConnected, setUserConnected] = useState<number | null>(null);
 
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push('/panel/investor/login');
-      }, 5);
-    }
-  };
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
-  };
-  const [menuOpen, setMenuOpen] = useState(false);
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
-
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/fund-managers/search`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/home`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
   };
   return (
     <>
@@ -208,7 +143,6 @@ export default function TypeProfil(): JSX.Element {
                     <h1 className='text-center'>Votre profil investisseur provisoire </h1>
                   </div>
                 </div>
-
 
 
                 {/* Les cards */}

@@ -77,7 +77,6 @@ async function getPost(id: number) {
 }
 
 
-
 const documentsall = [
   { name: 'Reporting mensuel', type: 'rapport', icon: 'fa-image' },
   { name: 'DIC', type: 'autre', icon: 'fa-video-camera' },
@@ -375,136 +374,12 @@ export default function Fond() {
   var options: any;
 
 
-
-
-
-
-
-
-
-
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push('/panel/investor/login');
-      }, 5);
-    }
-  };
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/fund-managers/search`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/home`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
-
-  const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-  const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-  };
-
-  const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-  };
-  const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/news`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
-  const [isHoveredp, setIsHoveredp] = useState(false);
-
-  const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-  };
-
-  const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-  };
-  const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/pays`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  
-  const [isHoveredc, setIsHoveredc] = useState(false);
-
-  const handleMouseEnterc = () => {
-      setIsHoveredc(true);
-  };
-
-  const handleMouseLeavec = () => {
-      setIsHoveredc(false);
-  };
   return (
 
     <Fragment>
@@ -885,7 +760,6 @@ borderColor:'grey'
                           </div>
 
                         </div>
-
 
 
                         {/*

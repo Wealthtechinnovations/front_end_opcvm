@@ -53,14 +53,6 @@ interface PerformancesState {
 export default function Performance() {
   const params = useParams();
   const [showDescription, setShowDescription] = useState(false);
-  const handleMouseEnter = () => {
-    setShowDescription(true);
-  };
-
-  const handleMouseLeave = () => {
-
-    setShowDescription(false);
-  };
   const selectedValues = Number(params.fondId);
   const [count, setCount] = useState(0);
 
@@ -153,12 +145,6 @@ export default function Performance() {
     }
     fetchData();
   }, []);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
-
-
   const handleSearch = (e: any) => {
     e.preventDefault();
     // Effectuez votre recherche ici si nécessaire
@@ -269,119 +255,7 @@ export default function Performance() {
       Swal.close(); // Close the loading popup in both success and error cases
     }
   };
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push('/panel/investor/login');
-      }, 5);
-    }
-  };
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/fund-managers/search`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/home`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
-
-  const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-  const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-  };
-
-  const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-  };
-  const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/news`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
-  const [isHoveredp, setIsHoveredp] = useState(false);
-
-  const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-  };
-
-  const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-  };
-  const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/pays`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  
-  const [isHoveredc, setIsHoveredc] = useState(false);
-
-  const handleMouseEnterc = () => {
-      setIsHoveredc(true);
-  };
-
-  const handleMouseLeavec = () => {
-      setIsHoveredc(false);
-  };
   return (
-
 
 
     < Fragment >
@@ -706,15 +580,6 @@ borderColor:'grey'
                                       </div>
 
 
-
-
-
-
-
-
-
-
-
                                       {activeTable === 'Glissantes' ? (
                                         <div className="table-responsive">
 
@@ -875,7 +740,6 @@ borderColor:'grey'
                                             className="table text-fade table-bordered table-hover display nowrap margin-top-10 w-p100">
 
 
-
                                             <thead className="table-header">
 
                                               <tr>
@@ -972,8 +836,6 @@ borderColor:'grey'
 
                                   </div>
                                 </div>
-
-
 
 
                               </div>
@@ -1271,8 +1133,6 @@ borderColor:'grey'
                   </div>
                 </div>
               </div >
-
-
 
 
             </div >

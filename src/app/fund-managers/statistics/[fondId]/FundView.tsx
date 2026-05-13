@@ -133,14 +133,6 @@ export default function Fond() {
   const randomPercentage1 = ((Math.random() * 200) - 100).toFixed(2);
   const randomPercentage2 = ((Math.random() * 200) - 100).toFixed(2);
   const [showDescription, setShowDescription] = useState(false);
-  const handleMouseEnter = () => {
-    setShowDescription(true);
-  };
-
-  const handleMouseLeave = () => {
-
-    setShowDescription(false);
-  };
   const [selectedFund, setSelectedFund] = useState<Option1>();
   const [fundsOptions, setFundsOptions] = useState([]);
   const [base100Data, setBase100Data] = useState<MyDataType[]>([]); // Nouvel état pour les données en base 100
@@ -188,7 +180,6 @@ export default function Fond() {
 
     fetchData();
   }, []);
-
 
 
   const [show, setShow] = useState(false);
@@ -246,12 +237,7 @@ export default function Fond() {
     fetchData();
 
 
-
   }, [id]);
-
-
-
-
 
 
   const handleSearch = (e: any) => {
@@ -264,23 +250,6 @@ export default function Fond() {
     setSelectedFund(selectedOption);
   };
 
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push('/panel/management/login');
-      }, 5);
-    }
-  };
   const [error, setError] = useState(""); // État pour stocker le message d'erreur
 
 
@@ -288,11 +257,6 @@ export default function Fond() {
 
   const handleExportClick = () => {
     setShow(true);
-  };
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
   };
   const [isOpen, setIsOpen] = useState(false);
 
@@ -504,98 +468,6 @@ export default function Fond() {
 
   };
 
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/fund-managers/search`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/home`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
-  const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-  const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-  };
-
-  const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-  };
-  const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/news`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
-  const [isHoveredp, setIsHoveredp] = useState(false);
-
-  const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-  };
-
-  const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-  };
-  const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/pays`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHoveredc, setIsHoveredc] = useState(false);
-
-  const handleMouseEnterc = () => {
-      setIsHoveredc(true);
-  };
-
-  const handleMouseLeavec = () => {
-      setIsHoveredc(false);
-  };
-  
   // JSON-LD pour Schema.org
   const jsonLd = {
     "@context": "https://schema.org",
@@ -662,7 +534,6 @@ export default function Fond() {
                     </div>
                     <hr />
                     <div className="d-md-flex justify-content-between align-items-center">
-
 
 
                     </div>
@@ -848,9 +719,6 @@ borderColor:'grey',
 
 
               </div>
-
-
-
 
 
             </div>

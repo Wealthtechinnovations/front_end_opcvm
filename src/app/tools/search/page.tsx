@@ -950,7 +950,6 @@ export default function Recherche() {
   useEffect(() => {
 
 
-
     // Appel à l'API lors du premier rendu du composant
     async function fetchData() {
       try {
@@ -1014,117 +1013,7 @@ export default function Recherche() {
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentFunds = funds?.data?.funds.slice(indexOfFirstItem, indexOfLastItem);
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const toggleMenu1 = () => {
-    setMenuOpen(!menuOpen);
-  };
-
-
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push('/panel/management/login');
-      }, 5);
-    }
-  };
-
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/fund-managers/search`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/home`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
-
-  const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-  const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-  };
-
-  const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-  };
-  const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/news`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
-  const [isHoveredp, setIsHoveredp] = useState(false);
-
-  const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-  };
-
-  const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-  };
-  const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/pays`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
   return (
-
 
 
     < Fragment >
@@ -1171,8 +1060,6 @@ export default function Recherche() {
 
 
                     <div className="row">
-
-
 
 
                       <form onSubmit={handleFormSubmit}>
@@ -1258,7 +1145,6 @@ export default function Recherche() {
                         {isOpen && (
 
 
-
                           <div className="container">
 
                             {/* Section pour les critères Perf annu */}
@@ -1325,7 +1211,6 @@ export default function Recherche() {
                                         </div>
                                       </div>
                                     </div>
-
 
 
                                   </div>
@@ -1750,7 +1635,6 @@ export default function Recherche() {
                                           </div>
                                         </div>
                                       </div>
-
 
 
                                     </div>
@@ -2590,7 +2474,6 @@ export default function Recherche() {
                                       </div>
 
 
-
                                     </div>
                                   </div>
                                   <div className="col-6">
@@ -2630,8 +2513,6 @@ export default function Recherche() {
                                       </div>
 
 
-
-
                                     </div>
                                   </div>
                                 </div>
@@ -2639,11 +2520,7 @@ export default function Recherche() {
                             </fieldset>
 
 
-
-
-
                           </div>
-
 
 
                         )}
@@ -3196,10 +3073,7 @@ export default function Recherche() {
                 </div>
 
 
-
               </div>
-
-
 
 
             </div>

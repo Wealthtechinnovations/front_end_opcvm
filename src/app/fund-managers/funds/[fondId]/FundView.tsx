@@ -131,9 +131,6 @@ const optionsCategorie = [
   { value: "Autres", label: 'Autres' },
 
 
-
-
-
   // Ajoutez plus d'options au besoin
 ];
 interface FormData {
@@ -153,14 +150,6 @@ export default function Fond() {
   const [funds, setFunds] = useState<Funds | null>(null);
 
   const [showDescription, setShowDescription] = useState(false);
-  const handleMouseEnter = () => {
-    setShowDescription(true);
-  };
-
-  const handleMouseLeave = () => {
-
-    setShowDescription(false);
-  };
   const [selectedOptions1, setSelectedOptions1] = useState<SingleValue<Option1> | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<Option[]>([]);
   const [fundsOptions, setFundsOptions] = useState([]);
@@ -211,7 +200,6 @@ export default function Fond() {
   }, []);
 
 
-
   const [show, setShow] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -221,7 +209,6 @@ export default function Fond() {
   const handleClosePopup = () => setShowPopup(false);
 
   const handleClose = () => setShow(false);
-
 
 
   var options: any;
@@ -252,7 +239,6 @@ export default function Fond() {
         setFundsOptions(mappedOptions);
 
 
-
         const response = await fetch(`${urlconstant}/api/listeproduitsociete/${id}`, {
           method: 'POST',
           headers: {
@@ -278,7 +264,6 @@ export default function Fond() {
       }
     }
     fetchData();
-
 
 
   }, [id]);
@@ -315,7 +300,6 @@ export default function Fond() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, settotalPages] = useState(1);
-
 
 
   const getSortClasses = (key: string) => {
@@ -397,23 +381,6 @@ export default function Fond() {
   };
 
 
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push('/panel/management/login');
-      }, 5);
-    }
-  };
   const [error, setError] = useState(""); // État pour stocker le message d'erreur
 
 
@@ -421,11 +388,6 @@ export default function Fond() {
 
   const handleExportClick = () => {
     setShow(true);
-  };
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
   };
   const [isOpen, setIsOpen] = useState(false);
 
@@ -579,98 +541,6 @@ export default function Fond() {
     }
   };
 
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/fund-managers/search`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/home`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
-  const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-  const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-  };
-
-  const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-  };
-  const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/news`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
-  const [isHoveredp, setIsHoveredp] = useState(false);
-
-  const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-  };
-
-  const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-  };
-  const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/pays`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHoveredc, setIsHoveredc] = useState(false);
-
-  const handleMouseEnterc = () => {
-      setIsHoveredc(true);
-  };
-
-  const handleMouseLeavec = () => {
-      setIsHoveredc(false);
-  };
-  
   // JSON-LD pour Schema.org
   const jsonLd = {
     "@context": "https://schema.org",
@@ -738,7 +608,6 @@ export default function Fond() {
                     <div className="d-md-flex justify-content-between align-items-center">
 
 
-
                     </div>
                     <div className="row">
 
@@ -803,8 +672,6 @@ borderColor:'grey',
                   </div>
                 </div>
                 <div className="row">
-
-
 
 
                   <form onSubmit={handleFormSubmit}>
@@ -1366,9 +1233,6 @@ borderColor:'grey',
 
 
               </div>
-
-
-
 
 
             </div>

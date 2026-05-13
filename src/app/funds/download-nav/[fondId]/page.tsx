@@ -184,7 +184,6 @@ interface Classement {
       rank5Anstotal: any;
 
 
-
     };
     classementType2: {
       rank3Mois: any;
@@ -200,7 +199,6 @@ interface Classement {
       rank3Anstotal: any;
       rank5Ans: any;
       rank5Anstotal: any;
-
 
 
     }
@@ -368,7 +366,6 @@ export default function Fond() {
         const data10 = await getfavoris(id)
 
 
-
         if (data10.success == true) {
           setIsFavorite(true)
         }
@@ -380,7 +377,6 @@ export default function Fond() {
           label: funds.label, // Replace with the actual property name
           // Replace with the actual property name
         }));
-
 
 
         setFundsOptions(mappedOptions); // Mettre à jour l'état avec les données récupérées
@@ -395,10 +391,7 @@ export default function Fond() {
     fetchData();
 
 
-
   }, [selectedPeriod, id]);
-
-
 
 
   const handleSearch = (e: any) => {
@@ -411,23 +404,6 @@ export default function Fond() {
     setSelectedFund(selectedOption);
   };
 
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push('/panel/investor/login');
-      }, 5);
-    }
-  };
   // Dynamically set quartile color
   const handleExport1 = async () => {
     try {
@@ -525,111 +501,12 @@ export default function Fond() {
       availableDate.getFullYear() === date.getFullYear()
     );
   };
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/fund-managers/search`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/home`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
-
-  const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-  const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-  };
-
-  const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-  };
-  const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/news`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
-  const [isHoveredp, setIsHoveredp] = useState(false);
-
-  const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-  };
-
-  const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-  };
-  const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/pays`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  
-  const [isHoveredc, setIsHoveredc] = useState(false);
-
-  const handleMouseEnterc = () => {
-      setIsHoveredc(true);
-  };
-
-  const handleMouseLeavec = () => {
-      setIsHoveredc(false);
-  };
   return (
 
     <Fragment>

@@ -322,115 +322,7 @@ export default function Comparaisonview() {
     fetchData();
   }, [filterStartDate, filterEndDate]);
 
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const toggleMenu1 = () => {
-    setMenuOpen(!menuOpen);
-  };
-
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/fund-managers/search`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push('/panel/investor/login');
-      }, 5);
-    }
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/home`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
-
-  const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-  const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-  };
-
-  const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-  };
-  const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/news`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
-  const [isHoveredp, setIsHoveredp] = useState(false);
-
-  const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-  };
-
-  const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-  };
-  const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/pays`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
   return (
-
 
 
     < Fragment >
@@ -472,8 +364,6 @@ export default function Comparaisonview() {
 
                     </div>
                     <hr />
-
-
 
 
                     {/*<div>
@@ -874,8 +764,6 @@ export default function Comparaisonview() {
                                       <th className="text-right" style={{ height: '35px' }}>Rachat</th>
 
 
-
-
                                     </tr>
                                   </thead>
 
@@ -911,8 +799,6 @@ export default function Comparaisonview() {
                                         <th className="text-right" style={{ height: '35px' }}>Type</th>
                                         <th className="text-right" style={{ height: '35px' }}>Categorie</th>
                                         <th className="text-right" style={{ height: '35px' }}>Code ISIN</th>
-
-
 
 
                                       </tr>
@@ -951,7 +837,6 @@ export default function Comparaisonview() {
                                           <th className="text-right">Sortino</th>
                                           <th className="text-right">Ratio info</th>
                                           <th className="text-right">Date</th>
-
 
 
                                         </tr>
@@ -995,7 +880,6 @@ export default function Comparaisonview() {
 
 
                 </div>
-
 
 
               </div>
@@ -1051,8 +935,6 @@ export default function Comparaisonview() {
                 </div>
               </div>
             </div>
-
-
 
 
           </section>

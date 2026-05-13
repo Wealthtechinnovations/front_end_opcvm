@@ -66,7 +66,6 @@ export default function Logins() {
   const [passwordValid, setPasswordValid] = useState(true);
 
 
-
   const [menuOpen, setMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -103,47 +102,10 @@ export default function Logins() {
 
 
   };
-  const handleLinkquestionnaire = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/funds/questionnaire`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
   const [isHovered, setIsHovered] = useState(false);
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-  };
-
-  const [isHoveredq, setIsHoveredq] = useState(false);
-
-  const handleMouseEnterq = () => {
-    setIsHoveredq(true);
-  };
-
-  const handleMouseLeaveq = () => {
-    setIsHoveredq(false);
-  };
 
   const [isHovereda, setIsHovereda] = useState(false);
 
-  const handleMouseEntera = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavea = () => {
-    setIsHovereda(false);
-  };
   const handleLinkactualite = () => {
 
 
@@ -207,8 +169,6 @@ export default function Logins() {
   };
 
 
-
-
   const handleMouseEntersa = () => {
     setIsHovereda(true);
   };
@@ -247,7 +207,6 @@ export default function Logins() {
   };
 
   return (
-
 
 
     < Fragment >
@@ -375,7 +334,6 @@ export default function Logins() {
               </Dropdown.Menu>
             </Dropdown>
           </li>
-
 
 
           <li style={{ height: '40px' }}>

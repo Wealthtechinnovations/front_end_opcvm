@@ -43,9 +43,6 @@ const optionsCategorie = [
   { value: "Autres", label: 'Autres' },
 
 
-
-
-
   // Ajoutez plus d'options au besoin
 ];
 
@@ -227,7 +224,6 @@ export default function Comparaison() {
   };
 
 
-
   const [activeTab, setActiveTab] = useState("tabAccueil");
 
   const handleTabClick = (tabName: any) => {
@@ -281,7 +277,6 @@ export default function Comparaison() {
     }
   };
   useEffect(() => {
-
 
 
     // Appel à l'API lors du premier rendu du composant
@@ -390,7 +385,6 @@ export default function Comparaison() {
       });
 
 
-
       // Mettre à jour sortedFunds avec la version triée
       setSortedFunds({ data: { funds: filteredFunds } });
       setFunds({ data: { funds: filteredFunds } });
@@ -444,118 +438,10 @@ const getValue = (fund, key) => {
   }
   return value;
 };*/
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
   const router = useRouter();
 
 
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push('/panel/management/login');
-      }, 5);
-    }
-  };
-
-
-
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/fund-managers/search`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/home`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
-  const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-  const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-  };
-
-  const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-  };
-  const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/news`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
-  const [isHoveredp, setIsHoveredp] = useState(false);
-
-  const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-  };
-
-  const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-  };
-  const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/pays`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
   return (
-
 
 
     < Fragment >
@@ -602,8 +488,6 @@ const getValue = (fund, key) => {
 
 
                     <div className="row">
-
-
 
 
                       <form onSubmit={handleFormSubmit}>
@@ -1203,10 +1087,7 @@ const getValue = (fund, key) => {
                 </div>
 
 
-
               </div>
-
-
 
 
             </div>

@@ -182,7 +182,6 @@ interface Classement {
       rank5Anstotal: any;
 
 
-
     };
     classementType2: {
       rank3Mois: any;
@@ -198,7 +197,6 @@ interface Classement {
       rank3Anstotal: any;
       rank5Ans: any;
       rank5Anstotal: any;
-
 
 
     }
@@ -358,7 +356,6 @@ export default function Fond() {
         const data10 = await getfavoris(id)
 
 
-
         if (data10.success == true) {
           setIsFavorite(true)
         }
@@ -459,7 +456,6 @@ export default function Fond() {
     fetchData();
 
 
-
   }, [selectedPeriod, id]);
   const determineClasseSRRI = (volatilite: any) => {
     // Supprimez la classe "indic-srri-selected" de tous les éléments "indic-srri"
@@ -519,14 +515,6 @@ export default function Fond() {
   const classeSRRI = determineClasseSRRI(isNaN(volatility) ? 0 : volatility.toFixed(2));
 
 
-
-
-
-
-
-
-
-
   let xAxisCategories: any;
   let xAxisType = 'category';
 
@@ -573,23 +561,6 @@ export default function Fond() {
     setSelectedFund(selectedOption);
   };
 
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/investor/dashboard`;
-
-        router.push('/panel/investor/login');
-      }, 5);
-    }
-  };
   const quartile = Math.ceil(classementlocal?.data?.classementType1.rank5Ans / classementlocal?.data?.classementType1.rank5Anstotal * 4);
   // Define quartile colors
   const quartileColors: {
@@ -699,112 +670,12 @@ export default function Fond() {
       availableDate.getFullYear() === date.getFullYear()
     );
   };
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
 
-  const [isHoveredc, setIsHoveredc] = useState(false);
-
-  const handleMouseEnterc = () => {
-      setIsHoveredc(true);
-  };
-
-  const handleMouseLeavec = () => {
-      setIsHoveredc(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/home`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
-  
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/fund-managers/search`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-
-  
-  const [isHoveredp, setIsHoveredp] = useState(false);
-
-  const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-  };
-
-  const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-  };
-  const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/pays`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
-  const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-  const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-  };
-
-  const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-  };
-  const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/news`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
   return (
 
     <Fragment>
@@ -1688,8 +1559,6 @@ borderColor:'grey'
                       </table>
 
 
-
-
                     </div>
                   </div>
 
@@ -1704,7 +1573,6 @@ borderColor:'grey'
                         </div>
 
                       </div>
-
 
 
                       <table className="table table-sm">
@@ -1955,8 +1823,6 @@ borderColor:'grey'
                           </tr>
                         </tbody>
                       </table>
-
-
 
 
                     </div>
@@ -1975,7 +1841,6 @@ borderColor:'grey'
                       </div>
 
 
-
                       <table className="table table-sm">
                         <thead className="table-header">
                           <tr className="th-no-border">
@@ -2224,7 +2089,6 @@ borderColor:'grey'
                           </tr>
                         </tbody>
                       </table>
-
 
 
                     </div>
@@ -2362,7 +2226,6 @@ borderColor:'grey'
                       </table>
 
 
-
                     </div>
                   </div>
 
@@ -2493,7 +2356,6 @@ borderColor:'grey'
                           </tr>
                         </tbody>
                       </table>
-
 
 
                     </div>
@@ -2628,7 +2490,6 @@ borderColor:'grey'
                       </table>
 
 
-
                     </div>
                   </div>
 
@@ -2761,7 +2622,6 @@ borderColor:'grey'
                       </table>
 
 
-
                     </div>
                   </div>
 
@@ -2843,7 +2703,6 @@ borderColor:'grey'
                           <td>Minimun  investissement <span data-content="Certains fonds investissent dans d'autres fonds plutôt que dans des titres en direct. Dès lors qu'ils sont susceptibles, d'après leur prospectus, d'investir à hauteur d'au moins 50% de leur portefeuille dans d'autres OPCVM, nous les considérons comme des fonds de fonds. Un fonds nourricier ne sera pas considéré comme un fonds de fonds, sauf si son fonds maître est lui-même un fonds de fonds. Les fonds de fonds sont soumis à 2 niveaux de frais de gestion : ceux du fonds lui-même et ceux des fonds dans lesquels il investit." data-helper-explanation="" data-trigger="hover" data-tooltip-isinit="true"></span></td>
                           <td className="text-right highlight"> {post?.data?.minimum_investissement}</td>
                         </tr>
-
 
 
                       </tbody>

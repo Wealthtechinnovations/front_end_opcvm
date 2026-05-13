@@ -52,8 +52,6 @@ const determineClasseSRRI = (volatilite: number) => {
  */
 
 
-
-
 async function getclassement(id: number) {
     try {
         const response = await fetch(`${urlconstant}/api/classementquartilemysql/${id}`, {
@@ -285,8 +283,6 @@ interface Classement {
             ranksortinototal: any;
 
 
-
-
         };
         classementType2: {
             rank3Mois: any;
@@ -302,7 +298,6 @@ interface Classement {
             rank3Anstotal: any;
             rank5Ans: any;
             rank5Anstotal: any;
-
 
 
         }
@@ -333,8 +328,6 @@ interface MyDataType {
 }
 
 
-
-
 /**
  * Composant principal représentant la page d'un fond.
  * @function Fond
@@ -351,15 +344,6 @@ export default function Fond() {
     const randomPercentage1 = ((Math.random() * 200) - 100).toFixed(2);
     const randomPercentage2 = ((Math.random() * 200) - 100).toFixed(2);
     const [showDescription, setShowDescription] = useState(false);
-    const handleMouseEnter = () => {
-        setShowDescription(true);
-    };
-
-    const handleMouseLeave = () => {
-
-        setShowDescription(false);
-    };
-
     const [selectedPeriod, setSelectedPeriod] = useState('1 year'); // Initialize with the default selected period
     const [filteredData, setFilteredData] = useState<Option[]>([]);
     const [post, setPost] = useState<Funds | null>(null);
@@ -646,7 +630,6 @@ export default function Fond() {
         fetchData();
 
 
-
     }, [selectedPeriod, id]);
 
     /*  const determineClasseSRRI = (volatilite: any) => {
@@ -729,14 +712,6 @@ export default function Fond() {
     // const classeSRRI = determineClasseSRRI(isNaN(volatility) ? 0 : volatility.toFixed(2));
 
 
-
-
-
-
-
-
-
-
     let xAxisCategories: any;
     let xAxisType = 'category';
 
@@ -783,23 +758,6 @@ export default function Fond() {
         setSelectedFund(selectedOption);
     };
 
-    const handleLinkClick = () => {
-
-        if (userConnected !== null) {
-            setTimeout(() => {
-                const redirectUrl = `/panel/investor/dashboard`;
-
-                router.push(redirectUrl);
-            }, 5);
-
-        } else {
-            setTimeout(() => {
-                // const redirectUrl = `/panel/investor/dashboard`;
-
-                router.push('/panel/management/login');
-            }, 5);
-        }
-    };
     const quartile = Math.ceil(classementlocal?.data?.classementType1.rank5Ans / classementlocal?.data?.classementType1.rank5Anstotal * 4);
     // Define quartile colors
     const quartileColors: {
@@ -936,11 +894,6 @@ export default function Fond() {
             availableDate.getFullYear() === date.getFullYear()
         );
     };
-    const [menuOpen, setMenuOpen] = useState(false);
-
-    const toggleMenu = () => {
-        setMenuOpen(!menuOpen);
-    };
     const [isOpen, setIsOpen] = useState(false);
 
     const toggleDropdown = () => {
@@ -952,17 +905,6 @@ export default function Fond() {
 
     const slicedPostc = postc?.data?.multipliedValues;
 
-    const handleLinksociete = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/fund-managers/search`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
     useEffect(() => {
         Highcharts.setOptions({
           credits: {
@@ -971,92 +913,11 @@ export default function Fond() {
         });
       }, [id]);
 
-    const [isHovered, setIsHovered] = useState(false);
-    const [isHoveredc, setIsHoveredc] = useState(false);
-
-    const handleMouseEnterc = () => {
-        setIsHoveredc(true);
-    };
-
-    const handleMouseLeavec = () => {
-        setIsHoveredc(false);
-    };
-
-    const handleMouseEnters = () => {
-        setIsHovered(true);
-    };
-
-    const handleMouseLeaves = () => {
-        setIsHovered(false);
-    };
-    const handleLinkaccueil = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/home`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
     const handleLinkcontact = () => {
 
 
         setTimeout(() => {
             const redirectUrl = `/contact`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-
-    const [isHovereda, setIsHovereda] = useState(false);
-
-
-    const handleMouseEntersa = () => {
-        setIsHovereda(true);
-    };
-
-    const handleMouseLeavesa = () => {
-        setIsHovereda(false);
-    };
-    const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-    const handleMouseEnteraa = () => {
-        setIsHoveredaa(true);
-    };
-
-    const handleMouseLeaveaa = () => {
-        setIsHoveredaa(false);
-    };
-    const handleLinkactualite = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/news`;
-
-            router.push(redirectUrl);
-        }, 1);
-
-
-    };
-
-    const [isHoveredp, setIsHoveredp] = useState(false);
-
-    const handleMouseEnterp = () => {
-        setIsHoveredp(true);
-    };
-
-    const handleMouseLeavep = () => {
-        setIsHoveredp(false);
-    };
-    const handleLinkpays = () => {
-
-
-        setTimeout(() => {
-            const redirectUrl = `/pays`;
 
             router.push(redirectUrl);
         }, 1);
@@ -1758,7 +1619,6 @@ export default function Fond() {
                                                     </tr>
 
 
-
                                                     <tr className="white-hover">
                                                         <td colSpan={3} className="p-t-1">
                                                             <strong >Données 3 ans au {post?.data?.lastdatepreviousmonth}</strong>
@@ -2094,8 +1954,6 @@ export default function Fond() {
                                             </table>
 
 
-
-
                                         </div>
                                     </div>
 
@@ -2110,7 +1968,6 @@ export default function Fond() {
                                                 </div>
 
                                             </div>
-
 
 
                                             <table className="table table-sm">
@@ -2363,8 +2220,6 @@ export default function Fond() {
                                             </table>
 
 
-
-
                                         </div>
                                     </div>
 
@@ -2379,7 +2234,6 @@ export default function Fond() {
                                                 </div>
 
                                             </div>
-
 
 
                                             <table className="table table-sm">
@@ -2632,7 +2486,6 @@ export default function Fond() {
                                             </table>
 
 
-
                                         </div>
                                     </div>
 
@@ -2770,7 +2623,6 @@ export default function Fond() {
                                             </table>
 
 
-
                                         </div>
                                     </div>
 
@@ -2901,7 +2753,6 @@ export default function Fond() {
                                                     </tr>
                                                 </tbody>
                                             </table>
-
 
 
                                         </div>
@@ -3038,7 +2889,6 @@ export default function Fond() {
                                             </table>
 
 
-
                                         </div>
                                     </div>
 
@@ -3171,7 +3021,6 @@ export default function Fond() {
                                             </table>
 
 
-
                                         </div>
                                     </div>
 
@@ -3255,7 +3104,6 @@ export default function Fond() {
                                                 </tr>
 
 
-
                                             </tbody>
                                         </table>
 
@@ -3298,7 +3146,6 @@ export default function Fond() {
                                                     </tbody>
                                                 </table>
                                             </div>
-
 
 
                                         </div>
