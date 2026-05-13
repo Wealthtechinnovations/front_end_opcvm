@@ -449,7 +449,7 @@ export default function Pagehome() {
 
     {/* Première carte (Image à gauche) */}
     <div className="card flex-1 shadow-lg border-0 rounded-lg overflow-hidden h-full">
-      <div className="card-body bg-gradient-to-b from-white to-blue-200 text-white p-6 flex items-center justify-center h-full relative">
+      <div className="card-body bg-gradient-to-b from-white to-[#D6E0EF] text-white p-6 flex items-center justify-center h-full relative">
         {/* Image agrandie */}
         <div className="text-center">
           <img
@@ -466,7 +466,7 @@ export default function Pagehome() {
     {/* Deuxième carte (Description à droite) */}
     <div className="card flex-1 shadow-lg border-0 rounded-lg overflow-hidden h-full">
       <div className="card-body bg-white text-dark p-6 flex flex-col justify-center h-full relative">
-        <h4 className="mb-4 text-blue-600">Détails de la Société</h4>
+        <h4 className="mb-4 text-[#1B3A5C]">Détails de la Société</h4>
         <p className="mb-2">
           <strong>Nom :</strong> <span className="ml-2">{managementCompany.nom}</span>
         </p>

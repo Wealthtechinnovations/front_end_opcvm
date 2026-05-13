@@ -183,7 +183,7 @@ export default function Importvl() {
                         <hr className="my-4 border-t-2 border-gray-200" />
 
                         <Link href="/excel-files/FondVlimport.xlsx" passHref>
-                          <Button className="inline-block mb-6 text-blue-500 hover:text-blue-700 font-semibold underline">
+                          <Button className="inline-block mb-6 text-[#1B3A5C] hover:text-[#2A5A8C] font-semibold underline">
                             Télécharger le modèle Excel
                           </Button>
                         </Link>
