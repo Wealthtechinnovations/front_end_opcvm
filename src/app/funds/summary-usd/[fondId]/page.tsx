@@ -1273,7 +1273,7 @@ borderColor:'grey'
                           Valeur liquidative
                         </span><br></br>
                         <div className="vl-box-currencies">
-                          <div className="vl-box-devise-value"> {post?.data?.lastValue.toFixed(2)}  USD</div>
+                          <div className="vl-box-devise-value"> {post?.data?.lastValue != null ? Number(post.data.lastValue).toFixed(2) : '-'}  USD</div>
                         </div><br></br>
                         <span className="vl-box-date">
                           {post?.data?.lastDate}

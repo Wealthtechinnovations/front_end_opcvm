@@ -519,7 +519,7 @@ export default function Fonds() {
                 <div className="row">
                   <div className="col-xl-12 col-lg-12 mb-4">
                     <div className="card text-center shadow-lg border-0 rounded-lg overflow-hidden">
-                      <div className="card-body bg-gradient-to-r from-indigo-500 via-purple-500 to-purple-500 text-white">
+                      <div className="card-body bg-gradient-to-r from-[#1B3A5C] via-[#2A5A8C] to-[#1B3A5C] text-white">
                         <img src="/images/avatar/avatar-13.png" className="bg-light rounded-circle avatar-lg img-thumbnail border-4 border-white mb-3" alt="profile-image" />
                         <h4 className="mb-0 mt-2">Admin</h4>
                         <h2 className="mb-0 mt-2">{funds?.data?.libelle_fond}</h2>

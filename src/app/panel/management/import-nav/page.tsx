@@ -139,7 +139,7 @@ export default function Importvl() {
                   {/* Profile Section */}
                   <div className="col-xl-12 col-lg-12 mb-4">
                     <div className="card text-center shadow-lg border-0 rounded-lg overflow-hidden">
-                      <div className="card-body bg-gradient-to-r from-indigo-500 via-purple-500 to-purple-500 text-white">
+                      <div className="card-body bg-gradient-to-r from-[#1B3A5C] via-[#2A5A8C] to-[#1B3A5C] text-white">
                         <img
                           src="/images/avatar/avatar-13.png"
                           className="bg-light rounded-circle avatar-lg img-thumbnail border-4 border-white mb-3"
@@ -179,7 +179,7 @@ export default function Importvl() {
                     <div className="box p-4 rounded-lg shadow-lg bg-white">
                       <div className="box-body">
                         {/* Heading */}
-                        <h4 className="font-bold text-xl text-indigo-700 mb-4">Importation des données</h4>
+                        <h4 className="font-bold text-xl text-[#1B3A5C] mb-4">Importation des données</h4>
                         <hr className="my-4 border-t-2 border-gray-200" />
 
                         <Link href="/excel-files/FondVlimport.xlsx" passHref>
@@ -214,7 +214,7 @@ export default function Importvl() {
                             className={`w-full py-3 px-5 text-lg font-semibold text-white rounded-lg transition duration-200 ${
                               isUploading || !file
                                 ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-indigo-600 hover:bg-indigo-500'
+                                : 'bg-[#1B3A5C] hover:bg-[#2A5A8C]'
                             }`}
                           >
                             {isUploading ? 'Importation en cours...' : 'Enregistrer'}
