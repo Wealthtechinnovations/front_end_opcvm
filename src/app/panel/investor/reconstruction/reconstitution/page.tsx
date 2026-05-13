@@ -107,7 +107,10 @@ export default function Reconstitution() {
         setSelectedOptions(mappedOptions);
         let selectedFundsArray: any[] = [];
         try {
-          const parsed = JSON.parse(selectedfunds);
+          let parsed = JSON.parse(selectedfunds);
+          if (typeof parsed === 'string') {
+            try { parsed = JSON.parse(parsed); } catch {}
+          }
           selectedFundsArray = Array.isArray(parsed) ? parsed : [parsed];
         } catch {
           selectedFundsArray = selectedfunds.split(',').filter(Boolean);

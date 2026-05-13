@@ -61,16 +61,31 @@ export default function Home() {
     });
   };
 
+  const toJsonArrayString = (val: any): string => {
+    if (!val) return '[]';
+    if (Array.isArray(val)) return JSON.stringify(val);
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) return val;
+        return JSON.stringify([parsed]);
+      } catch {
+        return JSON.stringify(val.split(',').filter(Boolean));
+      }
+    }
+    return JSON.stringify([val]);
+  };
+
   const handleLinkClick = (item: any) => {
-    const funds = encodeURIComponent(JSON.stringify(item?.funds || []));
-    const fundids = encodeURIComponent(JSON.stringify(item?.fundids || []));
+    const funds = encodeURIComponent(toJsonArrayString(item?.funds));
+    const fundids = encodeURIComponent(toJsonArrayString(item?.fundids));
     const href = `/panel/investor/reconstruction/reconstitution?selectedValuename=${funds}&selectedfund=${fundids}&portefeuille=${item.id}`;
     router.push(href);
   };
 
   const handleLinkClickrobot = (item: any) => {
-    const funds = encodeURIComponent(JSON.stringify(item?.funds || []));
-    const fundids = encodeURIComponent(JSON.stringify(item?.fundids || []));
+    const funds = encodeURIComponent(toJsonArrayString(item?.funds));
+    const fundids = encodeURIComponent(toJsonArrayString(item?.fundids));
     const href = `/panel/investor/robot-advisor/robot-portfolio?selectedValuename=${funds}&selectedfund=${fundids}&portefeuille=${item.id}`;
     router.push(href);
   };
@@ -327,7 +342,7 @@ export default function Home() {
                                 <Link
                                   href={{
                                     pathname: '/panel/investor/selected-funds',
-                                    query: { id: id, selectedValuename: JSON.stringify(item?.funds || []), selectedfund: JSON.stringify(item?.fundids || []), portefeuille: item.id },
+                                    query: { id: id, selectedValuename: toJsonArrayString(item?.funds), selectedfund: toJsonArrayString(item?.fundids), portefeuille: item.id },
                                   }}
                                 >
                                   <button className="select-funds-button" style={{
@@ -357,7 +372,7 @@ export default function Home() {
                                         Reconstitution
                                       </button>
                                       <Link
-                                        href={`/panel/investor/reconstruction?selectedValuename=${encodeURIComponent(JSON.stringify(item?.funds || []))}&selectedfund=${encodeURIComponent(JSON.stringify(item?.fundids || []))}&portefeuille=${item.id}`}
+                                        href={`/panel/investor/reconstruction?selectedValuename=${encodeURIComponent(toJsonArrayString(item?.funds))}&selectedfund=${encodeURIComponent(toJsonArrayString(item?.fundids))}&portefeuille=${item.id}`}
                                       >
                                         <button className="select-funds-button" style={{
                                           width: '150px',
@@ -365,7 +380,7 @@ export default function Home() {
                                         }}>Voir le portefeuille</button>
                                       </Link>
                                       <Link
-                                        href={`/panel/investor/reconstruction/transaction?selectedfund=${encodeURIComponent(JSON.stringify(item?.fundids || []))}&portefeuille=${item.id}`}
+                                        href={`/panel/investor/reconstruction/transaction?selectedfund=${encodeURIComponent(toJsonArrayString(item?.fundids))}&portefeuille=${item.id}`}
                                       >
                                         <button className="select-funds-button" style={{
                                           width: '150px',

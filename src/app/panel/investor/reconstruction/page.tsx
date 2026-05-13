@@ -236,20 +236,19 @@ export default function PorteFeuile() {
   const selectedValuenameRaw = searchParams.get('selectedValuename');
 
   // Safe parse: handle JSON arrays, comma-separated strings, and null
-  const selectedfunds = (() => {
-    if (!selectedfundsRaw) return '';
+  const safeParseToCSV = (raw: string | null): string => {
+    if (!raw) return '';
     try {
-      const parsed = JSON.parse(selectedfundsRaw);
-      return Array.isArray(parsed) ? parsed.join(',') : selectedfundsRaw;
-    } catch { return selectedfundsRaw; }
-  })();
-  const selectedValuename = (() => {
-    if (!selectedValuenameRaw) return '';
-    try {
-      const parsed = JSON.parse(selectedValuenameRaw);
-      return Array.isArray(parsed) ? parsed.join(',') : selectedValuenameRaw;
-    } catch { return selectedValuenameRaw; }
-  })();
+      let parsed = JSON.parse(raw);
+      if (typeof parsed === 'string') {
+        try { parsed = JSON.parse(parsed); } catch {}
+      }
+      if (Array.isArray(parsed)) return parsed.join(',');
+      return String(parsed);
+    } catch { return raw; }
+  };
+  const selectedfunds = safeParseToCSV(selectedfundsRaw);
+  const selectedValuename = safeParseToCSV(selectedValuenameRaw);
   const id = useUserId();
 
 

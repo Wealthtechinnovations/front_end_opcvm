@@ -149,8 +149,11 @@ export default function Transactions() {
   const selectedfundsRaw = searchParams.get('selectedfund');
   const selectedfunds = (() => {
     if (!selectedfundsRaw) return '';
-    try { const p = JSON.parse(selectedfundsRaw); return Array.isArray(p) ? p.join(',') : selectedfundsRaw; }
-    catch { return selectedfundsRaw; }
+    try {
+      let p = JSON.parse(selectedfundsRaw);
+      if (typeof p === 'string') { try { p = JSON.parse(p); } catch {} }
+      return Array.isArray(p) ? p.join(',') : selectedfundsRaw;
+    } catch { return selectedfundsRaw; }
   })();
   const selectedportfeuille = searchParams.get('portefeuille');
   const selectedValuename = searchParams.get('selectedValuename') || '';

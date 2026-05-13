@@ -147,21 +147,19 @@ export default function Fondselected() {
   const selectedportfeuille = searchParams.get('portefeuille');
   const selectedValuenameRaw = searchParams.get('selectedValuename');
 
-  // Safe parse: handle JSON arrays, comma-separated strings, and null
-  const selectedfunds = (() => {
-    if (!selectedfundsRaw) return '';
+  const safeParseToCSV = (raw: string | null): string => {
+    if (!raw) return '';
     try {
-      const parsed = JSON.parse(selectedfundsRaw);
-      return Array.isArray(parsed) ? parsed.join(',') : selectedfundsRaw;
-    } catch { return selectedfundsRaw; }
-  })();
-  const selectedValuename = (() => {
-    if (!selectedValuenameRaw) return '';
-    try {
-      const parsed = JSON.parse(selectedValuenameRaw);
-      return Array.isArray(parsed) ? parsed.join(',') : selectedValuenameRaw;
-    } catch { return selectedValuenameRaw; }
-  })();
+      let parsed = JSON.parse(raw);
+      if (typeof parsed === 'string') {
+        try { parsed = JSON.parse(parsed); } catch {}
+      }
+      if (Array.isArray(parsed)) return parsed.join(',');
+      return String(parsed);
+    } catch { return raw; }
+  };
+  const selectedfunds = safeParseToCSV(selectedfundsRaw);
+  const selectedValuename = safeParseToCSV(selectedValuenameRaw);
   const [optionsPays, setOptionsPays] = useState([]);
   const [selectedPays, setSelectedPays] = useState<Pays | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
@@ -255,8 +253,8 @@ export default function Fondselected() {
         const data = await getPortefeuille(selectedportfeuille);
         setPortefeuille(data);
         let minDate, maxDate;
-        if (data?.data.portefeuille.portefeuilletype == 'Robot advisor') {
-          switch (data?.data?.portefeuille.horizon) {
+        if (data?.data?.portefeuille?.portefeuilletype == 'Robot advisor') {
+          switch (data?.data?.portefeuille?.horizon) {
             case "MOINS D UN AN":
               maxDate = new Date();
               minDate = new Date(maxDate);
@@ -316,11 +314,11 @@ export default function Fondselected() {
           const preselectedOptions = mappedOptions.filter((option: { label: any; }) => selectedValuename.includes(option.label));
           setSelectedOptions(preselectedOptions);
         } else {
-          setcategories(data?.data.portefeuille.categorie.replace(/[^0-9A-Za-z\s,]+/g, '').split(','));
-          setunivers(data?.data.portefeuille.univers);
-          setuniverssous(data?.data.portefeuille.universsous);
-          const cat = data?.data.portefeuille.categorie.replace(/[^0-9A-Za-z\s,]+/g, '').split(',');
-          const data1 = await getlastvl2(cat, data?.data.portefeuille.univers, data?.data.portefeuille.universsous);
+          setcategories(data?.data?.portefeuille?.categorie?.replace(/[^0-9A-Za-z\s,]+/g, '').split(',') || []);
+          setunivers(data?.data?.portefeuille?.univers);
+          setuniverssous(data?.data?.portefeuille?.universsous);
+          const cat = data?.data?.portefeuille?.categorie?.replace(/[^0-9A-Za-z\s,]+/g, '').split(',') || [];
+          const data1 = await getlastvl2(cat, data?.data?.portefeuille?.univers, data?.data?.portefeuille?.universsous);
           const mappedOptions = data1?.data.fundsByCategorie.map((funds: any) => ({
             value: funds.value,
             label: funds.label,
