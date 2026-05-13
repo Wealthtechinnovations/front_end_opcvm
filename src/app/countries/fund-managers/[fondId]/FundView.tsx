@@ -492,7 +492,7 @@ borderColor:'grey',
                         </li>
                         <li style={{ margin: '0', padding: '0', flex: '1' }}>
                           <Link
-                            href={`/pays/statistique/${id.replace(/ /g, '-')}`}
+                            href={`/countries/statistique/${id.replace(/ /g, '-')}`}
                             style={{
                               width: '100%',
                               backgroundColor: 'grey', // Background color

@@ -11,12 +11,12 @@ export async function generateMetadata({ params }: { params: { fondId: string } 
         title: `Statistiques OPCVM ${pays} | Fundafrique`,
         description: `Statistiques détaillées des OPCVM au ${pays} : répartition par classe d'actifs, encours et performances sur la place financière ${nomdelabourse}.`,
         alternates: {
-            canonical: `${urlsite}/pays/statistique/${params.fondId}`,
+            canonical: `${urlsite}/countries/statistique/${params.fondId}`,
         },
         openGraph: {
             title: `Statistiques OPCVM ${pays} | Fundafrique`,
             description: `Analyses statistiques des OPCVM du ${pays}.`,
-            url: `${urlsite}/pays/statistique/${params.fondId}`,
+            url: `${urlsite}/countries/statistique/${params.fondId}`,
             type: 'website',
         },
     };
