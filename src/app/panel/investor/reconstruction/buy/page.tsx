@@ -111,7 +111,12 @@ export default function Achat() {
   };
   const allfund = searchParams.get('allfund');
   const devise = searchParams.get('devise') || 'MAD';
-  const selectedfunds = searchParams.get('selectedfund');
+  const selectedfundsRaw = searchParams.get('selectedfund');
+  const selectedfunds = (() => {
+    if (!selectedfundsRaw) return '';
+    try { const p = JSON.parse(selectedfundsRaw); return Array.isArray(p) ? p.join(',') : selectedfundsRaw; }
+    catch { return selectedfundsRaw; }
+  })();
   const selectedportfeuille = searchParams.get('portefeuille');
   const router = useRouter();
   const [transactionData, settransactioData] = useState<Transaction[]>([]);
@@ -233,7 +238,9 @@ export default function Achat() {
           // Replace with the actual property name
         }));
         setSelectedOptions(mappedOptions);
-        const selectedFundsArray = JSON.parse(selectedfunds);
+        let selectedFundsArray: any[] = [];
+        try { const p = JSON.parse(selectedfunds); selectedFundsArray = Array.isArray(p) ? p : [p]; }
+        catch { selectedFundsArray = selectedfunds.split(',').filter(Boolean); }
         setSelectedFunds(selectedFundsArray);
         const data3 = await getdateavailable(selectedfunds);
         setAvailableDates(data3.data);

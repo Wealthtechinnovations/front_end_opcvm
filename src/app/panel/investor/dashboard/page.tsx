@@ -62,16 +62,16 @@ export default function Home() {
   };
 
   const handleLinkClick = (item: any) => {
-    const href = `/panel/investor/reconstruction/reconstitution?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
-
-    // Use the router.push method to navigate
+    const funds = encodeURIComponent(JSON.stringify(item?.funds || []));
+    const fundids = encodeURIComponent(JSON.stringify(item?.fundids || []));
+    const href = `/panel/investor/reconstruction/reconstitution?selectedValuename=${funds}&selectedfund=${fundids}&portefeuille=${item.id}`;
     router.push(href);
   };
 
   const handleLinkClickrobot = (item: any) => {
-    const href = `/panel/investor/robot-advisor/robot-portfolio?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
-
-    // Use the router.push method to navigate
+    const funds = encodeURIComponent(JSON.stringify(item?.funds || []));
+    const fundids = encodeURIComponent(JSON.stringify(item?.fundids || []));
+    const href = `/panel/investor/robot-advisor/robot-portfolio?selectedValuename=${funds}&selectedfund=${fundids}&portefeuille=${item.id}`;
     router.push(href);
   };
 
@@ -327,7 +327,7 @@ export default function Home() {
                                 <Link
                                   href={{
                                     pathname: '/panel/investor/selected-funds',
-                                    query: { id: id, selectedValuename: item?.funds, selectedfund: item?.fundids, portefeuille: item.id },
+                                    query: { id: id, selectedValuename: JSON.stringify(item?.funds || []), selectedfund: JSON.stringify(item?.fundids || []), portefeuille: item.id },
                                   }}
                                 >
                                   <button className="select-funds-button" style={{
@@ -357,7 +357,7 @@ export default function Home() {
                                         Reconstitution
                                       </button>
                                       <Link
-                                        href={`/panel/investor/reconstruction?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`}
+                                        href={`/panel/investor/reconstruction?selectedValuename=${encodeURIComponent(JSON.stringify(item?.funds || []))}&selectedfund=${encodeURIComponent(JSON.stringify(item?.fundids || []))}&portefeuille=${item.id}`}
                                       >
                                         <button className="select-funds-button" style={{
                                           width: '150px',
@@ -365,7 +365,7 @@ export default function Home() {
                                         }}>Voir le portefeuille</button>
                                       </Link>
                                       <Link
-                                        href={`/panel/investor/reconstruction/transaction?selectedfund=${item?.fundids}&portefeuille=${item.id}`}
+                                        href={`/panel/investor/reconstruction/transaction?selectedfund=${encodeURIComponent(JSON.stringify(item?.fundids || []))}&portefeuille=${item.id}`}
                                       >
                                         <button className="select-funds-button" style={{
                                           width: '150px',

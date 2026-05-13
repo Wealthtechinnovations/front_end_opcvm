@@ -228,9 +228,14 @@ interface MyDataType {
 export default function Transaction() {
   const searchParams = useSearchParams();
   const id = useUserId();
-  const selectedfunds = searchParams.get('selectedfund');
+  const selectedfundsRaw = searchParams.get('selectedfund');
+  const selectedfunds = (() => {
+    if (!selectedfundsRaw) return '';
+    try { const p = JSON.parse(selectedfundsRaw); return Array.isArray(p) ? p.join(',') : selectedfundsRaw; }
+    catch { return selectedfundsRaw; }
+  })();
   const selectedportfeuille = searchParams.get('portefeuille');
-  const selectedValuename = searchParams.get('selectedValuename');
+  const selectedValuename = searchParams.get('selectedValuename') || '';
   const [post, setPost] = useState<Fundss | null>(null);
   const [base100Data, setBase100Data] = useState<MyDataType[]>([]); // Nouvel état pour les données en base 100
   const [postc, setPostc] = useState<Funds | null>(null);

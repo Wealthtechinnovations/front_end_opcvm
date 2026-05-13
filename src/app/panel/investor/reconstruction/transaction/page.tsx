@@ -146,9 +146,14 @@ interface MyDataType {
 export default function Transactions() {
   const searchParams = useSearchParams();
   const id = useUserId();
-  const selectedfunds = searchParams.get('selectedfund');
+  const selectedfundsRaw = searchParams.get('selectedfund');
+  const selectedfunds = (() => {
+    if (!selectedfundsRaw) return '';
+    try { const p = JSON.parse(selectedfundsRaw); return Array.isArray(p) ? p.join(',') : selectedfundsRaw; }
+    catch { return selectedfundsRaw; }
+  })();
   const selectedportfeuille = searchParams.get('portefeuille');
-  const selectedValuename = searchParams.get('selectedValuename');
+  const selectedValuename = searchParams.get('selectedValuename') || '';
 
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -182,7 +187,8 @@ export default function Transactions() {
           Swal.showLoading();
         }
       });
-      for (const item of selectedfunds.replace(/[^0-9A-Za-z\s,]+/g, '').split(',')) {
+      const fundIdList = selectedfunds ? selectedfunds.replace(/[^0-9A-Za-z\s,]+/g, '').split(',').filter(Boolean) : [];
+      for (const item of fundIdList) {
         try {
           const response = await fetch(`${urlconstant}/api/getfondbyid/${item}`);
           const data = await response.json();

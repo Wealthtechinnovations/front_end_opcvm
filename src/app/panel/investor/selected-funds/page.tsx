@@ -143,9 +143,25 @@ export default function Fondselected() {
   const searchParams = useSearchParams();
   const id = useUserId();
 
-  const selectedfunds = searchParams.get('selectedfund');
+  const selectedfundsRaw = searchParams.get('selectedfund');
   const selectedportfeuille = searchParams.get('portefeuille');
-  const selectedValuename = searchParams.get('selectedValuename');
+  const selectedValuenameRaw = searchParams.get('selectedValuename');
+
+  // Safe parse: handle JSON arrays, comma-separated strings, and null
+  const selectedfunds = (() => {
+    if (!selectedfundsRaw) return '';
+    try {
+      const parsed = JSON.parse(selectedfundsRaw);
+      return Array.isArray(parsed) ? parsed.join(',') : selectedfundsRaw;
+    } catch { return selectedfundsRaw; }
+  })();
+  const selectedValuename = (() => {
+    if (!selectedValuenameRaw) return '';
+    try {
+      const parsed = JSON.parse(selectedValuenameRaw);
+      return Array.isArray(parsed) ? parsed.join(',') : selectedValuenameRaw;
+    } catch { return selectedValuenameRaw; }
+  })();
   const [optionsPays, setOptionsPays] = useState([]);
   const [selectedPays, setSelectedPays] = useState<Pays | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
@@ -201,17 +217,19 @@ export default function Fondselected() {
       setOptionsPays(mappedOptions);
       const fetchedData = [];
 
-      for (const item of selectedfunds.replace(/[^0-9A-Za-z\s,]+/g, '').split(',')) {
-        try {
-          const response = await fetch(`${urlconstant}/api/getfondbyid/${item}`);
-          const data = await response.json();
-          fetchedData.push(data);
-        } catch (error) {
-          console.error("Erreur lors de l'appel API :", error);
+      if (selectedfunds) {
+        const fundIdList = selectedfunds.replace(/[^0-9A-Za-z\s,]+/g, '').split(',').filter(Boolean);
+        for (const item of fundIdList) {
+          try {
+            const response = await fetch(`${urlconstant}/api/getfondbyid/${item}`);
+            const data = await response.json();
+            fetchedData.push(data);
+          } catch (error) {
+            console.error("Erreur lors de l'appel API :", error);
+          }
         }
       }
 
-      // Mettez à jour l'état avec les données récupérées
       setFundsData(fetchedData);
     }
 

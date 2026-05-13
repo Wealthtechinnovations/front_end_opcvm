@@ -231,9 +231,25 @@ export default function PorteFeuile() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const selectedfunds = searchParams.get('selectedfund');
+  const selectedfundsRaw = searchParams.get('selectedfund');
   const selectedportfeuille = searchParams.get('portefeuille') || '';
-  const selectedValuename = searchParams.get('selectedValuename');
+  const selectedValuenameRaw = searchParams.get('selectedValuename');
+
+  // Safe parse: handle JSON arrays, comma-separated strings, and null
+  const selectedfunds = (() => {
+    if (!selectedfundsRaw) return '';
+    try {
+      const parsed = JSON.parse(selectedfundsRaw);
+      return Array.isArray(parsed) ? parsed.join(',') : selectedfundsRaw;
+    } catch { return selectedfundsRaw; }
+  })();
+  const selectedValuename = (() => {
+    if (!selectedValuenameRaw) return '';
+    try {
+      const parsed = JSON.parse(selectedValuenameRaw);
+      return Array.isArray(parsed) ? parsed.join(',') : selectedValuenameRaw;
+    } catch { return selectedValuenameRaw; }
+  })();
   const id = useUserId();
 
 
@@ -382,13 +398,16 @@ export default function PorteFeuile() {
     // Fonction pour effectuer l'appel à l'API
     async function fetchData() {
       const fetchedData = [];
-      for (const item of selectedfunds.replace(/[^0-9A-Za-z\s,]+/g, '').split(',')) {
-        try {
-          const response = await fetch(`${urlconstant}/api/getfondbyid/${item}?funds=${selectedfunds}`);
-          const data = await response.json();
-          fetchedData.push(data);
-        } catch (error) {
-          console.error("Erreur lors de l'appel API :", error);
+      if (selectedfunds) {
+        const fundIdList = selectedfunds.replace(/[^0-9A-Za-z\s,]+/g, '').split(',').filter(Boolean);
+        for (const item of fundIdList) {
+          try {
+            const response = await fetch(`${urlconstant}/api/getfondbyid/${item}?funds=${encodeURIComponent(selectedfunds)}`);
+            const data = await response.json();
+            fetchedData.push(data);
+          } catch (error) {
+            console.error("Erreur lors de l'appel API :", error);
+          }
         }
       }
 

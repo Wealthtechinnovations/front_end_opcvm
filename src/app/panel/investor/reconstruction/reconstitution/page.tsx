@@ -51,9 +51,12 @@ export default function Reconstitution() {
   const searchParams = useSearchParams();
   const id = useUserId();
 
-  const selectedfunds = searchParams.get('selectedfund');
+  const selectedfundsRaw = searchParams.get('selectedfund');
   const selectedportfeuille = searchParams.get('portefeuille');
   const router = useRouter();
+
+  // Safe parse: handle JSON arrays, comma-separated strings, and null
+  const selectedfunds = selectedfundsRaw || '';
 
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);
   const [portefeuillepropose, setPortefeuillepropose] = useState<Portefeuillepropose | null>(null);
@@ -102,7 +105,13 @@ export default function Reconstitution() {
           // Replace with the actual property name
         }));
         setSelectedOptions(mappedOptions);
-        const selectedFundsArray = JSON.parse(selectedfunds);
+        let selectedFundsArray: any[] = [];
+        try {
+          const parsed = JSON.parse(selectedfunds);
+          selectedFundsArray = Array.isArray(parsed) ? parsed : [parsed];
+        } catch {
+          selectedFundsArray = selectedfunds.split(',').filter(Boolean);
+        }
         setSelectedFunds(selectedFundsArray);
 
 
@@ -164,7 +173,7 @@ export default function Reconstitution() {
           timer: 2000,
           showConfirmButton: false,
         }).then(() => {
-          router.push(`/panel/investor/reconstruction?selectedValuename=${searchParams.get('selectedValuename') || ''}&selectedfund=${selectedfunds}&portefeuille=${selectedportfeuille}`);
+          router.push(`/panel/investor/reconstruction?selectedValuename=${encodeURIComponent(searchParams.get('selectedValuename') || '')}&selectedfund=${encodeURIComponent(selectedfunds)}&portefeuille=${selectedportfeuille}`);
         });
       } else {
         Swal.fire('Erreur', data.message || 'Une erreur est survenue.', 'error');
