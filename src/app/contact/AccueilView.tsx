@@ -27,23 +27,23 @@ export default function Accueil() {
 
         try {
             const res = await fetch(`${urlconstant}/api/contact`, {
-                method: ‘POST’,
-                headers: { ‘Content-Type’: ‘application/json’ },
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
             });
 
             if (!res.ok) {
                 const text = await res.text();
-                let message = ‘Impossible d’envoyer le message. Veuillez réessayer.’;
+                let message = "Impossible d'envoyer le message. Veuillez réessayer.";
                 try {
                     const data = JSON.parse(text);
                     if (data.message) message = data.message;
                 } catch {}
                 Swal.fire({
-                    icon: ‘error’,
-                    title: ‘Erreur’,
+                    icon: 'error',
+                    title: 'Erreur',
                     text: message,
-                    confirmButtonColor: ‘#1B3A5C’,
+                    confirmButtonColor: '#1B3A5C',
                 });
                 return;
             }
@@ -51,28 +51,28 @@ export default function Accueil() {
             const result = await res.json();
             if (result.success) {
                 Swal.fire({
-                    icon: ‘success’,
-                    title: ‘Message envoyé’,
-                    text: ‘Votre message a bien été transmis. Nous reviendrons vers vous rapidement.’,
-                    confirmButtonColor: ‘#1B3A5C’,
+                    icon: 'success',
+                    title: 'Message envoyé',
+                    text: 'Votre message a bien été transmis. Nous reviendrons vers vous rapidement.',
+                    confirmButtonColor: '#1B3A5C',
                     timer: 4000,
                     showConfirmButton: false,
                 });
-                setFormData({ name: ‘’, email: ‘’, description: ‘’ });
+                setFormData({ name: '', email: '', description: '' });
             } else {
                 Swal.fire({
-                    icon: ‘error’,
-                    title: ‘Erreur’,
-                    text: result.message || ‘Impossible d’envoyer le message. Veuillez réessayer.’,
-                    confirmButtonColor: ‘#1B3A5C’,
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: result.message || "Impossible d'envoyer le message. Veuillez réessayer.",
+                    confirmButtonColor: '#1B3A5C',
                 });
             }
         } catch {
             Swal.fire({
-                icon: ‘error’,
-                title: ‘Erreur’,
-                text: ‘Impossible de contacter le serveur. Veuillez réessayer plus tard.’,
-                confirmButtonColor: ‘#1B3A5C’,
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Impossible de contacter le serveur. Veuillez réessayer plus tard.',
+                confirmButtonColor: '#1B3A5C',
             });
         } finally {
             setIsSubmitting(false);
@@ -190,7 +190,7 @@ export default function Accueil() {
                                 {
                                     icon: '📍',
                                     title: 'Localisation',
-                                    content: 'Abidjan, Cocody, Riviera Palmeraie\nImmeuble Gold Africa\nCôte d’Ivoire',
+                                    content: "Abidjan, Cocody, Riviera Palmeraie\nImmeuble Gold Africa\nCôte d'Ivoire",
                                 },
                                 {
                                     icon: '📞',
