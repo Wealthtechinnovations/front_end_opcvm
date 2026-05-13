@@ -7,6 +7,8 @@ const nextConfig = {
         return [
             { source: '/accueil', destination: '/home', permanent: true },
             { source: '/actualite', destination: '/news', permanent: true },
+            { source: '/comparaison', destination: '/tools/comparison', permanent: true },
+            { source: '/recherche', destination: '/tools/search', permanent: true },
             { source: '/Opcvm/:path*', destination: '/funds/:path*', permanent: true },
             { source: '/Fundmanager/:path*', destination: '/fund-managers/:path*', permanent: true },
             { source: '/Outils/:path*', destination: '/tools/:path*', permanent: true },
