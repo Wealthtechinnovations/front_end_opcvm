@@ -335,7 +335,7 @@ export default function Home() {
                                   }} >selectionner les fonds</button>
                                 </Link>
 
-                                {item?.fundids?.length > 0 &&
+                                {item?.fundids?.length > 0 ?
                                   (item?.portefeuilletype == 'Robot advisor' ? (
                                     <button
                                       style={{
@@ -373,7 +373,16 @@ export default function Home() {
                                         }}>Transactions</button>
                                       </Link>
                                     </>
-                                  ))}
+                                  )) : (
+                                  <p style={{
+                                    fontSize: '13px',
+                                    color: '#6b7280',
+                                    fontStyle: 'italic',
+                                    margin: '4px 0',
+                                  }}>
+                                    Sélectionnez des fonds pour accéder à la reconstitution
+                                  </p>
+                                )}
                                 <button
                                   style={{
                                     width: '150px',
