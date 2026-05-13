@@ -306,6 +306,7 @@ export default function Comparaison() {
       } catch (error) {
         Swal.close();
         console.error("Erreur lors de l'appel à l'API :", error);
+        setError("Impossible de contacter le serveur. Veuillez réessayer plus tard.");
       }
     }
     fetchData();

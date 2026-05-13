@@ -94,6 +94,7 @@ export default function Comparaison() {
       } catch (err) {
         Swal.close();
         console.error("Erreur lors de l'appel à l'API :", err);
+        setError("Impossible de contacter le serveur. Veuillez réessayer plus tard.");
       }
     }
     fetchData();

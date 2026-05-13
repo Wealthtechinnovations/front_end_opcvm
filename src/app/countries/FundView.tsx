@@ -33,6 +33,7 @@ export default function Comparaison() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, settotalPages] = useState(1);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export default function Comparaison() {
         setOptionsPays(mappedOptions);
       } catch (error) {
         console.error("Erreur lors de l'appel à l'API :", error);
+        setError("Impossible de contacter le serveur. Veuillez réessayer plus tard.");
       }
     }
     fetchData();
@@ -132,6 +134,7 @@ export default function Comparaison() {
                 Rechercher
               </button>
             </form>
+            {error && <p style={{ textAlign: 'center', color: '#DC2626', marginTop: '12px', fontSize: '14px' }}>{error}</p>}
           </div>
 
           {/* Results table */}
