@@ -1,11 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import Select from 'react-select';
-import { urlconstant, urlstableconstant, API_KEY_STABLECOIN, urlsite } from "@/lib/constants";
+import { urlconstant } from "@/lib/constants";
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Dropdown } from "react-bootstrap";
 import Swal from "sweetalert2";
 
 async function login(email: string, password: any) {
@@ -689,277 +689,31 @@ export default function Logins() {
     setMenuOpen(!menuOpen);
   };
 
-  const [userConnected, setUserConnected] = useState(null);
-  const handleLinkClick = () => {
-    if (userConnected !== null) {
-        router.push('/panel/investor/dashboard');
-    } else {
-        router.push('/panel/management/login');
-    }
-};
-
-const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-        const redirectUrl = `/fund-managers/search`;
-
-        router.push(redirectUrl);
-    }, 1);
-
-
-};
-const [isHovered, setIsHovered] = useState(false);
-
-const [isHovereda, setIsHovereda] = useState(false);
-
-const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-        const redirectUrl = `/news`;
-
-        router.push(redirectUrl);
-    }, 1);
-
-
-};
-const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-        const redirectUrl = `/home`;
-
-        router.push(redirectUrl);
-    }, 1);
-
-
-};
-
-const [isHoveredp, setIsHoveredp] = useState(false);
-
-const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-};
-
-const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-};
-const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-        const redirectUrl = `/pays`;
-
-        router.push(redirectUrl);
-    }, 1);
-
-
-};
-
-const [isHoveredc, setIsHoveredc] = useState(false);
-
-const handleMouseEnterc = () => {
-    setIsHoveredc(true);
-};
-
-const handleMouseLeavec = () => {
-    setIsHoveredc(false);
-};
-
-const handleMouseEnters = () => {
-    setIsHovered(true);
-};
-
-const handleMouseLeaves = () => {
-    setIsHovered(false);
-};
-
-
-const handleMouseEntersa = () => {
-    setIsHovereda(true);
-};
-
-const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-};
-const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-};
-
-const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-};
-
-
   return (
 
 
-    < Fragment >
+    <Fragment>
       <nav className="main-nav bg-white" role="navigation">
-
-
         <input id="main-menu-state" type="checkbox" checked={menuOpen} onChange={toggleMenu} />
         <label className="main-menu-btn" htmlFor="main-menu-state">
           <span className="main-menu-btn-icon"></span> Toggle main menu visibility
         </label>
-
-        <ul id="main-menu" className={`sm sm-blue ${menuOpen ? 'open' : ''}`}>
-                    <li style={{ height: '40px' }}>
-                        <button
-                            onClick={handleLinkaccueil}
-                            style={{
-                                width: '150px',
-                                backgroundColor: isHovereda ? 'blue' : 'white',
-                                color: isHovereda ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEntersa}
-                            onMouseLeave={handleMouseLeavesa}
-                        >
-                            Accueil
-                        </button>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <button
-                            onClick={() => router.push(`${urlsite}/funds/search`)}
-                            style={{
-                                width: '150px',
-                                backgroundColor: isHoveredc ? 'blue' : 'white',
-                                color: isHoveredc ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEnterc}
-                            onMouseLeave={handleMouseLeavec}
-                        >
-                            Fonds
-                        </button>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <button
-                            onClick={handleLinksociete}
-                            style={{
-                                width: '150px',
-                                backgroundColor: isHovered ? 'blue' : 'white',
-                                color: isHovered ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEnters}
-                            onMouseLeave={handleMouseLeaves}
-                        >
-                            Societe de gestion
-                        </button>
-                    </li>
-                    <li style={{ height: '40px', }}>
-                        <button
-                            onClick={handleLinkpays}
-                            style={{
-                                width: '150px',
-                                backgroundColor: isHoveredp ? 'blue' : 'white',
-                                color: isHoveredp ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEnterp}
-                            onMouseLeave={handleMouseLeavep}
-                        >
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     Pays &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        </button>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <Dropdown>
-                            <Dropdown.Toggle id="dropdown-basic" style={{ width: '150px', backgroundColor: 'white', color: 'black', display: 'block', height: '100%', padding: '10px', textDecoration: 'none' }}>
-                                Services
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                <Dropdown.Item href="/questionnaire/questionnaire/pre/question1">Questionnaire cours</Dropdown.Item>
-                                <Dropdown.Item href="/questionnaire/questionnaire/question1">Profil investisseur (MIFID)</Dropdown.Item>
-                                <Dropdown.Item href="#">KYC</Dropdown.Item>
-                            </Dropdown.Menu>
-                        </Dropdown>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <Dropdown>
-                            <Dropdown.Toggle id="dropdown-basic" style={{ width: '150px', backgroundColor: 'white', color: 'black', display: 'block', height: '100%', padding: '10px', textDecoration: 'none' }}>
-                                Outils
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                <Dropdown.Item href="/tools/comparison">Comparaison</Dropdown.Item>
-                                <Dropdown.Item href="/tools/search">Selection OPCVM</Dropdown.Item>
-                                <Dropdown.Item href="/tools/robot">Robot Advisor</Dropdown.Item>
-                                <Dropdown.Item href="/tools/profile">Profil investisseurs</Dropdown.Item>
-                                <Dropdown.Item href="/tools/education">Éducation financière</Dropdown.Item>
-
-                            </Dropdown.Menu>
-                        </Dropdown>
-                    </li>
-
-
-                    <li style={{ height: '40px' }}>
-                        <button
-                            onClick={handleLinkactualite}
-                            style={{
-                                width: '150px',
-                                backgroundColor: isHoveredaa ? 'blue' : 'white',
-                                color: isHoveredaa ? 'white' : 'black',
-                                display: 'block',
-                                height: '100%',
-                                padding: '10px',
-                                textDecoration: 'none',
-                                border: '1px solid #000',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.3s'
-                            }}
-                            onMouseEnter={handleMouseEnteraa}
-                            onMouseLeave={handleMouseLeaveaa}
-                        >
-                            &nbsp;&nbsp;&nbsp;   Actualités &nbsp;&nbsp;&nbsp;
-                        </button>
-                    </li>
-                    <li style={{ height: '40px' }}>
-                        <Dropdown>
-                            <Dropdown.Toggle id="dropdown-basic" style={{ width: '150px',   backgroundColor: '#1B3A5C',
-                                color: 'white', display: 'block', height: '100%', padding: '10px', textDecoration: 'none' }}>
-                                Connexion
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                                <Dropdown.Item onClick={handleLinkClick} href="#">Espace Membre</Dropdown.Item>
-                                <Dropdown.Item href="/panel/management/login">Espace client</Dropdown.Item>
-                            </Dropdown.Menu>
-                        </Dropdown>
-                    </li>
-
-                </ul>
+        <ul id="main-menu" className="sm sm-blue">
+          <li><Link className="link-style" href="/home">Accueil</Link></li>
+          <li><Link className="link-style" href="/funds/search">Fonds</Link></li>
+          <li><Link className="link-style" href="/comparaison">Comparaison</Link></li>
+          <li><Link className="link-style" href="/recherche">Selection OPCVM</Link></li>
+          <li>
+            <Link className="link-style" href="/panel/investor/login">
+              Espace client
+            </Link>
+          </li>
+          <li>
+            <Link className="link-style" href="/panel/management/login" style={{ backgroundColor: "#1B3A5C", color: "white" }}>
+              Espace membre
+            </Link>
+          </li>
+        </ul>
       </nav>
       <br />
       <br /><br /><br /><br /><br />
@@ -1052,15 +806,12 @@ const handleMouseLeaveaa = () => {
 
                             {/* /.col */}
                             <div className="col-12 text-center">
-                            <a className="text-center" style={{
-                              textDecoration: 'none', // Remove underline
-                              backgroundColor: '#ef4444', // Background color
-                              color: 'white', // Text color
-                              padding: '10px 20px', // Padding
-                              borderRadius: '5px', // Rounded corners
-                              width: '200px', // Définir une largeur fixe
-                              display: 'inline-block', // Assurez-vous que l'élément est en ligne
-                            }} href="/panel/management/login/forgot-password">Mot de passe oublié</a>
+                            <Link
+                              href="/panel/management/login/forgot-password"
+                              style={{ color: '#1B3A5C', fontSize: '14px', textDecoration: 'underline' }}
+                            >
+                              Mot de passe oublié ?
+                            </Link>
 
                             </div>
                             {/* /.col */}
