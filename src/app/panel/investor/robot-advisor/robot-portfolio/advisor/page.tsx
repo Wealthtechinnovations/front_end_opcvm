@@ -849,7 +849,7 @@ export default function RoboAdvisor() {
                         <div style={{ padding: '10px', margin: '10px' }}>
                           <p >Voulez-vous renseigner  le nombre de fonds ?</p>
                           <div className="button-group" style={{ display: 'flex', justifyContent: 'space-between', border: '1px solid #ccc', borderRadius: '5px', padding: '10px' }}>
-                            <a href="#" onClick={() => { setShowFundCountInfo(true);setEtape(2)}} style={{ color: 'red', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Oui</a>
+                            <a href="#" onClick={() => { setShowFundCountInfo(true);setEtape(2)}} style={{ color: '#1B3A5C', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#EBF0F5', border: '1px solid #E2E8F0' }}>Oui</a>
                             <a href="#" onClick={() => { setShowFundCountInfo(false);setEtape(2) }} style={{ color: 'orange', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Non</a>
                           </div>
                         </div>
@@ -887,7 +887,7 @@ export default function RoboAdvisor() {
                            <div style={{ padding: '10px', margin: '10px' }}>
                            <p >Voulez-vous renseigner la pondération par fonds ?</p>
                            <div className="button-group" style={{ display: 'flex', justifyContent: 'space-between', border: '1px solid #ccc', borderRadius: '5px', padding: '10px' }}>
-                             <a href="#" onClick={() => setShowWeightInfo(true)} style={{ color: 'red', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Oui</a>
+                             <a href="#" onClick={() => setShowWeightInfo(true)} style={{ color: '#1B3A5C', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#EBF0F5', border: '1px solid #E2E8F0' }}>Oui</a>
                              <a href="#" onClick={() => { setShowWeightInfo(false);setEtape(3) }} style={{ color: 'orange', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Non</a>
                            </div>
                          </div>
@@ -925,7 +925,7 @@ export default function RoboAdvisor() {
                            <div style={{ padding: '10px', margin: '10px' }}>
                            <p >Voulez-vous renseigner la pondération par actions ?</p>
                            <div className="button-group" style={{ display: 'flex', justifyContent: 'space-between', border: '1px solid #ccc', borderRadius: '5px', padding: '10px' }}>
-                             <a href="#" onClick={() => setShowActionWeightInfo(true)} style={{ color: 'red', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Oui</a>
+                             <a href="#" onClick={() => setShowActionWeightInfo(true)} style={{ color: '#1B3A5C', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#EBF0F5', border: '1px solid #E2E8F0' }}>Oui</a>
                              <a href="#" onClick={() => { setShowActionWeightInfo(false);setEtape(4) }} style={{ color: 'orange', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Non</a>
                            </div>
                          </div>
@@ -963,7 +963,7 @@ export default function RoboAdvisor() {
                           <div style={{ padding: '10px', margin: '10px' }}>
                           <p >Voulez-vous renseigner la pondération par obligations ?</p>
                           <div className="button-group" style={{ display: 'flex', justifyContent: 'space-between', border: '1px solid #ccc', borderRadius: '5px', padding: '10px' }}>
-                            <a href="#" onClick={() => setShowObligationWeightInfo(true)} style={{ color: 'red', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Oui</a>
+                            <a href="#" onClick={() => setShowObligationWeightInfo(true)} style={{ color: '#1B3A5C', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#EBF0F5', border: '1px solid #E2E8F0' }}>Oui</a>
                             <a href="#" onClick={() => { setShowObligationWeightInfo(false);setEtape(5) }} style={{ color: 'orange', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Non</a>
                           </div>
                         </div>
@@ -1001,7 +1001,7 @@ export default function RoboAdvisor() {
                            <div style={{ padding: '10px', margin: '10px' }}>
                            <p >Voulez-vous renseigner la pondération par monétaires ?</p>
                            <div className="button-group" style={{ display: 'flex', justifyContent: 'space-between', border: '1px solid #ccc', borderRadius: '5px', padding: '10px' }}>
-                             <a href="#" onClick={() => setShowMonetaryWeightInfo(true)} style={{ color: 'red', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Oui</a>
+                             <a href="#" onClick={() => setShowMonetaryWeightInfo(true)} style={{ color: '#1B3A5C', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#EBF0F5', border: '1px solid #E2E8F0' }}>Oui</a>
                              <a href="#" onClick={() => { setShowMonetaryWeightInfo(false);setEtape(6) }} style={{ color: 'orange', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Non</a>
                            </div>
                          </div>
@@ -1039,7 +1039,7 @@ export default function RoboAdvisor() {
                           <div style={{ padding: '10px', margin: '10px' }}>
                           <p >Voulez-vous renseigner la pondération par diversifiés ?</p>
                           <div className="button-group" style={{ display: 'flex', justifyContent: 'space-between', border: '1px solid #ccc', borderRadius: '5px', padding: '10px' }}>
-                            <a href="#" onClick={() => setShowDiversifiedWeightInfo(true)} style={{ color: 'red', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Oui</a>
+                            <a href="#" onClick={() => setShowDiversifiedWeightInfo(true)} style={{ color: '#1B3A5C', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#EBF0F5', border: '1px solid #E2E8F0' }}>Oui</a>
                             <a href="#" onClick={() => { setShowDiversifiedWeightInfo(false);setEtape(7) }} style={{ color: 'orange', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Non</a>
                           </div>
                         </div>
@@ -1077,7 +1077,7 @@ export default function RoboAdvisor() {
                            <div style={{ padding: '10px', margin: '10px' }}>
                            <p >Voulez-vous renseigne les SRRI?</p>
                            <div className="button-group" style={{ display: 'flex', justifyContent: 'space-between', border: '1px solid #ccc', borderRadius: '5px', padding: '10px' }}>
-                             <a href="#" onClick={() => setShowSRRIInfo(true)} style={{ color: 'red', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Oui</a>
+                             <a href="#" onClick={() => setShowSRRIInfo(true)} style={{ color: '#1B3A5C', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#EBF0F5', border: '1px solid #E2E8F0' }}>Oui</a>
                              <a href="#" onClick={() => { setShowSRRIInfo(false);setEtape(8) }} style={{ color: 'orange', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Non</a>
                            </div>
                          </div>
@@ -1115,7 +1115,7 @@ export default function RoboAdvisor() {
                           <div style={{ padding: '10px', margin: '10px' }}>
                           <p >Voulez-vous renseigner la repartition par device?</p>
                           <div className="button-group" style={{ display: 'flex', justifyContent: 'space-between', border: '1px solid #ccc', borderRadius: '5px', padding: '10px' }}>
-                            <a href="#" onClick={() => setShowCurrencyDistributionInfo(true)} style={{ color: 'red', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Oui</a>
+                            <a href="#" onClick={() => setShowCurrencyDistributionInfo(true)} style={{ color: '#1B3A5C', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#EBF0F5', border: '1px solid #E2E8F0' }}>Oui</a>
                             <a href="#" onClick={() => { setShowCurrencyDistributionInfo(false);setEtape(9) }} style={{ color: 'orange', textDecoration: 'none', padding: '10px 20px', borderRadius: '5px', backgroundColor: '#f2f2f2', border: '1px solid #ccc' }}>Non</a>
                           </div>
                         </div>
@@ -1246,7 +1246,7 @@ export default function RoboAdvisor() {
                             style={{
 
                               textDecoration: 'none',
-                              backgroundColor: 'red',
+                              backgroundColor: '#ef4444',
 
                               color: 'white',
 
@@ -1325,7 +1325,7 @@ export default function RoboAdvisor() {
                         <div>
                           <button style={{
                             textDecoration: 'none', // Remove underline
-                            backgroundColor: 'red', // Background color
+                            backgroundColor: '#ef4444', // Background color
                             color: 'white', // Text color
                             padding: '10px 20px', // Padding
                             borderRadius: '5px', // Rounded corners

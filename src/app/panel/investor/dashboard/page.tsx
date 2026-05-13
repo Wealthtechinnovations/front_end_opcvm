@@ -369,7 +369,7 @@ export default function Home() {
                                       >
                                         <button className="select-funds-button" style={{
                                           width: '150px',
-                                          backgroundColor: '#8b5cf6',
+                                          backgroundColor: '#2A5A8C',
                                         }}>Transactions</button>
                                       </Link>
                                     </>

@@ -1178,7 +1178,7 @@ export default function PorteFeuile() {
                         style={{
                           width: '150px',
                           textDecoration: 'none',
-                          backgroundColor: 'blue',
+                          backgroundColor: '#1B3A5C',
                           color: 'white',
                           padding: '10px 20px',
                           borderRadius: '5px',
@@ -1194,7 +1194,7 @@ export default function PorteFeuile() {
                         style={{
                           width: '150px',
                           textDecoration: 'none',
-                          backgroundColor: 'red',
+                          backgroundColor: '#ef4444',
                           color: 'white',
                           padding: '10px 20px',
                           borderRadius: '5px',
@@ -1674,7 +1674,7 @@ export default function PorteFeuile() {
                                 }}
                                 style={{
                                   textDecoration: 'none',
-                                  backgroundColor: 'blue',
+                                  backgroundColor: '#1B3A5C',
                                   color: 'white',
                                   padding: '5px 10px',
                                   borderRadius: '5px',
@@ -1690,7 +1690,7 @@ export default function PorteFeuile() {
                                 }}
                                 style={{
                                   textDecoration: 'none',
-                                  backgroundColor: 'red',
+                                  backgroundColor: '#ef4444',
                                   color: 'white',
                                   padding: '5px 10px',
                                   borderRadius: '5px',

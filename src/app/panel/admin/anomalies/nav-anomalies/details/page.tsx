@@ -501,7 +501,7 @@ export default function Fondselected() {
             </Button>
             <Button variant="secondary" style={{
               textDecoration: 'none',
-              backgroundColor: 'red',
+              backgroundColor: '#ef4444',
               color: 'white',
               padding: '10px 20px',
               borderRadius: '5px',
