@@ -209,7 +209,7 @@ export default function Ajoutvl() {
           timer: 5000,
         });
         setTimeout(() => {
-          const href = `/panel/management/personnel`;
+          const href = `/panel/management/staff`;
           window.location.href = href;  // This will navigate and refresh the page
 
           //     router.push(href);

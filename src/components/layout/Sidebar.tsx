@@ -175,9 +175,9 @@ export default function Sidebar({ societeconneted }: { societeconneted: string }
               </ul>
             )}
           </li>
-          <SidebarLink href="/panel/management/importfondvl" label="Importation globale" pathMatch="/panel/management/importfondvl" />
-          <SidebarLink href="/panel/management/personnel" label="Personnels" pathMatch="/panel/management/personnel" />
-          <SidebarLink href="/panel/management/document" label="Documents" pathMatch="/panel/management/document" />
+          <SidebarLink href="/panel/management/import-nav" label="Importation globale" pathMatch="/panel/management/import-nav" />
+          <SidebarLink href="/panel/management/staff" label="Personnels" pathMatch="/panel/management/staff" />
+          <SidebarLink href="/panel/management/documents" label="Documents" pathMatch="/panel/management/documents" />
           <li>
             <button
               onClick={toggleSidebaranomalie}

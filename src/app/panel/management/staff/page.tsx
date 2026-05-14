@@ -152,7 +152,7 @@ export default function Profile() {
             <Link
               className={`btn btn-main active}`}
               style={{ backgroundColor: "#1B3A5C", color: "white" }}
-              href={`/panel/management/personnel/ajout`}
+              href={`/panel/management/staff/add`}
             >
               Ajouter un personnel
             </Link>
@@ -188,7 +188,7 @@ export default function Profile() {
                             className="btn btn-main active"
                             style={{ backgroundColor: "#1B3A5C", color: "white", width: "150px" }} // Largeur fixe définie ici
                             href={{
-                              pathname: '/panel/management/personnel/update',
+                              pathname: '/panel/management/staff/update',
                               query: { societeconneted: societeconneted, personid: person.id }
                             }}
                           >

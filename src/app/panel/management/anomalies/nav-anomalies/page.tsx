@@ -146,8 +146,8 @@ export default function Home() {
         console.error("Erreur lors de l'appel à l'API :", error);
       }
     }
-    fetchData();
-  }, []);
+    if (societeconneted) fetchData();
+  }, [societeconneted]);
 
   const handleLogout = () => {
     // Remove items from localStorage

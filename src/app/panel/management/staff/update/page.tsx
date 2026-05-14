@@ -216,7 +216,7 @@ export default function Ajoutvl() {
           timer: 5000,
         });
         setTimeout(() => {
-          const href = `/panel/management/personnel`;
+          const href = `/panel/management/staff`;
           router.push(href);
         }, 2000);
       } else {
