@@ -107,6 +107,30 @@
 - Etape 10: categorie_national
 - **Commit**: `4519fbe`
 
+### 2026-05-15 - Fix classement EUR/USD ecrivant dans la mauvaise table
+- **Statut**: COMMITE, A DEPLOYER
+- **Bug**: `/api/classementeur` et `/api/classementusd` dans `apigestionsavequotidien.js` utilisaient `classementfonds.create()` (table principale) au lieu de `classementfonds_eurs.create()` et `classementfonds_usds.create()`
+- **Impact**: Les classements EUR/USD se melangeaient avec les classements devise locale
+- **Correction**: 4 occurrences `classementfonds.create()` -> `classementfonds_eurs.create()` (EUR) et `classementfonds_usds.create()` (USD)
+- **Bonus**: 2 `type_classement: 1` -> `type_classement: 2` pour les classements regionaux (etaient incorrects)
+- **Commit API**: `e146385`
+
+### 2026-05-15 - Ajout batch endpoints performance EUR/USD
+- **Statut**: COMMITE, A DEPLOYER
+- **Nouveaux endpoints**:
+  - `/api/saveperfdateeur/:fond1/:fond2` - peuple `performences_eurs` (table actuellement vide)
+  - `/api/saveperfdateusd/:fond1/:fond2` - peuple `performences_usds` (table actuellement vide)
+- **Fonctions ajoutees**: `processFundDevise()`, `upsertPerformanceDevise()`
+- **Pattern**: Suit le meme pattern que `saveperfdatemysql` existant, appelle `/api/performancesdev/fond/:id/:devise`
+- **Fichier**: `src/routes/apigestionsavequotidien.js`
+- **Commit API**: `e146385`
+
+### 2026-05-15 - Fix country-panel anomalies (endpoint URL incorrect)
+- **Statut**: COMMITE, A DEPLOYER
+- **Bug**: Le frontend country-panel appelait `/api/getallfondsanomalie` (n'existe pas) au lieu de `/api/getallfondsvlanomalie` (existe dans routes_vl.js)
+- **Fichier**: `src/app/country-panel/anomalies/page.tsx` ligne 26
+- **Commit Frontend**: `3a33166`
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
@@ -179,7 +203,7 @@
 - [ ] Page reporting
 
 ### Country panel
-- [ ] Endpoint manquant `/api/getallfondsanomalie` (appele par country-panel/anomalies mais n'existe pas)
+- [x] Endpoint `/api/getallfondsanomalie` corrige -> c'etait une erreur de nommage dans le frontend, l'endpoint correct est `/api/getallfondsvlanomalie` (existe deja)
 
 ### Panel portfolio (`/panel/portfolio/`)
 - [ ] Memes bugs de serialisation JSON que panel investor (a corriger)
@@ -218,3 +242,5 @@
 | `fix_database_phase1.js` | 2026-05-14 | Orphelins, FK societe_id, activation, VL, forex, statique | Execute en prod |
 | `20260514000001-add-societe-id-fk.js` | 2026-05-14 | Migration Sequelize societe_id | Commite |
 | `fix_database_phase2.js` | 2026-05-15 | Enrichissement statique 10 etapes | Present sur serveur, PAS EXECUTE |
+| (classement EUR/USD fix) | 2026-05-15 | Fix classementfonds.create -> classementfonds_eurs/usds | Commite, a deployer |
+| (batch perf EUR/USD) | 2026-05-15 | Endpoints saveperfdateeur/saveperfdateusd | Commite, a deployer |
