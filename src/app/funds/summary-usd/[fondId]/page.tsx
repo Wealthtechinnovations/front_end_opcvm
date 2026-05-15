@@ -564,9 +564,9 @@ export default function Fond() {
   const classeSRRI = determineClasseSRRI(isNaN(volatility) ? 0 : volatility.toFixed(2));
 
 
-  const postYears = post?.data?.performances?.data?.adaptValues1.map((item: any) => item[0]);
+  const postYears = post?.data?.performances?.data?.adaptValues1?.map((item: any) => item[0]);
 
-  const slicedPostc = postc?.data?.multipliedValues.filter((item: any) => {
+  const slicedPostc = postc?.data?.multipliedValues?.filter((item: any) => {
     const year = item[0];
     // Assurez-vous que postYears est défini et qu'il s'agit d'un tableau
     if (Array.isArray(postYears)) {
