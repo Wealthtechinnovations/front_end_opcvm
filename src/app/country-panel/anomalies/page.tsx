@@ -23,7 +23,7 @@ interface Funds {
 async function getAnomalie(societegestionParam: any) {
   const data = (
 
-    await fetch(`${urlconstant}/api/getallfondsanomalie?pays=${societegestionParam}`, {
+    await fetch(`${urlconstant}/api/getallfondsvlanomalie?pays=${societegestionParam}`, {
       method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
     })
   ).json();
