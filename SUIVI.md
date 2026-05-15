@@ -151,6 +151,42 @@
 - **Usage**: `node import_vl_maroc.js "/chemin/vers/FICHIERS EXCELS/"`
 - **Commit API**: `00408bc`
 
+### 2026-05-15 - Script import VL Maroc XLSX (consolide ASFIM)
+- **Statut**: COMMITE, A DEPLOYER ET EXECUTER
+- **Script**: `api_opcv/import_vl_maroc_xlsx.js`
+- **Source**: `UNIQUE_Tableaux_Performance_CONSOLIDE.xlsx` (feuille ALL_DATA)
+- **Donnees**: 609 fonds, 50K+ VL, devise MAD
+- **Fonctionnalites**:
+  - Lit XLSX feuille ALL_DATA (CODE ISIN, OPCVM, Societe, AN, VL, DATE)
+  - Cree fonds nouveaux (pays=MAROC, devise=MAD, regulateur=AMMC)
+  - Insere VL sans ecraser l'existant
+  - Conversion MAD->EUR et MAD->USD (taux depuis devisedechanges ou defaut)
+  - Batch insert 100 par requete avec fallback unitaire
+- **Commit API**: `129c633`
+
+### 2026-05-15 - Script import VL UEMOA/BRVM (XLSX nettoye)
+- **Statut**: COMMITE, A DEPLOYER ET EXECUTER
+- **Script**: `api_opcv/import_vl_uemoa.js`
+- **Source**: `BRVM_VL_Nettoye.xlsx` (feuilles Fonds_resume + VL_nettoyees)
+- **Donnees**: 147 fonds, 87 186 VL validees, devise XOF, dates 2010-2026
+- **Categories**: D(72), OMLT(45), A(21), OCT(8), OATC(1)
+- **Fonctionnalites**:
+  - Conversion dates Excel serial number -> YYYY-MM-DD (87186/87186 converties OK)
+  - Metadata fonds depuis Fonds_resume (societe, depositaire, categorie, valeur origine)
+  - Classification automatique centralisee et non-destructive:
+    - A -> Actions / Actions / Actions UEMOA
+    - D -> Diversifies / Diversifies / Diversifies UEMOA
+    - OMLT -> Obligations moyen et long terme / Obligations / Obligations UEMOA
+    - OCT -> Obligations court terme / Obligations / Obligations UEMOA
+    - OATC -> Obligations et autres titres de creance / Obligations / Obligations UEMOA
+    - O -> Obligations / Obligations / Obligations UEMOA
+    - M -> Monetaire / Monetaire / Monetaire UEMOA
+  - Champs remplis: classification, categorie_globale, categorie_national, categorie_regional
+  - Ne met a jour que les champs VIDES (ne jamais ecraser les valeurs existantes correctes)
+  - EUR/XOF = 655.957 (parite fixe CFA)
+  - Batch insert 100 par requete avec fallback unitaire
+- **Commit API**: a venir
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
@@ -265,3 +301,5 @@
 | (classement EUR/USD fix) | 2026-05-15 | Fix classementfonds.create -> classementfonds_eurs/usds | Commite, a deployer |
 | (batch perf EUR/USD) | 2026-05-15 | Endpoints saveperfdateeur/saveperfdateusd | Commite, a deployer |
 | `import_vl_maroc.js` | 2026-05-15 | Import CSV ASFIM (VL Maroc) | Commite, a deployer et executer |
+| `import_vl_maroc_xlsx.js` | 2026-05-15 | Import XLSX consolide ASFIM (609 fonds, 50K+ VL Maroc) | Commite, a deployer et executer |
+| `import_vl_uemoa.js` | 2026-05-15 | Import XLSX BRVM nettoye (147 fonds, 87K VL UEMOA/XOF) | Commite, a deployer et executer |
