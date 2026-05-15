@@ -77,6 +77,36 @@
 - TSI CAPITAL GROUP -> TSI CAPITAL GROUP (apostrophe Unicode)
 - ARAB FINANCIAL CONSULTANTS -> normalise (espace insecable)
 
+### 2026-05-15 - Fix pages summary-eur/summary-usd + routes API mortes
+- **Statut**: VALIDE ET DEPLOYE EN PRODUCTION (deploiement confirme 2026-05-15)
+- **Probleme**: Pages `/funds/summary-eur/[fondId]` et `/funds/summary-usd/[fondId]` crashaient
+- **Cause racine backend**: Route `/api/performancesdevcategorie/fond/:id/:devise` enregistree sur `app.get()` (instance Express locale inutilisee) au lieu de `router.get()` dans `apigestionperformance.js`. Idem pour `/api/rendement/fonds` dans `apigestionrendement.js`.
+- **Cause racine frontend**: Acces null-unsafe sur `performances.data?.` (sans `?.` apres `performances`), et `null.toFixed(2)` quand perf3Moisactif_net est null.
+- **Fichiers backend modifies**:
+  - `src/routes/apigestionperformance.js` : ligne 1339, `app.get` -> `router.get`
+  - `src/routes/apigestionrendement.js` : ligne 41, `app.get` -> `router.get`
+- **Fichiers frontend modifies**:
+  - `src/app/funds/summary-eur/[fondId]/page.tsx` : optional chaining `performances?.data?.`, null check toFixed
+  - `src/app/funds/summary-usd/[fondId]/page.tsx` : memes corrections (fichier miroir)
+- **ATTENTION routes_vl.js**: Les 2 routes mortes (lignes 637 et 7286) ne doivent PAS etre changees en `router.post()` car `router` n'est pas defini dans ce fichier (pattern closure `module.exports = (app) => {...}`). Elles restent mortes mais inoffensives.
+- **Commits**: `ea2172a` (API), `a4a3d9e` (Frontend)
+- **Build**: 217/217 pages generees, 0 erreur
+
+### 2026-05-15 - Script Phase 2 enrichissement statique (cree, pas encore execute)
+- **Statut**: COMMITE, A DEPLOYER SUR PROD (script present sur serveur mais pas execute)
+- **Script**: `api_opcv/fix_database_phase2.js` (543 lignes, 10 etapes)
+- Etape 1: Nettoyage VL extremes (pattern bimodal)
+- Etape 2: Fix VL date=0000-00-00
+- Etape 3: forme_juridique (FCP/SICAV/FCPR/Mutual Fund)
+- Etape 4: categorie_globale (Obligataire/Monetaire/Actions/Diversifie)
+- Etape 5: categorie_libelle depuis categorie_globale
+- Etape 6: date_premiere_vl + montant_premier_vl (MIN date valorisations)
+- Etape 7: datejour (derniere VL)
+- Etape 8: periodicite (depuis frequence reelle VL)
+- Etape 9: Forex paires croisees (USD/XOF, EUR/MAD, EUR/TND)
+- Etape 10: categorie_national
+- **Commit**: `4519fbe`
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
@@ -187,3 +217,4 @@
 | `diagnostic_db.js` | 2026-05-14 | Audit complet 63 tables, 21 sections | Execute |
 | `fix_database_phase1.js` | 2026-05-14 | Orphelins, FK societe_id, activation, VL, forex, statique | Execute en prod |
 | `20260514000001-add-societe-id-fk.js` | 2026-05-14 | Migration Sequelize societe_id | Commite |
+| `fix_database_phase2.js` | 2026-05-15 | Enrichissement statique 10 etapes | Present sur serveur, PAS EXECUTE |
