@@ -131,6 +131,26 @@
 - **Fichier**: `src/app/country-panel/anomalies/page.tsx` ligne 26
 - **Commit Frontend**: `3a33166`
 
+### 2026-05-15 - Fix script Phase 2 (forme_juridique -> structure_fond)
+- **Statut**: COMMITE, A DEPLOYER ET EXECUTER
+- **Bug**: Le script `fix_database_phase2.js` utilisait `forme_juridique` qui n'existe pas dans la table
+- **Fix**: Remplace par `structure_fond` (colonne existante pour le type juridique FCP/SICAV/OPCVM)
+- **Commit API**: `00408bc`
+
+### 2026-05-15 - Script import VL Maroc (ASFIM CSV)
+- **Statut**: COMMITE, A DEPLOYER ET EXECUTER
+- **Script**: `api_opcv/import_vl_maroc.js`
+- **Source**: 100 fichiers CSV ASFIM (tous identiques, 1 seul fonds: "FCP AD MOROCCAN EQUITY")
+- **Donnees**: 100 VL du 2017-11-24 au 2019-10-18, societe "AD CAPITAL", classe Actions
+- **Fonctionnalites**:
+  - Lit tous les CSV, deduplique par (fonds+date)
+  - Cree le fonds s'il n'existe pas, rattache a la societe de gestion
+  - Insere VL (value, actif_net, value_EUR, value_USD) sans ecraser l'existant
+  - Met a jour datejour, date_premiere_vl, montant_premier_vl
+  - Conversion MAD->EUR (10.85) et MAD->USD (9.95)
+- **Usage**: `node import_vl_maroc.js "/chemin/vers/FICHIERS EXCELS/"`
+- **Commit API**: `00408bc`
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
@@ -139,11 +159,11 @@
 #### 2A. Nettoyage VL restant
 - [ ] Nettoyer 5 fonds avec VL extremes (meme probleme actif net vs VL unitaire que BRIDGE):
   - FCP TRESO MONEA, FCP BOA RENDEMENT, FCP ECOBANK UEMOA OBLIGATAIRE, SICAV ABDOU DIOUF, FCP SOGELIQUID
-- [ ] Corriger 31 VL avec date=0000-00-00 (supprimer ou corriger la date)
+- [x] Corriger 31 VL avec date=0000-00-00 (FAIT - supprimees par Phase 2 step 2)
 - [ ] Verifier coherence VL: detecter les series avec variations >50% d'un jour a l'autre
 
 #### 2B. Donnees statiques manquantes sur les fonds
-- [ ] Peupler `forme_juridique` (FCP/SICAV) a partir du prefixe du nom du fond
+- [ ] Peupler `structure_fond` (FCP/SICAV) a partir du prefixe du nom du fond (NOTE: forme_juridique n'existe PAS, utiliser structure_fond)
 - [ ] Peupler `categorie_globale` depuis classification existante ou nom du fond (Obligataire, Actions, Monetaire, Diversifie)
 - [ ] Peupler `categorie_national` depuis classification ou pays
 - [ ] Peupler `categorie_libelle` la ou vide (depuis classification ou categorie_globale)
@@ -244,3 +264,4 @@
 | `fix_database_phase2.js` | 2026-05-15 | Enrichissement statique 10 etapes | Present sur serveur, PAS EXECUTE |
 | (classement EUR/USD fix) | 2026-05-15 | Fix classementfonds.create -> classementfonds_eurs/usds | Commite, a deployer |
 | (batch perf EUR/USD) | 2026-05-15 | Endpoints saveperfdateeur/saveperfdateusd | Commite, a deployer |
+| `import_vl_maroc.js` | 2026-05-15 | Import CSV ASFIM (VL Maroc) | Commite, a deployer et executer |
