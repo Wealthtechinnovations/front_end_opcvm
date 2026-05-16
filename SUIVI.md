@@ -187,6 +187,39 @@
   - Batch insert 100 par requete avec fallback unitaire
 - **Commit API**: a venir
 
+### 2026-05-16 - Script import historique Forex (5 XLSX, 9 paires, 2000-2026)
+- **Statut**: COMMITE, A DEPLOYER ET EXECUTER
+- **Script**: `api_opcv/import_forex_historique.js`
+- **Source**: 5 fichiers XLSX:
+  1. `Historique_XOF_UEMOA_2000_2026.xlsx` -> EUR/XOF, USD/XOF (~5840 lignes)
+  2. `Historique_MAD_Maroc_2000_2026.xlsx` -> EUR/MAD, USD/MAD (~5849 lignes)
+  3. `Historique_NGN_Nigeria_2000_2026.xlsx` -> EUR/NGN, USD/NGN (~5840 lignes)
+  4. `historique_EURUSD_quotidien_2000_2026.xlsx` -> EUR/USD (~6875 lignes)
+  5. `Historique_TND_Tunisie_2000_2026.xlsx` -> EUR/TND, USD/TND (~5842 lignes)
+- **Couverture**: 2000/2003 a mai 2026 (quotidien)
+- **Fonctionnalites**:
+  - INSERT IGNORE (ne duplique jamais les entrees existantes)
+  - Pre-charge les paires existantes en memoire pour performance
+  - Insertion par batch de 500
+  - Gere dates string YYYY-MM-DD, DD/MM/YYYY, et serials Excel
+  - Skip valeurs vides ou <= 0 (certaines paires EUR manquent pour dates anciennes)
+  - Rapport detaille par paire + verification finale
+- **Usage**: `node import_forex_historique.js /chemin/vers/dossier/xlsx/`
+- **Impact**: Peuple devisedechanges avec ~30K+ nouvelles entrees forex historiques
+  - Permet le calcul EUR/USD pour TOUS les pays (y compris NGN jusque-la impossible)
+  - Pre-requis pour fix_valorisations_eur_usd.js et calculs de performance EUR/USD
+- **Commit API**: `3e9a801`
+
+### 2026-05-16 - Fix MySQL host IPv6 dans tous les scripts
+- **Statut**: COMMITE, A DEPLOYER
+- **Bug**: Sur production, `host: 'localhost'` resout en `::1` (IPv6) mais MySQL n'ecoute que sur IPv4
+- **Fix**: `host: 'localhost'` -> `host: '127.0.0.1'` dans 4 scripts:
+  - `fix_valorisations_eur_usd.js`
+  - `import_vl_maroc.js`
+  - `import_vl_maroc_xlsx.js`
+  - `import_vl_uemoa.js`
+- **Commit API**: `3e9a801`
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
@@ -209,8 +242,9 @@
 - [ ] Corriger `periodicite` (detecter depuis frequence reelle des VL: quotidien, hebdomadaire, mensuel)
 
 #### 2C. Forex manquant
-- [ ] Importer EUR/NGN et USD/NGN (necessaire quand VL Nigeria arrivent)
-- [ ] Generer toutes les paires croisees manquantes (MAD/EUR, TND/EUR, GHS/USD, KES/USD, ZAR/USD, EGP/USD)
+- [x] Importer EUR/NGN et USD/NGN (script import_forex_historique.js cree, a executer)
+- [x] Importer EUR/XOF, USD/XOF, EUR/MAD, USD/MAD, EUR/TND, USD/TND, EUR/USD (script pret)
+- [ ] Generer paires croisees manquantes (GHS/USD, KES/USD, ZAR/USD, EGP/USD)
 - [ ] Scraping automatique des taux de change (source: ECB, fixer.io, ou API gratuite)
 
 #### 2D. Calculs batch (tables vides)
