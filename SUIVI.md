@@ -187,6 +187,24 @@
   - Batch insert 100 par requete avec fallback unitaire
 - **Commit API**: a venir
 
+### 2026-05-16 - Script import VL Maroc quotidiennes ASFIM (2024-2026)
+- **Statut**: COMMITE, A DEPLOYER ET EXECUTER
+- **Script**: `api_opcv/import_vl_maroc_2024_2026.js`
+- **Source**: `Tableau_de_performance_du_20242026.zip` (342 fichiers XLSX ASFIM)
+- **Donnees**: 116 095 VL, 614 fonds, oct 2024 -> mar 2026
+- **Fonctionnalites**:
+  - Accepte un ZIP ou un dossier de fichiers XLSX
+  - Extrait automatiquement le ZIP dans /tmp
+  - Match fonds par CODE ISIN ou nom (priorite ISIN)
+  - Cree les fonds nouveaux (pays=MAROC, dev=MAD, regulateur=AMMC)
+  - INSERT IGNORE (ne duplique jamais les VL existantes)
+  - Conversion MAD->EUR/USD avec taux quotidien depuis devisedechanges
+  - Met a jour datejour, date_premiere_vl, montant_premier_vl apres import
+  - Batch insert 200 par requete avec fallback unitaire
+  - Nettoyage automatique du dossier temp
+- **Usage**: `node import_vl_maroc_2024_2026.js "/chemin/Tableau_de_performance_du_20242026.zip"`
+- **Commit API**: `5639894`
+
 ### 2026-05-16 - Script import historique Forex (5 XLSX, 9 paires, 2000-2026)
 - **Statut**: COMMITE, A DEPLOYER ET EXECUTER
 - **Script**: `api_opcv/import_forex_historique.js`
