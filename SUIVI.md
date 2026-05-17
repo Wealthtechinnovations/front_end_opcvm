@@ -300,11 +300,23 @@
 
 #### 2F. Nigeria VL
 - [x] Preparer script d'import Excel SEC Nigeria (weekly NAV) — sec_ng_nav_extractor_v6.py + import_vl_nigeria_sec.js
-- [ ] Executer extraction historique 2018-2026 sur le serveur
-- [ ] Executer import dans MySQL
-- [ ] Activer les 150+ fonds Nigeria une fois VL importees (automatique via import script)
+- [x] Executer extraction historique 2018-2026 sur le serveur (432 fichiers, 81 422 lignes, 0 erreurs)
+- [x] Executer import dans MySQL (58 291 VL inserees, 275 fonds total, 110 crees)
+- [x] Activer les 150+ fonds Nigeria une fois VL importees (automatique via import script)
 - [x] Generer EUR/NGN et USD/NGN (fait via import_forex_historique.js, 2026-05-16)
-- [ ] Installer cron_nigeria_weekly.sh (chaque lundi)
+- [x] Installer cron_nigeria_weekly.sh (chaque lundi 10h) — INSTALLE EN PROD
+- [x] Corriger 15 mauvais fuzzy matches (fix_nigeria_fuzzy_matches.js — 419 VL deplacees)
+- [x] Seuil fuzzy releve de 85% a 95% pour eviter faux positifs
+- [x] Validation VL ajoutee: bornes [0.0001 - 1M NGN], NAV max 5T NGN (1 041 rejets corrects)
+- [x] Preference bloc CURRENT vs PREVIOUS dans fichiers multi-blocs
+- [x] Creer societes de gestion Nigeria dans table societes (fix_nigeria_societes.js — 36 creees, 53 fonds rattaches)
+- [x] Corriger 15 fonds orphelins sans societe_gestion (fix_nigeria_orphans_and_dupes.js)
+- [x] Fusionner 9 doublons societes (variations noms: Ltd vs Limited, etc.)
+- [x] Supprimer societe parasite "1"
+- [x] Recalcul VL ajustees (1 229 313 VL, 0 erreurs)
+- [x] Recalcul performances locale/EUR/USD (611 fonds, 0 erreurs)
+- [ ] Verifier couverture: 211/221 fonds ont des VL 2026 (64 fonds sans VL 2026, probablement fonds fermes)
+- [ ] Nettoyer 244 VL avec variations extremes (erreurs source SEC: colonnes NAV/prix inversees)
 
 #### 2G. Harmonisation categories (casse et accents)
 - [x] Harmoniser majuscules/minuscules: ACTIONS vs Actions, DIVERSIFIE vs Diversifié, OBLIGATIONS vs Obligataire (fix_harmonize_categories.js, 603 fonds, 2026-05-17)
@@ -374,6 +386,12 @@
 - **EUR/XAF**: parite fixe 655.957 (zone CFA, depuis 1999)
 - **Types utilisateurs**: 0=Admin, 1=Investisseur, 2=SG, 3=Institutionnel, 4=DataRequester, 5=CountryPanel, 6=Distributeur
 - **Pays couverts**: MAROC, TUNISIE, UEMOA (zone CFA Ouest), CEMAC (zone CFA Central), Nigeria, AFRIQUE DU SUD, EGYPTE, KENYA, GHANA
+- **Table societes** (pas societe_gestions): le modele Sequelize est `societes` (fichier societe.js). La table `societe_gestions` n'existe PAS.
+- **Nigeria VL mapping**: CSV `vl_price` (offer/unit price) → DB `value`, CSV `nav_value` → DB `actif_net`. NE PAS CONFONDRE.
+- **Nigeria SEC source**: fichiers XLSX hebdomadaires sur sec.gov.ng, publiés le vendredi, colonnes: NAV (N), Offer Price (N), Bid Price (N)
+- **Fuzzy matching Nigeria**: seuil 95% (pas 85%) pour eviter faux positifs. 15 faux positifs identifies et corriges a 85%.
+- **Import scripts doivent filtrer par pays**: toujours utiliser `WHERE nom_fond = ? AND LOWER(pays) = LOWER(?)` pour eviter collisions cross-pays
+- **Crons actifs**: cron_daily_update.sh (lun-ven 20h), cron_nigeria_weekly.sh (lundi 10h), fix-brvm-nginx.py (toutes les 5 min)
 
 ## Historique des scripts de migration
 | Script | Date | Description | Statut |
@@ -397,9 +415,16 @@
 | (saveperfdateeur/usd) | 2026-05-17 | Tables performences_eurs/usds remplies (551 fonds) | Execute en prod |
 | `recalc_eur_usd_daily_rate.js` | 2026-05-17 | Recalcul value_EUR/USD avec taux quotidien par date VL (909 fonds, 1.17M VL) | Execute en prod |
 | (fix toFixed null safety) | 2026-05-17 | Fix crash pages fonds Tunisie/UEMOA (optional chaining, 3 fichiers) | DEPLOYE en prod |
-| `sec_ng_nav_extractor_v6.py` | 2026-05-17 | Extracteur Python SEC Nigeria Weekly NAV (scrape+parse XLSX) | Commite, a deployer |
-| `import_vl_nigeria_sec.js` | 2026-05-17 | Import CSV Nigeria -> MySQL (matching+creation fonds+VL+EUR/USD) | Commite, a deployer |
-| `cron_nigeria_weekly.sh` | 2026-05-17 | Cron hebdomadaire Nigeria (extraction+import+perf, chaque lundi) | Commite, a deployer |
+| `sec_ng_nav_extractor_v6.py` | 2026-05-17 | Extracteur Python SEC Nigeria Weekly NAV (scrape+parse XLSX) | Execute en prod (432 fichiers, 81K lignes) |
+| `import_vl_nigeria_sec.js` | 2026-05-17 | Import CSV Nigeria -> MySQL (matching+creation fonds+VL+EUR/USD) | Execute en prod (58K VL, 275 fonds) |
+| `cron_nigeria_weekly.sh` | 2026-05-17 | Cron hebdomadaire Nigeria (extraction+import+perf, chaque lundi) | Installe en prod (lundi 10h) |
+| `fix_nigeria_fuzzy_matches.js` | 2026-05-17 | Correction 15 mauvais fuzzy matches (deplace VL vers bons fonds) | Execute en prod (419 VL deplacees) |
+| `fix_nigeria_societes.js` | 2026-05-17 | Creation societes de gestion Nigeria dans table societes | Execute en prod (36 creees, 53 fonds rattaches) |
+| `fix_nigeria_orphans_and_dupes.js` | 2026-05-17 | Fix orphelins + suppression doublon societes + societe parasite "1" | Execute en prod (15 orphelins, 9 dupes) |
+| `compare_nigeria_excel_vs_db.js` | 2026-05-17 | Comparaison fichier Excel SEC Nigeria vs base pour fonds manquants | Commite, pret a utiliser |
+| (filtre pays imports) | 2026-05-17 | Ajout AND pays=? aux imports Maroc/UEMOA (anti-collision cross-pays) | Deploye en prod |
+| (null guard societes) | 2026-05-17 | Fix crash API getSocietebyidfisrt/stat quand societe absente | Deploye en prod |
+| (fix Sequelize FK+DataTypes) | 2026-05-17 | Desactivation FK incompatibles date/id + NUMBER->INTEGER | Deploye en prod |
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
 - **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
@@ -424,19 +449,63 @@
 - **Commit API**: `8f9c233`
 
 ### 2026-05-17 - Import VL Nigeria (SEC Nigeria Weekly NAV)
-- **Statut**: COMMITE, A DEPLOYER ET EXECUTER
+- **Statut**: EXECUTE EN PRODUCTION
 - **Objectif**: Importer l'historique complet des VL hebdomadaires Nigeria depuis la SEC (2018-2026)
 - **Architecture 3 scripts**:
   1. `sec_ng_nav_extractor_v6.py` (Python) : Scrape sec.gov.ng, telecharge les XLSX hebdomadaires, extrait fonds/societes/NAV/prix/categories/devises, produit 5 CSV (donnees, audit, coherence, couverture, fuzzy names)
-  2. `import_vl_nigeria_sec.js` (Node.js) : Lit le CSV, match les 150+ fonds Nigeria existants (exact + fuzzy), cree les nouveaux, insere VL avec conversion EUR/USD quotidienne (getRate binary search), INSERT IGNORE, met a jour datejour/date_premiere_vl/active
+  2. `import_vl_nigeria_sec.js` (Node.js) : Lit le CSV, match les fonds Nigeria (exact + fuzzy 95%), cree les nouveaux, insere VL avec conversion EUR/USD quotidienne (getRate binary search), cree automatiquement les societes de gestion
   3. `cron_nigeria_weekly.sh` (Bash) : Cron lundi 10h — extraction annee courante + import + recalc VL ajuste + recalc perf locale/EUR/USD
+- **Resultats execution prod**:
+  - Extraction: 432 fichiers telecharges, 81 422 lignes, 0 erreurs
+  - Import: 58 291 VL inserees, 275 fonds (165 existants + 110 crees), 1 041 VL rejetees (hors bornes)
+  - 45 fuzzy matches dont 15 faux positifs corriges (fix_nigeria_fuzzy_matches.js)
+  - 244 VL avec variations extremes detectees (erreurs source SEC, non importees)
+- **Mapping VL/AN verifie**:
+  - CSV `vl_price` (offer/unit price per share) → DB `value` (prix unitaire)
+  - CSV `nav_value`/`nav_ngn` (total NAV) → DB `actif_net` (actif net total)
+  - `vl_ajuste` = `value` (pas de dividendes pour Nigeria)
 - **Controles qualite integres**:
-  - CSV audit: fichiers mal parses signales
-  - CSV coherence: conflits entre fichiers detectes
-  - CSV fuzzy: noms similaires signales pour deduplication
-  - Matching fuzzy 85%+ pour rattacher aux fonds existants
-  - INSERT IGNORE: impossible de dupliquer des VL
+  - Bornes VL: [0.0001 - 1 000 000 NGN], NAV max: 5T NGN
+  - Preference bloc CURRENT vs PREVIOUS dans fichiers multi-semaines
+  - NAV < VL suspect (NAV devrait etre >> prix unitaire)
+  - Variation extreme >50% entre VL consecutives signalee
+  - Matching fuzzy 95% pour eviter faux positifs (releve de 85%)
   - Non-destructif: ne met a jour que les champs VIDES sur fonds existants
 - **Categories mappees**: ACTIONS, MONETAIRE, OBLIGATAIRE, DIVERSIFIE, IMMOBILIER, DOLLAR, ETHIQUE, CHARIA, SPECIALISE, INFRASTRUCTURE, ETF
 - **Pre-requis serveur**: Python3 + pip (requests, beautifulsoup4, openpyxl, python-dateutil), LibreOffice (conversion .xls anciens)
-- **Commit API**: a venir
+- **Commits API**: `a36e8d1` (pipeline initial), `3af89c2` (validation+qualite), `a9a36d1` (fix fuzzy+threshold 95%)
+- **Cron**: installe en production (chaque lundi 10h)
+
+### 2026-05-17 - Correction societes de gestion Nigeria
+- **Statut**: EXECUTE EN PRODUCTION
+- **Probleme 1**: import_vl_nigeria_sec.js creait les fonds avec societe_gestion (texte) mais ne creait pas les entrees dans la table societes ni ne mettait a jour societe_id → page /fund-managers/ crashait
+- **Probleme 2**: fix_nigeria_fuzzy_matches.js creait 15 fonds sans societe_gestion (champ vide)
+- **Probleme 3**: Doublons de societes dues a variations de noms (Ltd vs Limited, espace vs point)
+- **Probleme 4**: Societe parasite "1" creee par erreur
+- **Scripts executes**:
+  1. `fix_nigeria_societes.js`: 77 societes distinctes, 36 creees, 41 existantes, 53 fonds rattaches
+  2. `fix_nigeria_orphans_and_dupes.js`: 15 orphelins corriges, 9 doublons fusionnes, societe "1" supprimee
+- **Resultat final**: 69 societes Nigeria propres, 274/275 fonds avec societe_id (1 orphelin restant)
+- **Commits API**: `f107970` (fix societes + null guard), `9b0982f` (orphans + dupes)
+
+### 2026-05-17 - Null guard API societes de gestion
+- **Statut**: DEPLOYE EN PRODUCTION (PM2 restart id:10)
+- **Bug**: Routes `/api/getSocietebyidfisrt/:id` et `/api/getSocietebyidstat/:id` crashaient quand societe.findOne() retourne null
+- **Fix**: Ajout `if (!response) return res.status(404)` avant acces a response.nom
+- **Fichier**: `src/routes/apigestionsociete.js`
+- **Commit API**: `f107970`
+
+### 2026-05-17 - Filtre pays ajouté aux imports Maroc et UEMOA
+- **Statut**: DEPLOYE EN PRODUCTION
+- **Probleme**: import_vl_maroc.js et import_vl_uemoa.js cherchaient les fonds par nom SANS filtrer par pays → risque de collision cross-pays si 2 pays ont un fonds avec le meme nom
+- **Fix**: Ajout `AND LOWER(pays) = LOWER(?)` aux requetes de matching, aligné sur le modele Nigeria
+- **Fichiers**: `import_vl_maroc.js` ligne 177, `import_vl_uemoa.js` ligne 346
+- **Commit API**: `bd3821e`
+
+### 2026-05-17 - Fix associations Sequelize incompatibles + DataTypes
+- **Statut**: DEPLOYE EN PRODUCTION
+- **Fix 1**: Desactivation FK associations incompatibles (date STRING vs id INTEGER) dans db.js et sequelize.js
+  - `date_valorisation.belongsTo(vl)` et `vl.hasMany(date_valorisation)` — FK date (STRING) pointe vers vl.id (INTEGER)
+  - `transaction.belongsTo(devisedechanges)` — FK date incompatible
+- **Fix 2**: `tsrhisto.js` — `DataTypes.NUMBER` (n'existe pas) → `DataTypes.INTEGER`
+- **Commit API**: `f107970`
