@@ -238,6 +238,24 @@
   - `import_vl_uemoa.js`
 - **Commit API**: `3e9a801`
 
+### 2026-05-16 - Deploiement production: Forex, VL ajuste, cron
+- **Statut**: EXECUTE EN PRODUCTION
+- **Forex**: 21 paires importees, EUR/USD etendu jusqu'a mai 2026 via Yahoo Finance (FRED timeout)
+- **VL Ajuste**: 1 171 022 VL recalculees avec formule additive (identique au code d'origine)
+- **fix_valorisations_eur_usd**: Toutes devises gerees dynamiquement (0 updates necessaires, deja OK)
+- **Cron**: `cron_daily_update.sh` installe (20h lun-ven): ASFIM + forex + vl_ajuste + perf x2
+- **Commits API**: `8da790c`, `aacddcc`, `8a319f5`, `e3424ef`
+
+### 2026-05-17 - Fix pages EUR/USD (graphique, performances, classement)
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **8 bugs corriges dans 5 fichiers**:
+  1. `apigestionfonds.js`: Graphique EUR/USD utilisait `data.value` (devise locale) au lieu de `vl_ajuste_EUR`/`vl_ajuste_USD`. Ajout pattern `hasIndRef` pour rendre le graphique meme sans benchmark (comme la route locale). Fix `req.params.id` -> `fundId` pour le lookup fond.
+  2. `apigestionperformance.js`: Branche EUR utilisait `actif_net_USD` au lieu de `actif_net_EUR` (2 occurrences corrigees).
+  3. `apigestionsavequotidien.js`: `processFundDevise` appelait `/api/performancesdev/` sans date -> corrige vers `/api/performancesdevwithdate/` avec date. USD regional ranking utilisait `categorie_nationale` -> corrige vers `categorie_regionale`. `calculateRankForPeriod` retournait `null` causant crash -> retourne `[null, 0]`.
+  4. `apigestionquartile.js`: Route `classementquartiledev` retournait 404 si classement absent -> retourne objet vide `{}` (comme la version locale).
+  5. `apigestionratios.js`: Ratios EUR/USD utilisaient `indRef` (devise locale) -> corrige vers `indRef_EUR`/`indRef_USD` (2 occurrences).
+- **Commit API**: `4eb6d8b`
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
@@ -284,6 +302,17 @@
 - [ ] Preparer script d'import Excel SEC Nigeria (weekly NAV)
 - [ ] Activer les 150 fonds Nigeria une fois VL importees
 - [ ] Generer EUR/NGN et USD/NGN
+
+#### 2G. Harmonisation categories (casse et accents)
+- [ ] Harmoniser majuscules/minuscules: ACTIONS vs Actions, DIVERSIFIE vs Diversifié, OBLIGATIONS vs Obligataire
+- [ ] Normaliser en majuscules dans fond_investissements: categorie_globale, categorie_libelle, classification
+- [ ] Verifier coherence graphiques pays (pie charts countries/statistique)
+
+#### 2H. Limite 500 VL sur page fond (date decalee)
+- [ ] Route `/api/valLiq/:id` et `/api/valLiqdev/:id/:devise` limitees a 500 VL (LIMIT 500)
+- [ ] Fonds avec >500 VL: graphique et perf tronques aux 500 premieres (plus anciennes, ORDER ASC)
+- [ ] Exemple: AFRICAPITAL CASH PLUS montre VL jusqu'en 2021 alors que les donnees vont a 2026
+- [ ] Solution: augmenter LIMIT ou paginer, ou ORDER DESC + reverse cote client
 
 ### PHASE 3 - Integrite structurelle
 **Priorite: MOYENNE**
@@ -355,3 +384,8 @@
 | `import_vl_maroc.js` | 2026-05-15 | Import CSV ASFIM (VL Maroc) | Commite, a deployer et executer |
 | `import_vl_maroc_xlsx.js` | 2026-05-15 | Import XLSX consolide ASFIM (609 fonds, 50K+ VL Maroc) | Commite, a deployer et executer |
 | `import_vl_uemoa.js` | 2026-05-15 | Import XLSX BRVM nettoye (147 fonds, 87K VL UEMOA/XOF) | Commite, a deployer et executer |
+| `scrape_forex_import.js` | 2026-05-16 | Ajout EUR/USD Yahoo Finance fallback (FRED timeout) | Execute en prod |
+| `fix_valorisations_eur_usd.js` | 2026-05-16 | Gestion dynamique toutes devises (plus de skip NGN/ZAR/etc) | Execute en prod |
+| `recalc_vl_ajuste.js` | 2026-05-16 | Recalcul VL ajuste formule additive (1.17M VL, 0 erreurs) | Execute en prod |
+| `cron_daily_update.sh` | 2026-05-16 | Cron quotidien 5 etapes (ASFIM+forex+vl_ajuste+perf) | Installe en prod |
+| (fix EUR/USD pages) | 2026-05-17 | 8 bugs corriges dans 5 fichiers routes API | Commite, a deployer |
