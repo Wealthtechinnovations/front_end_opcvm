@@ -2801,7 +2801,7 @@ borderColor:'grey'
                           <td>Variation actif net (3 mois) <span data-content="Un fonds peut réinvestir ses revenus (dividendes ou coupons), il sera alors qualifié de Capi (car il capitalise les revenus) ou bien les distribuer aux porteurs de parts une ou plusieurs fois par an sous forme de dividendes ou de coupons, il sera alors qualifié de Distri (car il distribue ses revenus). Certains fonds laissent la liberté à leur organe de décision de capitaliser ou de distribuer, ils sont alors qualifiés de C/D." data-helper-explanation="" data-trigger="hover" data-tooltip-isinit="true"></span></td>
                           <td className="text-right highlight"> {post?.data?.performances?.data?.perf3Moisactif_net == null || isNaN(post?.data?.performances?.data?.perf3Moisactif_net)
                             ? "-"
-                            : Number(post.data.performances.data.perf3Moisactif_net).toFixed(2) + "%"} </td>
+                            : Number(post?.data?.performances?.data?.perf3Moisactif_net).toFixed(2) + "%"} </td>
                         </tr>
                         <br />
                         <tr>
