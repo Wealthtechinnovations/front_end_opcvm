@@ -48,73 +48,17 @@ async function getdevise() {
   ).json();
   return data;
 }
-const optionsCategorie = [
-  { value: "Obligations", label: 'Obligations' },
-  { value: "Actions", label: 'Actions' },
-  { value: "Diversifié", label: 'Diversifié' },
-  { value: "Monétaire", label: 'Monétaire' },
-  { value: "ETF", label: 'ETF' },
-  { value: "Infrastructure", label: 'Infrastructure' },
-  { value: "Immobilier", label: 'Immobilier' },
-  { value: "Private equity", label: 'Private equity' },
-  { value: "Alternatif", label: 'Alternatif' },
+async function getcategories() {
+  const data = (
+    await fetch(`${urlconstant}/api/getCategories`)
+  ).json();
+  return data;
+}
+const optionsCategorie: any[] = [];
 
-  { value: "Autres", label: 'Autres' },
+const optionsCategorienationale: any[] = [];
 
-
-];
-
-const optionsCategorienationale = [
-  { value: "Obligations Maroc", label: 'Obligations Maroc', country: 'Maroc' },
-  { value: "Obligations Maroc", label: 'Actions Maroc', country: 'Maroc' },
-  { value: "Diversifié Maroc", label: 'Diversifié Maroc', country: 'Maroc' },
-  { value: "Monétaire Maroc", label: 'Monétaire Maroc', country: 'Maroc' },
-  { value: "ETF Maroc", label: 'ETF Maroc', country: 'Maroc' },
-  { value: "Infrastructure Maroc", label: 'Infrastructure Maroc', country: 'Maroc' },
-  { value: "Immobilier Maroc", label: 'Immobilier Maroc', country: 'Maroc' },
-  { value: "Private equity Maroc", label: 'Private equity Maroc', country: 'Maroc' },
-  { value: "Alternatif Maroc", label: 'Alternatif Maroc', country: 'Maroc' },
-  { value: "Autres Maroc", label: 'Autres Maroc', country: 'Maroc' },
-
-  { value: "Obligations Tunisie", label: 'Obligations Tunisie', country: 'Tunisie' },
-  { value: "Actions Tunisie", label: 'Actions Tunisie', country: 'Tunisie' },
-  { value: "Diversifié Tunisie", label: 'Diversifié Tunisie', country: 'Tunisie' },
-  { value: "Monétaire Tunisie", label: 'Monétaire Tunisie', country: 'Tunisie' },
-  { value: "ETF Tunisie", label: 'ETF Tunisie', country: 'Tunisie' },
-  { value: "Infrastructure Tunisie", label: 'Infrastructure Tunisie', country: 'Tunisie' },
-  { value: "Immobilier Tunisie", label: 'Immobilier Tunisie', country: 'Tunisie' },
-  { value: "Private equity Tunisie", label: 'Private equity Tunisie', country: 'Tunisie' },
-  { value: "Alternatif Tunisie", label: 'Alternatif Tunisie', country: 'Tunisie' },
-  { value: "Autres Tunisie", label: 'Autres Tunisie', country: 'Tunisie' },
-
-  // Ajoutez plus d'options au besoin
-];
-
-const optionsCategorieregionale = [
-  { value: "Obligations Afrique du Nord", label: 'Obligations Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Actions Afrique du Nord", label: 'Actions Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Diversifié Afrique du Nord", label: 'Diversifié Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Monétaire Afrique du Nord", label: 'Monétaire Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "ETF Afrique du Nord", label: 'ETF Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Infrastructure Afrique du Nord", label: 'Infrastructure Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Immobilier Afrique du Nord", label: 'Immobilier Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Private equity Afrique du Nord", label: 'Private equity Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Alternatif Afrique du Nord", label: 'Alternatif Afrique du Nord', country: 'Afrique du Nord' },
-  { value: "Autres Afrique du Nord", label: 'Autres Afrique du Nord', country: 'Afrique du Nord' },
-
-  { value: "Obligations Afrique Centrale", label: 'Obligations Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Actions Afrique Centrale", label: 'Actions Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Diversifié Afrique Centrale", label: 'Diversifié Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Monétaire Afrique Centrale", label: 'Monétaire Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "ETF Afrique Centrale", label: 'ETF Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Infrastructure Afrique Centrale", label: 'Infrastructure Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Immobilier Afrique Centrale", label: 'Immobilier Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Private equity Afrique Centrale", label: 'Private equity Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Alternatif Afrique Centrale", label: 'Alternatif Afrique Centrale', country: 'Afrique Centrale' },
-  { value: "Autres Afrique Centrale", label: 'Autres Afrique Centrale', country: 'Afrique Centrale' },
-
-  // Ajoutez plus d'options au besoin
-];
+const optionsCategorieregionale: any[] = [];
 
 
 const optionsSociete = [
@@ -480,6 +424,9 @@ export default function Recherche() {
   const [openFieldset, setOpenFieldset] = useState(null);
   const [optionsSociete, setOptionsSociete] = useState([]);
   const [optionsDevise, setOptionsDevise] = useState([]);
+  const [optionsCategorieState, setOptionsCategorieState] = useState<any[]>([]);
+  const [optionsCategorienationaleState, setOptionsCategorienationaleState] = useState<any[]>([]);
+  const [optionsCategorieregionaleState, setOptionsCategorieregionaleState] = useState<any[]>([]);
   const [selectedSociete, setSelectedSociete] = useState<Societe | null>(null);
   const [selectedDevise, setSelectedDevise] = useState<Devise | null>(null);
 
@@ -984,6 +931,17 @@ export default function Recherche() {
         }));
         setOptionsDevise(mappedOptions5);
 
+        const catData = await getcategories();
+        if (catData?.data?.categoriesGlobal) {
+          setOptionsCategorieState(catData.data.categoriesGlobal.map((c: string) => ({ value: c, label: c })));
+        }
+        if (catData?.data?.categoriesNational) {
+          setOptionsCategorienationaleState(catData.data.categoriesNational.map((c: string) => ({ value: c, label: c })));
+        }
+        if (catData?.data?.categoriesRegional) {
+          setOptionsCategorieregionaleState(catData.data.categoriesRegional.map((c: string) => ({ value: c, label: c })));
+        }
+
       } catch (error) {
         Swal.close();
         console.error("Erreur lors de l'appel à l'API :", error);
@@ -1080,7 +1038,7 @@ export default function Recherche() {
                             <label htmlFor="select">Classe d actif  :</label>
                             <Select className="select-component"
                               id="select"
-                              options={optionsCategorie}
+                              options={optionsCategorieState}
 
                               isSearchable
                               value={selectedOptions1}
@@ -1103,7 +1061,7 @@ export default function Recherche() {
                             <label htmlFor="select">Categorie Regionale  :</label>
                             <Select className="select-component"
                               id="select"
-                              options={optionsCategorieregionale}
+                              options={optionsCategorieregionaleState}
 
                               isSearchable
                               value={selectedOptions2}
@@ -1114,7 +1072,7 @@ export default function Recherche() {
                             <label htmlFor="select">Categorie nationale :</label>
                             <Select className="select-component"
                               id="select"
-                              options={optionsCategorienationale}
+                              options={optionsCategorienationaleState}
 
                               isSearchable
                               value={selectedOptions3}

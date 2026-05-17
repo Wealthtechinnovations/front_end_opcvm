@@ -111,22 +111,7 @@ interface MyDataType {
   // Autres propriétés
 }
 
-const optionsCategorie = [
-  { value: "Obligations", label: 'Obligations' },
-  { value: "Actions", label: 'Actions' },
-  { value: "Diversifié", label: 'Diversifié' },
-  { value: "Monétaire", label: 'Monétaire' },
-  { value: "ETF", label: 'ETF' },
-  { value: "Infrastructure", label: 'Infrastructure' },
-  { value: "Immobilier", label: 'Immobilier' },
-  { value: "Private equity", label: 'Private equity' },
-  { value: "Alternatif", label: 'Alternatif' },
-
-  { value: "Autres", label: 'Autres' },
-
-
-  // Ajoutez plus d'options au besoin
-];
+const optionsCategorie: any[] = [];
 interface FormData {
   societe?: Option;
   categorie?: Option;

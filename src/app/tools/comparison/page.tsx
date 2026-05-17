@@ -29,31 +29,12 @@ async function getsociete() {
   ).json();
   return data;
 }
-const optionsCategorie = [
-  { value: "Obligations", label: 'Obligations' },
-  { value: "Actions", label: 'Actions' },
-  { value: "Diversifié", label: 'Diversifié' },
-  { value: "Monétaire", label: 'Monétaire' },
-  { value: "ETF", label: 'ETF' },
-  { value: "Infrastructure", label: 'Infrastructure' },
-  { value: "Immobilier", label: 'Immobilier' },
-  { value: "Private equity", label: 'Private equity' },
-  { value: "Alternatif", label: 'Alternatif' },
-
-  { value: "Autres", label: 'Autres' },
-
-
-  // Ajoutez plus d'options au besoin
-];
-
-const optionsSociete = [
-  { value: "WINEO GESTION", label: 'WINEO GESTION' },
-  { value: "WAFA GESTION", label: 'WAFA GESTION' },
-  { value: "TWIN CAPITAL GESTION", label: 'TWIN CAPITAL GESTION' },
-  { value: "CFG GESTION", label: 'CFG GESTION' }
-
-  // Ajoutez plus d'options au besoin
-];
+async function getcategories() {
+  const data = (
+    await fetch(`${urlconstant}/api/getCategories`)
+  ).json();
+  return data;
+}
 
 interface Option {
   value: string;
@@ -152,7 +133,7 @@ export default function Comparaison() {
   const [error, setError] = useState(""); // État pour stocker le message d'erreur
   const [optionsSociete, setOptionsSociete] = useState([]);
   const [selectedSociete, setSelectedSociete] = useState<Societe | null>(null);
-
+  const [optionsCategorieState, setOptionsCategorieState] = useState<any[]>([]);
 
   const [textInput, setTextInput] = useState('');
   const [fundsOptions, setFundsOptions] = useState([]);
@@ -303,6 +284,11 @@ export default function Comparaison() {
           // Replace with the actual property name
         }));
         setOptionsSociete(mappedOptions2);
+
+        const catData = await getcategories();
+        if (catData?.data?.categoriesGlobal) {
+          setOptionsCategorieState(catData.data.categoriesGlobal.map((c: string) => ({ value: c, label: c })));
+        }
       } catch (error) {
         Swal.close();
         console.error("Erreur lors de l'appel à l'API :", error);
@@ -508,7 +494,7 @@ const getValue = (fund, key) => {
                             <label htmlFor="select">Categories  :</label>
                             <Select className="select-component"
                               id="select"
-                              options={optionsCategorie}
+                              options={optionsCategorieState}
 
                               isSearchable
                               value={selectedOptions1}
