@@ -299,9 +299,12 @@
 - [ ] TSR Maroc: deja present dans la base
 
 #### 2F. Nigeria VL
-- [ ] Preparer script d'import Excel SEC Nigeria (weekly NAV)
-- [ ] Activer les 150 fonds Nigeria une fois VL importees
-- [ ] Generer EUR/NGN et USD/NGN
+- [x] Preparer script d'import Excel SEC Nigeria (weekly NAV) — sec_ng_nav_extractor_v6.py + import_vl_nigeria_sec.js
+- [ ] Executer extraction historique 2018-2026 sur le serveur
+- [ ] Executer import dans MySQL
+- [ ] Activer les 150+ fonds Nigeria une fois VL importees (automatique via import script)
+- [x] Generer EUR/NGN et USD/NGN (fait via import_forex_historique.js, 2026-05-16)
+- [ ] Installer cron_nigeria_weekly.sh (chaque lundi)
 
 #### 2G. Harmonisation categories (casse et accents)
 - [x] Harmoniser majuscules/minuscules: ACTIONS vs Actions, DIVERSIFIE vs Diversifié, OBLIGATIONS vs Obligataire (fix_harmonize_categories.js, 603 fonds, 2026-05-17)
@@ -394,6 +397,9 @@
 | (saveperfdateeur/usd) | 2026-05-17 | Tables performences_eurs/usds remplies (551 fonds) | Execute en prod |
 | `recalc_eur_usd_daily_rate.js` | 2026-05-17 | Recalcul value_EUR/USD avec taux quotidien par date VL (909 fonds, 1.17M VL) | Execute en prod |
 | (fix toFixed null safety) | 2026-05-17 | Fix crash pages fonds Tunisie/UEMOA (optional chaining, 3 fichiers) | DEPLOYE en prod |
+| `sec_ng_nav_extractor_v6.py` | 2026-05-17 | Extracteur Python SEC Nigeria Weekly NAV (scrape+parse XLSX) | Commite, a deployer |
+| `import_vl_nigeria_sec.js` | 2026-05-17 | Import CSV Nigeria -> MySQL (matching+creation fonds+VL+EUR/USD) | Commite, a deployer |
+| `cron_nigeria_weekly.sh` | 2026-05-17 | Cron hebdomadaire Nigeria (extraction+import+perf, chaque lundi) | Commite, a deployer |
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
 - **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
@@ -416,3 +422,21 @@
 - **Solution**: `recalc_eur_usd_daily_rate.js` recalcule value_EUR/USD pour chaque VL avec le taux EUR/{devise} et USD/{devise} de la date exacte de la VL
 - **Execution prod**: recalc + recalc_vl_ajuste.js + saveperfdateeur/saveperfdateusd => tables performences_eurs/usds mises a jour
 - **Commit API**: `8f9c233`
+
+### 2026-05-17 - Import VL Nigeria (SEC Nigeria Weekly NAV)
+- **Statut**: COMMITE, A DEPLOYER ET EXECUTER
+- **Objectif**: Importer l'historique complet des VL hebdomadaires Nigeria depuis la SEC (2018-2026)
+- **Architecture 3 scripts**:
+  1. `sec_ng_nav_extractor_v6.py` (Python) : Scrape sec.gov.ng, telecharge les XLSX hebdomadaires, extrait fonds/societes/NAV/prix/categories/devises, produit 5 CSV (donnees, audit, coherence, couverture, fuzzy names)
+  2. `import_vl_nigeria_sec.js` (Node.js) : Lit le CSV, match les 150+ fonds Nigeria existants (exact + fuzzy), cree les nouveaux, insere VL avec conversion EUR/USD quotidienne (getRate binary search), INSERT IGNORE, met a jour datejour/date_premiere_vl/active
+  3. `cron_nigeria_weekly.sh` (Bash) : Cron lundi 10h — extraction annee courante + import + recalc VL ajuste + recalc perf locale/EUR/USD
+- **Controles qualite integres**:
+  - CSV audit: fichiers mal parses signales
+  - CSV coherence: conflits entre fichiers detectes
+  - CSV fuzzy: noms similaires signales pour deduplication
+  - Matching fuzzy 85%+ pour rattacher aux fonds existants
+  - INSERT IGNORE: impossible de dupliquer des VL
+  - Non-destructif: ne met a jour que les champs VIDES sur fonds existants
+- **Categories mappees**: ACTIONS, MONETAIRE, OBLIGATAIRE, DIVERSIFIE, IMMOBILIER, DOLLAR, ETHIQUE, CHARIA, SPECIALISE, INFRASTRUCTURE, ETF
+- **Pre-requis serveur**: Python3 + pip (requests, beautifulsoup4, openpyxl, python-dateutil), LibreOffice (conversion .xls anciens)
+- **Commit API**: a venir
