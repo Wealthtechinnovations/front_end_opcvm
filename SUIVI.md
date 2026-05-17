@@ -276,6 +276,31 @@
 - **Scripts crees**: `fix_vl_spikes.js`, `fix_categorie_regional.js`
 - **Commit API**: `ea57218`
 
+### 2026-05-17 - Fix page societe de gestion (fund-managers) vide + VL anomales ciblees
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Probleme 1**: Page `/fund-managers/funds/[societe]` affiche des lignes vides (pas de nom, categorie, performances)
+- **Cause racine 1**: `/api/listeproduitsociete/:id` (apigestionsociete.js ligne 664): `performanceResults.toJSON()` crash quand le fond n'a pas de record dans `performences` (retourne null). Le catch renvoie un objet `{error:...}` au lieu de `{id, fundData, performanceData}`. Le frontend rend les lignes mais `item.fundData` est undefined.
+- **Fix 1a**: Null-safety: `performanceResults ? performanceResults.toJSON() : null`
+- **Fix 1b**: Case-insensitive matching pour societe_gestion (comme deja fait sur les pages pays)
+- **Impact**: Affecte TOUTES les societes de gestion dont les fonds n'ont pas de perf precalculee (Nigeria, Tunisie, UEMOA, CEMAC = 100% echec)
+- **Probleme 2**: Performances toujours "-" apres `saveperfdatemysql` — le endpoint est fondamentalement casse pour le bulk (genere millions d'appels HTTP a lui-meme, timeout)
+- **Fix 2**: `fix_populate_performances.js` — script leger qui pour chaque fond actif:
+  1. Recupere la derniere date VL
+  2. Appelle UNE SEULE fois `/api/performanceswithdate/fond/{id}/{date}` + ratios
+  3. INSERT/UPDATE dans `performences`
+  - Options: `--pays`, `--fond`, `--force`
+  - Utilise `http://localhost:3005` (appels internes, pas via Nginx)
+- **Probleme 3**: VL anomales specifiques restantes:
+  - AFRINVEST DOLLAR FUND (id=1141): 2 entrees VL=114.52 les 2025-12-19 et 2025-12-24 au lieu de ~165,000 (erreur saisie, valeur 1445x trop basse) -> YTD affiche 137,201%
+  - SICAV ABDOU DIOUF (id=1539): doublons de date + pics 10% residuels
+- **Fix 3**: `fix_vl_targeted.js` — nettoyage cible:
+  - Fond 1141: supprime entrees VL < 1000 en dec 2025
+  - Fond 1539: supprime doublons de date + detection pics seuil 10%
+  - Global: detecte tout fond avec drop >90% puis recovery >900% (pattern erreur saisie)
+- **Fichiers modifies**: `src/routes/apigestionsociete.js`
+- **Scripts crees**: `fix_populate_performances.js`, `fix_vl_targeted.js`
+- **Commit API**: `5c62ae0`
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
