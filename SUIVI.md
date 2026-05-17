@@ -257,26 +257,24 @@
 - **Commit API**: `4eb6d8b`
 
 ### 2026-05-17 - Fix performances "-" pour Nigeria/Tunisie/UEMOA + nettoyage pics VL
-- **Statut**: COMMITE ET POUSSE, A DEPLOYER ET EXECUTER EN PRODUCTION
+- **Statut**: DEPLOYE ET EXECUTE EN PRODUCTION
 - **Probleme 1**: Les colonnes YTD, Perf Glissante 1A, Perf Glissante 3A affichent "-" pour Nigeria, Tunisie, UEMOA (mais OK pour Maroc)
-- **Cause racine 1**: La table `performences` est vide pour les fonds non-Maroc. Le endpoint `saveperfdatemysql` n'a jamais ete execute pour ces fonds. De plus, `processFundmysql` avait un filtre date hardcode `> 2024-07-31` qui excluait UEMOA (dernieres VL: 2024-03-21) et Tunisie (2024-07-24).
+- **Cause racine 1**: La table `performences` etait vide pour les fonds non-Maroc. Le endpoint `saveperfdatemysql` n'avait jamais ete execute pour ces fonds. De plus, `processFundmysql` avait un filtre date hardcode `> 2024-07-31` qui excluait UEMOA (dernieres VL: 2024-03-21) et Tunisie (2024-07-24).
 - **Fix 1**: Date filtre changee de `2024-07-31` a `2019-12-31` + null guards dans processFundmysql
 - **Probleme 2**: Pics VL incoherents sur Nigeria/Tunisie/UEMOA (visible sur graphiques). Le precedent nettoyage (audit_vl_anomalies.js) ne detectait que l ecart avec le predecesseur, pas le successeur, donc ne distinguait pas quel point etait le pic.
 - **Fix 2**: `fix_vl_spikes.js` — algorithme iteratif multi-passes: un point est un pic seulement s il devie >15% de SES DEUX VOISINS (prev ET next). Supprime les pics et re-scanne jusqu a convergence.
 - **Probleme 3**: Nigeria categorie_regional = "AFRIQUE DU NORD" au lieu de "AFRIQUE DE L OUEST"
 - **Fix 3**: `fix_categorie_regional.js` — recalcule categorie_regional pour tous les pays selon le PAYS_REGION_MAP correct
+- **Resultats execution prod**:
+  - `fix_categorie_regional.js`: 546 fonds corriges (274 Nigeria, 72 Tunisie, 111 UEMOA, 34 CEMAC, 55 Maroc)
+  - `fix_vl_spikes.js --delete`: 72 pics supprimes en 3 passes (54 Nigeria, 13 Maroc, 5 UEMOA). Convergence pass 3.
+  - `recalc_vl_ajuste.js`: 1 228 363 VL recalculees, 0 erreurs
+  - `saveperfdatemysql/1/3000`: performances calculees pour 1176 fonds (tous pays)
+  - `saveperfdateeur/1/3000`: 1176 fonds EUR, 0 erreurs
+  - `saveperfdateusd/1/3000`: 1176 fonds USD, 0 erreurs
 - **Fichiers modifies**: `apigestionsavequotidien.js` (processFundmysql date filter + null guards)
 - **Scripts crees**: `fix_vl_spikes.js`, `fix_categorie_regional.js`
 - **Commit API**: `ea57218`
-- **PROCEDURE DE DEPLOIEMENT** (dans l ordre):
-  1. `cd /var/www/.../api && git pull origin claude/code-review-improvements-ikvuj`
-  2. `node fix_categorie_regional.js` (corrige les regions Nigeria)
-  3. `node fix_vl_spikes.js --delete` (nettoie les pics VL iterativement)
-  4. `node recalc_vl_ajuste.js` (recalcule VL ajustees apres nettoyage)
-  5. `pm2 restart 10` (recharger l API avec le nouveau filtre date)
-  6. `curl "http://localhost:3005/api/saveperfdatemysql/1/3000"` (calculer performances TOUS les fonds)
-  7. `curl "http://localhost:3005/api/saveperfdateeur/1/3000"` (perf EUR)
-  8. `curl "http://localhost:3005/api/saveperfdateusd/1/3000"` (perf USD)
 
 ## Points en cours / a faire
 
@@ -290,7 +288,7 @@
 - [x] Verifier coherence VL: detecter les series avec variations >50% d'un jour a l'autre (script audit_vl_anomalies.js)
 - [x] Supprimer fonds parasite nom_fond="1" (id=2820, 18 VL supprimees)
 - [x] Detecter VL avec variation >15% entre 2 VL consecutives (<= 7 jours) — TOUS PAYS (audit_vl_anomalies.js execute)
-- [x] Nettoyage iteratif pics VL avec detection bidirectionnelle (fix_vl_spikes.js) — A EXECUTER
+- [x] Nettoyage iteratif pics VL avec detection bidirectionnelle (fix_vl_spikes.js) — EXECUTE (72 pics, 3 passes)
 - **Resultats audit 15% / 7j (2026-05-17)**:
   - 1 183 fonds analyses, 1 229 273 VL
   - 860 anomalies detectees dans 201 fonds
@@ -320,8 +318,9 @@
 - [ ] Scraping automatique des taux de change (source: ECB, fixer.io, ou API gratuite)
 
 #### 2D. Calculs batch (tables vides)
-- [x] Remplir `performences_eurs` (551 fonds) - calcul perf en EUR pour chaque fond (2026-05-17)
-- [x] Remplir `performences_usds` (551 fonds) - calcul perf en USD pour chaque fond (2026-05-17)
+- [x] Remplir `performences` pour TOUS les pays (1176 fonds) - locale, EUR, USD (2026-05-17)
+- [x] Remplir `performences_eurs` (1176 fonds) - calcul perf en EUR pour chaque fond (2026-05-17)
+- [x] Remplir `performences_usds` (1176 fonds) - calcul perf en USD pour chaque fond (2026-05-17)
 - [x] Remplir `classementfonds_eurs` - classement par performance EUR (2026-05-17)
 - [x] Remplir `classementfonds_usds` - classement par performance USD (2026-05-17)
 - [ ] Remplir `rendements` (0 lignes) - rendements par periode
@@ -469,9 +468,10 @@
 | `audit_vl_anomalies.js` | 2026-05-17 | Audit VL: variation >15% entre VL consecutives <=7j, tous pays | Execute en prod (860 anomalies, 201 fonds) |
 | (fix countries/search/comparison) | 2026-05-17 | Case-insensitive pays/societe/categorie + null-safe perf + dynamic categories | DEPLOYE en prod |
 | `fix_normalize_uppercase.js` | 2026-05-17 | MAJUSCULES + no accents + fill categories nationales/regionales tous pays | Execute en prod |
-| `fix_vl_spikes.js` | 2026-05-17 | Nettoyage iteratif pics VL (detection bidirectionnelle, multi-passes) | A EXECUTER en prod |
-| `fix_categorie_regional.js` | 2026-05-17 | Correction categorie_regional Nigeria (AFRIQUE DU NORD -> AFRIQUE DE L OUEST) | A EXECUTER en prod |
-| (processFundmysql date fix) | 2026-05-17 | Date filtre 2024-07-31 -> 2019-12-31 + null guards | A DEPLOYER en prod |
+| `fix_vl_spikes.js` | 2026-05-17 | Nettoyage iteratif pics VL (detection bidirectionnelle, 3 passes, 72 pics) | Execute en prod |
+| `fix_categorie_regional.js` | 2026-05-17 | Correction categorie_regional Nigeria (AFRIQUE DU NORD -> AFRIQUE DE L OUEST), 546 fonds | Execute en prod |
+| (processFundmysql date fix) | 2026-05-17 | Date filtre 2024-07-31 -> 2019-12-31 + null guards | DEPLOYE en prod |
+| (saveperfdatemysql all) | 2026-05-17 | Performances calculees pour 1176 fonds (tous pays), + EUR + USD | Execute en prod |
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
 - **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
