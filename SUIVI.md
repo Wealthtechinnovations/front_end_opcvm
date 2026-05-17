@@ -256,6 +256,28 @@
   5. `apigestionratios.js`: Ratios EUR/USD utilisaient `indRef` (devise locale) -> corrige vers `indRef_EUR`/`indRef_USD` (2 occurrences).
 - **Commit API**: `4eb6d8b`
 
+### 2026-05-17 - Fix performances "-" pour Nigeria/Tunisie/UEMOA + nettoyage pics VL
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER ET EXECUTER EN PRODUCTION
+- **Probleme 1**: Les colonnes YTD, Perf Glissante 1A, Perf Glissante 3A affichent "-" pour Nigeria, Tunisie, UEMOA (mais OK pour Maroc)
+- **Cause racine 1**: La table `performences` est vide pour les fonds non-Maroc. Le endpoint `saveperfdatemysql` n'a jamais ete execute pour ces fonds. De plus, `processFundmysql` avait un filtre date hardcode `> 2024-07-31` qui excluait UEMOA (dernieres VL: 2024-03-21) et Tunisie (2024-07-24).
+- **Fix 1**: Date filtre changee de `2024-07-31` a `2019-12-31` + null guards dans processFundmysql
+- **Probleme 2**: Pics VL incoherents sur Nigeria/Tunisie/UEMOA (visible sur graphiques). Le precedent nettoyage (audit_vl_anomalies.js) ne detectait que l ecart avec le predecesseur, pas le successeur, donc ne distinguait pas quel point etait le pic.
+- **Fix 2**: `fix_vl_spikes.js` — algorithme iteratif multi-passes: un point est un pic seulement s il devie >15% de SES DEUX VOISINS (prev ET next). Supprime les pics et re-scanne jusqu a convergence.
+- **Probleme 3**: Nigeria categorie_regional = "AFRIQUE DU NORD" au lieu de "AFRIQUE DE L OUEST"
+- **Fix 3**: `fix_categorie_regional.js` — recalcule categorie_regional pour tous les pays selon le PAYS_REGION_MAP correct
+- **Fichiers modifies**: `apigestionsavequotidien.js` (processFundmysql date filter + null guards)
+- **Scripts crees**: `fix_vl_spikes.js`, `fix_categorie_regional.js`
+- **Commit API**: `ea57218`
+- **PROCEDURE DE DEPLOIEMENT** (dans l ordre):
+  1. `cd /var/www/.../api && git pull origin claude/code-review-improvements-ikvuj`
+  2. `node fix_categorie_regional.js` (corrige les regions Nigeria)
+  3. `node fix_vl_spikes.js --delete` (nettoie les pics VL iterativement)
+  4. `node recalc_vl_ajuste.js` (recalcule VL ajustees apres nettoyage)
+  5. `pm2 restart 10` (recharger l API avec le nouveau filtre date)
+  6. `curl "http://localhost:3005/api/saveperfdatemysql/1/3000"` (calculer performances TOUS les fonds)
+  7. `curl "http://localhost:3005/api/saveperfdateeur/1/3000"` (perf EUR)
+  8. `curl "http://localhost:3005/api/saveperfdateusd/1/3000"` (perf USD)
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
@@ -268,6 +290,7 @@
 - [x] Verifier coherence VL: detecter les series avec variations >50% d'un jour a l'autre (script audit_vl_anomalies.js)
 - [x] Supprimer fonds parasite nom_fond="1" (id=2820, 18 VL supprimees)
 - [x] Detecter VL avec variation >15% entre 2 VL consecutives (<= 7 jours) — TOUS PAYS (audit_vl_anomalies.js execute)
+- [x] Nettoyage iteratif pics VL avec detection bidirectionnelle (fix_vl_spikes.js) — A EXECUTER
 - **Resultats audit 15% / 7j (2026-05-17)**:
   - 1 183 fonds analyses, 1 229 273 VL
   - 860 anomalies detectees dans 201 fonds
@@ -444,8 +467,11 @@
 | (fix pays case-sensitive) | 2026-05-17 | getPaysall toLowerCase() pour matching pays cross-tables | Deploye en prod |
 | (null guard pays routes) | 2026-05-17 | Fix crash getPaysbyidfisrt/stat si pays non trouvé | Deploye en prod |
 | `audit_vl_anomalies.js` | 2026-05-17 | Audit VL: variation >15% entre VL consecutives <=7j, tous pays | Execute en prod (860 anomalies, 201 fonds) |
-| (fix countries/search/comparison) | 2026-05-17 | Case-insensitive pays/societe/categorie + null-safe perf + dynamic categories | Commite, A DEPLOYER |
-| `fix_normalize_uppercase.js` | 2026-05-17 | MAJUSCULES + no accents + fill categories nationales/regionales tous pays | Commite, A EXECUTER en prod |
+| (fix countries/search/comparison) | 2026-05-17 | Case-insensitive pays/societe/categorie + null-safe perf + dynamic categories | DEPLOYE en prod |
+| `fix_normalize_uppercase.js` | 2026-05-17 | MAJUSCULES + no accents + fill categories nationales/regionales tous pays | Execute en prod |
+| `fix_vl_spikes.js` | 2026-05-17 | Nettoyage iteratif pics VL (detection bidirectionnelle, multi-passes) | A EXECUTER en prod |
+| `fix_categorie_regional.js` | 2026-05-17 | Correction categorie_regional Nigeria (AFRIQUE DU NORD -> AFRIQUE DE L OUEST) | A EXECUTER en prod |
+| (processFundmysql date fix) | 2026-05-17 | Date filtre 2024-07-31 -> 2019-12-31 + null guards | A DEPLOYER en prod |
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
 - **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
