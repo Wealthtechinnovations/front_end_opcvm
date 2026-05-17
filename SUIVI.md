@@ -437,7 +437,8 @@
 | `compare_nigeria_excel_vs_db.js` | 2026-05-17 | Comparaison fichier Excel SEC Nigeria vs base pour fonds manquants | Commite, pret a utiliser |
 | (filtre pays imports) | 2026-05-17 | Ajout AND pays=? aux imports Maroc/UEMOA (anti-collision cross-pays) | Deploye en prod |
 | (null guard societes) | 2026-05-17 | Fix crash API getSocietebyidfisrt/stat quand societe absente | Deploye en prod |
-| (fix Sequelize FK+DataTypes) | 2026-05-17 | Desactivation FK incompatibles date/id + NUMBER->INTEGER | Deploye en prod |
+| (fix Sequelize FK+DataTypes) | 2026-05-17 | Desactivation FK incompatibles date/id + NUMBER->INTEGER | **REVERTE** (causait regression pages vides) |
+| (REVERT FK+DataTypes) | 2026-05-17 | Re-activation FK associations + DataTypes.NUMBER restaure | Commite, A DEPLOYER |
 | `fix_nigeria_pays_casing.js` | 2026-05-17 | Suppression fonds parasite nom="1" + normalisation pays casing | Execute en prod |
 | (fix pays case-sensitive) | 2026-05-17 | getPaysall toLowerCase() pour matching pays cross-tables | Deploye en prod |
 | (null guard pays routes) | 2026-05-17 | Fix crash getPaysbyidfisrt/stat si pays non trouvé | Deploye en prod |
@@ -520,12 +521,25 @@
 - **Commit API**: `bd3821e`
 
 ### 2026-05-17 - Fix associations Sequelize incompatibles + DataTypes
-- **Statut**: DEPLOYE EN PRODUCTION
-- **Fix 1**: Desactivation FK associations incompatibles (date STRING vs id INTEGER) dans db.js et sequelize.js
-  - `date_valorisation.belongsTo(vl)` et `vl.hasMany(date_valorisation)` — FK date (STRING) pointe vers vl.id (INTEGER)
-  - `transaction.belongsTo(devisedechanges)` — FK date incompatible
-- **Fix 2**: `tsrhisto.js` — `DataTypes.NUMBER` (n'existe pas) → `DataTypes.INTEGER`
-- **Commit API**: `f107970`
+- **Statut**: REVERTE — CAUSAIT UNE REGRESSION (pages fonds vides)
+- **Fix 1 (REVERTE)**: Desactivation FK associations dans db.js et sequelize.js — CASSAIT l'affichage des fonds
+  - `date_valorisation.belongsTo(vl)` et `vl.hasMany(date_valorisation)` — ne doivent PAS etre desactivees
+  - `transaction.belongsTo(devisedechanges)` — ne doit PAS etre desactivee
+- **Fix 2 (REVERTE)**: `tsrhisto.js` — `DataTypes.NUMBER` ne doit PAS etre change en `DataTypes.INTEGER` (fonctionnait avant)
+- **Commit initial (REGRESSION)**: `f107970`
+- **Commit revert (FIX)**: `473eb5f`
+- **LECON**: Ne JAMAIS desactiver des associations Sequelize existantes sans tester l'impact sur toutes les pages. Ces associations sont utilisees par les routes API pour charger les donnees des fonds.
+
+### 2026-05-17 - REVERT regression pages fonds vides
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION (pm2 restart 10)
+- **Probleme**: Les pages fonds affichaient des donnees vides apres deploiement du commit f107970
+- **Cause**: Le commit f107970 incluait accidentellement des modifications aux FK associations dans db.js et sequelize.js (desactivation de 3 associations) + changement DataTypes dans tsrhisto.js. Ces changements n'etaient pas lies aux fix Nigeria societes mais ont ete embarques dans le meme commit.
+- **Fix**: Revert des 3 fichiers:
+  1. `services/shared/db.js` — re-activation de date_valorisation<->vl et transaction<->devisedechanges
+  2. `src/db/sequelize.js` — meme re-activation
+  3. `src/models/tsrhisto.js` — DataTypes.INTEGER revenu a DataTypes.NUMBER
+- **Commit API**: `473eb5f`
+- **Deploiement**: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git pull origin claude/code-review-improvements-ikvuj && pm2 restart 10`
 
 ### 2026-05-17 - Fix page pays Nigeria=0 + fonds parasite + null guards pays
 - **Statut**: DEPLOYE EN PRODUCTION
