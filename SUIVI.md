@@ -267,8 +267,18 @@
 - [x] Corriger 31 VL avec date=0000-00-00 (FAIT - supprimees par Phase 2 step 2)
 - [x] Verifier coherence VL: detecter les series avec variations >50% d'un jour a l'autre (script audit_vl_anomalies.js)
 - [x] Supprimer fonds parasite nom_fond="1" (id=2820, 18 VL supprimees)
-- [ ] Detecter et exclure les VL avec variation >15% entre 2 VL consecutives (<= 7 jours) — TOUS PAYS
-- [ ] 244 VL Nigeria avec variations extremes (erreurs source SEC: colonnes NAV/prix inversees)
+- [x] Detecter VL avec variation >15% entre 2 VL consecutives (<= 7 jours) — TOUS PAYS (audit_vl_anomalies.js execute)
+- **Resultats audit 15% / 7j (2026-05-17)**:
+  - 1 183 fonds analyses, 1 229 273 VL
+  - 860 anomalies detectees dans 201 fonds
+  - Nigeria: 668 anomalies (124 fonds) — colonnes NAV/prix inversees dans fichiers SEC source
+  - MAROC: 176 anomalies (67 fonds) — meme pattern VL/actif_net inverses
+  - TUNISIE: 8 anomalies (5 fonds)
+  - UEMOA: 8 anomalies (5 fonds) — ex: FCP ECOBANK UEMOA OBLIGATAIRE (actif_net dans champ VL)
+  - Pattern: les variations >100 000% sont des inversions NAV/VL (ex: 1.03 -> 3543 = actif net dans champ prix)
+  - CSV rapport exporte: audit_vl_anomalies_report.csv sur le serveur
+- [ ] Supprimer les 860 VL anomales (audit_vl_anomalies.js --delete --seuil 15)
+- [ ] Recalculer VL ajustees + performances apres nettoyage
 
 #### 2B. Donnees statiques manquantes sur les fonds
 - [ ] Peupler `structure_fond` (FCP/SICAV) a partir du prefixe du nom du fond (NOTE: forme_juridique n'existe PAS, utiliser structure_fond)
@@ -431,6 +441,7 @@
 | `fix_nigeria_pays_casing.js` | 2026-05-17 | Suppression fonds parasite nom="1" + normalisation pays casing | Execute en prod |
 | (fix pays case-sensitive) | 2026-05-17 | getPaysall toLowerCase() pour matching pays cross-tables | Deploye en prod |
 | (null guard pays routes) | 2026-05-17 | Fix crash getPaysbyidfisrt/stat si pays non trouvé | Deploye en prod |
+| `audit_vl_anomalies.js` | 2026-05-17 | Audit VL: variation >15% entre VL consecutives <=7j, tous pays | Execute en prod (860 anomalies, 201 fonds) |
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
 - **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
