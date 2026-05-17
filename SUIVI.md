@@ -284,10 +284,10 @@
 - [ ] Scraping automatique des taux de change (source: ECB, fixer.io, ou API gratuite)
 
 #### 2D. Calculs batch (tables vides)
-- [ ] Remplir `performences_eurs` (0 lignes) - calcul perf en EUR pour chaque fond
-- [ ] Remplir `performences_usds` (0 lignes) - calcul perf en USD pour chaque fond
-- [ ] Remplir `classementfonds_eurs` - classement par performance EUR
-- [ ] Remplir `classementfonds_usds` - classement par performance USD
+- [x] Remplir `performences_eurs` (551 fonds) - calcul perf en EUR pour chaque fond (2026-05-17)
+- [x] Remplir `performences_usds` (551 fonds) - calcul perf en USD pour chaque fond (2026-05-17)
+- [x] Remplir `classementfonds_eurs` - classement par performance EUR (2026-05-17)
+- [x] Remplir `classementfonds_usds` - classement par performance USD (2026-05-17)
 - [ ] Remplir `rendements` (0 lignes) - rendements par periode
 - [ ] Remplir `portefeuille_base100s` (0 lignes) - courbes base 100
 
@@ -304,15 +304,15 @@
 - [ ] Generer EUR/NGN et USD/NGN
 
 #### 2G. Harmonisation categories (casse et accents)
-- [ ] Harmoniser majuscules/minuscules: ACTIONS vs Actions, DIVERSIFIE vs Diversifié, OBLIGATIONS vs Obligataire
-- [ ] Normaliser en majuscules dans fond_investissements: categorie_globale, categorie_libelle, classification
-- [ ] Verifier coherence graphiques pays (pie charts countries/statistique)
+- [x] Harmoniser majuscules/minuscules: ACTIONS vs Actions, DIVERSIFIE vs Diversifié, OBLIGATIONS vs Obligataire (fix_harmonize_categories.js, 603 fonds, 2026-05-17)
+- [x] Normaliser en majuscules dans fond_investissements: categorie_globale, categorie_libelle, classification (fait)
+- [x] Verifier coherence graphiques pays (pie charts countries/statistique) (verifie OK)
 
 #### 2H. Limite 500 VL sur page fond (date decalee)
-- [ ] Route `/api/valLiq/:id` et `/api/valLiqdev/:id/:devise` limitees a 500 VL (LIMIT 500)
-- [ ] Fonds avec >500 VL: graphique et perf tronques aux 500 premieres (plus anciennes, ORDER ASC)
-- [ ] Exemple: AFRICAPITAL CASH PLUS montre VL jusqu'en 2021 alors que les donnees vont a 2026
-- [ ] Solution: augmenter LIMIT ou paginer, ou ORDER DESC + reverse cote client
+- [x] Route `/api/valLiq/:id` et `/api/valLiqdev/:id/:devise` limitees a 500 VL -> augmente a 10000 (2026-05-17)
+- [x] Fonds avec >500 VL: graphique et perf tronques -> corrige (limit 10000 dans 5 fichiers routes, 33 occurrences)
+- [x] Exemple: AFRICAPITAL CASH PLUS montre VL jusqu'en 2021 alors que les donnees vont a 2026 -> corrige
+- [x] Solution appliquee: augmentation LIMIT 500 -> 10000 dans toutes les routes API
 
 ### PHASE 3 - Integrite structurelle
 **Priorite: MOYENNE**
@@ -392,13 +392,27 @@
 | (limit 500->10000) | 2026-05-17 | Fix troncature VL fonds >500 points (graph + perf) | DEPLOYE en prod |
 | `fix_harmonize_categories.js` | 2026-05-17 | Harmonisation categories (ACTIONS/Actions, etc) 603 fonds | Execute en prod |
 | (saveperfdateeur/usd) | 2026-05-17 | Tables performences_eurs/usds remplies (551 fonds) | Execute en prod |
-| `recalc_eur_usd_daily_rate.js` | 2026-05-17 | Recalcul value_EUR/USD avec taux quotidien par date VL | A deployer et executer |
+| `recalc_eur_usd_daily_rate.js` | 2026-05-17 | Recalcul value_EUR/USD avec taux quotidien par date VL (909 fonds, 1.17M VL) | Execute en prod |
+| (fix toFixed null safety) | 2026-05-17 | Fix crash pages fonds Tunisie/UEMOA (optional chaining, 3 fichiers) | DEPLOYE en prod |
+
+### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
+- **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
+- **Probleme**: Les pages fonds (`/funds/[fondId]`, `/funds/summary-eur/[fondId]`, `/funds/summary-usd/[fondId]`) crashaient avec "Cannot read properties of null (reading 'toFixed')" pour les fonds de Tunisie et UEMOA
+- **Cause racine**: Acces non-null-safe sur des valeurs potentiellement nulles (performances, lastValue, actif_net)
+- **Corrections**:
+  1. `FundView.tsx` ligne 1426: `lastValue.toFixed(2)` -> `lastValue?.toFixed(2) ?? '-'`
+  2. `FundView.tsx` lignes 3089-3091: `performances.data.perf3Moisactif_net` -> `performances?.data?.perf3Moisactif_net`
+  3. `FundView.tsx`: 11 occurrences `performances.data?.` -> `performances?.data?.` (replace_all)
+  4. `summary-eur/[fondId]/page.tsx` ligne 2802: `Number(post.data.performances.data.perf3Moisactif_net)` -> `Number(post?.data?.performances?.data?.perf3Moisactif_net)`
+  5. `summary-usd/[fondId]/page.tsx` ligne 2804: meme correction
+- **Impact**: Les fonds de TOUS les pays (y compris ceux avec des donnees incompletes) s'affichent sans crash
+- **Commit Frontend**: `8337134`
 
 ### 2026-05-17 - Anomalie: conversion EUR/USD avec taux fixe au lieu de quotidien
-- **Statut**: SCRIPT PRET, A DEPLOYER ET EXECUTER
+- **Statut**: EXECUTE EN PRODUCTION (909 fonds, 1 171 002 VL recalculees, 0 erreurs)
 - **Probleme**: Les imports historiques (import_vl_maroc_xlsx.js, fix_valorisations_eur_usd.js) convertissaient toutes les VL avec un SEUL taux de change (le plus recent), au lieu du taux du jour de chaque VL
 - **Impact**: Les performances EUR et USD sont identiques aux performances en devise locale pour les periodes courtes (perf veille, 4 semaines, YTD, 1 an) car le facteur constant s'annule dans le calcul de pourcentage
 - **Diagnostic**: Le scraper ASFIM quotidien utilise deja le taux quotidien (getRate avec binary search) — seuls les imports en batch posent probleme
 - **Solution**: `recalc_eur_usd_daily_rate.js` recalcule value_EUR/USD pour chaque VL avec le taux EUR/{devise} et USD/{devise} de la date exacte de la VL
-- **Apres execution**: Relancer recalc_vl_ajuste.js puis saveperfdateeur/saveperfdateusd pour propager
+- **Execution prod**: recalc + recalc_vl_ajuste.js + saveperfdateeur/saveperfdateusd => tables performences_eurs/usds mises a jour
 - **Commit API**: `8f9c233`
