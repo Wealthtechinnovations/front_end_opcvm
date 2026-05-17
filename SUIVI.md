@@ -265,7 +265,10 @@
 - [ ] Nettoyer 5 fonds avec VL extremes (meme probleme actif net vs VL unitaire que BRIDGE):
   - FCP TRESO MONEA, FCP BOA RENDEMENT, FCP ECOBANK UEMOA OBLIGATAIRE, SICAV ABDOU DIOUF, FCP SOGELIQUID
 - [x] Corriger 31 VL avec date=0000-00-00 (FAIT - supprimees par Phase 2 step 2)
-- [ ] Verifier coherence VL: detecter les series avec variations >50% d'un jour a l'autre
+- [x] Verifier coherence VL: detecter les series avec variations >50% d'un jour a l'autre (script audit_vl_anomalies.js)
+- [x] Supprimer fonds parasite nom_fond="1" (id=2820, 18 VL supprimees)
+- [ ] Detecter et exclure les VL avec variation >15% entre 2 VL consecutives (<= 7 jours) — TOUS PAYS
+- [ ] 244 VL Nigeria avec variations extremes (erreurs source SEC: colonnes NAV/prix inversees)
 
 #### 2B. Donnees statiques manquantes sur les fonds
 - [ ] Peupler `structure_fond` (FCP/SICAV) a partir du prefixe du nom du fond (NOTE: forme_juridique n'existe PAS, utiliser structure_fond)
@@ -425,6 +428,9 @@
 | (filtre pays imports) | 2026-05-17 | Ajout AND pays=? aux imports Maroc/UEMOA (anti-collision cross-pays) | Deploye en prod |
 | (null guard societes) | 2026-05-17 | Fix crash API getSocietebyidfisrt/stat quand societe absente | Deploye en prod |
 | (fix Sequelize FK+DataTypes) | 2026-05-17 | Desactivation FK incompatibles date/id + NUMBER->INTEGER | Deploye en prod |
+| `fix_nigeria_pays_casing.js` | 2026-05-17 | Suppression fonds parasite nom="1" + normalisation pays casing | Execute en prod |
+| (fix pays case-sensitive) | 2026-05-17 | getPaysall toLowerCase() pour matching pays cross-tables | Deploye en prod |
+| (null guard pays routes) | 2026-05-17 | Fix crash getPaysbyidfisrt/stat si pays non trouvé | Deploye en prod |
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
 - **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
@@ -509,3 +515,14 @@
   - `transaction.belongsTo(devisedechanges)` — FK date incompatible
 - **Fix 2**: `tsrhisto.js` — `DataTypes.NUMBER` (n'existe pas) → `DataTypes.INTEGER`
 - **Commit API**: `f107970`
+
+### 2026-05-17 - Fix page pays Nigeria=0 + fonds parasite + null guards pays
+- **Statut**: DEPLOYE EN PRODUCTION
+- **Bug 1**: Page `/countries` affichait NIGERIA: 0 car `getPaysall` (routes_vl.js:5188) faisait `c.pays === country.pays` (case-sensitive). pays_regulateurs a `NIGERIA`, fonds ont `Nigeria`.
+- **Fix 1**: Comparaison avec `.toLowerCase()` dans le join JavaScript (routes_vl.js)
+- **Bug 2**: Fonds parasite id=2820 avec nom_fond="1" et societe_gestion="1"
+- **Fix 2**: `fix_nigeria_pays_casing.js` supprime le fonds parasite + ses 18 VL
+- **Bug 3**: Routes `getPaysbyidfisrt` et `getPaysbyidstat` crashaient si pays non trouvé dans pays_regulateurs
+- **Fix 3**: Null guard `if (!response) return 404` sur les 2 routes (apigestionpays.js)
+- **Note**: pays_regulateurs contient 2 entrees pour NIGERIA (id=1 et id=32) — potentiel doublon a verifier
+- **Commit API**: `47332d0`
