@@ -444,6 +444,8 @@
 | (fix pays case-sensitive) | 2026-05-17 | getPaysall toLowerCase() pour matching pays cross-tables | Deploye en prod |
 | (null guard pays routes) | 2026-05-17 | Fix crash getPaysbyidfisrt/stat si pays non trouvé | Deploye en prod |
 | `audit_vl_anomalies.js` | 2026-05-17 | Audit VL: variation >15% entre VL consecutives <=7j, tous pays | Execute en prod (860 anomalies, 201 fonds) |
+| (fix countries/search/comparison) | 2026-05-17 | Case-insensitive pays/societe/categorie + null-safe perf + dynamic categories | Commite, A DEPLOYER |
+| `fix_normalize_uppercase.js` | 2026-05-17 | MAJUSCULES + no accents + fill categories nationales/regionales tous pays | Commite, A EXECUTER en prod |
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
 - **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
@@ -542,6 +544,51 @@
 - **Commit API**: `473eb5f`
 - **Deploiement**: FAIT — git pull + pm2 restart 10 (2026-05-17)
 - **VL anomales nettoyees dans la meme session**: 860 VL supprimees + recalcul VL ajuste (1 228 435) + perf locale/EUR/USD (611 fonds)
+
+### 2026-05-17 - Fix countries/funds, search, comparison pages + normalisation DB
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Problemes resolus**:
+  1. Pages `/countries/funds/NIGERIA`, `/countries/funds/UEMOA`, etc. n'affichaient pas la liste des fonds
+  2. Page `/tools/search`: les filtres societe de gestion, categories ne fonctionnaient pas
+  3. Page `/tools/comparison`: idem
+  4. Categories nationale/regionale manquantes pour tous les pays sauf Maroc
+  5. Noms avec accents/apostrophes/casse mixte dans la base
+- **Causes racines**:
+  1. Routes API `getfondbypays`, `listeproduitpayssociete`, `listesocietepays` utilisaient `pays: req.params.id` (exact, case-sensitive)
+  2. `listeproduitpayssociete` crashait si un fonds n'avait pas de performance (`.toJSON()` sur null)
+  3. `recherchefonds` ignorait les filtres societe/categorie quand aucun fonds n'etait selectionne
+  4. `fetchFundsByValorisationfirst` faisait du matching exact sur societe_gestion, categorie_globale
+  5. Les categories (classe d'actif, nationale, regionale) etaient hardcodees dans le frontend avec accents
+- **Corrections API** (`3872712`):
+  - `getfondbypays`: `LOWER(pays) = LOWER(?)` au lieu de `pays = ?`
+  - `listeproduitpayssociete`: batch performances + null-safe (plus de crash)
+  - `listesocietepays`: `LOWER(pays)` matching + `LOWER(societe_gestion)` count
+  - `recherchefonds`: gere le cas query vide + filtres societe/categorie actifs
+  - `rechercheravance-fonds`: null-safe sur tous les parametres
+  - `fetchFundsByValorisationfirst`: `LOWER()` sur tous les filtres (categorie, societe, devise, etc.)
+  - `getCategories`: retourne aussi `categoriesGlobal` (dynamique depuis DB)
+- **Corrections Frontend** (`031a685`):
+  - Search page: charge categories global/nationale/regionale depuis `/api/getCategories` (plus de hardcode)
+  - Comparison page: charge categories depuis API
+  - Countries/funds page: suppression hardcode categories
+- **Script normalisation**: `fix_normalize_uppercase.js` (a executer en prod)
+  - Met tous les noms en MAJUSCULES (fonds, societes, pays)
+  - Supprime accents et apostrophes
+  - Genere categorie_national et categorie_regional pour TOUS les pays
+- **Deploiement**:
+  ```bash
+  # API
+  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+  git pull origin claude/code-review-improvements-ikvuj
+  node fix_normalize_uppercase.js
+  pm2 restart 10
+
+  # Frontend
+  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend
+  git pull origin claude/code-review-improvements-ikvuj
+  npm run build
+  pm2 restart 11
+  ```
 
 ### 2026-05-17 - Fix page pays Nigeria=0 + fonds parasite + null guards pays
 - **Statut**: DEPLOYE EN PRODUCTION
