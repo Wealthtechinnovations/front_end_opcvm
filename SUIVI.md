@@ -277,8 +277,8 @@
   - UEMOA: 8 anomalies (5 fonds) — ex: FCP ECOBANK UEMOA OBLIGATAIRE (actif_net dans champ VL)
   - Pattern: les variations >100 000% sont des inversions NAV/VL (ex: 1.03 -> 3543 = actif net dans champ prix)
   - CSV rapport exporte: audit_vl_anomalies_report.csv sur le serveur
-- [ ] Supprimer les 860 VL anomales (audit_vl_anomalies.js --delete --seuil 15)
-- [ ] Recalculer VL ajustees + performances apres nettoyage
+- [x] Supprimer les 860 VL anomales (audit_vl_anomalies.js --delete --seuil 15) — FAIT 2026-05-17
+- [x] Recalculer VL ajustees + performances apres nettoyage — FAIT 2026-05-17 (1 228 435 VL, 611 fonds perf, 0 erreurs)
 
 #### 2B. Donnees statiques manquantes sur les fonds
 - [ ] Peupler `structure_fond` (FCP/SICAV) a partir du prefixe du nom du fond (NOTE: forme_juridique n'existe PAS, utiliser structure_fond)
@@ -438,7 +438,8 @@
 | (filtre pays imports) | 2026-05-17 | Ajout AND pays=? aux imports Maroc/UEMOA (anti-collision cross-pays) | Deploye en prod |
 | (null guard societes) | 2026-05-17 | Fix crash API getSocietebyidfisrt/stat quand societe absente | Deploye en prod |
 | (fix Sequelize FK+DataTypes) | 2026-05-17 | Desactivation FK incompatibles date/id + NUMBER->INTEGER | **REVERTE** (causait regression pages vides) |
-| (REVERT FK+DataTypes) | 2026-05-17 | Re-activation FK associations + DataTypes.NUMBER restaure | Commite, A DEPLOYER |
+| (REVERT FK+DataTypes) | 2026-05-17 | Re-activation FK associations + DataTypes.NUMBER restaure | DEPLOYE en prod |
+| (nettoyage 860 VL anomales) | 2026-05-17 | audit_vl_anomalies.js --delete --seuil 15 + recalcul complet | Execute en prod |
 | `fix_nigeria_pays_casing.js` | 2026-05-17 | Suppression fonds parasite nom="1" + normalisation pays casing | Execute en prod |
 | (fix pays case-sensitive) | 2026-05-17 | getPaysall toLowerCase() pour matching pays cross-tables | Deploye en prod |
 | (null guard pays routes) | 2026-05-17 | Fix crash getPaysbyidfisrt/stat si pays non trouvé | Deploye en prod |
@@ -539,7 +540,8 @@
   2. `src/db/sequelize.js` — meme re-activation
   3. `src/models/tsrhisto.js` — DataTypes.INTEGER revenu a DataTypes.NUMBER
 - **Commit API**: `473eb5f`
-- **Deploiement**: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git pull origin claude/code-review-improvements-ikvuj && pm2 restart 10`
+- **Deploiement**: FAIT — git pull + pm2 restart 10 (2026-05-17)
+- **VL anomales nettoyees dans la meme session**: 860 VL supprimees + recalcul VL ajuste (1 228 435) + perf locale/EUR/USD (611 fonds)
 
 ### 2026-05-17 - Fix page pays Nigeria=0 + fonds parasite + null guards pays
 - **Statut**: DEPLOYE EN PRODUCTION
