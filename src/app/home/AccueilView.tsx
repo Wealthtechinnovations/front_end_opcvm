@@ -3,10 +3,7 @@
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import Header from '@/components/layout/Header';
-import { urlsite } from "@/lib/constants";
 import { useRouter } from 'next/navigation';
-import SEO from '@/components/common/SEO';
-import { organizationSchema, websiteSchema, breadcrumbSchema } from '@/utils/structuredData';
 
 export default function Accueil() {
   const router = useRouter();
@@ -114,15 +111,6 @@ export default function Accueil() {
 
   return (
     <Fragment>
-      <SEO
-        title="Analyse et comparaison des OPCVM africains"
-        description="Explorez, analysez et comparez les OPCVM africains. Données de performances, fiches fonds détaillées, sociétés de gestion, marchés par pays et outils de comparaison professionnels."
-        keywords="OPCVM, Fonds, Finance, Afrique, Performance, Fundafrique, Investissement, Portefeuille, Valeur liquidative, UEMOA, BRVM"
-        canonicalUrl={`${urlsite}/home`}
-        structuredData={[organizationSchema, websiteSchema, breadcrumbSchema([
-          { name: 'Accueil', url: `${urlsite}/home` },
-        ])]}
-      />
       <Header />
 
       {/* ══════════════════ HERO ══════════════════ */}

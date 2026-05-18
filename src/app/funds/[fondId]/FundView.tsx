@@ -14,9 +14,6 @@ import ExportModal from './exportmodal';
 import { Modal, Button } from 'react-bootstrap';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import Head from 'next/head';
-import SEO from '@/components/common/SEO';
-import { fundSchema, breadcrumbSchema } from '@/utils/structuredData';
 import { DropdownButton, Dropdown } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import Swal from 'sweetalert2';
@@ -975,49 +972,7 @@ export default function Fond() {
     return (
 
         <Fragment>
-            <SEO
-                title={`${post?.data?.libelle_fond} ${post?.data?.symboledevise} ${post?.data?.code_ISIN} ${post?.data?.pays} - Synthèse OPCVM Afrique`}
-                description={`Analyse du fond ${post?.data?.libelle_fond} - Performance, VL, classement. Géré par ${post?.data?.societe_gestion}.`}
-                keywords={`${post?.data?.libelle_fond}, OPCVM, ${post?.data?.pays}, ${post?.data?.symboledevise}, investissement`}
-                canonicalUrl={`${urlsite}/funds/${params.fondId as string}`}
-                ogImage={`${urlsite}/images/logo.png`}
-                structuredData={[
-                    fundSchema({
-                        nom_fond: post?.data?.libelle_fond,
-                        categorie: post?.data?.categorie_globale,
-                        societe_gestion: post?.data?.societe_gestion,
-                        devise: post?.data?.symboledevise,
-                        code_ISIN: post?.data?.code_ISIN,
-                        pays: post?.data?.pays,
-                    }),
-                    breadcrumbSchema([
-                        { name: 'Accueil', url: `${urlsite}/accueil` },
-                        { name: 'Recherche OPCVM', url: `${urlsite}/funds/search` },
-                        { name: post?.data?.libelle_fond || 'Fond', url: `${urlsite}/funds/${params.fondId as string}` },
-                    ]),
-                ]}
-            />
             <Header />
-            <Head>
-                <title>{post?.data?.libelle_fond}  {post?.data?.symboledevise}  {post?.data?.code_ISIN}  {post?.data?.pays} - synthèse OPCVM Afrique - Fundafrique</title>
-                <meta name="description" content={`Découvrez le résumé du fonds ${post?.data?.libelle_fond} en ${post?.data?.symboledevise} avec des informations sur les performances, les risques et les caractéristiques.`} />
-                <meta name="keywords" content={`${post?.data?.libelle_fond}, investissement, ${post?.data?.symboledevise}, performances, caractéristiques`} />
-                <meta name="robots" content="index, follow" />
-                <meta property="og:title" content={`${post?.data?.libelle_fond} - Résumé ${post?.data?.symboledevise}`} />
-                <meta property="og:description" content={`Résumé ${post?.data?.symboledevise} du fonds ${post?.data?.libelle_fond} avec performances, risques et caractéristiques.`} />
-                <meta property="og:url" content={canonicalUrl} />
-                <meta property="og:image" content={`${urlsite}/images/logo.png`} />
-                <meta property="og:type" content="website" />
-                <link rel="canonical" href={`${urlsite}/funds/${params.fondId as string}`} />
-
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-                />
-
-
-            </Head>
-          
 
             <div className="">
                 <Modal show={show} onHide={handleClose} centered>

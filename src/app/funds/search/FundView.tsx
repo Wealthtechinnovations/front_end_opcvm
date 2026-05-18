@@ -6,9 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Modal, Button } from 'react-bootstrap';
 import Select, { SingleValue } from 'react-select';
 import Header from '@/components/layout/Header';
-import SEO from '@/components/common/SEO';
-import { websiteSchema, breadcrumbSchema } from '@/utils/structuredData';
-import { urlconstant, urlsite } from "@/lib/constants";
+import { urlconstant } from "@/lib/constants";
 import Swal from "sweetalert2";
 import { generateFundSlug } from "@/lib/utils";
 
@@ -206,17 +204,6 @@ export default function Comparaison() {
 
   return (
     <Fragment>
-      <SEO
-        title="Rechercher des OPCVM en Afrique"
-        description="Recherchez et comparez les fonds OPCVM africains par soci&eacute;t&eacute; de gestion, pays et cat&eacute;gorie. VL, performances et classements."
-        keywords="recherche, OPCVM, Afrique, soci&eacute;t&eacute; de gestion, fonds, comparaison"
-        canonicalUrl={`${urlsite}/funds/search`}
-        ogImage={`${urlsite}/images/logo.png`}
-        structuredData={[websiteSchema, breadcrumbSchema([
-          { name: 'Accueil', url: `${urlsite}/accueil` },
-          { name: 'Recherche OPCVM', url: `${urlsite}/funds/search` },
-        ])]}
-      />
       <Header />
 
       {/* Membership popup */}

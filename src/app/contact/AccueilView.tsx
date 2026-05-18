@@ -2,10 +2,8 @@
 
 import { Fragment, useEffect, useState } from "react";
 import Header from '@/components/layout/Header';
-import { urlconstant, urlsite } from "@/lib/constants";
+import { urlconstant } from "@/lib/constants";
 import { useRouter } from 'next/navigation';
-import SEO from '@/components/common/SEO';
-import { breadcrumbSchema } from '@/utils/structuredData';
 import Swal from "sweetalert2";
 
 export default function Accueil() {
@@ -81,16 +79,6 @@ export default function Accueil() {
 
     return (
         <Fragment>
-            <SEO
-                title="Contact - Fundafrique"
-                description="Contactez l&apos;équipe Fundafrique pour toute question sur les OPCVM en Afrique et l&apos;investissement dans les fonds africains."
-                keywords="contact, Fundafrique, OPCVM, Afrique"
-                canonicalUrl={`${urlsite}/contact`}
-                structuredData={breadcrumbSchema([
-                    { name: 'Accueil', url: `${urlsite}/accueil` },
-                    { name: 'Contact', url: `${urlsite}/contact` },
-                ])}
-            />
             <Header />
 
             <div style={{ background: 'linear-gradient(135deg, #F8F9FB 0%, #EBF0F5 50%, #F0F2F5 100%)', minHeight: '80vh', padding: '60px 24px' }}>

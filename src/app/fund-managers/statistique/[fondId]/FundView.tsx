@@ -12,7 +12,6 @@ import { urlconstant, urlsite } from "@/lib/constants";
 import { Modal, Button } from 'react-bootstrap';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import Head from 'next/head';
 import { DropdownButton, Dropdown } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import Swal from "sweetalert2";
@@ -480,22 +479,8 @@ export default function Fond() {
 
     <Fragment>
       <Header />
-      <Head>
-        <title>{managementCompany?.nom} - Informations sur la societe</title>
-        <meta name="description" content={managementCompany?.nom} />
-        <meta name="robots" content="index, follow" />
-        <meta property="og:title" content={`${managementCompany?.nom} - Informations sur le fond`} />
-        <meta property="og:description" content={managementCompany?.nom} />
-        <meta property="og:image" content={`${urlsite}/images/logo.png`} />
-        <meta property="og:type" content="website" />
-        {/* Ajoutez ici d'autres métadonnées spécifiques au SEO */}     
-        <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
-      </Head>
 
-     
+
       <div className="">
         <Modal show={showPopup} onHide={handleClosePopup} centered>
           <Modal.Header closeButton>
