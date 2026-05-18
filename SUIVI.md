@@ -327,6 +327,24 @@
   - `fix_populate_performances.js --force`: 1173 fonds, 0 erreurs (395 inseres, 778 mis a jour)
 - **Impact graphique base 100**: Les pics a 200 sur SICAV ABDOU DIOUF et les 2 fonds Maroc sont corriges
 
+### 2026-05-18 - Audit complet plateforme + corrections P0
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Audit 4 axes**: API routes, frontend SEO, calculs financiers, taches en suspens
+- **Corrections API** (commit `c026f0a`):
+  1. **18 routes sans try/catch** (14 performance + 4 ratios) — ajout try/catch + 8 null guards fond.findOne()
+  2. **Sortino ratio**: taux hardcode -0.00473 remplace par `tauxsr` dynamique (65 occurrences)
+  3. **Calmar ratio ranking**: etait trie ascendant (lower=better) -> corrige en descendant (higher=better, 2 occurrences)
+  4. **VAR95jour/trackingErrorjour**: etaient ecrases par valeurs mensuelles dans la reponse JSON (16 occurrences corrigees)
+- **Corrections Frontend** (commit `15d3f08`):
+  1. **Page racine `/`**: etait vide ("Bienvenu") -> redirige vers /home
+  2. **robots.ts**: ajout disallow pour 5 panels sensibles (distributor, data-requester, institutional, portfolio, portefeuille) + /api/
+  3. **layout.tsx**: ajout og:image (/og-image.png) et twitter card (summary_large_image)
+- **Problemes P0 restants** (a traiter cote production):
+  - performences_eurs: 6 fonds au lieu de 1174 (table quasi-vide)
+  - performences_usds: 5 fonds au lieu de 1174
+  - classementfonds_eurs + classementfonds_usds: 0 lignes
+  - TSR hardcode 1.42% pour non-Maroc (Sharpe incorrect pour Nigeria/Tunisie/UEMOA)
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
