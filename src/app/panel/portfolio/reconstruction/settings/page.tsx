@@ -225,6 +225,11 @@ interface MyDataType {
   InRef?: any; // Remplacez "number" par le type approprié
   // Autres propriétés
 }
+const findFirstInRef = (data: any) => {
+  const item = data.find((item: any) => item.InRef !== undefined);
+  return item ? item.InRef : undefined;
+};
+
 export default function Transaction() {
   const searchParams = useSearchParams();
   const id = useUserId();
@@ -341,12 +346,12 @@ export default function Transaction() {
           if (filteredData.length > 0) {
 
             const lastValue = filteredData[0].y; // Dernière valeur
-            const lastValueInd = filteredData[0].InRef; // Dernière valeur
+            const lastValueInd = findFirstInRef(filteredData);
 
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
               name: item.name,
-              y: (item.y / lastValue) * 100, // Calcul en base 100
-              InRef: (item.InRef / lastValueInd) * 100, // Calcul en base 100 pour InRef si nécessaire
+              y: (item.y / lastValue) * 100,
+              InRef: (lastValueInd !== undefined && item.InRef !== undefined) ? (item.InRef / lastValueInd) * 100 : undefined,
             }));
 
             setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100
@@ -362,12 +367,12 @@ export default function Transaction() {
           // Calculer les données en base 100
           if (filteredData.length > 0) {
             const lastValue = filteredData[0].y; // Dernière valeur
-            const lastValueInd = filteredData[0].InRef; // Dernière valeur
+            const lastValueInd = findFirstInRef(filteredData);
 
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
               name: item.name,
-              y: (item.y / lastValue) * 100, // Calcul en base 100
-              InRef: (item.InRef / lastValueInd) * 100, // Calcul en base 100 pour InRef si nécessaire
+              y: (item.y / lastValue) * 100,
+              InRef: (lastValueInd !== undefined && item.InRef !== undefined) ? (item.InRef / lastValueInd) * 100 : undefined,
             }));
 
             setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100
@@ -383,12 +388,12 @@ export default function Transaction() {
           // Calculer les données en base 100
           if (filteredData.length > 0) {
             const lastValue = filteredData[0].y; // Dernière valeur
-            const lastValueInd = filteredData[0].InRef; // Dernière valeur
+            const lastValueInd = findFirstInRef(filteredData);
 
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
               name: item.name,
-              y: (item.y / lastValue) * 100, // Calcul en base 100
-              InRef: (item.InRef / lastValueInd) * 100, // Calcul en base 100 pour InRef si nécessaire
+              y: (item.y / lastValue) * 100,
+              InRef: (lastValueInd !== undefined && item.InRef !== undefined) ? (item.InRef / lastValueInd) * 100 : undefined,
             }));
 
             setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100
@@ -426,12 +431,12 @@ export default function Transaction() {
             // Calculer les données en base 100
             if (filteredData.length > 0) {
               const lastValue = filteredData[0].y; // Dernière valeur
-              const lastValueInd = filteredData[0].InRef; // Dernière valeur
+              const lastValueInd = findFirstInRef(filteredData);
 
               const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
                 name: item.name,
-                y: (item.y / lastValue) * 100, // Calcul en base 100
-                InRef: (item.InRef / lastValueInd) * 100, // Calcul en base 100 pour InRef si nécessaire
+                y: (item.y / lastValue) * 100,
+                InRef: (lastValueInd !== undefined && item.InRef !== undefined) ? (item.InRef / lastValueInd) * 100 : undefined,
               }));
               setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100
             }
@@ -446,12 +451,12 @@ export default function Transaction() {
             // Calculer les données en base 100
             if (filteredData.length > 0) {
               const lastValue = filteredData[0].y; // Dernière valeur
-              const lastValueInd = filteredData[0].InRef; // Dernière valeur
+              const lastValueInd = findFirstInRef(filteredData);
 
               const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
                 name: item.name,
-                y: (item.y / lastValue) * 100, // Calcul en base 100
-                InRef: (item.InRef / lastValueInd) * 100, // Calcul en base 100 pour InRef si nécessaire
+                y: (item.y / lastValue) * 100,
+                InRef: (lastValueInd !== undefined && item.InRef !== undefined) ? (item.InRef / lastValueInd) * 100 : undefined,
               }));
 
               setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100
@@ -467,12 +472,12 @@ export default function Transaction() {
             // Calculer les données en base 100
             if (filteredData.length > 0) {
               const lastValue = filteredData[0].y; // Dernière valeur
-              const lastValueInd = filteredData[0].InRef; // Dernière valeur
+              const lastValueInd = findFirstInRef(filteredData);
 
               const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
                 name: item.name,
-                y: (item.y / lastValue) * 100, // Calcul en base 100
-                InRef: (item.InRef / lastValueInd) * 100, // Calcul en base 100 pour InRef si nécessaire
+                y: (item.y / lastValue) * 100,
+                InRef: (lastValueInd !== undefined && item.InRef !== undefined) ? (item.InRef / lastValueInd) * 100 : undefined,
               }));
 
               setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100

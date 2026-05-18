@@ -231,6 +231,11 @@ interface MyDataType {
  * @function Fond
  * @param {PageProps} props - Propriétés de la page.
  */
+const findFirstInRef = (data: any) => {
+  const item = data.find((item: any) => item.InRef !== undefined);
+  return item ? item.InRef : undefined;
+};
+
 export default function Fond() {
   const router = useRouter();
   const params = useParams();
@@ -391,12 +396,12 @@ export default function Fond() {
           if (filteredData.length > 0) {
 
             const lastValue = filteredData[0].y; // Dernière valeur
-            const lastValueInd = filteredData[0].InRef; // Dernière valeur
+            const lastValueInd = findFirstInRef(filteredData);
 
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
               name: item.name,
-              y: (item.y / lastValue) * 100, // Calcul en base 100
-              InRef: (item.InRef / lastValueInd) * 100, // Calcul en base 100 pour InRef si nécessaire
+              y: (item.y / lastValue) * 100,
+              InRef: (lastValueInd !== undefined && item.InRef !== undefined) ? (item.InRef / lastValueInd) * 100 : undefined,
             }));
 
             setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100
@@ -412,12 +417,12 @@ export default function Fond() {
           // Calculer les données en base 100
           if (filteredData.length > 0) {
             const lastValue = filteredData[0].y; // Dernière valeur
-            const lastValueInd = filteredData[0].InRef; // Dernière valeur
+            const lastValueInd = findFirstInRef(filteredData);
 
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
               name: item.name,
-              y: (item.y / lastValue) * 100, // Calcul en base 100
-              InRef: (item.InRef / lastValueInd) * 100, // Calcul en base 100 pour InRef si nécessaire
+              y: (item.y / lastValue) * 100,
+              InRef: (lastValueInd !== undefined && item.InRef !== undefined) ? (item.InRef / lastValueInd) * 100 : undefined,
             }));
 
             setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100
@@ -433,12 +438,12 @@ export default function Fond() {
           // Calculer les données en base 100
           if (filteredData.length > 0) {
             const lastValue = filteredData[0].y; // Dernière valeur
-            const lastValueInd = filteredData[0].InRef; // Dernière valeur
+            const lastValueInd = findFirstInRef(filteredData);
 
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => ({
               name: item.name,
-              y: (item.y / lastValue) * 100, // Calcul en base 100
-              InRef: (item.InRef / lastValueInd) * 100, // Calcul en base 100 pour InRef si nécessaire
+              y: (item.y / lastValue) * 100,
+              InRef: (lastValueInd !== undefined && item.InRef !== undefined) ? (item.InRef / lastValueInd) * 100 : undefined,
             }));
 
             setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100

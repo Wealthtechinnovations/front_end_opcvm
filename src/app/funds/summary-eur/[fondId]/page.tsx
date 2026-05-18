@@ -413,88 +413,88 @@ export default function Fond() {
         }));
         setFundsOptions(mappedOptions);
 
-        const currentDate = new Date(); // Date actuelle
+        const currentDate = new Date();
         let filteredData = [];
         const lastDate = new Date(Math.max(...datasgraph.map((item: { name: string | number | Date }) => new Date(item.name))));
+        const findFirstInRef = (data: any) => {
+            const item = data.find((item: any) => item.InRef !== undefined);
+            return item ? item.InRef : undefined;
+        };
 
         if (selectedPeriod === '1 year') {
-          // Filtrer les données pour 1 an
           filteredData = datasgraph.filter((item: { name: string | number | Date; }) => {
-            const itemDate = new Date(item.name); // Convertir la date de l'élément en objet Date
+            const itemDate = new Date(item.name);
             const oneYearAgo = new Date();
-            oneYearAgo.setFullYear(lastDate.getFullYear() - 1); // Date il y a 1 an
-            return itemDate >= oneYearAgo && itemDate <= currentDate; // Sélectionner les dates dans la période d'1 an
+            oneYearAgo.setFullYear(lastDate.getFullYear() - 1);
+            return itemDate >= oneYearAgo && itemDate <= currentDate;
           });
 
-          // Calculer les données en base 100
           if (filteredData.length > 0) {
-            const lastValue = filteredData[0].y; // Dernière valeur
-            const lastValueInd = filteredData[0].InRef; // Dernière valeur
+            const lastValue = filteredData[0].y;
+            const lastValueInd = findFirstInRef(filteredData);
 
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => {
               const baseItem: { name: any; y: number; InRef?: number } = {
                 name: item.name,
-                y: (item.y / lastValue) * 100, // Calcul en base 100
+                y: (item.y / lastValue) * 100,
               };
-              if (item.InRef !== undefined) {
-                baseItem.InRef = (item.InRef / lastValueInd) * 100; // Calcul en base 100 pour InRef si nécessaire
+              if (lastValueInd !== undefined && item.InRef !== undefined) {
+                baseItem.InRef = (item.InRef / lastValueInd) * 100;
               }
               return baseItem;
             });
 
-            setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100
+            setBase100Data(base100Data);
           }
         } else if (selectedPeriod === '3 years') {
-          // Filtrer les données pour 3 ans
           filteredData = datasgraph.filter((item: { name: string | number | Date; }) => {
             const itemDate = new Date(item.name);
             const threeYearsAgo = new Date();
-            threeYearsAgo.setFullYear(lastDate.getFullYear() - 3); // Date il y a 3 ans
+            threeYearsAgo.setFullYear(lastDate.getFullYear() - 3);
             return itemDate >= threeYearsAgo && itemDate <= currentDate;
           });
-          // Calculer les données en base 100
+
           if (filteredData.length > 0) {
-            const lastValue = filteredData[0].y; // Dernière valeur
-            const lastValueInd = filteredData[0].InRef; // Dernière valeur
+            const lastValue = filteredData[0].y;
+            const lastValueInd = findFirstInRef(filteredData);
 
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => {
               const baseItem: { name: any; y: number; InRef?: number } = {
                 name: item.name,
-                y: (item.y / lastValue) * 100, // Calcul en base 100
+                y: (item.y / lastValue) * 100,
               };
-              if (item.InRef !== undefined) {
-                baseItem.InRef = (item.InRef / lastValueInd) * 100; // Calcul en base 100 pour InRef si nécessaire
+              if (lastValueInd !== undefined && item.InRef !== undefined) {
+                baseItem.InRef = (item.InRef / lastValueInd) * 100;
               }
               return baseItem;
             });
 
-            setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100
+            setBase100Data(base100Data);
           }
         } else if (selectedPeriod === '5 years') {
-          // Filtrer les données pour 5 ans
           filteredData = datasgraph.filter((item: { name: string | number | Date; }) => {
             const itemDate = new Date(item.name);
             const fiveYearsAgo = new Date();
-            fiveYearsAgo.setFullYear(lastDate.getFullYear() - 5); // Date il y a 5 ans
+            fiveYearsAgo.setFullYear(lastDate.getFullYear() - 5);
             return itemDate >= fiveYearsAgo && itemDate <= currentDate;
           });
-          // Calculer les données en base 100
+
           if (filteredData.length > 0) {
-            const lastValue = filteredData[0].y; // Dernière valeur
-            const lastValueInd = filteredData[0].InRef; // Dernière valeur
+            const lastValue = filteredData[0].y;
+            const lastValueInd = findFirstInRef(filteredData);
 
             const base100Data = filteredData.map((item: { name: any; y: number; InRef: number; }) => {
               const baseItem: { name: any; y: number; InRef?: number } = {
                 name: item.name,
-                y: (item.y / lastValue) * 100, // Calcul en base 100
+                y: (item.y / lastValue) * 100,
               };
-              if (item.InRef !== undefined) {
-                baseItem.InRef = (item.InRef / lastValueInd) * 100; // Calcul en base 100 pour InRef si nécessaire
+              if (lastValueInd !== undefined && item.InRef !== undefined) {
+                baseItem.InRef = (item.InRef / lastValueInd) * 100;
               }
               return baseItem;
             });
 
-            setBase100Data(base100Data); // Mettre à jour l'état avec les données en base 100
+            setBase100Data(base100Data);
           }
         }
         setFilteredData(filteredData);
