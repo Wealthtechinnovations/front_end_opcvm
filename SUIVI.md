@@ -681,3 +681,30 @@
 - **Fix 3**: Null guard `if (!response) return 404` sur les 2 routes (apigestionpays.js)
 - **Note**: pays_regulateurs contient 2 entrees pour NIGERIA (id=1 et id=32) — potentiel doublon a verifier
 - **Commit API**: `47332d0`
+
+### 2026-05-18 - Fix blocage graphique base 100 quand historiques fonds/indice different
+- **Statut**: COMMIT ET PUSH (a deployer)
+- **Probleme**: Quand `hasIndRef` est true, les points VL sans indRef etaient filtres du graphique, tronquant l'affichage. De plus `filteredData[0].InRef` crashait si le premier point n'avait pas d'InRef.
+- **Fix backend** (3 routes):
+  - `apigestionfonds.js`: routes `/api/valLiq/:id` et `/api/valLiqdev/:id/:devise` — toujours inclure tous les points VL, ne setter `valuesInd` que quand indRef != null
+  - `routes_vl.js`: meme fix sur la route VL equivalente
+- **Fix frontend** (7 fichiers):
+  - Ajout helper `findFirstInRef()` qui trouve le premier InRef non-undefined
+  - Remplacement de `filteredData[0].InRef` par `findFirstInRef(filteredData)` dans tous les blocs base 100
+  - Ajout null guard: `(lastValueInd !== undefined && item.InRef !== undefined)` sur tous les calculs InRef base 100
+  - Fichiers: FundView.tsx, summary-eur/page.tsx, summary-usd/page.tsx, history/page.tsx, portfolio/page.tsx, panel/investor/reconstruction/settings/page.tsx, panel/portfolio/reconstruction/settings/page.tsx
+- **Commit API**: `119f698`
+- **Commit Frontend**: `9aa48c4`
+- **Deploiement**:
+  ```bash
+  # API
+  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+  git pull origin claude/code-review-improvements-ikvuj
+  pm2 restart 10
+
+  # Frontend
+  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend
+  git pull origin claude/code-review-improvements-ikvuj
+  npm run build
+  pm2 restart 11
+  ```
