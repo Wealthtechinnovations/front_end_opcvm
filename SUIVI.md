@@ -527,6 +527,9 @@
 | `fix_vl_cleanup_all.js` | 2026-05-18 | Nettoyage complet: 535K doublons + 76 pics/erreurs + 35 indRef parasites | Execute en prod |
 | `fix_populate_performances.js` v2 | 2026-05-18 | Calcul perf direct SQL (sans API) pour tous les fonds | Deploye en prod (1174 fonds, 0 erreurs) |
 | `fix_vl_targeted.js` | 2026-05-18 | Nettoyage cible fonds 1141 + 1539 (1003 VL supprimees) | Execute en prod |
+| (fix regression valLiq) | 2026-05-18 | try/catch + null guards + safeFetch sur valLiq/valLiqdev | DEPLOYE en prod |
+| `import_indices_excel.js` | 2026-05-18 | Import 5 indices (MASI/Tunindex/BRVM/NSE/MONIA) + indRef + EUR/USD | Execute en prod (657K VL, 316K conv) |
+| `sync_production.sh` | 2026-05-18 | Snapshot etat prod (DB+routes+git) -> PRODUCTION_STATE.json | Commite, a deployer |
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
 - **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
@@ -698,7 +701,7 @@
 - **Deploiement**: Resultat OK (2026-05-18). Build: Compiled successfully, 0 erreur. PM2: api-monolith (10) online, fundafrique-frontend (11) online.
 
 ### 2026-05-18 - REGRESSION pages fonds vides apres deploiement chart fix + CORRECTION
-- **Statut**: CORRIGE, A DEPLOYER
+- **Statut**: CORRIGE ET DEPLOYE EN PRODUCTION
 - **Probleme**: Apres deploiement du fix chart blocking (commit `119f698`), les pages fonds (`/funds/866`, `/funds/1141`, etc.) n'affichent PLUS aucune donnee: Pays, Regulateur, Classification, Benchmark, performances tous vides
 - **Cause racine**: Les routes `/api/valLiq/:id` et `/api/valLiqdev/:id/:devise` n'avaient PAS de try/catch (commente depuis l'origine). En cas d'erreur non-capturee (ex: `pays_regul` null, `resultat` null, fetch interne echoue), Express renvoie un 500 generique sans corps JSON -> le frontend recoit rien et affiche tout vide. De plus, les 4 appels internes (performances + 3 ratios) avaient chacun un `if (!response.ok) return 404` qui tuait toute la page si un seul sous-appel echouait.
 - **Corrections apportees** (fichier `src/routes/apigestionfonds.js`):
@@ -707,11 +710,12 @@
   3. **Null guard `resultat`** — retourne 404 propre au lieu de TypeError crash
   4. **Null guard `pays_regul`** — si pays inconnu dans pays_regulateurs, retourne null pour chaque champ au lieu de crash
   5. **`safeFetch` + `Promise.all`** pour les appels internes performances/ratios — un sous-appel qui echoue retourne `{}` au lieu de tuer la route entiere. BONUS: les 4 appels sont maintenant paralleles (avant sequentiels = plus lent)
+- **Deploiement**: curl /api/valLiq/866 retourne HTTP 200 apres restart
 - **LECON CRITIQUE**: A CHAQUE deploiement futur, verifier que les routes principales (valLiq, valLiqdev) ont un try/catch actif et des null guards sur `resultat` et `pays_regul`. Ce probleme est revenu 2 fois (2026-05-17 associations FK, 2026-05-18 chart fix). Pattern a bannir: `const x = await model.findOne(...); const y = x.field;` sans verifier x != null.
-- **Commit API**: a venir
+- **Commit API**: `dce55a8`
 
 ### 2026-05-18 - Import indices de reference depuis Excel (Points 1, 2, 4)
-- **Statut**: SCRIPT PRET (a executer sur prod)
+- **Statut**: EXECUTE EN PRODUCTION (2026-05-18)
 - **Script**: `api_opcv/import_indices_excel.js`
 - **Fichier Excel**: `api_opcv/Historique_Indices_Complet.xlsx`
 - **Donnees**: 6881 lignes, 5 indices (MASI, Tunindex, BRVM, MONIA, NSE), 2000-01-03 -> 2026-05-15
@@ -727,18 +731,16 @@
 - **Modes**: `--report` (defaut, aucune modif), `--execute` (applique les changements)
 - **Options**: `--step 1|2|4|all`, `--pays Maroc`, `--fond 123`
 - **Commit API**: `97ab8e8`
-- **Deploiement et execution**:
-  ```bash
-  # Deployer
-  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
-  git pull origin claude/code-review-improvements-ikvuj
+- **Resultats execution prod (2026-05-18)**:
+  - Etape 1: **24 016 indices inseres**, 4 504 mis a jour (MASI 6880, Tunindex 6880, BRVM 6880, NSE 6880, MONIA 1000)
+  - Etape 2: **657 025 VL mises a jour** (indRef peuple), 657 liens fond->indice crees. 1043 fonds traites, 153 ignores (pas d'indice pour leur pays)
+  - Etape 4: **315 826 indRef convertis EUR/USD**, 347 443 deja OK, 1 333 sans taux (3 fonds Eurobond USD Nigeria — normal)
+  - pm2 restart OK, api-monolith online
 
-  # D'abord en mode rapport pour verifier
-  node import_indices_excel.js --report
-
-  # Si rapport OK, executer
-  node import_indices_excel.js --execute
-
-  # Redemarrer l'API
-  pm2 restart 10
-  ```
+### 2026-05-18 - Script sync production (PRODUCTION_STATE.json)
+- **Statut**: COMMITE, A DEPLOYER
+- **Script**: `api_opcv/sync_production.sh`
+- **Objectif**: Generer un snapshot complet de l'etat de la production (tables, VL, indices, performances, devises, routes API) dans `PRODUCTION_STATE.json` et le push vers le repo distant
+- **Donnees capturees**: stats tables principales, derniere VL par pays, couverture indRef, stats indices, stats performances, stats devises, fonds par pays, git log, pm2 status, test routes critiques
+- **Usage**: `bash sync_production.sh` (a lancer depuis le serveur de production)
+- **Avantage**: Permet a Claude Code de connaitre l'etat exact de la production AVANT toute modification, evitant les evolutions "a l'aveugle"
