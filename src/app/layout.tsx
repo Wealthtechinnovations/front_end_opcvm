@@ -31,6 +31,11 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'Fundafrique',
     locale: 'fr_FR',
+    images: [{ url: '/og-image.png' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@fundafrique',
   },
   verification: {
     google: 'Mh5mrGhtOFCkCE7RB3ltUYEEhAqluJEHgGCBP2AO7Gk',
