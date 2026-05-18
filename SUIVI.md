@@ -299,7 +299,18 @@
   - Global: detecte tout fond avec drop >90% puis recovery >900% (pattern erreur saisie)
 - **Fichiers modifies**: `src/routes/apigestionsociete.js`
 - **Scripts crees**: `fix_populate_performances.js`, `fix_vl_targeted.js`
-- **Commit API**: `5c62ae0`
+- **Commit API**: `5c62ae0`, `85ef436`
+
+### 2026-05-18 - Deploiement 1: VL ciblees + fund-managers fix
+- **Statut**: DEPLOYE PARTIELLEMENT
+- **Resultats positifs**:
+  - `fix_vl_targeted.js --delete`: 1003 VL supprimees (2 fond 1141 + 1001 doublons fond 1539)
+  - `recalc_vl_ajuste.js`: 1 227 360 VL recalculees, 0 erreurs
+  - Fund-managers fix: verifie OK — `curl listeproduitsociete/CHAPEL HILL...` retourne 11 fonds avec `{id, fundData, performanceData}`
+- **Probleme**: `fix_populate_performances.js` (v1) a echoue — 1127 erreurs / 37 succes (tous Maroc)
+  - Cause: l'API `/api/performanceswithdate` crash (500) pour 96% des fonds. Les fonctions utilitaires (`findNearestDate`, `findNearestDateJanuary`, etc.) plantent sur les fonds avec peu de VL ou des gaps.
+- **Fix**: Script reecrit (v2, commit `85ef436`) pour calculer DIRECTEMENT les performances en JS depuis les VL en base, sans passer par l'API. Logique: pour chaque fond, lire les VL triees, trouver la VL la plus proche de chaque date cible (1er janvier, -1an, -3ans...), calculer le ratio.
+- **A deployer**: `git pull` + `node fix_populate_performances.js --force`
 
 ## Points en cours / a faire
 
