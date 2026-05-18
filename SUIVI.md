@@ -697,6 +697,19 @@
 - **Commit Frontend**: `9aa48c4`
 - **Deploiement**: Resultat OK (2026-05-18). Build: Compiled successfully, 0 erreur. PM2: api-monolith (10) online, fundafrique-frontend (11) online.
 
+### 2026-05-18 - REGRESSION pages fonds vides apres deploiement chart fix + CORRECTION
+- **Statut**: CORRIGE, A DEPLOYER
+- **Probleme**: Apres deploiement du fix chart blocking (commit `119f698`), les pages fonds (`/funds/866`, `/funds/1141`, etc.) n'affichent PLUS aucune donnee: Pays, Regulateur, Classification, Benchmark, performances tous vides
+- **Cause racine**: Les routes `/api/valLiq/:id` et `/api/valLiqdev/:id/:devise` n'avaient PAS de try/catch (commente depuis l'origine). En cas d'erreur non-capturee (ex: `pays_regul` null, `resultat` null, fetch interne echoue), Express renvoie un 500 generique sans corps JSON -> le frontend recoit rien et affiche tout vide. De plus, les 4 appels internes (performances + 3 ratios) avaient chacun un `if (!response.ok) return 404` qui tuait toute la page si un seul sous-appel echouait.
+- **Corrections apportees** (fichier `src/routes/apigestionfonds.js`):
+  1. **try/catch active** sur les 2 routes (etait commente) — plus jamais de crash silencieux
+  2. **`parseInt(req.params.id)` -> `fundId`** (extractIdFromSlug) pour le lookup fond — coherence avec le reste de la route
+  3. **Null guard `resultat`** — retourne 404 propre au lieu de TypeError crash
+  4. **Null guard `pays_regul`** — si pays inconnu dans pays_regulateurs, retourne null pour chaque champ au lieu de crash
+  5. **`safeFetch` + `Promise.all`** pour les appels internes performances/ratios — un sous-appel qui echoue retourne `{}` au lieu de tuer la route entiere. BONUS: les 4 appels sont maintenant paralleles (avant sequentiels = plus lent)
+- **LECON CRITIQUE**: A CHAQUE deploiement futur, verifier que les routes principales (valLiq, valLiqdev) ont un try/catch actif et des null guards sur `resultat` et `pays_regul`. Ce probleme est revenu 2 fois (2026-05-17 associations FK, 2026-05-18 chart fix). Pattern a bannir: `const x = await model.findOne(...); const y = x.field;` sans verifier x != null.
+- **Commit API**: a venir
+
 ### 2026-05-18 - Import indices de reference depuis Excel (Points 1, 2, 4)
 - **Statut**: SCRIPT PRET (a executer sur prod)
 - **Script**: `api_opcv/import_indices_excel.js`
