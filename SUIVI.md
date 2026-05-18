@@ -301,37 +301,31 @@
 - **Scripts crees**: `fix_populate_performances.js`, `fix_vl_targeted.js`
 - **Commit API**: `5c62ae0`, `85ef436`
 
-### 2026-05-18 - Deploiement 1: VL ciblees + fund-managers fix
-- **Statut**: DEPLOYE PARTIELLEMENT
+### 2026-05-18 - Deploiement 1: VL ciblees + fund-managers fix + performances v2
+- **Statut**: DEPLOYE ET EXECUTE EN PRODUCTION
 - **Resultats positifs**:
   - `fix_vl_targeted.js --delete`: 1003 VL supprimees (2 fond 1141 + 1001 doublons fond 1539)
   - `recalc_vl_ajuste.js`: 1 227 360 VL recalculees, 0 erreurs
   - Fund-managers fix: verifie OK — `curl listeproduitsociete/CHAPEL HILL...` retourne 11 fonds avec `{id, fundData, performanceData}`
-- **Probleme**: `fix_populate_performances.js` (v1) a echoue — 1127 erreurs / 37 succes (tous Maroc)
-  - Cause: l'API `/api/performanceswithdate` crash (500) pour 96% des fonds. Les fonctions utilitaires (`findNearestDate`, `findNearestDateJanuary`, etc.) plantent sur les fonds avec peu de VL ou des gaps.
-- **Fix**: Script reecrit (v2, commit `85ef436`) pour calculer DIRECTEMENT les performances en JS depuis les VL en base, sans passer par l'API. Logique: pour chaque fond, lire les VL triees, trouver la VL la plus proche de chaque date cible (1er janvier, -1an, -3ans...), calculer le ratio.
-- **A deployer**: `git pull` + `node fix_populate_performances.js --force`
+- **fix_populate_performances.js v1 avait echoue** (1127 erreurs / 37 succes)
+  - Cause: l'API `/api/performanceswithdate` crash (500) pour 96% des fonds
+  - Fix: Script reecrit (v2, commit `85ef436`) — calcul DIRECT en SQL+JS sans passer par l'API
+  - **v2 deploye et execute**: 1174 fonds, 0 erreurs, 1162 inseres, 12 mis a jour
 
-### 2026-05-18 - Script nettoyage complet VL + indRef parasites (fix_vl_cleanup_all.js)
-- **Statut**: COMMITE, A DEPLOYER ET EXECUTER EN PRODUCTION
-- **Script**: `api_opcv/fix_vl_cleanup_all.js`
-- **3 etapes de nettoyage**:
-  1. **DOUBLONS DE DATE**: Plusieurs VL pour la meme date sur un meme fond. Garde celle la plus proche de la mediane des voisins.
-  2. **PICS (>15%) & ERREURS DE SAISIE (>30%)**: Detection bidirectionnelle — une VL est un PIC seulement si elle devie de >15% de SES DEUX voisins directs (prev ET next). Iteratif multi-passes jusqu'a convergence. Les ecarts >30% sont categorises ERREUR_SAISIE.
-  3. **INDREF PARASITES (graphique base 100)**: Detecte les valeurs indRef qui devient de >50% de leurs 2 voisins et les corrige par interpolation lineaire `(prev + next) / 2`. C'est la cause des pics a 200 sur le graphique base 100 (ex: SICAV ABDOU DIOUF, fond 1539).
-- **Cause racine graphique base 100**: La route `/api/valLiq/:id` (apigestionfonds.js:363) retourne `data.indRef` comme `valuesInd` utilise par le frontend pour le graphique base 100. Des valeurs parasites intercalees (proches de 0 au 1er janvier de chaque annee, ou ~2x la normale en fin de mois/trimestre) creent des pics visuels de 100 a 200.
-- **Options**: `--report` (defaut, rapport seul), `--delete` (appliquer les corrections), `--pays`, `--fond`, `--seuil`, `--maxpass`
-- **Usage**:
-  ```bash
-  node fix_vl_cleanup_all.js                          # rapport complet (ne modifie rien)
-  node fix_vl_cleanup_all.js --delete                 # appliquer toutes les corrections
-  node fix_vl_cleanup_all.js --delete --fond 1539     # un seul fond
-  ```
-- **Post-nettoyage**:
-  ```bash
-  node recalc_vl_ajuste.js
-  node fix_populate_performances.js --force
-  ```
+### 2026-05-18 - Deploiement 2: Nettoyage complet VL + indRef parasites
+- **Statut**: DEPLOYE ET EXECUTE EN PRODUCTION
+- **Script**: `fix_vl_cleanup_all.js --delete`
+- **Resultats nettoyage** (3 passes, convergence pass 3):
+  - Doublons de date: **534 974 VL supprimees** (MAROC 527K, NIGERIA 4.5K, UEMOA 3K, CEMAC 148)
+  - Pics VL (>15%): **52 VL supprimees** (tous MAROC)
+  - Erreurs saisie (>30%): **24 VL supprimees** (17 MAROC, 7 NIGERIA)
+  - IndRef parasites: **35 corrigees par interpolation** (33 UEMOA/SICAV ABDOU DIOUF + 2 MAROC)
+  - **TOTAL: 535 050 VL nettoyees + 35 indRef corrigees**
+- **Fonds les plus touches**: STANBIC IBTC ETF 30 (4), BMCI COSMOS (3), FCP CAPITAL ACTIONS (3)
+- **Post-nettoyage execute**:
+  - `recalc_vl_ajuste.js`: 692 310 VL recalculees, 0 erreurs (base reduite de ~1.2M a 732K VL apres suppression doublons)
+  - `fix_populate_performances.js --force`: 1173 fonds, 0 erreurs (395 inseres, 778 mis a jour)
+- **Impact graphique base 100**: Les pics a 200 sur SICAV ABDOU DIOUF et les 2 fonds Maroc sont corriges
 
 ## Points en cours / a faire
 
@@ -339,6 +333,7 @@
 **Priorite: HAUTE**
 
 #### 2A. Nettoyage VL restant
+- [x] Nettoyage complet: 534 974 doublons + 76 pics/erreurs + 35 indRef parasites (fix_vl_cleanup_all.js, 2026-05-18)
 - [ ] Nettoyer 5 fonds avec VL extremes (meme probleme actif net vs VL unitaire que BRIDGE):
   - FCP TRESO MONEA, FCP BOA RENDEMENT, FCP ECOBANK UEMOA OBLIGATAIRE, SICAV ABDOU DIOUF, FCP SOGELIQUID
 - [x] Corriger 31 VL avec date=0000-00-00 (FAIT - supprimees par Phase 2 step 2)
@@ -529,7 +524,7 @@
 | `fix_categorie_regional.js` | 2026-05-17 | Correction categorie_regional Nigeria (AFRIQUE DU NORD -> AFRIQUE DE L OUEST), 546 fonds | Execute en prod |
 | (processFundmysql date fix) | 2026-05-17 | Date filtre 2024-07-31 -> 2019-12-31 + null guards | DEPLOYE en prod |
 | (saveperfdatemysql all) | 2026-05-17 | Performances calculees pour 1176 fonds (tous pays), + EUR + USD | Execute en prod |
-| `fix_vl_cleanup_all.js` | 2026-05-18 | Nettoyage complet: doublons + pics bidirectionnel + indRef parasites | Commite, a deployer et executer |
+| `fix_vl_cleanup_all.js` | 2026-05-18 | Nettoyage complet: 535K doublons + 76 pics/erreurs + 35 indRef parasites | Execute en prod |
 | `fix_populate_performances.js` v2 | 2026-05-18 | Calcul perf direct SQL (sans API) pour tous les fonds | Deploye en prod (1174 fonds, 0 erreurs) |
 | `fix_vl_targeted.js` | 2026-05-18 | Nettoyage cible fonds 1141 + 1539 (1003 VL supprimees) | Execute en prod |
 
