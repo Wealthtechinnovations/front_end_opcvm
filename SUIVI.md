@@ -312,6 +312,27 @@
 - **Fix**: Script reecrit (v2, commit `85ef436`) pour calculer DIRECTEMENT les performances en JS depuis les VL en base, sans passer par l'API. Logique: pour chaque fond, lire les VL triees, trouver la VL la plus proche de chaque date cible (1er janvier, -1an, -3ans...), calculer le ratio.
 - **A deployer**: `git pull` + `node fix_populate_performances.js --force`
 
+### 2026-05-18 - Script nettoyage complet VL + indRef parasites (fix_vl_cleanup_all.js)
+- **Statut**: COMMITE, A DEPLOYER ET EXECUTER EN PRODUCTION
+- **Script**: `api_opcv/fix_vl_cleanup_all.js`
+- **3 etapes de nettoyage**:
+  1. **DOUBLONS DE DATE**: Plusieurs VL pour la meme date sur un meme fond. Garde celle la plus proche de la mediane des voisins.
+  2. **PICS (>15%) & ERREURS DE SAISIE (>30%)**: Detection bidirectionnelle — une VL est un PIC seulement si elle devie de >15% de SES DEUX voisins directs (prev ET next). Iteratif multi-passes jusqu'a convergence. Les ecarts >30% sont categorises ERREUR_SAISIE.
+  3. **INDREF PARASITES (graphique base 100)**: Detecte les valeurs indRef qui devient de >50% de leurs 2 voisins et les corrige par interpolation lineaire `(prev + next) / 2`. C'est la cause des pics a 200 sur le graphique base 100 (ex: SICAV ABDOU DIOUF, fond 1539).
+- **Cause racine graphique base 100**: La route `/api/valLiq/:id` (apigestionfonds.js:363) retourne `data.indRef` comme `valuesInd` utilise par le frontend pour le graphique base 100. Des valeurs parasites intercalees (proches de 0 au 1er janvier de chaque annee, ou ~2x la normale en fin de mois/trimestre) creent des pics visuels de 100 a 200.
+- **Options**: `--report` (defaut, rapport seul), `--delete` (appliquer les corrections), `--pays`, `--fond`, `--seuil`, `--maxpass`
+- **Usage**:
+  ```bash
+  node fix_vl_cleanup_all.js                          # rapport complet (ne modifie rien)
+  node fix_vl_cleanup_all.js --delete                 # appliquer toutes les corrections
+  node fix_vl_cleanup_all.js --delete --fond 1539     # un seul fond
+  ```
+- **Post-nettoyage**:
+  ```bash
+  node recalc_vl_ajuste.js
+  node fix_populate_performances.js --force
+  ```
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
@@ -508,6 +529,9 @@
 | `fix_categorie_regional.js` | 2026-05-17 | Correction categorie_regional Nigeria (AFRIQUE DU NORD -> AFRIQUE DE L OUEST), 546 fonds | Execute en prod |
 | (processFundmysql date fix) | 2026-05-17 | Date filtre 2024-07-31 -> 2019-12-31 + null guards | DEPLOYE en prod |
 | (saveperfdatemysql all) | 2026-05-17 | Performances calculees pour 1176 fonds (tous pays), + EUR + USD | Execute en prod |
+| `fix_vl_cleanup_all.js` | 2026-05-18 | Nettoyage complet: doublons + pics bidirectionnel + indRef parasites | Commite, a deployer et executer |
+| `fix_populate_performances.js` v2 | 2026-05-18 | Calcul perf direct SQL (sans API) pour tous les fonds | Deploye en prod (1174 fonds, 0 erreurs) |
+| `fix_vl_targeted.js` | 2026-05-18 | Nettoyage cible fonds 1141 + 1539 (1003 VL supprimees) | Execute en prod |
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
 - **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
