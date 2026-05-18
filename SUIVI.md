@@ -683,7 +683,7 @@
 - **Commit API**: `47332d0`
 
 ### 2026-05-18 - Fix blocage graphique base 100 quand historiques fonds/indice different
-- **Statut**: COMMIT ET PUSH (a deployer)
+- **Statut**: VALIDE ET DEPLOYE EN PRODUCTION (2026-05-18)
 - **Probleme**: Quand `hasIndRef` est true, les points VL sans indRef etaient filtres du graphique, tronquant l'affichage. De plus `filteredData[0].InRef` crashait si le premier point n'avait pas d'InRef.
 - **Fix backend** (3 routes):
   - `apigestionfonds.js`: routes `/api/valLiq/:id` et `/api/valLiqdev/:id/:devise` — toujours inclure tous les points VL, ne setter `valuesInd` que quand indRef != null
@@ -695,16 +695,37 @@
   - Fichiers: FundView.tsx, summary-eur/page.tsx, summary-usd/page.tsx, history/page.tsx, portfolio/page.tsx, panel/investor/reconstruction/settings/page.tsx, panel/portfolio/reconstruction/settings/page.tsx
 - **Commit API**: `119f698`
 - **Commit Frontend**: `9aa48c4`
-- **Deploiement**:
+- **Deploiement**: Resultat OK (2026-05-18). Build: Compiled successfully, 0 erreur. PM2: api-monolith (10) online, fundafrique-frontend (11) online.
+
+### 2026-05-18 - Import indices de reference depuis Excel (Points 1, 2, 4)
+- **Statut**: SCRIPT PRET (a executer sur prod)
+- **Script**: `api_opcv/import_indices_excel.js`
+- **Fichier Excel**: `api_opcv/Historique_Indices_Complet.xlsx`
+- **Donnees**: 6881 lignes, 5 indices (MASI, Tunindex, BRVM, MONIA, NSE), 2000-01-03 -> 2026-05-15
+- **Mapping indices -> pays**:
+  - MASI -> Maroc (devise MAD)
+  - Tunindex -> Tunisie (devise TND)
+  - BRVM Composite -> Cote d'Ivoire, Senegal, Burkina Faso, Mali, Togo, Benin, Niger, Guinee-Bissau (devise XOF)
+  - NSE All Share -> Nigeria (devise NGN)
+  - MONIA -> secondaire Maroc, pas de mapping fonds direct
+- **ETAPE 1**: Import dans `indice_references` (INSERT si nouveau, UPDATE si valeur differente, SKIP si identique)
+- **ETAPE 2**: Peuplement `indRef` dans `valorisations` (matching date VL <-> date indice, tolerance 7 jours). Met aussi a jour `indice_name` et `ID_indice`. Cree les liens `fond_investissements.indice_benchmark` et `.indice` si absents.
+- **ETAPE 4**: Conversion `indRef_EUR` et `indRef_USD` via table `devisedechanges` (taux de change le plus proche <= date VL)
+- **Modes**: `--report` (defaut, aucune modif), `--execute` (applique les changements)
+- **Options**: `--step 1|2|4|all`, `--pays Maroc`, `--fond 123`
+- **Commit API**: `97ab8e8`
+- **Deploiement et execution**:
   ```bash
-  # API
+  # Deployer
   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
   git pull origin claude/code-review-improvements-ikvuj
-  pm2 restart 10
 
-  # Frontend
-  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend
-  git pull origin claude/code-review-improvements-ikvuj
-  npm run build
-  pm2 restart 11
+  # D'abord en mode rapport pour verifier
+  node import_indices_excel.js --report
+
+  # Si rapport OK, executer
+  node import_indices_excel.js --execute
+
+  # Redemarrer l'API
+  pm2 restart 10
   ```
