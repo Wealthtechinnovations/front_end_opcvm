@@ -345,6 +345,25 @@
   - classementfonds_eurs + classementfonds_usds: 0 lignes
   - TSR hardcode 1.42% pour non-Maroc (Sharpe incorrect pour Nigeria/Tunisie/UEMOA)
 
+### 2026-05-18 - Corrections P1: SEO complet + trackingError mensuel + deploiement
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Corrections API**:
+  1. **trackingError mensuel**: nouvelle fonction `calculateTrackingErrormois` avec `calculerVolatilitemois` (sqrt(12)). 13 occurrences corrigees dans apigestionratios.js (utilisaient sqrt(52) au lieu de sqrt(12))
+  2. **fix_database_phase2.js**: credentials production corriges (root/vide -> fund_opcvm/66G41zes~)
+  3. **sync_production.sh**: route inexistante `/api/lastVl1` remplacee par `/api/getactualite`
+  4. **deploy_all_fixes.sh** enrichi: ajout index composite, phase2, performances locales, classement local, sync
+  5. **fix_populate_performances_eur_usd.js**: script direct SQL calcul perf EUR+USD (tous fonds)
+  6. **cron_daily_eur_usd.sh**: cron quotidien maintenance EUR/USD
+- **Corrections Frontend**:
+  1. **HelmetProvider supprime** de providers.tsx (non fonctionnel en App Router)
+  2. **`<SEO/>` supprime** de 4 pages (home, search, news, contact) + imports structuredData inutilises
+  3. **`import Head from next/head` supprime** de 14 fichiers (FundView.tsx + page.tsx)
+  4. **6 sous-pages fonds restructurees**: page.tsx split en FundSubView.tsx (client) + page.tsx (server wrapper) + page.server.ts (generateMetadata)
+  5. **page.server.ts cree** pour `/news` (metadata statique)
+  6. **Build verifie OK** (0 erreur)
+- **Commits API**: `db656e3`, `3cd1f79` + `ab74b7f` (scripts deploiement)
+- **Commit Frontend**: `db5dddd`
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
@@ -440,7 +459,7 @@
 - [ ] Ajouter contraintes FK reelles MySQL (societe_id -> societes.id, fund_id -> fond_investissements.id)
 - [ ] Optimiser table classementfonds: 30+ colonnes de ranking -> table pivot
 - [ ] Migrer calculs lourds vers ClickHouse (deja integre, 3 tables)
-- [ ] Ajouter index manquants (valorisations.fund_id + date composite)
+- [x] Ajouter index composite valorisations(fund_id, date) — inclus dans deploy_all_fixes.sh
 - [ ] Nettoyer tables inutilisees ou orphelines
 
 ### Panel admin - cockpit administration
@@ -547,7 +566,13 @@
 | `fix_vl_targeted.js` | 2026-05-18 | Nettoyage cible fonds 1141 + 1539 (1003 VL supprimees) | Execute en prod |
 | (fix regression valLiq) | 2026-05-18 | try/catch + null guards + safeFetch sur valLiq/valLiqdev | DEPLOYE en prod |
 | `import_indices_excel.js` | 2026-05-18 | Import 5 indices (MASI/Tunindex/BRVM/NSE/MONIA) + indRef + EUR/USD | Execute en prod (657K VL, 316K conv) |
-| `sync_production.sh` | 2026-05-18 | Snapshot etat prod (DB+routes+git) -> PRODUCTION_STATE.json | Commite, a deployer |
+| `sync_production.sh` | 2026-05-18 | Snapshot etat prod (DB+routes+git) -> PRODUCTION_STATE.json | Installe en prod (cron horaire) |
+| (audit complet + P0 fixes) | 2026-05-18 | try/catch 18 routes, Sortino/Calmar/VAR, SEO racine/robots/og | Commite, a deployer |
+| `fix_populate_performances_eur_usd.js` | 2026-05-18 | Calcul perf EUR+USD direct SQL pour tous les fonds actifs | Commite, a deployer et executer |
+| `deploy_all_fixes.sh` | 2026-05-18 | Script deploiement complet 9 etapes (pull+build+restart+repopulation) | Commite, pret a executer |
+| `cron_daily_eur_usd.sh` | 2026-05-18 | Cron quotidien recalcul performances+classements EUR/USD | Commite, a installer |
+| (trackingError mois fix) | 2026-05-18 | calculateTrackingErrormois sqrt(12) au lieu de sqrt(52), 13 occurrences | Commite, a deployer |
+| (SEO complet frontend) | 2026-05-18 | Suppression react-helmet-async/next-head, generateMetadata partout, 33 fichiers | Commite, a deployer |
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
 - **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
