@@ -436,11 +436,13 @@
 - [ ] Remplir `portefeuille_base100s` (0 lignes) - courbes base 100
 
 #### 2E. Taux sans risque (TSR)
-- [ ] Importer TSR Tunisie: TMM (Taux du Marche Monetaire) depuis BCT
-- [ ] Importer TSR UEMOA: taux directeur BCEAO
-- [ ] Importer TSR CEMAC: taux directeur BEAC
-- [ ] Importer TSR Nigeria: MPR depuis CBN
-- [ ] TSR Maroc: deja present dans la base
+- [x] Code: tsrhistos() supporte maintenant un parametre pays (filtre DB par pays) — plus de hardcode "Maroc"
+- [x] Code: TSR_DEFAULTS fallback per-country si tsrhisto vide (Nigeria 27.5%, Tunisie 8%, UEMOA 3.5%, CEMAC 5%, Maroc 2.75%)
+- [x] Script: fix_tsr_per_country.js — peuple tsrhisto 2015-2026 pour Nigeria/Tunisie/UEMOA/CEMAC (commit `36c37dd`)
+- [ ] **A EXECUTER SUR PROD**: `node fix_tsr_per_country.js` (peuple tsrhisto + fix Nigeria casing)
+- [ ] **A DEPLOYER**: pull API + pm2 restart (apigestionratios.js modifie)
+- [ ] Recalculer les ratios (Sharpe/Sortino) apres deploiement: `fix_populate_performances.js --force`
+- [x] TSR Maroc: deja present (MONIA) — taguer avec pays=MAROC si manquant (fait par le script)
 
 #### 2F. Nigeria VL
 - [x] Preparer script d'import Excel SEC Nigeria (weekly NAV) — sec_ng_nav_extractor_v6.py + import_vl_nigeria_sec.js
@@ -610,6 +612,8 @@
 | (fix graphique datetime) | 2026-05-19 | Highcharts category->datetime + fallback vl_ajuste??value | DEPLOYE en prod (rebase+restart) |
 | (fix limit vl_ajuste) | 2026-05-19 | Suppression limit 500/10000 sur recalcul vl_ajuste (3 routes) | DEPLOYE en prod (rebase+restart) |
 | (rebase divergent branches) | 2026-05-19 | git pull --rebase pour resoudre divergence sync_production.sh | EXECUTE en prod |
+| (TSR par pays) | 2026-05-19 | tsrhistos() filtre par pays + TSR_DEFAULTS fallback + suppression hardcode 1.42% | Commite, a deployer |
+| `fix_tsr_per_country.js` | 2026-05-19 | Peuple tsrhistos 2015-2026 pour Nigeria/Tunisie/UEMOA/CEMAC + fix Nigeria casing | Commite, a deployer et executer |
 
 ### 2026-05-19 - Fix MySQL IPv6 connexion refusee (ECONNREFUSED ::1:3306)
 - **Statut**: DEPLOYE EN PRODUCTION (2026-05-19 00:53)
@@ -680,6 +684,26 @@
 - **Fix**: Suppression des 3 limites (LIMIT 500 et LIMIT 10000)
 - **Note**: Les scripts batch d'import (import_vl_maroc.js, cron ASFIM, import_vl_nigeria_sec.js) inserent en SQL direct et ne passent PAS par ces routes API → le recalcul vl_ajuste n'est pas declenche. Il faut lancer recalc_vl_ajuste.js apres ces imports, ou integrer le recalcul dans le cron.
 - **Commit API**: `47e2c4c`
+
+### 2026-05-19 - TSR par pays: Sharpe/Sortino avec taux reels au lieu de 1.42% hardcode
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER ET EXECUTER EN PRODUCTION
+- **Probleme**: Le ratio Sharpe et Sortino utilisaient un TSR hardcode: 1.42% pour tous les pays sauf Maroc. Les vrais taux sont tres differents: Nigeria ~27.5%, Tunisie ~8%, UEMOA ~3.5%, CEMAC ~5%
+- **Impact**: Les fonds Nigeria affichaient des Sharpe ratios tres surestime car le taux sans risque reel est ~27.5% (MPR CBN) vs le 1.42% utilise
+- **Corrections code** (`apigestionratios.js`):
+  1. `tsrhistos(datee, year)` -> `tsrhistos(datee, year, pays)` — ajoute filtre `pays` sur toutes les requetes tsrhisto
+  2. Suppression `if (paysFond == "Maroc")` — logique unifiee pour tous les pays
+  3. Ajout `TSR_DEFAULTS` avec taux reels par pays en fallback si tsrhisto vide
+  4. Ajout try/catch autour de l'appel tsrhistos (plus de crash si donnees absentes)
+  5. Suppression du filtre `indice: "MONIA"` hardcode — filtre par `pays` a la place (plus generique)
+  6. Ajout fallback pour annee 5/10: si pas de donnees avec `annee: X`, requete sans filtre annee
+- **Script**: `fix_tsr_per_country.js` — peuple `tsrhistos` avec taux historiques mensuels 2015-2026:
+  - NIGERIA / MPR: 11.5% (2020) -> 27.5% (2025), source CBN
+  - TUNISIE / TMM: 4.75% (2015) -> 8% (2024), source BCT
+  - UEMOA / BCEAO: 2.5% (2017) -> 3.5% (2025), source BCEAO
+  - CEMAC / BEAC: 2.95% (2017) -> 5% (2023), source BEAC
+  - Tague aussi les donnees MONIA existantes avec pays=MAROC
+  - Corrige egalement pays "Nigeria" -> "NIGERIA" (6 fonds)
+- **Commit API**: `36c37dd`
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
 - **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
