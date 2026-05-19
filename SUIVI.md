@@ -364,6 +364,18 @@
 - **Commits API**: `db656e3`, `3cd1f79` + `ab74b7f` (scripts deploiement)
 - **Commit Frontend**: `db5dddd`
 
+### 2026-05-19 - Fix regression graphique: points mensuels au lieu de journaliers
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Probleme**: Le graphique "Courbe de tous les fonds" n'affichait que quelques points mensuels au lieu de tous les points journaliers
+- **Cause racine 1 (API)**: La route `/api/valLiq/:id` utilisait `data.vl_ajuste` quand le fonds avait un indRef, mais `vl_ajuste` etait NULL pour de nombreux enregistrements (fonds pas recalcules apres import). Highcharts sautait les valeurs NULL, ne laissant que quelques points.
+- **Fix API**: Ajout fallback `data.vl_ajuste ?? data.value` dans `valLiq` et `valLiqdev` (apigestionfonds.js lignes 387 et 617)
+- **Cause racine 2 (Frontend)**: Highcharts utilisait `type: 'category'` avec des labels formaties en `{ month: 'long', year: 'numeric' }`, compressant visuellement les dates journalieres en labels mensuels
+- **Fix Frontend**: Passage en `type: 'datetime'` avec donnees `[timestamp, value]` au lieu de `[index, value]` + categories
+- **Fichiers modifies**: 5 fichiers frontend (FundView.tsx + 4 FundSubView.tsx) + 1 fichier API (apigestionfonds.js)
+- **Build**: OK (0 erreur)
+- **Commit API**: `3b44a09`
+- **Commit Frontend**: `e468376`
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
