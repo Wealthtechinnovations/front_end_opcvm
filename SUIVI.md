@@ -364,8 +364,15 @@
 - **Commits API**: `db656e3`, `3cd1f79` + `ab74b7f` (scripts deploiement)
 - **Commit Frontend**: `db5dddd`
 
+### 2026-05-19 - Deploiement API reussi (rebase divergent branches)
+- **Statut**: DEPLOYE EN PRODUCTION (2026-05-19)
+- **Probleme**: `git pull` echouait sur le serveur avec "fatal: Need to specify how to reconcile divergent branches" car `sync_production.sh` (cron horaire) avait pousse des commits PRODUCTION_STATE.json depuis le serveur, creant une divergence
+- **Fix**: `git pull --rebase origin claude/code-review-improvements-ikvuj`
+- **Resultat**: Successfully rebased. PM2 restart api-monolith OK (online)
+- **Commits deployes**: `3b44a09` (graph fallback) + `47e2c4c` (limit vl_ajuste)
+
 ### 2026-05-19 - Fix regression graphique: points mensuels au lieu de journaliers
-- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Statut**: DEPLOYE EN PRODUCTION (2026-05-19)
 - **Probleme**: Le graphique "Courbe de tous les fonds" n'affichait que quelques points mensuels au lieu de tous les points journaliers
 - **Cause racine 1 (API)**: La route `/api/valLiq/:id` utilisait `data.vl_ajuste` quand le fonds avait un indRef, mais `vl_ajuste` etait NULL pour de nombreux enregistrements (fonds pas recalcules apres import). Highcharts sautait les valeurs NULL, ne laissant que quelques points.
 - **Fix API**: Ajout fallback `data.vl_ajuste ?? data.value` dans `valLiq` et `valLiqdev` (apigestionfonds.js lignes 387 et 617)
@@ -528,7 +535,7 @@
 - **Nigeria SEC source**: fichiers XLSX hebdomadaires sur sec.gov.ng, publiés le vendredi, colonnes: NAV (N), Offer Price (N), Bid Price (N)
 - **Fuzzy matching Nigeria**: seuil 95% (pas 85%) pour eviter faux positifs. 15 faux positifs identifies et corriges a 85%.
 - **Import scripts doivent filtrer par pays**: toujours utiliser `WHERE nom_fond = ? AND LOWER(pays) = LOWER(?)` pour eviter collisions cross-pays
-- **Crons actifs**: cron_daily_update.sh (lun-ven 20h), cron_nigeria_weekly.sh (lundi 10h), fix-brvm-nginx.py (toutes les 5 min), sync_production.sh (horaire)
+- **Crons actifs**: cron_daily_update.sh (lun-ven 20h), cron_nigeria_weekly.sh (lundi 10h), fix-brvm-nginx.py (toutes les 5 min), sync_production.sh (horaire), cron_daily_eur_usd.sh (6h30 quotidien)
 - **Mecanisme vl_ajuste** (NE DOIT JAMAIS ETRE NULL si VL existe):
   - A chaque insertion/modification de VL ou dividende, on recalcule TOUT l'historique du fonds depuis la date modifiee
   - `vl_ajuste = value + cumul_dividendes` (formule cumulative additive sur tout l'historique)
@@ -593,15 +600,16 @@
 | (audit complet + P0 fixes) | 2026-05-18 | try/catch 18 routes, Sortino/Calmar/VAR, SEO racine/robots/og | DEPLOYE en prod (2026-05-19) |
 | `fix_populate_performances_eur_usd.js` | 2026-05-18 | Calcul perf EUR+USD direct SQL pour tous les fonds actifs | EXECUTE en prod (2026-05-19, 1185 fonds) |
 | `deploy_all_fixes.sh` | 2026-05-18 | Script deploiement complet 9 etapes (pull+build+restart+repopulation) | EXECUTE en prod (2026-05-19 00:53) |
-| `cron_daily_eur_usd.sh` | 2026-05-18 | Cron quotidien recalcul performances+classements EUR/USD | Commite, A INSTALLER |
+| `cron_daily_eur_usd.sh` | 2026-05-18 | Cron quotidien recalcul performances+classements EUR/USD | INSTALLE en prod (6h30 quotidien) |
 | (trackingError mois fix) | 2026-05-18 | calculateTrackingErrormois sqrt(12) au lieu de sqrt(52), 13 occurrences | DEPLOYE en prod (2026-05-19) |
 | (SEO complet frontend) | 2026-05-18 | Suppression react-helmet-async/next-head, generateMetadata partout, 33 fichiers | DEPLOYE en prod (2026-05-19) |
 | (fix try/catch syntax) | 2026-05-18 | Fix 14 routes apigestionperformance.js .then() closers manquants | DEPLOYE en prod (commit 9751816) |
 | (fix MySQL IPv6) | 2026-05-19 | DB_HOST localhost->127.0.0.1 (.env + sequelize.js + config.js + agenda.js) | DEPLOYE en prod (commit f679613) |
 | (deploy_all_fixes.sh) | 2026-05-19 | Deploiement complet: perf 1185 fonds + classements + index + phase2 | EXECUTE en prod (00:53-00:55) |
 | (classementmysql) | 2026-05-19 | Relance classement local (route corrigee classement->classementmysql) | EXECUTE en prod (2358 lignes, 1179 fonds) |
-| (fix graphique datetime) | 2026-05-19 | Highcharts category->datetime + fallback vl_ajuste??value | Commite, a deployer |
-| (fix limit vl_ajuste) | 2026-05-19 | Suppression limit 500/10000 sur recalcul vl_ajuste (3 routes) | Commite, a deployer |
+| (fix graphique datetime) | 2026-05-19 | Highcharts category->datetime + fallback vl_ajuste??value | DEPLOYE en prod (rebase+restart) |
+| (fix limit vl_ajuste) | 2026-05-19 | Suppression limit 500/10000 sur recalcul vl_ajuste (3 routes) | DEPLOYE en prod (rebase+restart) |
+| (rebase divergent branches) | 2026-05-19 | git pull --rebase pour resoudre divergence sync_production.sh | EXECUTE en prod |
 
 ### 2026-05-19 - Fix MySQL IPv6 connexion refusee (ECONNREFUSED ::1:3306)
 - **Statut**: DEPLOYE EN PRODUCTION (2026-05-19 00:53)
@@ -639,8 +647,15 @@
 - **Bug deploy script corrige**: `/api/classement` -> `/api/classementmysql` dans deploy_all_fixes.sh
 - **6 fonds pays "Nigeria" minuscule**: residuel casing mineur (273 fonds "NIGERIA" OK)
 
+### 2026-05-19 - Deploiement API reussi (rebase divergent branches)
+- **Statut**: DEPLOYE EN PRODUCTION (2026-05-19)
+- **Probleme**: `git pull` echouait avec "fatal: Need to specify how to reconcile divergent branches" — `sync_production.sh` (cron horaire) avait pousse des commits PRODUCTION_STATE.json depuis le serveur, creant une divergence avec nos commits
+- **Fix**: `git pull --rebase origin claude/code-review-improvements-ikvuj`
+- **Resultat**: Successfully rebased and updated. PM2 restart api-monolith OK (online, 18.2MB)
+- **Commits deployes**: `3b44a09` (graph fallback vl_ajuste??value) + `47e2c4c` (suppression limit 500/10000 vl_ajuste)
+
 ### 2026-05-19 - Fix regression graphique: points mensuels au lieu de journaliers
-- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Statut**: DEPLOYE EN PRODUCTION (2026-05-19)
 - **Probleme**: Le graphique "Courbe de tous les fonds" n'affichait que quelques points mensuels au lieu de tous les points journaliers
 - **Cause racine 1 (API)**: La route `/api/valLiq/:id` utilisait `data.vl_ajuste` quand le fonds avait un indRef, mais `vl_ajuste` etait NULL pour de nombreux enregistrements (fonds pas recalcules apres import). Highcharts sautait les valeurs NULL, ne laissant que quelques points.
 - **Fix API**: Ajout fallback `data.vl_ajuste ?? data.value` dans `valLiq` et `valLiqdev` (apigestionfonds.js lignes 387 et 617) — garde-fou defensif, car vl_ajuste ne DEVRAIT jamais etre null si le mecanisme de recalcul fonctionne
@@ -652,7 +667,7 @@
 - **Commit Frontend**: `e468376`
 
 ### 2026-05-19 - Fix mecanisme vl_ajuste: suppression limit 500/10000
-- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Statut**: DEPLOYE EN PRODUCTION (2026-05-19)
 - **Probleme**: Le recalcul vl_ajuste apres insertion de VL etait bride par des LIMIT:
   - `routes_vl.js` route savevl: `limit: 500` sur le fond.findAll (ne recalculait que 500 VL)
   - `routes_vl.js` route uploadsfilevl: `limit: 500` idem
