@@ -573,6 +573,21 @@
 | `cron_daily_eur_usd.sh` | 2026-05-18 | Cron quotidien recalcul performances+classements EUR/USD | Commite, a installer |
 | (trackingError mois fix) | 2026-05-18 | calculateTrackingErrormois sqrt(12) au lieu de sqrt(52), 13 occurrences | Commite, a deployer |
 | (SEO complet frontend) | 2026-05-18 | Suppression react-helmet-async/next-head, generateMetadata partout, 33 fichiers | Commite, a deployer |
+| (fix try/catch syntax) | 2026-05-18 | Fix 14 routes apigestionperformance.js .then() closers manquants | DEPLOYE en prod (commit 9751816) |
+| (fix MySQL IPv6) | 2026-05-19 | DB_HOST localhost->127.0.0.1 (.env + sequelize.js + config.js + agenda.js) | Commite, a deployer (commit f679613) |
+
+### 2026-05-19 - Fix MySQL IPv6 connexion refusee (ECONNREFUSED ::1:3306)
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Probleme**: Apres deploiement du 2026-05-18, `api-monolith` ne demarre plus: `connect ECONNREFUSED ::1:3306`
+- **Cause racine**: `.env` avait `DB_HOST=localhost` qui sur le serveur prod resout vers `::1` (IPv6), mais MySQL n'ecoute que sur IPv4 (127.0.0.1). Le probleme existait deja mais etait masque par la connexion Sequelize en cache.
+- **Fix**: `DB_HOST=localhost` -> `DB_HOST=127.0.0.1` dans:
+  - `.env` (variable d'environnement principale)
+  - `src/db/sequelize.js` ligne 54 (fallback default)
+  - `src/db/config.js` ligne 8 (dev config fallback)
+  - `src/config/agenda.js` ligne 10 (agenda config fallback)
+  - `.env.example` (template)
+- **Commit API**: `f679613`
+- **Deploiement**: Sur le serveur, faire: `git pull origin claude/code-review-improvements-ikvuj && pm2 restart api-monolith`
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
 - **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
