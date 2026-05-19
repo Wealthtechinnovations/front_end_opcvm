@@ -583,20 +583,6 @@ export default function Fond() {
   });
 
 
-  let xAxisCategories: any;
-  let xAxisType = 'category';
-
-  if (selectedPeriod === '1 year') {
-    xAxisCategories = base100Data.map(item => new Date(item.name).toLocaleString('default', { month: 'short' }));
-  } else if (selectedPeriod === '3 years' || selectedPeriod === '5 years') {
-    xAxisCategories = base100Data.map(item => {
-      const date = new Date(item.name);
-      const options = { month: 'long', year: 'numeric' } as Intl.DateTimeFormatOptions;
-      const formattedDate = date.toLocaleDateString(undefined, options);
-      return formattedDate;
-    });
-  }
-
   options = {
     chart: {
       type: 'spline',
@@ -605,17 +591,19 @@ export default function Fond() {
       text: 'Courbe de tous les fonds',
     },
     xAxis: {
-      type: xAxisType,
-      categories: xAxisCategories,
+      type: 'datetime',
+      labels: {
+        format: '{value:%d %b %Y}',
+      },
     },
     series: [
       {
         name: post?.data?.fundname,
-        data: base100Data.map(item => item.y),
+        data: base100Data.map(item => [new Date(item.name).getTime(), item.y]),
       },
       {
         name: post?.data?.libelle_indice,
-        data: base100Data.map(item => item.InRef),
+        data: base100Data.map(item => [new Date(item.name).getTime(), item.InRef]),
       },
     ],
   };
