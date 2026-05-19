@@ -328,7 +328,7 @@
 - **Impact graphique base 100**: Les pics a 200 sur SICAV ABDOU DIOUF et les 2 fonds Maroc sont corriges
 
 ### 2026-05-18 - Audit complet plateforme + corrections P0
-- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Statut**: DEPLOYE EN PRODUCTION (via deploy_all_fixes.sh, 2026-05-19 00:53)
 - **Audit 4 axes**: API routes, frontend SEO, calculs financiers, taches en suspens
 - **Corrections API** (commit `c026f0a`):
   1. **18 routes sans try/catch** (14 performance + 4 ratios) — ajout try/catch + 8 null guards fond.findOne()
@@ -346,7 +346,7 @@
   - TSR hardcode 1.42% pour non-Maroc (Sharpe incorrect pour Nigeria/Tunisie/UEMOA)
 
 ### 2026-05-18 - Corrections P1: SEO complet + trackingError mensuel + deploiement
-- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Statut**: DEPLOYE EN PRODUCTION (via deploy_all_fixes.sh, 2026-05-19 00:53)
 - **Corrections API**:
   1. **trackingError mensuel**: nouvelle fonction `calculateTrackingErrormois` avec `calculerVolatilitemois` (sqrt(12)). 13 occurrences corrigees dans apigestionratios.js (utilisaient sqrt(52) au lieu de sqrt(12))
   2. **fix_database_phase2.js**: credentials production corriges (root/vide -> fund_opcvm/66G41zes~)
@@ -419,11 +419,12 @@
 - [ ] Scraping automatique des taux de change (source: ECB, fixer.io, ou API gratuite)
 
 #### 2D. Calculs batch (tables vides)
-- [x] Remplir `performences` pour TOUS les pays (1176 fonds) - locale, EUR, USD (2026-05-17)
-- [x] Remplir `performences_eurs` (1176 fonds) - calcul perf en EUR pour chaque fond (2026-05-17)
-- [x] Remplir `performences_usds` (1176 fonds) - calcul perf en USD pour chaque fond (2026-05-17)
-- [x] Remplir `classementfonds_eurs` - classement par performance EUR (2026-05-17)
-- [x] Remplir `classementfonds_usds` - classement par performance USD (2026-05-17)
+- [x] Remplir `performences` pour TOUS les pays — 57 932 lignes / 1 186 fonds (deploiement 2026-05-19, avec corrections Sortino/Calmar/VAR)
+- [x] Remplir `performences_eurs` — 1 951 lignes / 1 185 fonds (2026-05-19)
+- [x] Remplir `performences_usds` — 2 184 lignes / 1 185 fonds (2026-05-19)
+- [x] Remplir `classementfonds` — 2 358 lignes / 1 179 fonds (classement local par categorie_nationale, 2026-05-19)
+- [x] Remplir `classementfonds_eurs` — 2 370 lignes / 1 185 fonds (2026-05-19)
+- [x] Remplir `classementfonds_usds` — 2 370 lignes / 1 185 fonds (2026-05-19)
 - [ ] Remplir `rendements` (0 lignes) - rendements par periode
 - [ ] Remplir `portefeuille_base100s` (0 lignes) - courbes base 100
 
@@ -527,7 +528,17 @@
 - **Nigeria SEC source**: fichiers XLSX hebdomadaires sur sec.gov.ng, publiés le vendredi, colonnes: NAV (N), Offer Price (N), Bid Price (N)
 - **Fuzzy matching Nigeria**: seuil 95% (pas 85%) pour eviter faux positifs. 15 faux positifs identifies et corriges a 85%.
 - **Import scripts doivent filtrer par pays**: toujours utiliser `WHERE nom_fond = ? AND LOWER(pays) = LOWER(?)` pour eviter collisions cross-pays
-- **Crons actifs**: cron_daily_update.sh (lun-ven 20h), cron_nigeria_weekly.sh (lundi 10h), fix-brvm-nginx.py (toutes les 5 min)
+- **Crons actifs**: cron_daily_update.sh (lun-ven 20h), cron_nigeria_weekly.sh (lundi 10h), fix-brvm-nginx.py (toutes les 5 min), sync_production.sh (horaire)
+- **Mecanisme vl_ajuste** (NE DOIT JAMAIS ETRE NULL si VL existe):
+  - A chaque insertion/modification de VL ou dividende, on recalcule TOUT l'historique du fonds depuis la date modifiee
+  - `vl_ajuste = value + cumul_dividendes` (formule cumulative additive sur tout l'historique)
+  - Idem pour `vl_ajuste_EUR` et `vl_ajuste_USD`
+  - Le recalcul est integre dans les routes `savevl/:id` et `uploadsfilevl/:id` (routes_vl.js)
+  - La route `updatewithdividende` recalcule pour tous les fonds "Distribuant"
+  - **ATTENTION**: les scripts batch d'import (SQL direct) NE DECLENCHENT PAS ce mecanisme → lancer `recalc_vl_ajuste.js` apres import batch
+- **Classement local** = classement dans la meme `categorie_nationale` (ex: "ACTIONS MAROC", "MONETAIRE UEMOA")
+- **Classement regional** = classement dans la meme `categorie_regionale` (ex: "OBLIGATIONS AFRIQUE DU NORD", "ACTIONS AFRIQUE DE L'OUEST")
+- **Routes classement**: `/api/classementmysql` (local), `/api/classementeur`, `/api/classementusd` — PAS `/api/classement` (n'existe pas)
 
 ## Historique des scripts de migration
 | Script | Date | Description | Statut |
@@ -535,7 +546,7 @@
 | `diagnostic_db.js` | 2026-05-14 | Audit complet 63 tables, 21 sections | Execute |
 | `fix_database_phase1.js` | 2026-05-14 | Orphelins, FK societe_id, activation, VL, forex, statique | Execute en prod |
 | `20260514000001-add-societe-id-fk.js` | 2026-05-14 | Migration Sequelize societe_id | Commite |
-| `fix_database_phase2.js` | 2026-05-15 | Enrichissement statique 10 etapes | Present sur serveur, PAS EXECUTE |
+| `fix_database_phase2.js` | 2026-05-15 | Enrichissement statique 10 etapes | EXECUTE en prod (2026-05-19 via deploy_all_fixes) |
 | (classement EUR/USD fix) | 2026-05-15 | Fix classementfonds.create -> classementfonds_eurs/usds | Commite, a deployer |
 | (batch perf EUR/USD) | 2026-05-15 | Endpoints saveperfdateeur/saveperfdateusd | Commite, a deployer |
 | `import_vl_maroc.js` | 2026-05-15 | Import CSV ASFIM (VL Maroc) | Commite, a deployer et executer |
@@ -579,17 +590,21 @@
 | (fix regression valLiq) | 2026-05-18 | try/catch + null guards + safeFetch sur valLiq/valLiqdev | DEPLOYE en prod |
 | `import_indices_excel.js` | 2026-05-18 | Import 5 indices (MASI/Tunindex/BRVM/NSE/MONIA) + indRef + EUR/USD | Execute en prod (657K VL, 316K conv) |
 | `sync_production.sh` | 2026-05-18 | Snapshot etat prod (DB+routes+git) -> PRODUCTION_STATE.json | Installe en prod (cron horaire) |
-| (audit complet + P0 fixes) | 2026-05-18 | try/catch 18 routes, Sortino/Calmar/VAR, SEO racine/robots/og | Commite, a deployer |
-| `fix_populate_performances_eur_usd.js` | 2026-05-18 | Calcul perf EUR+USD direct SQL pour tous les fonds actifs | Commite, a deployer et executer |
-| `deploy_all_fixes.sh` | 2026-05-18 | Script deploiement complet 9 etapes (pull+build+restart+repopulation) | Commite, pret a executer |
-| `cron_daily_eur_usd.sh` | 2026-05-18 | Cron quotidien recalcul performances+classements EUR/USD | Commite, a installer |
-| (trackingError mois fix) | 2026-05-18 | calculateTrackingErrormois sqrt(12) au lieu de sqrt(52), 13 occurrences | Commite, a deployer |
-| (SEO complet frontend) | 2026-05-18 | Suppression react-helmet-async/next-head, generateMetadata partout, 33 fichiers | Commite, a deployer |
+| (audit complet + P0 fixes) | 2026-05-18 | try/catch 18 routes, Sortino/Calmar/VAR, SEO racine/robots/og | DEPLOYE en prod (2026-05-19) |
+| `fix_populate_performances_eur_usd.js` | 2026-05-18 | Calcul perf EUR+USD direct SQL pour tous les fonds actifs | EXECUTE en prod (2026-05-19, 1185 fonds) |
+| `deploy_all_fixes.sh` | 2026-05-18 | Script deploiement complet 9 etapes (pull+build+restart+repopulation) | EXECUTE en prod (2026-05-19 00:53) |
+| `cron_daily_eur_usd.sh` | 2026-05-18 | Cron quotidien recalcul performances+classements EUR/USD | Commite, A INSTALLER |
+| (trackingError mois fix) | 2026-05-18 | calculateTrackingErrormois sqrt(12) au lieu de sqrt(52), 13 occurrences | DEPLOYE en prod (2026-05-19) |
+| (SEO complet frontend) | 2026-05-18 | Suppression react-helmet-async/next-head, generateMetadata partout, 33 fichiers | DEPLOYE en prod (2026-05-19) |
 | (fix try/catch syntax) | 2026-05-18 | Fix 14 routes apigestionperformance.js .then() closers manquants | DEPLOYE en prod (commit 9751816) |
-| (fix MySQL IPv6) | 2026-05-19 | DB_HOST localhost->127.0.0.1 (.env + sequelize.js + config.js + agenda.js) | Commite, a deployer (commit f679613) |
+| (fix MySQL IPv6) | 2026-05-19 | DB_HOST localhost->127.0.0.1 (.env + sequelize.js + config.js + agenda.js) | DEPLOYE en prod (commit f679613) |
+| (deploy_all_fixes.sh) | 2026-05-19 | Deploiement complet: perf 1185 fonds + classements + index + phase2 | EXECUTE en prod (00:53-00:55) |
+| (classementmysql) | 2026-05-19 | Relance classement local (route corrigee classement->classementmysql) | EXECUTE en prod (2358 lignes, 1179 fonds) |
+| (fix graphique datetime) | 2026-05-19 | Highcharts category->datetime + fallback vl_ajuste??value | Commite, a deployer |
+| (fix limit vl_ajuste) | 2026-05-19 | Suppression limit 500/10000 sur recalcul vl_ajuste (3 routes) | Commite, a deployer |
 
 ### 2026-05-19 - Fix MySQL IPv6 connexion refusee (ECONNREFUSED ::1:3306)
-- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Statut**: DEPLOYE EN PRODUCTION (2026-05-19 00:53)
 - **Probleme**: Apres deploiement du 2026-05-18, `api-monolith` ne demarre plus: `connect ECONNREFUSED ::1:3306`
 - **Cause racine**: `.env` avait `DB_HOST=localhost` qui sur le serveur prod resout vers `::1` (IPv6), mais MySQL n'ecoute que sur IPv4 (127.0.0.1). Le probleme existait deja mais etait masque par la connexion Sequelize en cache.
 - **Fix**: `DB_HOST=localhost` -> `DB_HOST=127.0.0.1` dans:
@@ -599,7 +614,57 @@
   - `src/config/agenda.js` ligne 10 (agenda config fallback)
   - `.env.example` (template)
 - **Commit API**: `f679613`
-- **Deploiement**: Sur le serveur, faire: `git pull origin claude/code-review-improvements-ikvuj && pm2 restart api-monolith`
+
+### 2026-05-19 - Deploiement complet reussi (deploy_all_fixes.sh)
+- **Statut**: DEPLOYE ET EXECUTE EN PRODUCTION (2026-05-19 00:53-00:55)
+- **Resultats par etape**:
+  1. Pull API + Frontend: OK (fast-forward)
+  2. Build Frontend: OK
+  3. PM2 restart: OK (api-monolith online, 200MB, routes 200)
+  4. Test routes: valLiq/866=200, valLiq/1141=200, getPaysall=200
+  5. Index composite valorisations(fund_id,date): cree OK
+  5c. fix_database_phase2: execute OK
+  6. Perf locale: **1185 fonds** (643 inseres, 542 maj, 0 erreurs) — avec corrections Sortino/Calmar/VAR
+  7. Perf EUR: **1185 fonds** (0 erreurs) — Perf USD: **1185 fonds** (0 erreurs)
+  8. Classement local: **echoue** initialement (route `/api/classement` n'existe pas, c'est `/api/classementmysql`) — **corrige et relance manuellement: OK**
+  8b. Classement EUR: "finishrank" OK — Classement USD: "finishrank" OK
+  9. Sync production snapshot: push OK
+- **Etat final tables production**:
+  - performences: 57 932 lignes / 1 186 fonds
+  - performences_eurs: 1 951 lignes / 1 185 fonds
+  - performences_usds: 2 184 lignes / 1 185 fonds
+  - classementfonds: **2 358 lignes / 1 179 fonds** (apres relance classementmysql)
+  - classementfonds_eurs: 2 370 lignes / 1 185 fonds
+  - classementfonds_usds: 2 370 lignes / 1 185 fonds
+- **Bug deploy script corrige**: `/api/classement` -> `/api/classementmysql` dans deploy_all_fixes.sh
+- **6 fonds pays "Nigeria" minuscule**: residuel casing mineur (273 fonds "NIGERIA" OK)
+
+### 2026-05-19 - Fix regression graphique: points mensuels au lieu de journaliers
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Probleme**: Le graphique "Courbe de tous les fonds" n'affichait que quelques points mensuels au lieu de tous les points journaliers
+- **Cause racine 1 (API)**: La route `/api/valLiq/:id` utilisait `data.vl_ajuste` quand le fonds avait un indRef, mais `vl_ajuste` etait NULL pour de nombreux enregistrements (fonds pas recalcules apres import). Highcharts sautait les valeurs NULL, ne laissant que quelques points.
+- **Fix API**: Ajout fallback `data.vl_ajuste ?? data.value` dans `valLiq` et `valLiqdev` (apigestionfonds.js lignes 387 et 617) — garde-fou defensif, car vl_ajuste ne DEVRAIT jamais etre null si le mecanisme de recalcul fonctionne
+- **Cause racine 2 (Frontend)**: Highcharts utilisait `type: 'category'` avec des labels formaties en `{ month: 'long', year: 'numeric' }`, compressant visuellement les dates journalieres en labels mensuels
+- **Fix Frontend**: Passage en `type: 'datetime'` avec donnees `[timestamp, value]` au lieu de `[index, value]` + categories
+- **Fichiers modifies**: 5 fichiers frontend (FundView.tsx + 4 FundSubView.tsx) + 1 fichier API (apigestionfonds.js)
+- **Build**: OK (0 erreur)
+- **Commit API**: `3b44a09`
+- **Commit Frontend**: `e468376`
+
+### 2026-05-19 - Fix mecanisme vl_ajuste: suppression limit 500/10000
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Probleme**: Le recalcul vl_ajuste apres insertion de VL etait bride par des LIMIT:
+  - `routes_vl.js` route savevl: `limit: 500` sur le fond.findAll (ne recalculait que 500 VL)
+  - `routes_vl.js` route uploadsfilevl: `limit: 500` idem
+  - `apigestionsavequotidien.js` route updatewithdividende: `limit: 10000` sur les fonds Distribuant
+- **Design attendu (rappel)**: Quand une VL ou un dividende est insere/modifie a n'importe quelle date (meme 2010), le mecanisme doit recalculer TOUT l'historique du fonds depuis cette date:
+  - `vl_ajuste` = value + cumul_dividendes (devise locale)
+  - `vl_ajuste_EUR` = value_EUR + cumul_dividendes_EUR
+  - `vl_ajuste_USD` = value_USD + cumul_dividendes_USD
+  - Ceci car chaque vl_ajuste depend de la precedente (formule cumulative additive)
+- **Fix**: Suppression des 3 limites (LIMIT 500 et LIMIT 10000)
+- **Note**: Les scripts batch d'import (import_vl_maroc.js, cron ASFIM, import_vl_nigeria_sec.js) inserent en SQL direct et ne passent PAS par ces routes API → le recalcul vl_ajuste n'est pas declenche. Il faut lancer recalc_vl_ajuste.js apres ces imports, ou integrer le recalcul dans le cron.
+- **Commit API**: `47e2c4c`
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
 - **Statut**: DEPLOYE EN PRODUCTION (build OK 217/217 pages, 0 erreur)
