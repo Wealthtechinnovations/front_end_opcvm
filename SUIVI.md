@@ -452,8 +452,8 @@
 - [x] Peupler `periodicite` — 99.9% deja rempli
 - [x] Peupler `datejour` — 5 fonds rafraichis
 - [x] Peupler `montant_actif_net` — **919 fonds mis a jour** (77.5% couverture, 269 sans actif_net en base)
-- [ ] Peupler `categorie_national` depuis classification ou pays — script `fix_categories_remaining.js` cree, A DEPLOYER ET EXECUTER
-- [ ] Peupler `categorie_libelle` la ou vide — inclus dans `fix_categories_remaining.js`
+- [x] Peupler `categorie_national` — DEJA 100% (diagnostic fix_categories_remaining.js: 0 lacune sur 1196 fonds)
+- [x] Peupler `categorie_libelle` — DEJA 100% (idem, scripts anterieurs avaient deja tout comble)
 - [ ] Corriger `periodicite` (detecter depuis frequence reelle des VL: quotidien, hebdomadaire, mensuel)
 
 #### 2C. Forex manquant
@@ -469,7 +469,7 @@
 - [x] Remplir `classementfonds` — 2 358 lignes / 1 179 fonds (classement local par categorie_nationale, 2026-05-19)
 - [x] Remplir `classementfonds_eurs` — 2 370 lignes / 1 185 fonds (2026-05-19)
 - [x] Remplir `classementfonds_usds` — 2 370 lignes / 1 185 fonds (2026-05-19)
-- [ ] Remplir `rendements` (0 lignes) — script `fix_populate_rendements.js` cree, A DEPLOYER ET EXECUTER (note: l'appel API /api/rendement/fonds est commente dans le frontend robot-advisor)
+- [ ] Remplir `rendements` (0 lignes) — script `fix_populate_rendements.js` corrige (bug lastvl), A RE-DEPLOYER ET RE-EXECUTER avec --truncate
 - [ ] Remplir `portefeuille_base100s` — peuple a la demande via cumulvl() quand un investisseur cree un portefeuille (pas de batch necessaire)
 
 #### 2E. Taux sans risque (TSR)
@@ -1016,3 +1016,29 @@
 - **Donnees capturees**: stats tables principales, derniere VL par pays, couverture indRef, stats indices, stats performances, stats devises, fonds par pays, git log, pm2 status, test routes critiques
 - **Usage**: `bash sync_production.sh` (a lancer depuis le serveur de production)
 - **Avantage**: Permet a Claude Code de connaitre l'etat exact de la production AVANT toute modification, evitant les evolutions "a l'aveugle"
+
+### 2026-05-20 - Deploiement frontend Series 2 fix + verification complete
+- **Statut**: DEPLOYE EN PRODUCTION (2026-05-20)
+- **Fix**: Label "Series 2" sur graphiques EUR/USD remplace par nom benchmark reel
+- **Build**: 0 erreur, 217/217 pages compilees
+- **Deploiement**: PM2 restart OK, pages de production verifiees
+
+### 2026-05-20 - Fix fix_populate_rendements.js (bug colonne lastvl)
+- **Statut**: CORRIGE, A RE-DEPLOYER ET RE-EXECUTER
+- **Probleme**: Le script utilisait la colonne `lastvl` dans l'INSERT, mais cette colonne n'existe PAS dans la table MySQL `rendements` (le modele Sequelize la declare mais la migration n'a jamais ete faite). Resultat: 2714 erreurs, 0 rendements inseres.
+- **Cause racine**: Desynchronisation entre le modele Sequelize (`src/models/rendement.js` declare `lastvl: DOUBLE`) et le schema reel de la table MySQL (pas de colonne `lastvl`).
+- **Corrections apportees** (fichier `fix_populate_rendements.js`):
+  1. Suppression de `lastvl` de la clause INSERT INTO
+  2. Suppression de `curr.value` des tuples batch (journalier, hebdomadaire, mensuel)
+  3. Placeholders passes de `(?, ?, ?, ?, ?, ?)` a `(?, ?, ?, ?, ?)`
+- **Fichiers modifies**: `api_opcv/fix_populate_rendements.js`
+- **Commande de deploiement**:
+  ```bash
+  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git pull --rebase origin claude/code-review-improvements-ikvuj && node fix_populate_rendements.js --truncate
+  ```
+- **Verification categories**: fix_categories_remaining.js diagnostic = 0 lacune, categories 100% completes (aucune action necessaire)
+
+### 2026-05-20 - Gouvernance documentaire
+- **Statut**: COMMITE ET POUSSE (2 repos)
+- **Modification**: Ajout section "Gouvernance documentaire" (9 regles) dans CLAUDE.md des deux depots
+- **Objectif**: Eviter mise a jour mecanique de fichiers doc secondaires, centraliser suivi dans SUIVI.md
