@@ -144,6 +144,7 @@ interface Funds {
     funds: any[]; // ou un type spécifique pour les éléments du tableau 'funds'
     fundname: any;
     libelle_indice: any;
+    indice_benchmark: any;
     ID_indice: any;
     lastDate: any;
     lastValue: any;
@@ -604,7 +605,7 @@ export default function Fond() {
         data: base100Data.map(item => [new Date(item.name).getTime(), item.y]),
       },
       {
-        name: post?.data?.libelle_indice,
+        name: post?.data?.libelle_indice || post?.data?.indice_benchmark || post?.data?.ID_indice || 'Indice de référence',
         data: base100Data.map(item => [new Date(item.name).getTime(), item.InRef]),
       },
     ],

@@ -726,7 +726,7 @@ export default function Fond() {
                 data: base100Data.map(item => [new Date(item.name).getTime(), item.y]),
             },
             {
-                name: post?.data?.libelle_indice,
+                name: post?.data?.libelle_indice || post?.data?.indice_benchmark || post?.data?.ID_indice || 'Indice de référence',
                 data: base100Data.map(item => [new Date(item.name).getTime(), item.InRef]),
             },
         ],
