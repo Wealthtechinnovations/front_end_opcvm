@@ -1042,3 +1042,73 @@
 - **Statut**: COMMITE ET POUSSE (2 repos)
 - **Modification**: Ajout section "Gouvernance documentaire" (9 regles) dans CLAUDE.md des deux depots
 - **Objectif**: Eviter mise a jour mecanique de fichiers doc secondaires, centraliser suivi dans SUIVI.md
+
+### 2026-05-20 - Protocole anti-compactage, anti-limite et anti-taches inachevees
+- **Statut**: COMMITE ET POUSSE (2 repos)
+- **Fichiers modifies**: `api_opcv/CLAUDE.md`, `front_end_opcvm/CLAUDE.md`, `front_end_opcvm/SUIVI.md`
+- **Sections ajoutees dans les deux CLAUDE.md**:
+  - Protocole anti-compactage, anti-limite et anti-taches inachevees (10 regles)
+    1. Principe general (memoire = fichiers, pas conversation)
+    2. Travail obligatoire en lots courts
+    3. Point de reprise obligatoire (POINT DE REPRISE COURANT dans SUIVI.md)
+    4. Regle avant interruption, compactage ou limite
+    5. Reduction de la consommation de tokens
+    6. Regle de non-dispersion documentaire
+    7. Regle Git et etat stable
+    8. Regle de securite pour les taches sensibles (diagnostic avant modification)
+    9. Regle de fin de lot (bilan court obligatoire)
+    10. Regle de reprise (relire CLAUDE.md + SUIVI.md + POINT DE REPRISE)
+- **Section ajoutee dans SUIVI.md**: POINT DE REPRISE COURANT (section permanente)
+- **Aucun code applicatif modifie**
+- **Aucune route API modifiee**
+- **Aucune table modifiee**
+- **Aucun script modifie**
+- **Zero regression**
+
+## POINT DE REPRISE COURANT
+
+### Dernier etat stable
+Production stable. Frontend deploye (Series 2 fix OK, 217/217 pages, PM2 online). API en ligne (api-monolith online). Base de donnees fund_opcvm operationnelle (1196 fonds actifs, 21 paires forex, performances/classements peuples).
+
+### Dernier lot termine
+Ajout protocole anti-compactage dans les deux CLAUDE.md + creation section POINT DE REPRISE COURANT dans SUIVI.md.
+
+### Fichiers modifies dans le dernier lot
+- `api_opcv/CLAUDE.md` (ajout protocole 10 regles)
+- `front_end_opcvm/CLAUDE.md` (ajout protocole 10 regles)
+- `front_end_opcvm/SUIVI.md` (entree datee + section POINT DE REPRISE COURANT)
+
+### Commandes executees
+- Lecture CLAUDE.md des deux depots
+- Lecture SUIVI.md
+- Verification etat Git des deux depots (clean, branche claude/code-review-improvements-ikvuj)
+- Edition des 3 fichiers documentaires
+
+### Tests realises
+- Verification que les deux repos sont sur la bonne branche et clean
+- Verification qu'aucun fichier applicatif n'est modifie (git diff ne montre que les .md)
+
+### Resultat des tests
+OK — uniquement des fichiers documentaires modifies, zero code applicatif touche.
+
+### Erreurs restantes
+- **fix_populate_rendements.js**: Le fix est commite (commit `1bc6a6c`) et pousse, mais le deploiement en production a echoue car le serveur a des fichiers non commites (PRODUCTION_STATE.json du cron sync_production.sh). La commande corrigee est : `git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop ; node fix_populate_rendements.js --truncate`
+- **Table rendements**: toujours vide (0 lignes) — attend l'execution du script corrige en production.
+
+### Tache en cours
+Commit et push du protocole anti-compactage (lot documentaire en cours).
+
+### Prochaine action recommandee
+1. Commit et push des modifications documentaires (2 repos)
+2. Deployer le fix rendements en production avec la commande corrigee (git stash avant pull)
+3. Executer `node fix_populate_rendements.js --truncate` sur le serveur
+4. Verifier que la table rendements est remplie
+
+### Risques connus
+- Conflit Git en production du a PRODUCTION_STATE.json (cron sync_production.sh toutes les heures) — mitiger avec `git stash` avant `git pull --rebase`
+- Table rendements vide — pas de regression (la table etait deja vide, l'API /api/rendement/fonds est commentee dans le frontend)
+
+### A ne pas faire a la reprise
+- Ne pas re-executer fix_populate_rendements.js sans le deployer d'abord (l'ancienne version avec lastvl est encore en production)
+- Ne pas utiliser `git pull --rebase` sans `git stash` sur le serveur de production (PRODUCTION_STATE.json non commite)
+- Ne pas modifier la table rendements ni le modele Sequelize sans verifier le schema reel MySQL
