@@ -1146,11 +1146,18 @@
 - [x] Creer `ref_index_sources` (10 sources) — FAIT
 - [x] Script: seed_referentiel_fundafrica.js (idempotent, depuis le fichier Excel) — EXECUTE EN PRODUCTION
 
-**LOT 3** — Colonne `indice_fundafrica` sur fond_investissements:
-- ALTER TABLE ADD COLUMN `indice_fundafrica` VARCHAR(255) NULL
-- ALTER TABLE ADD COLUMN `indice_fundafrica_id` INT NULL
-- NE PAS toucher `indice_benchmark` (benchmark declare par le fonds)
-- Backfill: mapper chaque fonds vers son indice FundAfrica selon categorie + pays
+**LOT 3** — Colonne `indice_fundafrica` sur fond_investissements: **SCRIPT CREE 2026-05-20**
+- [x] Script: lot3_indice_fundafrica.js (migration + backfill) — CREE
+- [x] ALTER TABLE ADD COLUMN `indice_fundafrica` VARCHAR(200) NULL
+- [x] ALTER TABLE ADD COLUMN `indice_fundafrica_id` INT NULL
+- [x] ALTER TABLE ADD COLUMN `categorie_fundafrica_locale` VARCHAR(200) NULL
+- [x] ALTER TABLE ADD COLUMN `categorie_fundafrica_regionale` VARCHAR(200) NULL
+- [x] ALTER TABLE ADD COLUMN `categorie_fundafrica_globale` VARCHAR(200) NULL
+- [x] NE PAS toucher `indice_benchmark` (benchmark declare par le fonds)
+- [x] Backfill: mapping classification + pays -> ref_categories_fundafrica -> ref_indices_fundafrica
+- [x] Modele Sequelize fond.js mis a jour (5 nouvelles colonnes)
+- [x] Routes API apigestionfonds.js: colonnes ajoutees aux attributs
+- [ ] A DEPLOYER ET EXECUTER: `node lot3_indice_fundafrica.js --execute`
 
 **LOT 4** — Correction indices par categorie:
 - Fonds OBLIGATIONS: indice FundAfrica = S&P Sovereign Bond du pays (pas MASI/NSE)
@@ -1190,21 +1197,25 @@ LOT 2 — Tables referentielles creees et peuplees en production (2026-05-20):
 - Total: 320 rows, 0 erreurs. Script: seed_referentiel_fundafrica.js --execute
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/seed_referentiel_fundafrica.js` (script creation + seed)
-- `api_opcv/referentiel_fundafrica.json` (donnees Excel)
-- `front_end_opcvm/SUIVI.md` (mise a jour LOT 2 FAIT)
+- `api_opcv/lot3_indice_fundafrica.js` (script migration + backfill) — NOUVEAU
+- `api_opcv/src/models/fond.js` (5 nouvelles colonnes Sequelize)
+- `api_opcv/src/routes/apigestionfonds.js` (colonnes ajoutees aux attributs API)
+- `front_end_opcvm/SUIVI.md` (mise a jour LOT 3)
 
 ### Commandes executees
-- seed_referentiel_fundafrica.js --execute en production (320 rows, 0 erreurs)
-- Verification tables creees via queries MySQL directes
+- Creation lot3_indice_fundafrica.js avec mapping complet classification+pays
+- Mise a jour fond.js (model Sequelize) avec 5 nouvelles colonnes
+- Mise a jour apigestionfonds.js (2 routes findOne) avec nouveaux attributs
+- Commit + push sur claude/code-review-improvements-ikvuj
 
 ### Tests realises
-- Verification 5 tables creees avec bon nombre de lignes
-- Verification idempotence (INSERT IGNORE)
-- Verification production stable apres migration
+- Verification referentiel JSON (140 categories, 137 indices, 5 pays actifs)
+- Verification mapping complet pour MAROC, NIGERIA, TUNISIE, UEMOA, CEMAC × 4 classifications
+- Verification que indice_benchmark n'est jamais modifie par le script
 
 ### Resultat des tests
-OK — 5 tables referentielles en production, donnees conformes au fichier Excel.
+Script cree OK. Mapping couvre les 5 pays actifs × 4 classifications = 20 combinaisons.
+A executer en production pour confirmer le nombre de fonds mappes.
 
 ### Erreurs restantes
 - Fonds obligations/monetaires ont l'indice actions comme benchmark FundAfrica (MASI pour oblig Maroc au lieu de S&P Morocco Sovereign Bond)
@@ -1212,13 +1223,14 @@ OK — 5 tables referentielles en production, donnees conformes au fichier Excel
 - 107 indices sur 137 n'ont pas encore de source ou d'historique (MISSING, COMPOSITE_TO_BUILD, RATE_TO_DEFINE)
 
 ### Tache en cours
-LOT 3 — Ajouter colonnes indice_fundafrica + indice_fundafrica_id sur fond_investissements, backfill depuis referentiel.
+LOT 3 — Script lot3_indice_fundafrica.js cree et commite. A deployer et executer avec --execute.
 
 ### Prochaine action recommandee
-1. Creer script lot3_indice_fundafrica.js
-2. Ajouter colonnes indice_fundafrica + indice_fundafrica_id a fond_investissements
-3. Mapper chaque fonds vers son indice FundAfrica selon classification + pays
-4. NE PAS toucher indice_benchmark (benchmark declare par le fonds)
+1. Deployer API: `cd /var/www/.../api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop`
+2. Executer: `node lot3_indice_fundafrica.js --execute`
+3. Redemarrer API: `pm2 restart api-monolith`
+4. Verifier sur la fiche fonds que les nouveaux champs sont retournes par l'API
+5. Puis LOT 4: correction indices par categorie (obligations, monetaire, diversifie)
 
 ### Risques connus
 - Conflit Git en production du a PRODUCTION_STATE.json — mitiger avec `git stash`
