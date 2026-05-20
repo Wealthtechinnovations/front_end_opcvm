@@ -469,7 +469,7 @@
 - [x] Remplir `classementfonds` — 2 358 lignes / 1 179 fonds (classement local par categorie_nationale, 2026-05-19)
 - [x] Remplir `classementfonds_eurs` — 2 370 lignes / 1 185 fonds (2026-05-19)
 - [x] Remplir `classementfonds_usds` — 2 370 lignes / 1 185 fonds (2026-05-19)
-- [ ] Remplir `rendements` — 1 092 534 en devise locale (2026-05-20). Script v3 pret avec EUR/USD, A RE-DEPLOYER ET RE-EXECUTER avec --truncate
+- [x] Remplir `rendements` — **1 092 534 rendements / 1 185 fonds** (2026-05-20). 3 devises (locale, EUR, USD). 692 969 rendements journaliers par devise. Calcul sur vl_ajuste (Total Return NAV). 0 erreurs.
 - [ ] Remplir `portefeuille_base100s` — peuple a la demande via cumulvl() quand un investisseur cree un portefeuille (pas de batch necessaire)
 
 #### 2E. Taux sans risque (TSR)
@@ -1068,10 +1068,10 @@
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Production stable. Frontend deploye (Series 2 fix OK, 217/217 pages, PM2 online). API en ligne (api-monolith online). Base de donnees fund_opcvm operationnelle (1196 fonds actifs, 21 paires forex, performances/classements peuples).
+Production stable. Frontend deploye (Series 2 fix OK, 217/217 pages, PM2 online). API en ligne (api-monolith online, restart OK). Base de donnees fund_opcvm operationnelle (1196 fonds actifs, 21 paires forex, performances/classements peuples, 1 092 534 rendements 3 devises).
 
 ### Dernier lot termine
-Fix fix_populate_rendements.js v3 — rendements en 3 devises (locale, EUR, USD) + 6 nouvelles colonnes + modele Sequelize mis a jour.
+Execution fix_populate_rendements.js v4 en production — 1 092 534 rendements (3 devises, vl_ajuste), 0 erreurs. PM2 restart OK.
 
 ### Fichiers modifies dans le dernier lot
 - `api_opcv/fix_populate_rendements.js` (v3: rendements 3 devises, ensureSchema avec 6 nouvelles colonnes EUR/USD)
@@ -1092,15 +1092,13 @@ Fix fix_populate_rendements.js v3 — rendements en 3 devises (locale, EUR, USD)
 OK — uniquement des fichiers documentaires modifies, zero code applicatif touche.
 
 ### Erreurs restantes
-- **Table rendements**: 1 092 534 rendements en devise locale inseres (lot precedent). Maintenant le script v3 ajoute aussi EUR/USD. A re-deployer et re-executer avec --truncate pour avoir les 3 devises.
+- Aucune erreur bloquante connue sur les rendements.
 
 ### Tache en cours
-Deploiement et execution de fix_populate_rendements.js corrige (avec ensureSchema).
+En attente d'instructions complementaires de l'utilisateur.
 
 ### Prochaine action recommandee
-1. Deployer et executer le script v3 rendements 3 devises: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop ; node fix_populate_rendements.js --truncate`
-2. Verifier le resume (rendements local + EUR + USD)
-3. Restart API si modele Sequelize modifie: `pm2 restart api-monolith`
+Attendre instructions complementaires (colonnes a remplir, ajustements).
 
 ### Risques connus
 - Conflit Git en production du a PRODUCTION_STATE.json (cron sync_production.sh toutes les heures) — mitiger avec `git stash` avant `git pull --rebase`
