@@ -1240,14 +1240,17 @@ OK — 1178/1189 fonds mappes, 0 erreurs, benchmark intact, CEMAC corrige.
 - Indices diversifie et monetaire = N/A (COMPOSITE_TO_BUILD, RATE_TO_DEFINE) — attendus, pas d'indice disponible encore
 
 ### Tache en cours
-LOT 3 + 3bis termines. Pret pour LOT 4.
+Diagnostic multi-sujets signales par l'utilisateur (2026-05-20):
+1. Graphique base 100 EUR/USD — code API correct (indRef_EUR/USD), diagnostic data a executer
+2. Classements regionaux/Afrique — probleme structurel confirme (pas de type 3 globale)
+3. Page /news — publications test a nettoyer (table actualites)
+4. LOT 5 indices historiques — en attente de donnees (S&P payant, BVMAC inaccessible)
+5. TODO futur: reimport VL Tunisie avec dividendes (fichiers 200-220 Mo, en attente)
 
 ### Prochaine action recommandee
-1. LOT 4: Pas necessaire — la correction indices/categorie est deja faite par le referentiel
-   (obligations ont S&P Sovereign Bond, CEMAC a BVMAC, etc.)
-2. LOT 5: Import historiques nouveaux indices (S&P Sovereign Bond, BVMAC, etc.)
-3. LOT 6: API + frontend pour afficher indice FundAfrica distinct du benchmark declare
-4. TODO futur: reimport VL Tunisie avec dividendes (fichiers 200-220 Mo, en attente)
+1. Executer lot_diag_indref_eur_usd.js en production (diagnostic couverture + audit news)
+2. Nettoyer publications test dans actualites
+3. Planifier et implementer classements regionaux/Afrique (gros chantier)
 
 ### Risques connus
 - Conflit Git en production du a PRODUCTION_STATE.json — mitiger avec `git stash`
