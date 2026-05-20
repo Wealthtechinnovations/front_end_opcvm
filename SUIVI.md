@@ -508,7 +508,12 @@
   - EUR: fonds=233.0, indRef=202.7 (fonds surperforme, effet devise MAD/EUR capture)
   - USD: fonds=220.6, indRef=191.8 (idem en USD)
   - Local: fonds=222.7, indRef=193.8 (coherent, ecarts expliques par evolution taux de change)
-- [ ] Label "Series 2" a corriger (libelle_indice null pour EUR/USD — a investiguer)
+- [x] Label "Series 2" corrige — commit API `58b52ba`, commit Frontend `7d33f64`, A DEPLOYER
+  - **Cause racine API**: `valLiqdev` prenait `libelle_indice = indice_name` de la derniere VL (null) et ne chargeait ni `indice_benchmark` ni `indice` dans `fond.findOne()`
+  - **Fix API**: `.find(v => v)` pour prendre la premiere VL avec indice_name renseigne + ajout `indice_benchmark`/`indice` dans attributs et reponse
+  - **Fix Frontend**: fallback `libelle_indice || indice_benchmark || ID_indice || 'Indice de reference'` sur les 3 pages (locale, EUR, USD)
+  - **Build**: OK (0 erreur)
+  - Meme fix applique a la route locale `valLiq` (meme probleme potentiel)
 
 #### 2J. Crons — corrections ordonnancement et completude
 - [x] `cron_daily_update.sh`: enrichi 5->9 etapes — DEPLOYE sur serveur
