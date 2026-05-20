@@ -404,6 +404,20 @@
 - **Regle ajoutee (2026-05-20)** : gouvernance documentaire — SUIVI.md seul fichier a mettre a jour systematiquement ; CLAUDE.md/README_DEV.md/ROADMAP.md/CODE_REVIEW.md/CHANGELOG.md uniquement quand leur perimetre specifique change ; pas de dispersion d'information entre fichiers
 - **Impact**: aucun code applicatif, aucune route API, aucune table modifies
 
+### 2026-05-20 - Deploiement frontend Series 2 fix + verification complete
+- **Statut**: DEPLOYE EN PRODUCTION (2026-05-20)
+- **Frontend deploye**: commit `7475e5f` (gouvernance + fix Series 2 label)
+- **Build**: 0 erreur, 217/217 pages, PM2 fundafrique-frontend online
+- **Conflit stash resolu**: ancien stash en conflit -> `git reset --hard HEAD && git stash drop`
+- **Verification production API**:
+  - Fonds 1131 EUR: libelle_indice="MASI", indice_benchmark="MASI" (OK)
+  - Fonds 1131 USD: idem (OK)
+  - Fonds 1141 Nigeria: libelle_indice="NSE All Share" (OK)
+  - Fonds 2682 CEMAC: libelle_indice=null (normal, pas de benchmark CEMAC)
+- **Forex 21 paires**: toutes presentes et a jour (GHS/KES/ZAR/EGP/NAD incluses), cron quotidien actif
+- **Scripts crees**: `fix_categories_remaining.js` (combler categorie_national/libelle), `fix_populate_rendements.js` (peupler table rendements)
+- **Impact**: aucune regression, tous les graphiques EUR/USD affichent le nom du benchmark
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
@@ -438,15 +452,15 @@
 - [x] Peupler `periodicite` — 99.9% deja rempli
 - [x] Peupler `datejour` — 5 fonds rafraichis
 - [x] Peupler `montant_actif_net` — **919 fonds mis a jour** (77.5% couverture, 269 sans actif_net en base)
-- [ ] Peupler `categorie_national` depuis classification ou pays (pour les quelques fonds manquants)
-- [ ] Peupler `categorie_libelle` la ou vide (depuis classification ou categorie_globale)
+- [ ] Peupler `categorie_national` depuis classification ou pays — script `fix_categories_remaining.js` cree, A DEPLOYER ET EXECUTER
+- [ ] Peupler `categorie_libelle` la ou vide — inclus dans `fix_categories_remaining.js`
 - [ ] Corriger `periodicite` (detecter depuis frequence reelle des VL: quotidien, hebdomadaire, mensuel)
 
 #### 2C. Forex manquant
 - [x] Importer EUR/NGN et USD/NGN (script import_forex_historique.js cree, a executer)
 - [x] Importer EUR/XOF, USD/XOF, EUR/MAD, USD/MAD, EUR/TND, USD/TND, EUR/USD (script pret)
-- [ ] Generer paires croisees manquantes (GHS/USD, KES/USD, ZAR/USD, EGP/USD)
-- [ ] Scraping automatique des taux de change (source: ECB, fixer.io, ou API gratuite)
+- [x] Generer paires croisees manquantes (GHS/USD, KES/USD, ZAR/USD, EGP/USD) — FAIT (scrape_forex_import.js execute, 21 paires en base, cron quotidien actif)
+- [x] Scraping automatique des taux de change — FAIT (scrape_forex_import.js dans cron_daily_update.sh, Yahoo Finance + FRED)
 
 #### 2D. Calculs batch (tables vides)
 - [x] Remplir `performences` pour TOUS les pays — 57 932 lignes / 1 186 fonds (deploiement 2026-05-19, avec corrections Sortino/Calmar/VAR)
@@ -455,8 +469,8 @@
 - [x] Remplir `classementfonds` — 2 358 lignes / 1 179 fonds (classement local par categorie_nationale, 2026-05-19)
 - [x] Remplir `classementfonds_eurs` — 2 370 lignes / 1 185 fonds (2026-05-19)
 - [x] Remplir `classementfonds_usds` — 2 370 lignes / 1 185 fonds (2026-05-19)
-- [ ] Remplir `rendements` (0 lignes) - rendements par periode
-- [ ] Remplir `portefeuille_base100s` (0 lignes) - courbes base 100
+- [ ] Remplir `rendements` (0 lignes) — script `fix_populate_rendements.js` cree, A DEPLOYER ET EXECUTER (note: l'appel API /api/rendement/fonds est commente dans le frontend robot-advisor)
+- [ ] Remplir `portefeuille_base100s` — peuple a la demande via cumulvl() quand un investisseur cree un portefeuille (pas de batch necessaire)
 
 #### 2E. Taux sans risque (TSR)
 - [x] Code: tsrhistos() supporte maintenant un parametre pays (filtre DB par pays) — plus de hardcode "Maroc"
@@ -509,7 +523,7 @@
   - EUR: fonds=233.0, indRef=202.7 (fonds surperforme, effet devise MAD/EUR capture)
   - USD: fonds=220.6, indRef=191.8 (idem en USD)
   - Local: fonds=222.7, indRef=193.8 (coherent, ecarts expliques par evolution taux de change)
-- [x] Label "Series 2" corrige — commit API `58b52ba`, commit Frontend `7d33f64`, A DEPLOYER
+- [x] Label "Series 2" corrige — commit API `58b52ba`, commit Frontend `7d33f64`, DEPLOYE EN PRODUCTION (2026-05-20)
   - **Cause racine API**: `valLiqdev` prenait `libelle_indice = indice_name` de la derniere VL (null) et ne chargeait ni `indice_benchmark` ni `indice` dans `fond.findOne()`
   - **Fix API**: `.find(v => v)` pour prendre la premiere VL avec indice_name renseigne + ajout `indice_benchmark`/`indice` dans attributs et reponse
   - **Fix Frontend**: fallback `libelle_indice || indice_benchmark || ID_indice || 'Indice de reference'` sur les 3 pages (locale, EUR, USD)
