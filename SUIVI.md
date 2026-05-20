@@ -470,9 +470,10 @@
 - [x] Verifier coherence graphiques pays (pie charts countries/statistique) (verifie OK)
 
 #### 2I. Graphique EUR/USD — spike base 100 (fix valLiqdev)
-- [x] Code: filtrer VL avec value_EUR/USD=0 dans valLiqdev (apigestionfonds.js ligne 616) — DEPLOYE
-- [ ] Verifier: graphique EUR/USD pour fonds Maroc (ex: /funds/summary-eur/1131) doit montrer base 100 normal
-- [ ] Verifier: graphique USD pour fonds Nigeria
+- [x] Code v1: filtrer VL avec value_EUR/USD=0 dans valLiqdev — DEPLOYE (insuffisant, spike persistait)
+- [x] Code v2: calcul base 100 cote API — `(val / firstValidValue) * 100` — DEPLOYE (commit `c4217e1`)
+- [x] Meme traitement pour indRef: `(indRef_EUR / firstValidIndRef) * 100`
+- [ ] **A VERIFIER**: graphique EUR/USD pour fonds Maroc (/funds/summary-eur/1131) + Nigeria
 - [ ] Label "Series 2" a corriger (libelle_indice potentiellement null pour EUR/USD — a investiguer)
 
 #### 2J. Crons — corrections ordonnancement et completude
@@ -633,7 +634,8 @@
 | (TSR par pays) | 2026-05-19 | tsrhistos() filtre par pays + TSR_DEFAULTS fallback + suppression hardcode 1.42% | DEPLOYE en prod |
 | `fix_tsr_per_country.js` | 2026-05-19 | Peuple tsrhistos 2015-2026 pour Nigeria/Tunisie/UEMOA/CEMAC (548 entrees) | EXECUTE en prod |
 | (recalcul perf TSR) | 2026-05-19 | fix_populate_performances.js --force (1185 fonds, Sharpe/Sortino avec TSR reels) | EXECUTE en prod |
-| (fix graph EUR/USD) | 2026-05-20 | valLiqdev: filtrer VL value_EUR/USD=0 (spike base100) | DEPLOYE en prod |
+| (fix graph EUR/USD v1) | 2026-05-20 | valLiqdev: filtrer VL value_EUR/USD=0 (spike base100) | DEPLOYE en prod |
+| (fix graph EUR/USD v2) | 2026-05-20 | valLiqdev: calcul base 100 cote API (val/firstVal*100) | DEPLOYE en prod |
 | (fix cron ordering) | 2026-05-20 | cron_daily_update.sh 9 etapes + cron_eur_usd 6h30->21h30 | DEPLOYE + crontab MAJ |
 | `fix_static_data.js` | 2026-05-20 | 7 FCPE + 919 actif_net + 5 datejour (structure/categorie/date/perio/actif) | EXECUTE en prod |
 | (Nigeria BINARY casing) | 2026-05-20 | UPDATE WHERE BINARY pays='Nigeria' → 280 tous NIGERIA | EXECUTE en prod |
