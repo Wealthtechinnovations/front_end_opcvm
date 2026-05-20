@@ -1160,20 +1160,19 @@
 - [x] Script: lot3_indice_fundafrica.js (migration + backfill) — CREE ET EXECUTE
 - [x] ALTER TABLE ADD COLUMN (5 colonnes) — FAIT EN PRODUCTION
 - [x] NE PAS toucher `indice_benchmark` — CONFIRME (1043 fonds non modifies)
-- [x] Backfill execute: 212/1189 fonds mappes (0 erreurs)
+- [x] Backfill initial: 212/1189 fonds mappes (0 erreurs)
 - [x] Modele Sequelize fond.js + routes API mis a jour
 - [x] PM2 restart api-monolith — OK
-- RESULTAT PARTIEL: 870 fonds sans classification (NULL), 107 avec classif non-standard Nigeria
 
-**LOT 3bis** — Completer classifications manquantes + mapper classifs non-standard:
-- [ ] Remplir classification NULL pour MAROC (612 fonds) depuis categorie_libelle ou nom_fond
-- [ ] Remplir classification NULL pour TUNISIE (124 fonds)
-- [ ] Remplir classification NULL pour UEMOA (111 fonds)
-- [ ] Remplir classification NULL pour CEMAC (34 fonds)
-- [ ] Mapper classifs Nigeria non-standard: OMLT->OBLIGATIONS, OCT->MONETAIRE, DOLLAR->MONETAIRE
-- [ ] Mapper classifs Nigeria non-standard: ETF->ACTIONS, ETHIQUE->DIVERSIFIE, AUTRE->DIVERSIFIE
-- [ ] Mapper: IMMOBILIER->DIVERSIFIE, INFRASTRUCTURE->DIVERSIFIE, CHARIA->DIVERSIFIE, OPCVM->DIVERSIFIE
-- [ ] Re-executer lot3 avec --execute --force apres corrections
+**LOT 3bis** — Completer classifications + re-mapper: **EXECUTE 2026-05-20**
+- [x] Etape 1: 859/870 classifications NULL remplies depuis categorie_globale
+- [x] Etape 2: 111 classifications non-standard normalisees (OMLT->OBLIGATIONS, OCT->MONETAIRE, DOLLAR->MONETAIRE, ETF->ACTIONS, ETHIQUE/AUTRE/IMMOBILIER/INFRA/CHARIA/OPCVM->DIVERSIFIE, CONTRACTUEL->DIVERSIFIE)
+- [x] Etape 3: 966 fonds supplementaires mappes vers indice FundAfrica
+- [x] RESULTAT FINAL: **1178/1189 fonds mappes (99.1%)**, 0 erreurs
+- [x] 11 fonds restants sans classification (NULL) — a investiguer manuellement
+- [x] Benchmark NON modifie (1043 fonds confirmes)
+- [x] CEMAC: BVMAC ALL SHARE INDEX (corrige, plus BRVM COMPOSITE)
+- [x] Couverture par pays: MAROC 633/640, NIGERIA 276/280, TUNISIE 124/124, UEMOA 111/111, CEMAC 34/34
 
 **LOT 4** — Correction indices par categorie:
 - Fonds OBLIGATIONS: indice FundAfrica = S&P Sovereign Bond du pays (pas MASI/NSE)
@@ -1204,45 +1203,51 @@
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Production stable. Rendements peuples (1 092 534, 3 devises). API + Frontend online. 1189 fonds actifs, 21 forex, performances/classements OK.
+Production stable. Rendements peuples (1 092 534, 3 devises). Indice FundAfrica mappe sur 1178/1189 fonds (99.1%). Classifications normalisees. API + Frontend online. 1189 fonds actifs, 21 forex, performances/classements OK.
 
 ### Dernier lot termine
-LOT 2 — Tables referentielles creees et peuplees en production (2026-05-20):
-- ref_asset_classes (4 rows), ref_geo_zones (29 rows), ref_categories_fundafrica (140 rows)
-- ref_indices_fundafrica (137 rows), ref_index_sources (10 rows)
-- Total: 320 rows, 0 erreurs. Script: seed_referentiel_fundafrica.js --execute
+LOT 3bis — Classifications + indices FundAfrica (2026-05-20):
+- 859 classifications NULL remplies depuis categorie_globale
+- 111 classifications non-standard normalisees (Nigeria+Maroc+UEMOA)
+- 1178/1189 fonds mappes vers indice FundAfrica (99.1%), 0 erreurs
+- Benchmark non modifie (1043 fonds confirmes)
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/lot3bis_fix_classifications.js` (correction classifs + re-mapping) — NOUVEAU
-- `front_end_opcvm/SUIVI.md` (mise a jour LOT 3 execute + LOT 3bis)
+- `api_opcv/lot3_indice_fundafrica.js` — migration 5 colonnes + backfill initial (212 fonds)
+- `api_opcv/lot3bis_fix_classifications.js` — correction classifs + re-mapping (966 fonds supp.)
+- `api_opcv/src/models/fond.js` — 5 nouvelles colonnes Sequelize
+- `api_opcv/src/routes/apigestionfonds.js` — colonnes ajoutees aux attributs API
+- `front_end_opcvm/SUIVI.md` — mise a jour LOT 3 + 3bis
 
 ### Commandes executees
-- LOT 3 execute en production: 212/1189 fonds mappes, 0 erreurs
-- Diagnostic: 870 fonds NULL classif, 107 classifs non-standard Nigeria
-- Creation lot3bis_fix_classifications.js (3 etapes: fill NULL, normalize, re-map)
+- lot3_indice_fundafrica.js --execute (5 colonnes, 212 fonds mappes)
+- lot3bis_fix_classifications.js --execute (859 classifs, 111 normalises, 966 re-mappes)
+- pm2 restart api-monolith
 
 ### Tests realises
-- LOT 3 production: 5 colonnes creees, 212 fonds mappes
-- Benchmark NON modifie (1043 fonds confirmes)
-- Identification: categorie_globale est peuplee meme quand classification est NULL
+- Verification 1178/1189 fonds avec indice_fundafrica (99.1%)
+- Verification par pays: MAROC 633/640, NIGERIA 276/280, TUNISIE 124/124, UEMOA 111/111, CEMAC 34/34
+- Verification benchmark NON modifie (1043 fonds)
+- Verification CEMAC = BVMAC ALL SHARE INDEX (corrige vs ancien BRVM COMPOSITE)
+- Verification classifications normalisees (OBLIGATIONS 477, DIVERSIFIE 358, ACTIONS 183, MONETAIRE 160)
 
 ### Resultat des tests
-LOT 3 partiel OK. LOT 3bis necessaire pour les 977 fonds restants.
+OK — 1178/1189 fonds mappes, 0 erreurs, benchmark intact, CEMAC corrige.
 
 ### Erreurs restantes
-- Fonds obligations/monetaires ont l'indice actions comme benchmark FundAfrica (MASI pour oblig Maroc au lieu de S&P Morocco Sovereign Bond)
-- CEMAC utilise BRVM COMPOSITE (incorrect, devrait etre BVMAC ALL SHARE)
+- 11 fonds sans classification (NULL) — a investiguer manuellement
 - 107 indices sur 137 n'ont pas encore de source ou d'historique (MISSING, COMPOSITE_TO_BUILD, RATE_TO_DEFINE)
+- Indices diversifie et monetaire = N/A (COMPOSITE_TO_BUILD, RATE_TO_DEFINE) — attendus, pas d'indice disponible encore
 
 ### Tache en cours
-LOT 3bis — Corriger classifications manquantes (870 NULL) + normaliser non-standard Nigeria (107) + re-mapper indices.
+LOT 3 + 3bis termines. Pret pour LOT 4.
 
 ### Prochaine action recommandee
-1. Deployer API: `cd /var/www/.../api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop`
-2. Dry run: `node lot3bis_fix_classifications.js`
-3. Si OK: `node lot3bis_fix_classifications.js --execute`
-4. Pas besoin de restart PM2 (pas de changement code API, juste data)
-5. Puis LOT 4 si couverture satisfaisante
+1. LOT 4: Pas necessaire — la correction indices/categorie est deja faite par le referentiel
+   (obligations ont S&P Sovereign Bond, CEMAC a BVMAC, etc.)
+2. LOT 5: Import historiques nouveaux indices (S&P Sovereign Bond, BVMAC, etc.)
+3. LOT 6: API + frontend pour afficher indice FundAfrica distinct du benchmark declare
+4. TODO futur: reimport VL Tunisie avec dividendes (fichiers 200-220 Mo, en attente)
 
 ### Risques connus
 - Conflit Git en production du a PRODUCTION_STATE.json — mitiger avec `git stash`
