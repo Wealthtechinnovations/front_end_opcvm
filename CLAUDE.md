@@ -3,6 +3,13 @@
 > Ce fichier est lu automatiquement par Claude Code a chaque reprise de session.
 > Il garantit la continuite, la coherence et la qualite de toutes les interventions.
 
+## Premiere action obligatoire
+
+A chaque reprise de session ou nouvelle tache, Claude doit imperativement :
+1. Relire `CLAUDE.md` des deux depots (api_opcv et front_end_opcvm)
+2. Relire `SUIVI.md` (dans ce depot) pour connaitre l'etat courant des taches
+3. Ne commencer aucune modification avant d'avoir fait ces deux lectures
+
 ## Depot
 
 - **Depot** : `front_end_opcvm` (Frontend)
