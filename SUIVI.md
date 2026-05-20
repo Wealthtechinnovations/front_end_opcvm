@@ -472,8 +472,12 @@
 #### 2I. Graphique EUR/USD — spike base 100 (fix valLiqdev)
 - [x] Code v1: filtrer VL avec value_EUR/USD=0 dans valLiqdev — DEPLOYE (insuffisant, spike persistait)
 - [x] Code v2: calcul base 100 cote API — `(val / firstValidValue) * 100` — DEPLOYE (commit `c4217e1`)
-- [x] Meme traitement pour indRef: `(indRef_EUR / firstValidIndRef) * 100`
-- [ ] **A VERIFIER**: graphique EUR/USD pour fonds Maroc (/funds/summary-eur/1131) + Nigeria
+- [x] Code v2: indRef base 100 depuis debut donnees — indRef spike a 15000 car base prise avant le debut du fonds (valeurs forex corrompues)
+- [x] Code v3: aligner base 100 indRef sur la date du premier VL valide du fonds — COMMITE (commit `9d8e839`), A DEPLOYER
+  - Avant: `firstValidInd = response.find(d => d[indRefField] > 0)` (depuis le debut des donnees)
+  - Apres: `response.slice(startIdx).find(...)` (startIdx = index du premier VL valide du fonds)
+  - Garantit que le fonds et l'indRef demarrent au meme point dans le temps
+- [ ] **A DEPLOYER ET VERIFIER**: graphique EUR/USD pour fonds Maroc (/funds/summary-eur/1131) + Nigeria
 - [ ] Label "Series 2" a corriger (libelle_indice potentiellement null pour EUR/USD — a investiguer)
 
 #### 2J. Crons — corrections ordonnancement et completude
