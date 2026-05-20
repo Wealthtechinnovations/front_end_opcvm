@@ -383,6 +383,25 @@
 - **Commit API**: `3b44a09`
 - **Commit Frontend**: `e468376`
 
+### 2026-05-20 - Creation CLAUDE.md — regles permanentes du projet
+- **Statut**: COMMITE ET POUSSE (2026-05-20)
+- **Objectif**: Garantir la continuite, la coherence et la qualite de toutes les interventions, meme en cas de reprise de session
+- **Fichiers crees**:
+  - `api_opcv/CLAUDE.md` — regles permanentes pour le depot API
+  - `front_end_opcvm/CLAUDE.md` — regles permanentes pour le depot Frontend
+- **Contenu**:
+  - Role permanent : expert financier OPCVM + expert developpeur full-stack
+  - Regle absolue zero regression
+  - SUIVI.md comme fichier de suivi unique (pas de SUIVI_PROJET.md)
+  - Checklist avant toute modification (14 points dont verification en production)
+  - Regles metier OPCVM (categories, devises, conversions, benchmarks)
+  - Conversion devise : DIVISION par le taux (jamais multiplication)
+  - Architecture technique (fichiers cles, scripts, crons, panels)
+  - Securite (pas de secrets dans les commits)
+  - Documentation obligatoire apres chaque intervention
+- **CLAUDE.md est lu automatiquement par Claude Code a chaque reprise de session**
+- **Impact**: aucun code applicatif, aucune route API, aucune table modifies
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
