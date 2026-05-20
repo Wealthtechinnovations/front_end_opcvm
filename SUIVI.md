@@ -469,7 +469,7 @@
 - [x] Remplir `classementfonds` — 2 358 lignes / 1 179 fonds (classement local par categorie_nationale, 2026-05-19)
 - [x] Remplir `classementfonds_eurs` — 2 370 lignes / 1 185 fonds (2026-05-19)
 - [x] Remplir `classementfonds_usds` — 2 370 lignes / 1 185 fonds (2026-05-19)
-- [ ] Remplir `rendements` (0 lignes) — script `fix_populate_rendements.js` corrige (ensureSchema + bug lastvl + bug rendement_jour), A RE-DEPLOYER ET RE-EXECUTER avec --truncate
+- [ ] Remplir `rendements` — 1 092 534 en devise locale (2026-05-20). Script v3 pret avec EUR/USD, A RE-DEPLOYER ET RE-EXECUTER avec --truncate
 - [ ] Remplir `portefeuille_base100s` — peuple a la demande via cumulvl() quand un investisseur cree un portefeuille (pas de batch necessaire)
 
 #### 2E. Taux sans risque (TSR)
@@ -1071,10 +1071,11 @@
 Production stable. Frontend deploye (Series 2 fix OK, 217/217 pages, PM2 online). API en ligne (api-monolith online). Base de donnees fund_opcvm operationnelle (1196 fonds actifs, 21 paires forex, performances/classements peuples).
 
 ### Dernier lot termine
-Fix fix_populate_rendements.js — ajout auto-detection et creation colonnes manquantes (ensureSchema).
+Fix fix_populate_rendements.js v3 — rendements en 3 devises (locale, EUR, USD) + 6 nouvelles colonnes + modele Sequelize mis a jour.
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/fix_populate_rendements.js` (ajout ensureSchema: auto-detection + ALTER TABLE pour colonnes manquantes)
+- `api_opcv/fix_populate_rendements.js` (v3: rendements 3 devises, ensureSchema avec 6 nouvelles colonnes EUR/USD)
+- `api_opcv/src/models/rendement.js` (ajout colonnes EUR/USD dans modele Sequelize)
 - `front_end_opcvm/SUIVI.md` (mise a jour point de reprise)
 
 ### Commandes executees
@@ -1091,15 +1092,15 @@ Fix fix_populate_rendements.js — ajout auto-detection et creation colonnes man
 OK — uniquement des fichiers documentaires modifies, zero code applicatif touche.
 
 ### Erreurs restantes
-- **Table rendements**: toujours vide (0 lignes). Le script corrige avec ensureSchema doit etre deploye et execute.
-- **Cause racine resolue**: la table MySQL n'avait pas les colonnes `rendement_jour` ni `lastvl`. Le script ajoute maintenant automatiquement les colonnes manquantes via ALTER TABLE avant les INSERT.
+- **Table rendements**: 1 092 534 rendements en devise locale inseres (lot precedent). Maintenant le script v3 ajoute aussi EUR/USD. A re-deployer et re-executer avec --truncate pour avoir les 3 devises.
 
 ### Tache en cours
 Deploiement et execution de fix_populate_rendements.js corrige (avec ensureSchema).
 
 ### Prochaine action recommandee
-1. Deployer le fix rendements en production: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop ; node fix_populate_rendements.js --truncate`
-2. Verifier que la table rendements est remplie (les colonnes manquantes seront ajoutees automatiquement par ensureSchema)
+1. Deployer et executer le script v3 rendements 3 devises: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop ; node fix_populate_rendements.js --truncate`
+2. Verifier le resume (rendements local + EUR + USD)
+3. Restart API si modele Sequelize modifie: `pm2 restart api-monolith`
 
 ### Risques connus
 - Conflit Git en production du a PRODUCTION_STATE.json (cron sync_production.sh toutes les heures) — mitiger avec `git stash` avant `git pull --rebase`
