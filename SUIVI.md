@@ -401,6 +401,7 @@
   - Documentation obligatoire apres chaque intervention
 - **CLAUDE.md est lu automatiquement par Claude Code a chaque reprise de session**
 - **Regle ajoutee (2026-05-20)** : les deux CLAUDE.md imposent desormais comme premiere action obligatoire de relire CLAUDE.md (api_opcv + front_end_opcvm) et SUIVI.md avant toute intervention, a chaque reprise de session ou nouvelle tache
+- **Regle ajoutee (2026-05-20)** : gouvernance documentaire — SUIVI.md seul fichier a mettre a jour systematiquement ; CLAUDE.md/README_DEV.md/ROADMAP.md/CODE_REVIEW.md/CHANGELOG.md uniquement quand leur perimetre specifique change ; pas de dispersion d'information entre fichiers
 - **Impact**: aucun code applicatif, aucune route API, aucune table modifies
 
 ## Points en cours / a faire
