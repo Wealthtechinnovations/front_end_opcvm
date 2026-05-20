@@ -478,13 +478,16 @@
   - `routes_vl.js` ligne 6517: `indRef_EUR = indRef * EUR/MAD` (10.7) -> resultat x10 trop grand
   - `recalc_eur_usd_daily_rate.js`: corrigeait `value/vl_ajuste/actif_net/dividende` (division) mais PAS `indRef`
   - Coherence verifiee: value_MAD=2207, lastValue_EUR=206.33, ratio=10.70 (correct car recalc ecrase)
-- [x] Code v5 (FIX DEFINITIF) — commit `c76075d`, A DEPLOYER + EXECUTER recalc:
+- [x] Code v5 (FIX DEFINITIF) — commit `c76075d`, DEPLOYE ET VERIFIE EN PRODUCTION (2026-05-20):
   - `routes_vl.js`: 10 occurrences `*` -> `/` (value, dividende, actif_net, indRef) x EUR/USD
   - `recalc_eur_usd_daily_rate.js`: ajout recalcul `indRef_EUR = indRef / eurRate`, `indRef_USD = indRef / usdRate`
-  - `apigestionfonds.js`: retour a `indRef_EUR`/`indRef_USD` (seront corrects apres recalcul)
+  - `apigestionfonds.js`: retour a `indRef_EUR`/`indRef_USD` (corrects apres recalcul)
   - **Approche financierement correcte**: comparaison fonds EUR vs benchmark EUR dans la meme devise
-- [ ] **A EXECUTER SUR PROD**: `node recalc_eur_usd_daily_rate.js` (recalcule indRef_EUR/USD pour toutes les VL)
-- [ ] **A VERIFIER**: graphique EUR/USD fonds 1131 (Maroc) + fonds Nigeria sur 1A/3A/5A
+- [x] **RECALCUL EXECUTE**: `node recalc_eur_usd_daily_rate.js` — 1188 fonds, 694157 VL, 0 erreurs
+- [x] **VERIFIE EN PRODUCTION**: fonds 1131 EUR indRef passe de 793643 (corrompu) a 202.7 (correct)
+  - EUR: fonds=233.0, indRef=202.7 (fonds surperforme, effet devise MAD/EUR capture)
+  - USD: fonds=220.6, indRef=191.8 (idem en USD)
+  - Local: fonds=222.7, indRef=193.8 (coherent, ecarts expliques par evolution taux de change)
 - [ ] Label "Series 2" a corriger (libelle_indice null pour EUR/USD — a investiguer)
 
 #### 2J. Crons — corrections ordonnancement et completude
