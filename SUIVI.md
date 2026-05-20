@@ -472,12 +472,18 @@
 #### 2I. Graphique EUR/USD — spike base 100 (fix valLiqdev)
 - [x] Code v1: filtrer VL avec value_EUR/USD=0 dans valLiqdev — DEPLOYE (insuffisant, spike persistait)
 - [x] Code v2: calcul base 100 cote API — `(val / firstValidValue) * 100` — DEPLOYE (commit `c4217e1`)
-- [x] Code v2: indRef base 100 depuis debut donnees — indRef spike a 15000 car base prise avant le debut du fonds (valeurs forex corrompues)
-- [x] Code v3: aligner base 100 indRef sur la date du premier VL valide du fonds — COMMITE (commit `9d8e839`), A DEPLOYER
-  - Avant: `firstValidInd = response.find(d => d[indRefField] > 0)` (depuis le debut des donnees)
-  - Apres: `response.slice(startIdx).find(...)` (startIdx = index du premier VL valide du fonds)
-  - Garantit que le fonds et l'indRef demarrent au meme point dans le temps
+- [x] Code v3: aligner base 100 indRef sur la date du premier VL valide du fonds — COMMITE (commit `9d8e839`)
+- [x] **DIAGNOSTIC ROOT CAUSE**: `indRef_EUR` et `indRef_USD` en base sont CORROMPUS
+  - `routes_vl.js` ligne 6517: `indRef_EUR = indRef * exchangeRatesEUR.value` (MULTIPLICATION)
+  - `recalc_eur_usd_daily_rate.js` fait `value_EUR = value / eurRate` (DIVISION, correct) mais ne touche PAS indRef
+  - Resultat: indRef local 12030->14382 (correct), indRef_EUR = 14382 * 10.85 = 156K (FAUX, devrait etre 14382/10.85 = 1325)
+  - Le spike x8000 vient du fait que le taux EUR/MAD a change entre 2010 et 2025, amplifiant l'erreur
+- [x] Code v4: utiliser `data.indRef` (local, fiable) au lieu de `data.indRef_EUR/USD` (corrompus) — COMMITE (commit `d182c1a`), A DEPLOYER
+  - Le base 100 est un ratio de performance independant de la devise: (indRef[t] / indRef[0]) * 100
+  - Meme approche que la page devise locale qui utilise `data.indRef` directement
 - [ ] **A DEPLOYER ET VERIFIER**: graphique EUR/USD pour fonds Maroc (/funds/summary-eur/1131) + Nigeria
+- [ ] **P2**: Corriger `routes_vl.js` multiplication -> division pour indRef_EUR/USD (lignes 6517-6518, 6639-6640, 6802-6803, 6972-6973)
+- [ ] **P2**: Recalculer indRef_EUR/USD pour toutes les VL existantes (ajout dans recalc_eur_usd_daily_rate.js)
 - [ ] Label "Series 2" a corriger (libelle_indice potentiellement null pour EUR/USD — a investiguer)
 
 #### 2J. Crons — corrections ordonnancement et completude
