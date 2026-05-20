@@ -1184,10 +1184,12 @@
 Production stable. Rendements peuples (1 092 534, 3 devises). API + Frontend online. 1189 fonds actifs, 21 forex, performances/classements OK.
 
 ### Dernier lot termine
-LOT 1 DIAGNOSTIC — Referentiel FundAfrica Categories/Indices. Analyse complete du fichier Excel (11 feuilles), audit DB (5 tables), audit code (backend + frontend), verification API production (5 fonds testes). Aucun code modifie.
+LOT 2 — Script seed_referentiel_fundafrica.js cree et commite. Cree 5 tables referentielles + seed depuis Excel. A deployer et executer avec --execute.
 
 ### Fichiers modifies dans le dernier lot
-- `front_end_opcvm/SUIVI.md` (diagnostic + plan de migration)
+- `api_opcv/seed_referentiel_fundafrica.js` (script de creation tables + seed)
+- `api_opcv/referentiel_fundafrica.json` (donnees extraites du fichier Excel)
+- `front_end_opcvm/SUIVI.md` (point de reprise)
 
 ### Commandes executees
 - Lecture CLAUDE.md des deux depots + SUIVI.md
@@ -1213,10 +1215,12 @@ OK — production stable, categories peuplees, indices affiches. Probleme identi
 - 107 indices sur 137 n'ont pas encore de source ou d'historique (MISSING, COMPOSITE_TO_BUILD, RATE_TO_DEFINE)
 
 ### Tache en cours
-Diagnostic referentiel termine. Pret pour LOT 2 (creation tables referentielles).
+LOT 2 commite. A deployer et executer en production.
 
 ### Prochaine action recommandee
-LOT 2: Creer les 5 tables referentielles (ref_asset_classes, ref_geo_zones, ref_categories_fundafrica, ref_indices_fundafrica, ref_index_sources) + seed depuis le fichier Excel. ADDITIF UNIQUEMENT, aucun impact sur l'existant.
+1. Deployer: `cd /var/www/.../api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop`
+2. Executer: `node seed_referentiel_fundafrica.js --execute`
+3. Puis LOT 3: ajouter colonne indice_fundafrica sur fond_investissements
 
 ### Risques connus
 - Conflit Git en production du a PRODUCTION_STATE.json — mitiger avec `git stash`
