@@ -557,6 +557,16 @@
 - [x] Ajouter index composite valorisations(fund_id, date) — inclus dans deploy_all_fixes.sh
 - [ ] Nettoyer tables inutilisees ou orphelines
 
+### TODO FUTUR — Tunisie: reimport VL avec dividendes
+**Priorite: A FAIRE (fichiers fournis par l'utilisateur, 200-220 Mo chacun)**
+- [ ] Recevoir fichiers VL Tunisie avec bonnes VL + dividendes
+- [ ] Analyser structure des fichiers (colonnes, format dates, devises)
+- [ ] Ecraser VL existantes Tunisie avec les nouvelles valeurs corrigees
+- [ ] Recalculer vl_ajuste pour Tunisie apres reimport
+- [ ] Recalculer EUR/USD pour Tunisie
+- [ ] Re-peupler rendements Tunisie
+- Note: en attente des instructions et fichiers de l'utilisateur
+
 ### Panel admin - cockpit administration
 - [ ] Gestion rattachement fonds <-> societes de gestion (admin UI)
 - [ ] Gestion rattachement fonds <-> indices, categories (admin UI)
@@ -1146,18 +1156,24 @@
 - [x] Creer `ref_index_sources` (10 sources) — FAIT
 - [x] Script: seed_referentiel_fundafrica.js (idempotent, depuis le fichier Excel) — EXECUTE EN PRODUCTION
 
-**LOT 3** — Colonne `indice_fundafrica` sur fond_investissements: **SCRIPT CREE 2026-05-20**
-- [x] Script: lot3_indice_fundafrica.js (migration + backfill) — CREE
-- [x] ALTER TABLE ADD COLUMN `indice_fundafrica` VARCHAR(200) NULL
-- [x] ALTER TABLE ADD COLUMN `indice_fundafrica_id` INT NULL
-- [x] ALTER TABLE ADD COLUMN `categorie_fundafrica_locale` VARCHAR(200) NULL
-- [x] ALTER TABLE ADD COLUMN `categorie_fundafrica_regionale` VARCHAR(200) NULL
-- [x] ALTER TABLE ADD COLUMN `categorie_fundafrica_globale` VARCHAR(200) NULL
-- [x] NE PAS toucher `indice_benchmark` (benchmark declare par le fonds)
-- [x] Backfill: mapping classification + pays -> ref_categories_fundafrica -> ref_indices_fundafrica
-- [x] Modele Sequelize fond.js mis a jour (5 nouvelles colonnes)
-- [x] Routes API apigestionfonds.js: colonnes ajoutees aux attributs
-- [ ] A DEPLOYER ET EXECUTER: `node lot3_indice_fundafrica.js --execute`
+**LOT 3** — Colonne `indice_fundafrica` sur fond_investissements: **EXECUTE 2026-05-20**
+- [x] Script: lot3_indice_fundafrica.js (migration + backfill) — CREE ET EXECUTE
+- [x] ALTER TABLE ADD COLUMN (5 colonnes) — FAIT EN PRODUCTION
+- [x] NE PAS toucher `indice_benchmark` — CONFIRME (1043 fonds non modifies)
+- [x] Backfill execute: 212/1189 fonds mappes (0 erreurs)
+- [x] Modele Sequelize fond.js + routes API mis a jour
+- [x] PM2 restart api-monolith — OK
+- RESULTAT PARTIEL: 870 fonds sans classification (NULL), 107 avec classif non-standard Nigeria
+
+**LOT 3bis** — Completer classifications manquantes + mapper classifs non-standard:
+- [ ] Remplir classification NULL pour MAROC (612 fonds) depuis categorie_libelle ou nom_fond
+- [ ] Remplir classification NULL pour TUNISIE (124 fonds)
+- [ ] Remplir classification NULL pour UEMOA (111 fonds)
+- [ ] Remplir classification NULL pour CEMAC (34 fonds)
+- [ ] Mapper classifs Nigeria non-standard: OMLT->OBLIGATIONS, OCT->MONETAIRE, DOLLAR->MONETAIRE
+- [ ] Mapper classifs Nigeria non-standard: ETF->ACTIONS, ETHIQUE->DIVERSIFIE, AUTRE->DIVERSIFIE
+- [ ] Mapper: IMMOBILIER->DIVERSIFIE, INFRASTRUCTURE->DIVERSIFIE, CHARIA->DIVERSIFIE, OPCVM->DIVERSIFIE
+- [ ] Re-executer lot3 avec --execute --force apres corrections
 
 **LOT 4** — Correction indices par categorie:
 - Fonds OBLIGATIONS: indice FundAfrica = S&P Sovereign Bond du pays (pas MASI/NSE)
@@ -1197,25 +1213,21 @@ LOT 2 — Tables referentielles creees et peuplees en production (2026-05-20):
 - Total: 320 rows, 0 erreurs. Script: seed_referentiel_fundafrica.js --execute
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/lot3_indice_fundafrica.js` (script migration + backfill) — NOUVEAU
-- `api_opcv/src/models/fond.js` (5 nouvelles colonnes Sequelize)
-- `api_opcv/src/routes/apigestionfonds.js` (colonnes ajoutees aux attributs API)
-- `front_end_opcvm/SUIVI.md` (mise a jour LOT 3)
+- `api_opcv/lot3bis_fix_classifications.js` (correction classifs + re-mapping) — NOUVEAU
+- `front_end_opcvm/SUIVI.md` (mise a jour LOT 3 execute + LOT 3bis)
 
 ### Commandes executees
-- Creation lot3_indice_fundafrica.js avec mapping complet classification+pays
-- Mise a jour fond.js (model Sequelize) avec 5 nouvelles colonnes
-- Mise a jour apigestionfonds.js (2 routes findOne) avec nouveaux attributs
-- Commit + push sur claude/code-review-improvements-ikvuj
+- LOT 3 execute en production: 212/1189 fonds mappes, 0 erreurs
+- Diagnostic: 870 fonds NULL classif, 107 classifs non-standard Nigeria
+- Creation lot3bis_fix_classifications.js (3 etapes: fill NULL, normalize, re-map)
 
 ### Tests realises
-- Verification referentiel JSON (140 categories, 137 indices, 5 pays actifs)
-- Verification mapping complet pour MAROC, NIGERIA, TUNISIE, UEMOA, CEMAC × 4 classifications
-- Verification que indice_benchmark n'est jamais modifie par le script
+- LOT 3 production: 5 colonnes creees, 212 fonds mappes
+- Benchmark NON modifie (1043 fonds confirmes)
+- Identification: categorie_globale est peuplee meme quand classification est NULL
 
 ### Resultat des tests
-Script cree OK. Mapping couvre les 5 pays actifs × 4 classifications = 20 combinaisons.
-A executer en production pour confirmer le nombre de fonds mappes.
+LOT 3 partiel OK. LOT 3bis necessaire pour les 977 fonds restants.
 
 ### Erreurs restantes
 - Fonds obligations/monetaires ont l'indice actions comme benchmark FundAfrica (MASI pour oblig Maroc au lieu de S&P Morocco Sovereign Bond)
@@ -1223,14 +1235,14 @@ A executer en production pour confirmer le nombre de fonds mappes.
 - 107 indices sur 137 n'ont pas encore de source ou d'historique (MISSING, COMPOSITE_TO_BUILD, RATE_TO_DEFINE)
 
 ### Tache en cours
-LOT 3 — Script lot3_indice_fundafrica.js cree et commite. A deployer et executer avec --execute.
+LOT 3bis — Corriger classifications manquantes (870 NULL) + normaliser non-standard Nigeria (107) + re-mapper indices.
 
 ### Prochaine action recommandee
 1. Deployer API: `cd /var/www/.../api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop`
-2. Executer: `node lot3_indice_fundafrica.js --execute`
-3. Redemarrer API: `pm2 restart api-monolith`
-4. Verifier sur la fiche fonds que les nouveaux champs sont retournes par l'API
-5. Puis LOT 4: correction indices par categorie (obligations, monetaire, diversifie)
+2. Dry run: `node lot3bis_fix_classifications.js`
+3. Si OK: `node lot3bis_fix_classifications.js --execute`
+4. Pas besoin de restart PM2 (pas de changement code API, juste data)
+5. Puis LOT 4 si couverture satisfaisante
 
 ### Risques connus
 - Conflit Git en production du a PRODUCTION_STATE.json — mitiger avec `git stash`
