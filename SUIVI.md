@@ -410,15 +410,14 @@
 - [x] Recalculer VL ajustees + performances apres nettoyage — FAIT 2026-05-17 (1 228 435 VL, 611 fonds perf, 0 erreurs)
 
 #### 2B. Donnees statiques manquantes sur les fonds
-- [x] Script: `fix_static_data.js` cree (7 etapes, --dry-run) — commit `b43c293`
-- [ ] **A EXECUTER SUR PROD**: `node fix_static_data.js` (apres pull API)
-- [ ] Peupler `structure_fond` (FCP/SICAV/Mutual Fund) — step 1 du script
-- [ ] Peupler `categorie_globale` (ACTIONS/OBLIGATIONS/MONETAIRE/DIVERSIFIE) — step 2
-- [ ] Peupler `date_premiere_vl` + `montant_premier_vl` — step 3
-- [ ] Peupler `periodicite` (Quotidien/Hebdomadaire/Mensuel) — step 4
-- [ ] Peupler `datejour` (derniere VL) — step 5
-- [ ] Peupler `montant_actif_net` — step 6
-- [ ] Peupler `categorie_national` depuis classification ou pays
+- [x] Script: `fix_static_data.js` cree et execute en prod (2026-05-20)
+- [x] Peupler `structure_fond` — 7 FCPE mis a jour, 95.1% couverture (59 restants = fonds sans prefixe clair)
+- [x] Peupler `categorie_globale` — **100%** deja rempli
+- [x] Peupler `date_premiere_vl` + `montant_premier_vl` — 99.7%/99.9% deja rempli
+- [x] Peupler `periodicite` — 99.9% deja rempli
+- [x] Peupler `datejour` — 5 fonds rafraichis
+- [x] Peupler `montant_actif_net` — **919 fonds mis a jour** (77.5% couverture, 269 sans actif_net en base)
+- [ ] Peupler `categorie_national` depuis classification ou pays (pour les quelques fonds manquants)
 - [ ] Peupler `categorie_libelle` la ou vide (depuis classification ou categorie_globale)
 - [ ] Corriger `periodicite` (detecter depuis frequence reelle des VL: quotidien, hebdomadaire, mensuel)
 
@@ -471,22 +470,22 @@
 - [x] Verifier coherence graphiques pays (pie charts countries/statistique) (verifie OK)
 
 #### 2I. Graphique EUR/USD — spike base 100 (fix valLiqdev)
-- [x] Code: filtrer VL avec value_EUR/USD=0 dans valLiqdev (apigestionfonds.js ligne 616)
-- [ ] **A DEPLOYER**: pull API + pm2 restart
+- [x] Code: filtrer VL avec value_EUR/USD=0 dans valLiqdev (apigestionfonds.js ligne 616) — DEPLOYE
 - [ ] Verifier: graphique EUR/USD pour fonds Maroc (ex: /funds/summary-eur/1131) doit montrer base 100 normal
 - [ ] Verifier: graphique USD pour fonds Nigeria
 - [ ] Label "Series 2" a corriger (libelle_indice potentiellement null pour EUR/USD — a investiguer)
 
 #### 2J. Crons — corrections ordonnancement et completude
-- [x] `cron_daily_update.sh`: enrichi 5->9 etapes (ajout recalc EUR/USD rates, perf EUR/USD, classements)
-- [x] `cron_daily_eur_usd.sh`: schedule corrige 6h30->21h30
-- [ ] **A DEPLOYER ET APPLIQUER**: copier les scripts sur prod + mettre a jour crontab
-  ```bash
-  crontab -e
-  # Changer: 30 6 * * * cron_daily_eur_usd.sh → 30 21 * * * cron_daily_eur_usd.sh
-  ```
-- [ ] Verifier crontab actuel sur le serveur: `crontab -l`
+- [x] `cron_daily_update.sh`: enrichi 5->9 etapes — DEPLOYE sur serveur
+- [x] `cron_daily_eur_usd.sh`: schedule corrige 6h30->21h30 — APPLIQUE dans crontab
+- [x] Crontab verifie sur serveur: 5 crons actifs, tous corrects
 - [ ] Ajouter monitoring: alerte si un cron echoue (email ou fichier sentinel)
+- **Crons actifs sur serveur (verifie 2026-05-20)**:
+  - `0 20 * * 1-5` — cron_daily_update.sh (9 etapes: ASFIM+forex+EUR/USD rates+vl_ajuste+perf local+EUR/USD+classements)
+  - `30 21 * * *` — cron_daily_eur_usd.sh (perf EUR/USD + classements EUR/USD)
+  - `0 10 * * 1` — cron_nigeria_weekly.sh (SEC Nigeria + import + recalc)
+  - `0 * * * *` — sync_production.sh (snapshot horaire)
+  - `*/5 * * * *` — fix-brvm-nginx.py (fix Nginx BRVM)
 
 #### 2H. Limite 500 VL sur page fond (date decalee)
 - [x] Route `/api/valLiq/:id` et `/api/valLiqdev/:id/:devise` limitees a 500 VL -> augmente a 10000 (2026-05-17)
@@ -634,9 +633,10 @@
 | (TSR par pays) | 2026-05-19 | tsrhistos() filtre par pays + TSR_DEFAULTS fallback + suppression hardcode 1.42% | DEPLOYE en prod |
 | `fix_tsr_per_country.js` | 2026-05-19 | Peuple tsrhistos 2015-2026 pour Nigeria/Tunisie/UEMOA/CEMAC (548 entrees) | EXECUTE en prod |
 | (recalcul perf TSR) | 2026-05-19 | fix_populate_performances.js --force (1185 fonds, Sharpe/Sortino avec TSR reels) | EXECUTE en prod |
-| (fix graph EUR/USD) | 2026-05-20 | valLiqdev: filtrer VL value_EUR/USD=0 (spike base100) | Commite, a deployer |
-| (fix cron ordering) | 2026-05-20 | cron_daily_update.sh 9 etapes + cron_eur_usd 6h30->21h30 | Commite, a deployer |
-| `fix_static_data.js` | 2026-05-20 | Peuple structure_fond, categorie_globale, date_premiere_vl, periodicite, datejour, actif_net | Commite, a deployer et executer |
+| (fix graph EUR/USD) | 2026-05-20 | valLiqdev: filtrer VL value_EUR/USD=0 (spike base100) | DEPLOYE en prod |
+| (fix cron ordering) | 2026-05-20 | cron_daily_update.sh 9 etapes + cron_eur_usd 6h30->21h30 | DEPLOYE + crontab MAJ |
+| `fix_static_data.js` | 2026-05-20 | 7 FCPE + 919 actif_net + 5 datejour (structure/categorie/date/perio/actif) | EXECUTE en prod |
+| (Nigeria BINARY casing) | 2026-05-20 | UPDATE WHERE BINARY pays='Nigeria' → 280 tous NIGERIA | EXECUTE en prod |
 
 ### 2026-05-19 - Fix MySQL IPv6 connexion refusee (ECONNREFUSED ::1:3306)
 - **Statut**: DEPLOYE EN PRODUCTION (2026-05-19 00:53)
@@ -731,14 +731,20 @@
 - **Bug residuel**: 6 fonds ont encore pays="Nigeria" (casse mixte) au lieu de "NIGERIA" — la collation MySQL case-insensitive empechait la detection. Fix: `UPDATE ... WHERE BINARY pays = 'Nigeria'`
 
 ### 2026-05-20 - Fix graphique EUR/USD base100 spike + crons + donnees statiques
-- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Statut**: DEPLOYE ET EXECUTE EN PRODUCTION (2026-05-20)
 - **Probleme 1 (graphique)**: Pages `/funds/summary-eur/[fondId]` et `/funds/summary-usd/[fondId]` affichent un graphique avec spike vertical (Y=1,250k au lieu de base 100). Cause: VL avec `value_EUR/USD = 0` (pas de taux forex pour dates anciennes) passaient dans le graphique. Le frontend divise par cette premiere valeur ~0 pour base 100 → explosion a 1,250,000.
 - **Fix graphique**: `valLiqdev` route — `if (val === null)` → `if (!val)` (filtre aussi 0, undefined, NaN)
 - **Probleme 2 (crons)**: `cron_daily_eur_usd.sh` tournait a 6h30 (AVANT le cron principal 20h). `cron_daily_update.sh` ne faisait pas le recalcul EUR/USD daily rates apres import ASFIM.
 - **Fix crons**:
   - `cron_daily_update.sh`: enrichi de 5 a 9 etapes — ajout recalc_eur_usd_daily_rate.js (step 3), perf fonds 1201-3000 (step 7), perf EUR/USD (step 8), classements local+EUR+USD (step 9)
   - `cron_daily_eur_usd.sh`: schedule 6h30 → 21h30 (apres le cron principal)
-- **Script donnees statiques**: `fix_static_data.js` cree — 7 etapes pour peupler structure_fond, categorie_globale, date_premiere_vl, periodicite, datejour, montant_actif_net
+  - **Crontab mis a jour sur serveur**: verifie `30 21 * * *`
+- **Script donnees statiques**: `fix_static_data.js` execute en production:
+  - structure_fond: 7 FCPE mis a jour (95.1% couverture)
+  - categorie_globale: 100% deja rempli
+  - date_premiere_vl: 99.7% deja rempli
+  - montant_actif_net: **919 fonds mis a jour** (77.5% couverture)
+  - datejour: 5 fonds rafraichis
 - **Commit API**: `b43c293`
 
 ### 2026-05-17 - Fix crash toFixed sur fonds Tunisie/UEMOA (null safety)
