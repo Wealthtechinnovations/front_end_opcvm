@@ -1065,46 +1065,167 @@
 - **Aucun script modifie**
 - **Zero regression**
 
+### 2026-05-20 - DIAGNOSTIC Referentiel FundAfrica Categories / Indices (LOT 1)
+- **Statut**: DIAGNOSTIC TERMINE — AUCUN CODE MODIFIE
+- **Source**: Fichier Excel `Referentiel_FundAfrica_Categories_Indices_CLEAN_V2_FIX_ASCII.xlsx`
+- **Feuilles analysees**: 11 feuilles (CATEGORIE INDICE, TOTAL INDICE, 00-10)
+
+#### A. ETAT ACTUEL DE LA BASE DE DONNEES
+
+**Tables existantes et champs categories/indices:**
+
+| Table | Champs pertinents | Statut |
+|-------|-------------------|--------|
+| `fond_investissements` | `classification`, `categorie_globale`, `categorie_national`, `categorie_regional`, `categorie_libelle`, `indice_benchmark`, `indice` | Texte libre, 100% peuple |
+| `indice_references` | `id_indice`, `nom_indice`, `valeur`, `date`, `type_indice_id` | 5 indices: MASI, TUNINDEX, BRVM, NSE, MONIA |
+| `valorisations` | `indRef`, `indRef_EUR`, `indRef_USD`, `indice_name`, `ID_indice` | Peuple pour MAROC/TUNISIE/UEMOA/NIGERIA |
+| `pays_regulateurs` | `pays`, `regulateur`, `nomdevise`, `symboledevise` | Referentiel pays actuel |
+| `devisedechanges` | 21 paires forex | Complet |
+
+**Tables de referentiel dediees**: AUCUNE (pas de ref_asset_classes, ref_geo_zones, ref_categories, ref_indices)
+**Categories**: stockees en texte libre dans fond_investissements, normalisees en MAJUSCULES
+**Indices en production**: 5 (MASI, TUNINDEX, BRVM COMPOSITE, NSE ALL SHARE, MONIA)
+**Crons indices**: import_indices_excel.js (historique Excel) — pas de scraping automatique des indices
+
+#### B. VERIFICATION PRODUCTION (API live)
+
+| Fond | Pays | categorie_globale | categorie_national | categorie_regional | indice_benchmark | ID_indice |
+|------|------|-------------------|--------------------|--------------------|------------------|-----------|
+| 1131 (Actions Maroc) | MAROC | ACTIONS | ACTIONS MAROC | ACTIONS AFRIQUE DU NORD | MASI | MASI |
+| 569 (Diversifie Maroc) | MAROC | DIVERSIFIE | DIVERSIFIE MAROC | DIVERSIFIE AFRIQUE DU NORD | MASI | MASI |
+| 2700 (Oblig Maroc) | MAROC | OBLIGATIONS | OBLIGATIONS MAROC | OBLIGATIONS AFRIQUE DU NORD | MASI | MASI |
+| 2500 (Diversifie Tunisie) | TUNISIE | DIVERSIFIE | DIVERSIFIE TUNISIE | DIVERSIFIE AFRIQUE DU NORD | Tunindex | TUNINDEX |
+| 2800 (Diversifie Nigeria) | NIGERIA | DIVERSIFIE | DIVERSIFIE NIGERIA | DIVERSIFIE AFRIQUE DE L OUEST | NSE All Share | NSE |
+
+**Constat**: Categories correctement peuplees. Indices = indice actions du pays pour TOUS les fonds (meme obligations et monetaires). Le referentiel Excel corrige cela.
+
+#### C. CONTENU DU FICHIER EXCEL (referentiel cible)
+
+**01_REF_PAYS_ZONES**: 29 pays africains avec region, devise, zone globale, zone monetaire
+**02_REF_ASSET_CLASSES**: 4 classes (ACTIONS, OBLIGATIONS, DIVERSIFIE, MONETAIRE)
+**03_REF_CATEGORIES_LONG**: 141 categories (LOCAL + REGIONAL + GLOBAL, 4 classes x pays/regions)
+**04_REF_INDICES_FUNDAFRICA**: 137 indices avec statuts:
+  - 30 VALIDATED_OR_TO_VERIFY (avec nom d'indice)
+  - 15 MISSING_BENCHMARK (indice manquant, a ne pas peupler)
+  - 24 MISSING_OR_TO_VERIFY (a verifier)
+  - 34 COMPOSITE_TO_BUILD (indice composite a construire plus tard)
+  - 34 RATE_TO_DEFINE (taux monetaires a definir plus tard)
+**05_REF_SOURCES_INDICES**: 10 sources (S&P Global, BRVM, BVMAC, NSE Kenya, etc.)
+**06_MAPPING_CHAMPS_SITE**: 9 regles de mapping champs existants -> referentiel
+**07_CONTROLES_QUALITE**: 7 controles (CEMAC != BRVM, benchmark != indice FundAfrica, etc.)
+
+#### D. COMPARAISON EXISTANT vs REFERENTIEL
+
+| Element | Existant | Referentiel Excel | Action |
+|---------|----------|-------------------|--------|
+| Classes d'actifs | Texte libre (ACTIONS, OBLIGATIONS, DIVERSIFIE, MONETAIRE) | Table ref_asset_classes (4 lignes) | Creer table referentiel |
+| Zones geographiques | Hardcode dans scripts (PAYS_REGION_MAP) | Table ref_geo_zones (29 pays) | Creer table referentiel |
+| Categories | Texte dans fond_investissements | Table ref_categories (141 lignes) | Creer table, mapper fonds |
+| Indices FundAfrica | 5 indices (MASI, TUNINDEX, BRVM, NSE, MONIA) dans indice_references | 30 indices valides (dont S&P Sovereign Bonds, BVMAC) | ENRICHIR indice_references, NE PAS supprimer les 5 existants |
+| Sources indices | Pas de table | Table ref_index_sources (10 sources) | Creer table |
+| Benchmark declare | indice_benchmark dans fond_investissements | Separer benchmark declare vs indice FundAfrica | Ajouter colonne `indice_fundafrica` |
+| CEMAC | BRVM COMPOSITE utilise (incorrect) | BVMAC ALL SHARE INDEX | Corriger mapping CEMAC |
+| Obligations | Indice MASI/TUNINDEX/NSE (Actions!) | S&P Sovereign Bond par pays | Ajouter indices obligations |
+
+#### E. RISQUES DE REGRESSION IDENTIFIES
+
+1. **Renommer des colonnes** -> casse le frontend (categorie_libelle, indice_benchmark, etc.)
+2. **Supprimer indice_references existantes** -> perte historique MASI/TUNINDEX/BRVM/NSE/MONIA
+3. **Modifier indice_benchmark** des fonds -> le benchmark DECLARE ne doit JAMAIS etre ecrase par l'indice FundAfrica
+4. **Crons existants** (cron_daily_update.sh, cron_daily_eur_usd.sh, cron_nigeria_weekly.sh) -> ne pas casser
+5. **import_indices_excel.js** -> conserve, enrichir avec nouvelles sources
+6. **Pages fonds, graphiques, classements** -> toutes les colonnes existantes doivent rester fonctionnelles
+
+#### F. PLAN DE MIGRATION ADDITIF (par lots courts)
+
+**LOT 2** — Tables referentielles (ADDITIF, zero impact sur l'existant):
+- Creer `ref_asset_classes` (4 lignes)
+- Creer `ref_geo_zones` (29 pays + regions)
+- Creer `ref_categories_fundafrica` (141 categories)
+- Creer `ref_indices_fundafrica` (137 indices avec statuts)
+- Creer `ref_index_sources` (10 sources)
+- Script: seed_referentiel_fundafrica.js (idempotent, depuis le fichier Excel)
+
+**LOT 3** — Colonne `indice_fundafrica` sur fond_investissements:
+- ALTER TABLE ADD COLUMN `indice_fundafrica` VARCHAR(255) NULL
+- ALTER TABLE ADD COLUMN `indice_fundafrica_id` INT NULL
+- NE PAS toucher `indice_benchmark` (benchmark declare par le fonds)
+- Backfill: mapper chaque fonds vers son indice FundAfrica selon categorie + pays
+
+**LOT 4** — Correction indices par categorie:
+- Fonds OBLIGATIONS: indice FundAfrica = S&P Sovereign Bond du pays (pas MASI/NSE)
+- Fonds MONETAIRE: indice FundAfrica = RATE_TO_DEFINE (statut)
+- Fonds DIVERSIFIE: indice FundAfrica = COMPOSITE_TO_BUILD (statut)
+- Fonds ACTIONS: indice FundAfrica = indice actions national (MASI, NSE, TUNINDEX, BRVM, BVMAC)
+- CEMAC: BVMAC ALL SHARE INDEX (pas BRVM COMPOSITE)
+
+**LOT 5** — Import historiques nouveaux indices:
+- S&P Sovereign Bond indices (scraping ou import manuel)
+- BVMAC ALL SHARE INDEX
+- EAE 20 SHARE INDEX
+- GSE COMPOSITE INDEX
+- Sources depuis 05_REF_SOURCES_INDICES
+
+**LOT 6** — API et frontend:
+- Nouvelles routes API: /api/ref/categories, /api/ref/indices, /api/ref/pays
+- Modifier fiche fonds pour afficher indice FundAfrica distinct du benchmark declare
+- Pages classement: utiliser ref_categories pour grouper
+- Compatibilite ascendante: les anciennes colonnes restent fonctionnelles
+
+**LOT 7** — Controles qualite:
+- Coherence indice / categorie / devise
+- Fonds sans categorie, sans benchmark, sans indice
+- Indices sans historique
+- Taux FX manquants
+
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Production stable. Frontend deploye (Series 2 fix OK, 217/217 pages, PM2 online). API en ligne (api-monolith online, restart OK). Base de donnees fund_opcvm operationnelle (1196 fonds actifs, 21 paires forex, performances/classements peuples, 1 092 534 rendements 3 devises).
+Production stable. Rendements peuples (1 092 534, 3 devises). API + Frontend online. 1189 fonds actifs, 21 forex, performances/classements OK.
 
 ### Dernier lot termine
-Execution fix_populate_rendements.js v4 en production — 1 092 534 rendements (3 devises, vl_ajuste), 0 erreurs. PM2 restart OK.
+LOT 1 DIAGNOSTIC — Referentiel FundAfrica Categories/Indices. Analyse complete du fichier Excel (11 feuilles), audit DB (5 tables), audit code (backend + frontend), verification API production (5 fonds testes). Aucun code modifie.
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/fix_populate_rendements.js` (v3: rendements 3 devises, ensureSchema avec 6 nouvelles colonnes EUR/USD)
-- `api_opcv/src/models/rendement.js` (ajout colonnes EUR/USD dans modele Sequelize)
-- `front_end_opcvm/SUIVI.md` (mise a jour point de reprise)
+- `front_end_opcvm/SUIVI.md` (diagnostic + plan de migration)
 
 ### Commandes executees
-- Lecture CLAUDE.md des deux depots
-- Lecture SUIVI.md
-- Verification etat Git des deux depots (clean, branche claude/code-review-improvements-ikvuj)
-- Edition des 3 fichiers documentaires
+- Lecture CLAUDE.md des deux depots + SUIVI.md
+- Verification etat Git (clean, branche claude/code-review-improvements-ikvuj)
+- Lecture complete du fichier Excel (11 feuilles, 137 indices, 141 categories, 29 pays)
+- Audit modeles Sequelize (fond.js, indice.js, vl.js, pays_regulateurs.js)
+- Audit routes API (apigestionfonds.js, apigestionperformance.js, apigestionrendement.js)
+- Audit frontend (FundView.tsx, FundSubView.tsx EUR/USD, search, comparison, panels)
+- Verification API production: /api/valLiq/1131, /api/valLiq/569, /api/valLiq/2700, /api/valLiq/2500, /api/valLiq/2800
 
 ### Tests realises
-- Verification que les deux repos sont sur la bonne branche et clean
-- Verification qu'aucun fichier applicatif n'est modifie (git diff ne montre que les .md)
+- Verification que les categories existantes (categorie_globale, national, regional) sont correctement peuplees en production
+- Verification que les indices (MASI, TUNINDEX, NSE) sont affiches sur les fiches fonds
+- Verification que le frontend utilise classification, categorie_libelle, categorie_globale, categorie_national, categorie_regional, indice_benchmark, libelle_indice, ID_indice
 
 ### Resultat des tests
-OK — uniquement des fichiers documentaires modifies, zero code applicatif touche.
+OK — production stable, categories peuplees, indices affiches. Probleme identifie: les fonds OBLIGATIONS et MONETAIRE utilisent l'indice actions (MASI/NSE) au lieu d'un indice obligataire/monetaire. Le referentiel Excel corrige cela.
 
 ### Erreurs restantes
-- Aucune erreur bloquante connue sur les rendements.
+- Fonds obligations/monetaires ont l'indice actions comme benchmark FundAfrica (MASI pour oblig Maroc au lieu de S&P Morocco Sovereign Bond)
+- CEMAC utilise BRVM COMPOSITE (incorrect, devrait etre BVMAC ALL SHARE)
+- Pas de table referentielle pour categories, indices, zones geographiques (tout en texte libre)
+- 107 indices sur 137 n'ont pas encore de source ou d'historique (MISSING, COMPOSITE_TO_BUILD, RATE_TO_DEFINE)
 
 ### Tache en cours
-En attente d'instructions complementaires de l'utilisateur.
+Diagnostic referentiel termine. Pret pour LOT 2 (creation tables referentielles).
 
 ### Prochaine action recommandee
-Attendre instructions complementaires (colonnes a remplir, ajustements).
+LOT 2: Creer les 5 tables referentielles (ref_asset_classes, ref_geo_zones, ref_categories_fundafrica, ref_indices_fundafrica, ref_index_sources) + seed depuis le fichier Excel. ADDITIF UNIQUEMENT, aucun impact sur l'existant.
 
 ### Risques connus
-- Conflit Git en production du a PRODUCTION_STATE.json (cron sync_production.sh toutes les heures) — mitiger avec `git stash` avant `git pull --rebase`
-- Table rendements vide — pas de regression (la table etait deja vide, l'API /api/rendement/fonds est commentee dans le frontend)
+- Conflit Git en production du a PRODUCTION_STATE.json — mitiger avec `git stash`
+- Ne pas renommer les colonnes existantes (categorie_globale, indice_benchmark etc.) — le frontend les utilise
+- Ne pas ecraser indice_benchmark (benchmark declare) avec l'indice FundAfrica
+- Ne pas supprimer les 5 indices existants dans indice_references (MASI, TUNINDEX, BRVM, NSE, MONIA)
 
 ### A ne pas faire a la reprise
-- Ne pas re-executer fix_populate_rendements.js sans le deployer d'abord (l'ancienne version avec lastvl est encore en production)
-- Ne pas utiliser `git pull --rebase` sans `git stash` sur le serveur de production (PRODUCTION_STATE.json non commite)
-- Ne pas modifier la table rendements ni le modele Sequelize sans verifier le schema reel MySQL
+- Ne pas modifier les colonnes existantes de fond_investissements
+- Ne pas supprimer les indices existants dans indice_references
+- Ne pas ecraser indice_benchmark avec un indice FundAfrica
+- Ne pas commencer les lots 3-7 sans avoir termine et valide le lot 2
