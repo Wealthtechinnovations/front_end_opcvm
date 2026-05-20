@@ -1200,66 +1200,103 @@
 - Indices sans historique
 - Taux FX manquants
 
+### 2026-05-20 - Classement regional/Afrique: schema + ranking + type 3
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+- **Objectif**: Classements regionaux FundAfrica (cross-pays en EUR/USD) + classement Afrique (type 3)
+- **Bugs corriges**:
+  1. Bug ligne 1199: `type_classement = 1` -> `2` pour classement regional local
+  2. Regional ranking utilisait `categorie_regionale` (locale) -> maintenant `categorie_fundafrica_regionale` (referentiel)
+- **Changements schema (ADDITIFS)**: 2 colonnes ajoutees a 6 tables:
+  - `categorie_fundafrica_regionale` VARCHAR(200) — performences, performences_eurs, performences_usds, classementfonds, classementfonds_eurs, classementfonds_usds
+  - `categorie_fundafrica_globale` VARCHAR(200) — idem 6 tables
+- **Nouvelle fonction**: `calculateRankGlobaldev(category, fundId, devise)` — classement Afrique par `categorie_fundafrica_globale` dans performences_eurs/usds
+- **Routes modifiees**:
+  - `/api/classementmysql`: regional utilise `categorie_fundafrica_regionale`
+  - `/api/classementeur`: regional + type 3 Afrique (via `calculateRankGlobaldev`)
+  - `/api/classementusd`: idem
+  - `/api/classementquartilemysql/:id`: retourne `classementType3`
+  - `/api/classementquartiledev/:id/:dev`: retourne `classementType3`
+- **Scripts mis a jour**: fix_populate_performances.js, fix_populate_performances_eur_usd.js — incluent les nouvelles colonnes
+- **Migration**: `lot_classement_regional_africa.js` (ajoute colonnes + backfill depuis fond_investissements)
+- **Fichiers modifies**: 11 fichiers (6 modeles + 2 routes + 2 scripts + 1 migration)
+- **Commit API**: `40b1e28`
+- **Deploiement (a executer sur prod)**:
+  ```bash
+  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+  git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop
+  node lot_classement_regional_africa.js --execute
+  pm2 restart api-monolith
+  node fix_populate_performances.js --force
+  node fix_populate_performances_eur_usd.js --devise EUR --force
+  node fix_populate_performances_eur_usd.js --devise USD --force
+  curl http://localhost:3005/api/classementmysql
+  curl http://localhost:3005/api/classementeur
+  curl http://localhost:3005/api/classementusd
+  ```
+- **Nettoyage /news (en attente execution)**:
+  ```bash
+  node fix_cleanup_news.js --execute
+  ```
+
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Production stable. Rendements peuples (1 092 534, 3 devises). Indice FundAfrica mappe sur 1178/1189 fonds (99.1%). Classifications normalisees. API + Frontend online. 1189 fonds actifs, 21 forex, performances/classements OK.
+Production stable. LOT 3bis termine (1178/1189 fonds mappes). Classement regional/Afrique code et pousse (commit `40b1e28`), PAS ENCORE DEPLOYE.
 
 ### Dernier lot termine
-LOT 3bis — Classifications + indices FundAfrica (2026-05-20):
-- 859 classifications NULL remplies depuis categorie_globale
-- 111 classifications non-standard normalisees (Nigeria+Maroc+UEMOA)
-- 1178/1189 fonds mappes vers indice FundAfrica (99.1%), 0 erreurs
-- Benchmark non modifie (1043 fonds confirmes)
+Classement regional/Afrique — schema + ranking + type 3 (2026-05-20):
+- 2 colonnes ajoutees a 6 tables (modeles Sequelize)
+- Bug type_classement=1->2 corrige (regional local)
+- calculateRankGlobaldev() cree (type 3 Afrique)
+- Routes classement EUR/USD: type 2 + type 3
+- Quartile routes: classementType3 retourne
+- processFundDevise/upsertPerformance: categories propagees
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/lot3_indice_fundafrica.js` — migration 5 colonnes + backfill initial (212 fonds)
-- `api_opcv/lot3bis_fix_classifications.js` — correction classifs + re-mapping (966 fonds supp.)
-- `api_opcv/src/models/fond.js` — 5 nouvelles colonnes Sequelize
-- `api_opcv/src/routes/apigestionfonds.js` — colonnes ajoutees aux attributs API
-- `front_end_opcvm/SUIVI.md` — mise a jour LOT 3 + 3bis
+- `api_opcv/lot_classement_regional_africa.js` — migration script (NEW)
+- `api_opcv/src/models/performence.js` — +2 colonnes fundafrica
+- `api_opcv/src/models/performence_eurs.js` — +2 colonnes fundafrica
+- `api_opcv/src/models/performence_usds.js` — +2 colonnes fundafrica
+- `api_opcv/src/models/classementfond.js` — +2 colonnes fundafrica
+- `api_opcv/src/models/classementfond_eurs.js` — +2 colonnes fundafrica
+- `api_opcv/src/models/classementfond_usds.js` — +2 colonnes fundafrica
+- `api_opcv/src/routes/apigestionsavequotidien.js` — ranking functions + routes
+- `api_opcv/src/routes/apigestionquartile.js` — classementType3
+- `api_opcv/fix_populate_performances.js` — +2 colonnes SELECT/INSERT
+- `api_opcv/fix_populate_performances_eur_usd.js` — +2 colonnes SELECT/INSERT
 
 ### Commandes executees
-- lot3_indice_fundafrica.js --execute (5 colonnes, 212 fonds mappes)
-- lot3bis_fix_classifications.js --execute (859 classifs, 111 normalises, 966 re-mappes)
-- pm2 restart api-monolith
+- Syntax check OK (11 fichiers)
+- git commit + git push origin claude/code-review-improvements-ikvuj
 
 ### Tests realises
-- Verification 1178/1189 fonds avec indice_fundafrica (99.1%)
-- Verification par pays: MAROC 633/640, NIGERIA 276/280, TUNISIE 124/124, UEMOA 111/111, CEMAC 34/34
-- Verification benchmark NON modifie (1043 fonds)
-- Verification CEMAC = BVMAC ALL SHARE INDEX (corrige vs ancien BRVM COMPOSITE)
-- Verification classifications normalisees (OBLIGATIONS 477, DIVERSIFIE 358, ACTIONS 183, MONETAIRE 160)
+- Syntax check node -c sur tous les fichiers modifies: OK
+- Verification du diff: 446 additions, 59 suppressions
 
 ### Resultat des tests
-OK — 1178/1189 fonds mappes, 0 erreurs, benchmark intact, CEMAC corrige.
+OK (code compile). Deploiement et tests fonctionnels en attente.
 
 ### Erreurs restantes
-- 11 fonds sans classification (NULL) — a investiguer manuellement
-- 107 indices sur 137 n'ont pas encore de source ou d'historique (MISSING, COMPOSITE_TO_BUILD, RATE_TO_DEFINE)
-- Indices diversifie et monetaire = N/A (COMPOSITE_TO_BUILD, RATE_TO_DEFINE) — attendus, pas d'indice disponible encore
+- 11 fonds sans classification (NULL)
+- Page /news: 5 publications test a nettoyer (fix_cleanup_news.js --execute)
+- LOT 5: indices historiques bloques (S&P payant, BVMAC inaccessible)
+- Frontend: pas encore de bloc d'affichage pour classement type 3 (Afrique)
 
 ### Tache en cours
-Diagnostic multi-sujets signales par l'utilisateur (2026-05-20):
-1. Graphique base 100 EUR/USD — code API correct (indRef_EUR/USD), diagnostic data a executer
-2. Classements regionaux/Afrique — probleme structurel confirme (pas de type 3 globale)
-3. Page /news — publications test a nettoyer (table actualites)
-4. LOT 5 indices historiques — en attente de donnees (S&P payant, BVMAC inaccessible)
-5. TODO futur: reimport VL Tunisie avec dividendes (fichiers 200-220 Mo, en attente)
+Deploiement classement regional/Afrique sur production
 
 ### Prochaine action recommandee
-1. Executer lot_diag_indref_eur_usd.js en production (diagnostic couverture + audit news)
-2. Nettoyer publications test dans actualites
-3. Planifier et implementer classements regionaux/Afrique (gros chantier)
+1. Deployer sur production (voir commandes ci-dessus)
+2. Executer fix_cleanup_news.js --execute (nettoyage /news)
+3. Verifier les classements en production: curl classementquartiledev/:fondId/EUR
+4. Frontend: ajouter affichage du classement type 3 (Afrique) sur les pages fonds EUR/USD
 
 ### Risques connus
 - Conflit Git en production du a PRODUCTION_STATE.json — mitiger avec `git stash`
-- Ne pas renommer les colonnes existantes (categorie_globale, indice_benchmark etc.) — le frontend les utilise
-- Ne pas ecraser indice_benchmark (benchmark declare) avec l'indice FundAfrica
-- Ne pas supprimer les 5 indices existants dans indice_references (MASI, TUNINDEX, BRVM, NSE, MONIA)
+- Les colonnes doivent exister AVANT le restart PM2 (migration en premier)
+- Le recalcul performances+classements prend du temps (~15-20 min pour 1185 fonds)
 
 ### A ne pas faire a la reprise
-- Ne pas modifier les colonnes existantes de fond_investissements
-- Ne pas supprimer les indices existants dans indice_references
+- Ne pas deployer l'API sans avoir execute lot_classement_regional_africa.js --execute d'abord
+- Ne pas supprimer les colonnes existantes (categorie_regionale, categorie_nationale)
 - Ne pas ecraser indice_benchmark avec un indice FundAfrica
-- Ne pas commencer les lots 3-7 sans avoir termine et valide le lot 2
