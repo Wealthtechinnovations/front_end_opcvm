@@ -470,21 +470,22 @@
 - [x] Verifier coherence graphiques pays (pie charts countries/statistique) (verifie OK)
 
 #### 2I. Graphique EUR/USD — spike base 100 (fix valLiqdev)
-- [x] Code v1: filtrer VL avec value_EUR/USD=0 dans valLiqdev — DEPLOYE (insuffisant, spike persistait)
-- [x] Code v2: calcul base 100 cote API — `(val / firstValidValue) * 100` — DEPLOYE (commit `c4217e1`)
-- [x] Code v3: aligner base 100 indRef sur la date du premier VL valide du fonds — COMMITE (commit `9d8e839`)
-- [x] **DIAGNOSTIC ROOT CAUSE**: `indRef_EUR` et `indRef_USD` en base sont CORROMPUS
-  - `routes_vl.js` ligne 6517: `indRef_EUR = indRef * exchangeRatesEUR.value` (MULTIPLICATION)
-  - `recalc_eur_usd_daily_rate.js` fait `value_EUR = value / eurRate` (DIVISION, correct) mais ne touche PAS indRef
-  - Resultat: indRef local 12030->14382 (correct), indRef_EUR = 14382 * 10.85 = 156K (FAUX, devrait etre 14382/10.85 = 1325)
-  - Le spike x8000 vient du fait que le taux EUR/MAD a change entre 2010 et 2025, amplifiant l'erreur
-- [x] Code v4: utiliser `data.indRef` (local, fiable) au lieu de `data.indRef_EUR/USD` (corrompus) — COMMITE (commit `d182c1a`), A DEPLOYER
-  - Le base 100 est un ratio de performance independant de la devise: (indRef[t] / indRef[0]) * 100
-  - Meme approche que la page devise locale qui utilise `data.indRef` directement
-- [ ] **A DEPLOYER ET VERIFIER**: graphique EUR/USD pour fonds Maroc (/funds/summary-eur/1131) + Nigeria
-- [ ] **P2**: Corriger `routes_vl.js` multiplication -> division pour indRef_EUR/USD (lignes 6517-6518, 6639-6640, 6802-6803, 6972-6973)
-- [ ] **P2**: Recalculer indRef_EUR/USD pour toutes les VL existantes (ajout dans recalc_eur_usd_daily_rate.js)
-- [ ] Label "Series 2" a corriger (libelle_indice potentiellement null pour EUR/USD — a investiguer)
+- [x] Code v1: filtrer VL avec value_EUR/USD=0 dans valLiqdev — DEPLOYE
+- [x] Code v2: calcul base 100 cote API — DEPLOYE (commit `c4217e1`)
+- [x] Code v3: aligner base 100 indRef sur la date du premier VL valide — COMMITE (commit `9d8e839`)
+- [x] Code v4: utiliser indRef local (workaround temporaire) — DEPLOYE (commit `d182c1a`)
+- [x] **DIAGNOSTIC ROOT CAUSE**: `routes_vl.js` MULTIPLIAIT par le taux de change au lieu de DIVISER
+  - `routes_vl.js` ligne 6517: `indRef_EUR = indRef * EUR/MAD` (10.7) -> resultat x10 trop grand
+  - `recalc_eur_usd_daily_rate.js`: corrigeait `value/vl_ajuste/actif_net/dividende` (division) mais PAS `indRef`
+  - Coherence verifiee: value_MAD=2207, lastValue_EUR=206.33, ratio=10.70 (correct car recalc ecrase)
+- [x] Code v5 (FIX DEFINITIF) — commit `c76075d`, A DEPLOYER + EXECUTER recalc:
+  - `routes_vl.js`: 10 occurrences `*` -> `/` (value, dividende, actif_net, indRef) x EUR/USD
+  - `recalc_eur_usd_daily_rate.js`: ajout recalcul `indRef_EUR = indRef / eurRate`, `indRef_USD = indRef / usdRate`
+  - `apigestionfonds.js`: retour a `indRef_EUR`/`indRef_USD` (seront corrects apres recalcul)
+  - **Approche financierement correcte**: comparaison fonds EUR vs benchmark EUR dans la meme devise
+- [ ] **A EXECUTER SUR PROD**: `node recalc_eur_usd_daily_rate.js` (recalcule indRef_EUR/USD pour toutes les VL)
+- [ ] **A VERIFIER**: graphique EUR/USD fonds 1131 (Maroc) + fonds Nigeria sur 1A/3A/5A
+- [ ] Label "Series 2" a corriger (libelle_indice null pour EUR/USD — a investiguer)
 
 #### 2J. Crons — corrections ordonnancement et completude
 - [x] `cron_daily_update.sh`: enrichi 5->9 etapes — DEPLOYE sur serveur
