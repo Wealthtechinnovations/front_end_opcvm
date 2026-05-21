@@ -1345,59 +1345,88 @@
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Tout le code est termine, commite et pousse sur les deux depots. Les working trees sont clean. Les builds passent. Les tests passent. Aucune action production n'a ete executee.
+DEPLOIEMENT PRODUCTION EXECUTE LE 2026-05-21 — Tous les LOTs 0-5 termines avec succes.
 
-### Dernier lot termine
-Session 2026-05-21 — Securisation avant phase production (LOT 6):
-- Verification etat Git final : les deux depots sont propres, synchronises avec origin
-- Verification SUIVI.md : lots, commits, tests, risques documentes
-- Plan de reprise production redige (voir section dediee ci-dessous)
+### Deploiement production 2026-05-21 (21:20 UTC)
 
-LOTs precedents (meme session):
-- LOT 1: Securite credentials — 37 scripts migres de hardcoded vers process.env.DB_PASSWORD — commit api `388d068`
-- LOT 2: Phase 3.4 ttyd-agent — terminal controle securise, 15 commandes — commit api `2016e67`
-- LOT 3: Phase 3.5 scheduler toggle — runtime overrides via API — commit api `e7c5407`
-- LOT 4: Phase 5.8 frontend dates — formatDateFR(DD/MM/YYYY), 21 occurrences, 3 vues — commit front `89d28dc`
-- LOT 5: Portfolio serialisation JSON fix — 10 fichiers, meme pattern que investor — commit front `ff4087e`
-- Nettoyage: package-lock.json apres suppression dead deps — commit api `a47dccb`
+**LOT 0 — Diagnostic production** : FAIT
+- PM2 daemon avait ete respawne (processes vides) → restauration urgente effectuee
+- Services remontes : api-monolith (id:0) + fundafrique-frontend (id:1)
+- MySQL connecte, ~40 tables existantes, pas de tables recalc, pas de ClickHouse
 
-### Etat Git verifie le 2026-05-21
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `a47dccb`, clean, sync origin
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `21a261a`, clean, sync origin
+**LOT 1 — Deploiement code** : FAIT
+- API : `git reset --hard origin/claude/code-review-improvements-ikvuj` → commit `ca90bd9`
+  - 20 commits de code deployes (Phases 1-5, securite credentials, workers, recalc)
+  - 14 commits de snapshot horaires non-pushes ignores (PRODUCTION_STATE.json regenere)
+- Frontend : `git pull` fast-forward → commit `1312d7d`
+  - 16 fichiers modifies (Phase 5.8 dates, portfolio fix, SUIVI.md)
+- npm install + npm run build (exit code 0) + pm2 restart
+- Cron sync_production desactive pendant deploiement, reactve apres
+- Validation : API health OK, frontend HTTP 200, trafic reel observe
 
-### Tests realises
-- TypeScript frontend: `npx tsc --noEmit` — 0 erreurs
-- Build frontend: `npm run build` — 217/217 pages, 0 erreurs
-- Jest api_opcv: 54/54 pass (ranking 22 + performance 17 + forex 15)
-- Parsing api_opcv: tous fichiers nouveaux OK (node -c)
+**LOT 2 — Tables recalc** : FAIT
+- Script `create_recalc_tables.js --execute` : 4 tables creees
+  - recalc_events, recalc_jobs, recalc_dependencies, recalc_audit
+  - 20 dependances inserees
+- Validation MySQL : 4 tables presentes, structure conforme
 
-### Resultat des tests
-OK — tout passe
+**LOT 3 — Workers** : FAIT
+- `pm2 start ecosystem.config.js --only worker-recalculation` → online (id:2)
+- `pm2 start ecosystem.config.js --only worker-data-import` → online (id:3)
+- Logs OK : "Worker recalculation demarre — poll 10000ms", "Taches disponibles: asfim-daily, forex-daily, nigeria-weekly"
+- `pm2 save` effectue
+
+**LOT 4 — Fix fonds sans classification** : FAIT
+- Fix colonne script : `categorie_regionale` → `categorie_regional`, `categorie_fundafrica_nationale` → `categorie_fundafrica_locale` — commit api `ca90bd9`
+- 11/18 fonds corriges automatiquement (MONETAIRE +3, OBLIGATIONS +3, ACTIONS +2, DIVERSIFIE +3)
+- 7 fonds restants avec categorie AUTRES/INFRASTRUCTURE (classification manuelle requise)
+- Erreur secondaire sur `ref_indices_fundafrica` (table inexistante) — non bloquante
+
+**LOT 5 — Migration crontab** : FAIT
+- 4 chemins corriges vers `scripts/cron/` et `scripts/deploy/`
+- Permissions +x ajoutees sur `cron_daily_eur_usd.sh` et `sync_production.sh`
+- Cron `fix-brvm-nginx.py` inchange (chemin systeme)
+- Sauvegarde crontab avant modification dans `/tmp/crontab_before_lot5.txt`
+
+**LOT 6 — ClickHouse** : NON FAIT (pas installe sur le serveur)
+
+### Etat production actuel (2026-05-21 21:18 UTC)
+| Process | PM2 id | Status | Memoire |
+|---------|--------|--------|---------|
+| api-monolith | 0 | online | 159.9mb |
+| fundafrique-frontend | 1 | online | 56.4mb |
+| worker-recalculation | 2 | online | 58.0mb |
+| worker-data-import | 3 | online | 56.9mb |
+
+- API Health : `{"status":"ok"}`
+- Frontend : HTTP 200
+- RAM disponible : 15Gi / 17Gi
+- Disque : 34G libre (78% utilise)
+- Trafic reel : utilisateurs actifs observes pendant le deploiement
+
+### Etat Git production
+- **api**: branche `claude/code-review-improvements-ikvuj`, commit `ca90bd9`, 2 fichiers M (chmod permissions)
+- **frontend**: branche `claude/code-review-improvements-ikvuj`, commit `1312d7d`, clean
+
+### Etat Git local
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `ca90bd9`, sync origin
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `1312d7d`, sync origin
 
 ### Erreurs restantes
-- 11 fonds sans classification (script pret `fix_11_fonds_sans_classification.js`, attente execution en prod)
-- Tables recalc_* pas encore creees (script pret `create_recalc_tables.js`, attente execution en prod)
-
-### Tache en cours
-Aucune. Tout le code faisable hors production est termine.
+- 7 fonds sans classification (AUTRES/INFRASTRUCTURE) — classification manuelle requise
+- ClickHouse non installe — routes analytics retournent 503 proprement
+- Erreur secondaire `ref_indices_fundafrica` dans script fix (table inexistante)
 
 ### Prochaine action recommandee
-Executer le PLAN DE REPRISE PRODUCTION ci-dessous, apres validation explicite.
+- Installer ClickHouse si souhaite (LOT 6) — ressources suffisantes (15Gi RAM, 34G disque)
+- Classifier manuellement les 7 fonds restants
+- Activer progressivement worker-scheduler (apres validation des crons migres)
 
-### Risques connus
-- **Divergence Git production** : `sync_production.sh` (cron horaire) peut avoir pousse des commits PRODUCTION_STATE.json sur le serveur, creant une divergence. Toujours utiliser `git pull --rebase`.
-- **Crontab chemins** : les crons production referencent les anciens chemins de scripts. Apres deploiement API, verifier et mettre a jour les chemins dans crontab si les scripts ont ete deplaces dans `scripts/`.
-- **Workers sans tables recalc** : graceful degradation (pas de crash, les services catchent "doesn't exist"). Mais les events recalc emis par l'API seront silencieusement ignores jusqu'a creation des tables.
-- **ClickHouse non installe** : les 6 routes analytics retournent 503 proprement via le middleware `requireClickHouse`. Pas de crash.
-- **ecosystem.config.js** : contient 8 microservices (Phase 6) + 3 workers. Les microservices ne doivent PAS etre demarres (Phase 6 = priorite BASSE). Utiliser `--only` pour demarrer uniquement les workers.
-
-### A ne pas faire a la reprise
+### A ne pas faire
 - Ne pas demarrer les microservices de Phase 6 (gateway, auth-service, etc.)
 - Ne pas activer worker-scheduler sans desactiver les crons correspondants dans crontab
-- Ne pas installer ClickHouse sans valider les ressources serveur (RAM, disque)
-- Ne pas forcer un deploiement sans verifier l'etat Git du serveur de production d'abord
-- Ne pas modifier la base de donnees sans backup prealable
-- Ne pas demarrer les workers avant d'avoir cree les tables recalc
+- Ne pas faire `pm2 start ecosystem.config.js` sans `--only`
+- Ne pas modifier le .env de production
 
 ---
 
