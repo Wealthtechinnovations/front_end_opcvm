@@ -1232,51 +1232,44 @@
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Production stable. Migration schema OK (12/12 colonnes). Performances repeuplees (1185 fonds x 3 devises, 0 erreurs). Classements EUR/USD OK (3 types chacun). Classement local en cours de recalcul.
+Production stable. Migration schema OK (12/12 colonnes). Performances repeuplees (1185 fonds x 3 devises, 0 erreurs). Classements EUR/USD OK (3 types chacun). Frontend classementType3 (Afrique) corrige.
 
 ### Dernier lot termine
-Fix date filter classement regional local (2026-05-21):
-- `calculateRankregionalmysql`: `WHERE date = :datedebut` remplace par subquery `MAX(date)` par fond
-- Fix MariaDB `conn.execute()` -> `conn.query()` dans lot_classement_regional_africa.js
-- Deploiement migration + performances + classements EUR/USD execute par l'utilisateur
+Frontend classementType3 Afrique (2026-05-21):
+- Ajout `classementType3` a l'interface TypeScript dans FundSubView.tsx (EUR + USD)
+- Remplacement `classementType2` -> `classementType3` dans la 3e carte classement (Afrique) des pages EUR et USD
+- Build Next.js OK, commit `2a7a095`, push OK
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/lot_classement_regional_africa.js` — conn.execute -> conn.query (commit `f09ff95`)
-- `api_opcv/src/routes/apigestionsavequotidien.js` — subquery MAX(date) regional (commit `518bc78`)
+- `front_end_opcvm/src/app/funds/summary-eur/[fondId]/FundSubView.tsx` — interface + 3e carte (commit `2a7a095`)
+- `front_end_opcvm/src/app/funds/summary-usd/[fondId]/FundSubView.tsx` — interface + 3e carte (commit `2a7a095`)
 
 ### Commandes executees
-- git push origin claude/code-review-improvements-ikvuj (2 commits)
-- Utilisateur: migration --execute, PM2 restart, fix_populate_performances.js, fix_populate_performances_eur_usd.js
-- curl classementmysql (declanche depuis dev via URL externe)
-- curl classementquartilemysql/1131 — verifie OK
-- curl classementquartiledev/569/EUR — verifie OK (3 types avec totaux differents)
+- git push origin claude/code-review-improvements-ikvuj (frontend)
 
 ### Tests realises
-- classementquartiledev/569/EUR: type1=16/513, type2=19/582, type3=61/727 — OK (3 niveaux differents)
-- classementquartiledev/569/USD: type1=193/233, type2=262/302, type3=402/447 — OK
-- classementquartilemysql/1131: type1=107/120, type2=107/120 (MEME total, fix pas encore deploye)
-- valLiq/569: code 200 — OK
-- searchFunds?q=maroc: code 200 — OK
+- npm run build: OK (0 erreurs TypeScript)
+- classementType3 references: 55 par fichier (EUR + USD)
+- classementType2 ne reste PAS dans la section Afrique (verified par grep)
 
 ### Resultat des tests
-PARTIEL — EUR/USD classements OK, local classement type 2 pas encore recalcule avec le fix date filter (commit `518bc78` pas deploye).
+OK — Build propre, references correctes.
 
 ### Erreurs restantes
-- Classement local type 2: meme total que type 1 (fix `518bc78` a deployer + recalculer)
+- Classement local type 2: meme total que type 1 (fix `518bc78` a deployer sur prod + recalculer)
 - 11 fonds sans classification (NULL)
-- Page /news: 5 publications test a nettoyer (fix_cleanup_news.js --execute)
+- Page /news: publications test a nettoyer (fix_cleanup_news.js --execute)
 - LOT 5: indices historiques bloques (S&P payant, BVMAC inaccessible)
-- Frontend: pas encore de bloc d'affichage pour classement type 3 (Afrique)
 
 ### Tache en cours
-Deploiement fix date filter classement regional local sur production
+Deploiement frontend classementType3 sur production
 
 ### Prochaine action recommandee
-1. Deployer fix sur production: `git stash && git pull --rebase && git stash pop && pm2 restart api-monolith`
+1. Deployer API fix sur production: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith`
 2. Recalculer classement local: `curl -s http://localhost:3005/api/classementmysql`
-3. Verifier: `curl -s http://localhost:3005/api/classementquartilemysql/1131` (type 2 doit avoir un total > type 1)
-4. Executer fix_cleanup_news.js --execute (nettoyage /news)
-5. Frontend: ajouter affichage du classement type 3 (Afrique) sur les pages fonds EUR/USD
+3. Deployer frontend sur production: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend`
+4. Verifier: ouvrir page fonds EUR, la 3e carte Afrique doit afficher les bons rangs (ex: fond 569 type3=61/727)
+5. Executer fix_cleanup_news.js --execute (nettoyage /news)
 
 ### Risques connus
 - Conflit Git en production du a PRODUCTION_STATE.json (sync_production.sh cron horaire) — mitiger avec `git stash`
