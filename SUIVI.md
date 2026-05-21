@@ -1232,48 +1232,50 @@
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Production stable. Migration schema OK (12/12 colonnes). Performances repeuplees (1185 fonds x 3 devises, 0 erreurs). Classements EUR/USD OK (3 types chacun). Frontend classementType3 (Afrique) corrige.
+Production: classements EUR/USD OK (3 types). Classement local OK type 1+2 (type 3 pas encore calcule). Frontend EUR/USD deploye avec classementType3.
 
 ### Dernier lot termine
-Frontend classementType3 Afrique (2026-05-21):
-- Ajout `classementType3` a l'interface TypeScript dans FundSubView.tsx (EUR + USD)
-- Remplacement `classementType2` -> `classementType3` dans la 3e carte classement (Afrique) des pages EUR et USD
-- Build Next.js OK, commit `2a7a095`, push OK
+Classement type 3 local + frontend local (2026-05-21):
+- API: ajout `calculateRankGlobalmysql` (groupe par `categorie_fundafrica_globale`, subquery MAX(date))
+- API: ajout type 3 dans `/api/classementmysql` (create + update)
+- Frontend: fix classementType3 sur page locale `FundView.tsx` (meme fix que EUR/USD)
+- Frontend: ajout `classementType3` a interface TypeScript des 3 pages (local, EUR, USD)
+- Build OK, commits + push OK
 
 ### Fichiers modifies dans le dernier lot
-- `front_end_opcvm/src/app/funds/summary-eur/[fondId]/FundSubView.tsx` — interface + 3e carte (commit `2a7a095`)
-- `front_end_opcvm/src/app/funds/summary-usd/[fondId]/FundSubView.tsx` — interface + 3e carte (commit `2a7a095`)
+- `api_opcv/src/routes/apigestionsavequotidien.js` — calculateRankGlobalmysql + type 3 dans classementmysql (commit `ce2577f`)
+- `front_end_opcvm/src/app/funds/[fondId]/FundView.tsx` — interface + 3e carte Afrique (commit `3403d95`)
 
 ### Commandes executees
-- git push origin claude/code-review-improvements-ikvuj (frontend)
+- git push origin claude/code-review-improvements-ikvuj (API + frontend)
 
 ### Tests realises
-- npm run build: OK (0 erreurs TypeScript)
-- classementType3 references: 55 par fichier (EUR + USD)
-- classementType2 ne reste PAS dans la section Afrique (verified par grep)
+- npm run build: OK (0 erreurs)
+- classementType3 references: 55 par fichier (local, EUR, USD)
+- classementType2 OK dans section regionale, classementType3 dans section Afrique
 
 ### Resultat des tests
-OK — Build propre, references correctes.
+OK — Build propre, code correct.
 
 ### Erreurs restantes
-- Classement local type 2: meme total que type 1 (fix `518bc78` a deployer sur prod + recalculer)
 - 11 fonds sans classification (NULL)
 - Page /news: publications test a nettoyer (fix_cleanup_news.js --execute)
 - LOT 5: indices historiques bloques (S&P payant, BVMAC inaccessible)
 
 ### Tache en cours
-Deploiement frontend classementType3 sur production
+Deploiement API + frontend + nettoyage news
 
 ### Prochaine action recommandee
-1. Deployer API fix sur production: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith`
-2. Recalculer classement local: `curl -s http://localhost:3005/api/classementmysql`
-3. Deployer frontend sur production: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend`
-4. Verifier: ouvrir page fonds EUR, la 3e carte Afrique doit afficher les bons rangs (ex: fond 569 type3=61/727)
-5. Executer fix_cleanup_news.js --execute (nettoyage /news)
+1. Nettoyage news: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && node fix_cleanup_news.js` puis `node fix_cleanup_news.js --execute`
+2. Deployer API: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith`
+3. Recalculer classement local (maintenant avec type 3): `curl -s http://localhost:3005/api/classementmysql`
+4. Deployer frontend: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend`
+5. Verifier classement local type 3: `curl -s http://localhost:3005/api/classementquartilemysql/1131 | python3 -c "import sys,json; d=json.load(sys.stdin)['data']; print('Type1:', d.get('classementType1',{}).get('rank3Mois','?'), '/', d.get('classementType1',{}).get('rank3Moistotal','?')); print('Type2:', d.get('classementType2',{}).get('rank3Mois','?'), '/', d.get('classementType2',{}).get('rank3Moistotal','?')); print('Type3:', d.get('classementType3',{}).get('rank3Mois','?'), '/', d.get('classementType3',{}).get('rank3Moistotal','?'))"`
 
 ### Risques connus
 - Conflit Git en production du a PRODUCTION_STATE.json (sync_production.sh cron horaire) — mitiger avec `git stash`
 - MariaDB: toujours utiliser `conn.query()` (pas `conn.execute()`) pour SHOW COLUMNS et statements non-standard
+- Recalcul classement local prend ~3-5 min (1185 fonds x 3 types)
 
 ### A ne pas faire a la reprise
 - Ne pas supprimer les colonnes existantes (categorie_regionale, categorie_nationale)
