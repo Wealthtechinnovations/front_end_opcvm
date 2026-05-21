@@ -586,7 +586,10 @@
 - [x] Endpoint `/api/getallfondsanomalie` corrige -> c'etait une erreur de nommage dans le frontend, l'endpoint correct est `/api/getallfondsvlanomalie` (existe deja)
 
 ### Panel portfolio (`/panel/portfolio/`)
-- [ ] Memes bugs de serialisation JSON que panel investor (a corriger)
+- [x] Fix serialisation JSON (memes bugs que panel investor) — commit `ff4087e`
+  - Dashboard: toJsonArrayString + encodeURIComponent pour fundids/funds
+  - Selected-funds: safeParseToCSV double-decode
+  - 8 sous-pages reconstruction: IIFE double-decode pour selectedfund/selectedValuename
 
 ### Anomalies - ameliorations futures
 - [ ] Detecter automatiquement les ecarts VL suspects (cron job quotidien)
@@ -1349,13 +1352,17 @@ Session 2026-05-21 (continuation) — LOTs completes:
 - LOT 1: Securite credentials — 37 scripts migres de hardcoded vers process.env.DB_PASSWORD — commit `388d068`
 - LOT 2: Phase 3.4 ttyd-agent — terminal controle securise, 15 commandes — commit `2016e67`
 - LOT 3: Phase 3.5 scheduler toggle — runtime overrides via API — commit `e7c5407`
-- LOT 4: Phase 5.8 frontend dates — formatDateFR(DD/MM/YYYY), 21 occurrences, 3 vues — a commiter
+- LOT 4: Phase 5.8 frontend dates — formatDateFR(DD/MM/YYYY), 21 occurrences, 3 vues — commit `89d28dc`
+- LOT 5: Portfolio serialisation JSON fix — 10 fichiers, meme pattern que investor — commit `ff4087e`
 
-### Fichiers modifies dans ce lot (LOT 4)
+### Fichiers modifies dans les derniers lots
 - `front_end_opcvm/src/lib/utils.ts` — MODIFIE (ajout formatDateFR)
-- `front_end_opcvm/src/app/funds/[fondId]/FundView.tsx` — MODIFIE (import + 8 dates formatees + fix lastDate→lastdatepreviousmonth)
-- `front_end_opcvm/src/app/funds/summary-eur/[fondId]/FundSubView.tsx` — MODIFIE (import + 7 dates formatees)
-- `front_end_opcvm/src/app/funds/summary-usd/[fondId]/FundSubView.tsx` — MODIFIE (import + 7 dates formatees)
+- `front_end_opcvm/src/app/funds/[fondId]/FundView.tsx` — MODIFIE (8 dates formatees + fix lastDate→lastdatepreviousmonth)
+- `front_end_opcvm/src/app/funds/summary-eur/[fondId]/FundSubView.tsx` — MODIFIE (7 dates formatees)
+- `front_end_opcvm/src/app/funds/summary-usd/[fondId]/FundSubView.tsx` — MODIFIE (7 dates formatees)
+- `front_end_opcvm/src/app/panel/portfolio/dashboard/page.tsx` — MODIFIE (toJsonArrayString)
+- `front_end_opcvm/src/app/panel/portfolio/selected-funds/page.tsx` — MODIFIE (safeParseToCSV)
+- `front_end_opcvm/src/app/panel/portfolio/reconstruction/*.tsx` — 8 fichiers MODIFIES (double-decode IIFE)
 
 ### Tests realises
 - TypeScript: `npx tsc --noEmit` — 0 erreurs
@@ -1369,7 +1376,7 @@ OK
 - 11 fonds sans classification (script pret, attente execution en prod)
 
 ### Tache en cours
-Commit + push Phase 5.8 frontend
+Toutes les taches code sont terminees. Reste : deploiement production.
 
 ### Prochaine action recommandee
 1. Commiter et pousser Phase 5.8 (frontend)
