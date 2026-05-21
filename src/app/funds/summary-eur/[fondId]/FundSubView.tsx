@@ -213,6 +213,20 @@ interface Classement {
       rank5Anstotal: any;
 
 
+    };
+    classementType3: {
+      rank3Mois: any;
+      rank3Moistotal: any;
+      rank6Mois: any;
+      rank6Moistotal: any;
+      rank1erJanvier: any;
+      rank1erJanviertotal: any;
+      rank1An: any;
+      rank1Antotal: any;
+      rank3Ans: any;
+      rank3Anstotal: any;
+      rank5Ans: any;
+      rank5Anstotal: any;
     }
   }
 };
@@ -1944,16 +1958,16 @@ borderColor:'grey'
                           <tr>
                             <td>3 mois</td>
                             <td style={{ textAlign: 'center' }}>
-                              {classementlocal?.data?.classementType2?.rank3Mois === undefined || classementlocal?.data?.classementType2?.rank3Mois == 0
+                              {classementlocal?.data?.classementType3?.rank3Mois === undefined || classementlocal?.data?.classementType3?.rank3Mois == 0
                                 ? "-"
-                                : `${classementlocal?.data?.classementType2?.rank3Mois} / ${classementlocal?.data?.classementType2?.rank3Moistotal}`}
+                                : `${classementlocal?.data?.classementType3?.rank3Mois} / ${classementlocal?.data?.classementType3?.rank3Moistotal}`}
                             </td>
                             <td className="text-right">
-                              {classementlocal?.data?.classementType2?.rank3Mois === undefined || classementlocal?.data?.classementType2?.rank3Moistotal === undefined || classementlocal?.data?.classementType2?.rank3Mois == 0
+                              {classementlocal?.data?.classementType3?.rank3Mois === undefined || classementlocal?.data?.classementType3?.rank3Moistotal === undefined || classementlocal?.data?.classementType3?.rank3Mois == 0
                                 ? "-"
                                 : Math.ceil(
-                                  (classementlocal?.data?.classementType2?.rank3Mois /
-                                    classementlocal?.data?.classementType2?.rank3Moistotal) *
+                                  (classementlocal?.data?.classementType3?.rank3Mois /
+                                    classementlocal?.data?.classementType3?.rank3Moistotal) *
                                   4
                                 )}
                             </td>
@@ -1963,14 +1977,14 @@ borderColor:'grey'
                                   key={index}
                                   className={`quartile-default quartile-${index + 1 >
                                     Math.ceil(
-                                      (classementlocal?.data?.classementType2?.rank3Mois /
-                                        classementlocal?.data?.classementType2?.rank3Moistotal) *
+                                      (classementlocal?.data?.classementType3?.rank3Mois /
+                                        classementlocal?.data?.classementType3?.rank3Moistotal) *
                                       4
                                     )
                                     ? quartileColors[
                                     Math.ceil(
-                                      (classementlocal?.data?.classementType2?.rank3Mois /
-                                        classementlocal?.data?.classementType2?.rank3Moistotal) *
+                                      (classementlocal?.data?.classementType3?.rank3Mois /
+                                        classementlocal?.data?.classementType3?.rank3Moistotal) *
                                       4
                                     )
                                     ]
@@ -1983,16 +1997,16 @@ borderColor:'grey'
                           <tr>
                             <td>6 mois</td>
                             <td style={{ textAlign: 'center' }}>
-                              {classementlocal?.data?.classementType2?.rank6Mois === undefined || classementlocal?.data?.classementType2?.rank6Mois == 0
+                              {classementlocal?.data?.classementType3?.rank6Mois === undefined || classementlocal?.data?.classementType3?.rank6Mois == 0
                                 ? "-"
-                                : `${classementlocal?.data?.classementType2?.rank6Mois} / ${classementlocal?.data?.classementType2?.rank6Moistotal}`}
+                                : `${classementlocal?.data?.classementType3?.rank6Mois} / ${classementlocal?.data?.classementType3?.rank6Moistotal}`}
                             </td>
                             <td className="text-right">
-                              {classementlocal?.data?.classementType2?.rank6Mois === undefined || classementlocal?.data?.classementType2?.rank6Moistotal === undefined || classementlocal?.data?.classementType2?.rank6Mois == 0
+                              {classementlocal?.data?.classementType3?.rank6Mois === undefined || classementlocal?.data?.classementType3?.rank6Moistotal === undefined || classementlocal?.data?.classementType3?.rank6Mois == 0
                                 ? "-"
                                 : Math.ceil(
-                                  (classementlocal?.data?.classementType2?.rank6Mois /
-                                    classementlocal?.data?.classementType2?.rank6Moistotal) *
+                                  (classementlocal?.data?.classementType3?.rank6Mois /
+                                    classementlocal?.data?.classementType3?.rank6Moistotal) *
                                   4
                                 )}
                             </td>
@@ -2002,14 +2016,14 @@ borderColor:'grey'
                                   key={index}
                                   className={`quartile-default quartile-${index + 1 >
                                     Math.ceil(
-                                      (classementlocal?.data?.classementType2?.rank6Mois /
-                                        classementlocal?.data?.classementType2?.rank6Moistotal) *
+                                      (classementlocal?.data?.classementType3?.rank6Mois /
+                                        classementlocal?.data?.classementType3?.rank6Moistotal) *
                                       4
                                     )
                                     ? quartileColors[
                                     Math.ceil(
-                                      (classementlocal?.data?.classementType2?.rank6Mois /
-                                        classementlocal?.data?.classementType2?.rank6Moistotal) *
+                                      (classementlocal?.data?.classementType3?.rank6Mois /
+                                        classementlocal?.data?.classementType3?.rank6Moistotal) *
                                       4
                                     )
                                     ]
@@ -2022,16 +2036,16 @@ borderColor:'grey'
                           <tr>
                             <td>YTD</td>
                             <td style={{ textAlign: 'center' }}>
-                              {classementlocal?.data?.classementType2?.rank1erJanvier === undefined || classementlocal?.data?.classementType2?.rank1erJanvier == 0
+                              {classementlocal?.data?.classementType3?.rank1erJanvier === undefined || classementlocal?.data?.classementType3?.rank1erJanvier == 0
                                 ? "-"
-                                : `${classementlocal?.data?.classementType2?.rank1erJanvier} / ${classementlocal?.data?.classementType2?.rank1erJanviertotal}`}
+                                : `${classementlocal?.data?.classementType3?.rank1erJanvier} / ${classementlocal?.data?.classementType3?.rank1erJanviertotal}`}
                             </td>
                             <td className="text-right">
-                              {classementlocal?.data?.classementType2?.rank1erJanvier === undefined || classementlocal?.data?.classementType2?.rank1erJanviertotal === undefined || classementlocal?.data?.classementType2?.rank1erJanvier == 0
+                              {classementlocal?.data?.classementType3?.rank1erJanvier === undefined || classementlocal?.data?.classementType3?.rank1erJanviertotal === undefined || classementlocal?.data?.classementType3?.rank1erJanvier == 0
                                 ? "-"
                                 : Math.ceil(
-                                  (classementlocal?.data?.classementType2?.rank1erJanvier /
-                                    classementlocal?.data?.classementType2?.rank1erJanviertotal) *
+                                  (classementlocal?.data?.classementType3?.rank1erJanvier /
+                                    classementlocal?.data?.classementType3?.rank1erJanviertotal) *
                                   4
                                 )}
                             </td>
@@ -2041,14 +2055,14 @@ borderColor:'grey'
                                   key={index}
                                   className={`quartile-default quartile-${index + 1 >
                                     Math.ceil(
-                                      (classementlocal?.data?.classementType2?.rank1erJanvier /
-                                        classementlocal?.data?.classementType2?.rank1erJanviertotal) *
+                                      (classementlocal?.data?.classementType3?.rank1erJanvier /
+                                        classementlocal?.data?.classementType3?.rank1erJanviertotal) *
                                       4
                                     )
                                     ? quartileColors[
                                     Math.ceil(
-                                      (classementlocal?.data?.classementType2?.rank1erJanvier /
-                                        classementlocal?.data?.classementType2?.rank1erJanviertotal) *
+                                      (classementlocal?.data?.classementType3?.rank1erJanvier /
+                                        classementlocal?.data?.classementType3?.rank1erJanviertotal) *
                                       4
                                     )
                                     ]
@@ -2061,16 +2075,16 @@ borderColor:'grey'
                           <tr>
                             <td>1 an</td>
                             <td style={{ textAlign: 'center' }}>
-                              {classementlocal?.data?.classementType2?.rank1An === undefined || classementlocal?.data?.classementType2?.rank1An == 0
+                              {classementlocal?.data?.classementType3?.rank1An === undefined || classementlocal?.data?.classementType3?.rank1An == 0
                                 ? "-"
-                                : `${classementlocal?.data?.classementType2?.rank1An} / ${classementlocal?.data?.classementType2?.rank1Antotal}`}
+                                : `${classementlocal?.data?.classementType3?.rank1An} / ${classementlocal?.data?.classementType3?.rank1Antotal}`}
                             </td>
                             <td className="text-right">
-                              {classementlocal?.data?.classementType2?.rank1An === undefined || classementlocal?.data?.classementType2?.rank1Antotal === undefined || classementlocal?.data?.classementType2?.rank1An == 0
+                              {classementlocal?.data?.classementType3?.rank1An === undefined || classementlocal?.data?.classementType3?.rank1Antotal === undefined || classementlocal?.data?.classementType3?.rank1An == 0
                                 ? "-"
                                 : Math.ceil(
-                                  (classementlocal?.data?.classementType2?.rank1An /
-                                    classementlocal?.data?.classementType2?.rank1Antotal) *
+                                  (classementlocal?.data?.classementType3?.rank1An /
+                                    classementlocal?.data?.classementType3?.rank1Antotal) *
                                   4
                                 )}
                             </td>
@@ -2080,14 +2094,14 @@ borderColor:'grey'
                                   key={index}
                                   className={`quartile-default quartile-${index + 1 >
                                     Math.ceil(
-                                      (classementlocal?.data?.classementType2?.rank1An /
-                                        classementlocal?.data?.classementType2?.rank1Antotal) *
+                                      (classementlocal?.data?.classementType3?.rank1An /
+                                        classementlocal?.data?.classementType3?.rank1Antotal) *
                                       4
                                     )
                                     ? quartileColors[
                                     Math.ceil(
-                                      (classementlocal?.data?.classementType2?.rank1An /
-                                        classementlocal?.data?.classementType2?.rank1Antotal) *
+                                      (classementlocal?.data?.classementType3?.rank1An /
+                                        classementlocal?.data?.classementType3?.rank1Antotal) *
                                       4
                                     )
                                     ]
@@ -2100,16 +2114,16 @@ borderColor:'grey'
                           <tr>
                             <td>3 ans</td>
                             <td style={{ textAlign: 'center' }}>
-                              {classementlocal?.data?.classementType2?.rank3Ans === undefined || classementlocal?.data?.classementType2?.rank3Ans == 0
+                              {classementlocal?.data?.classementType3?.rank3Ans === undefined || classementlocal?.data?.classementType3?.rank3Ans == 0
                                 ? "-"
-                                : `${classementlocal?.data?.classementType2?.rank3Ans} / ${classementlocal?.data?.classementType2?.rank3Anstotal}`}
+                                : `${classementlocal?.data?.classementType3?.rank3Ans} / ${classementlocal?.data?.classementType3?.rank3Anstotal}`}
                             </td>
                             <td className="text-right">
-                              {classementlocal?.data?.classementType2?.rank3Ans === undefined || classementlocal?.data?.classementType2?.rank3Anstotal === undefined || classementlocal?.data?.classementType2?.rank3Ans == 0
+                              {classementlocal?.data?.classementType3?.rank3Ans === undefined || classementlocal?.data?.classementType3?.rank3Anstotal === undefined || classementlocal?.data?.classementType3?.rank3Ans == 0
                                 ? "-"
                                 : Math.ceil(
-                                  (classementlocal?.data?.classementType2?.rank3Ans /
-                                    classementlocal?.data?.classementType2?.rank3Anstotal) *
+                                  (classementlocal?.data?.classementType3?.rank3Ans /
+                                    classementlocal?.data?.classementType3?.rank3Anstotal) *
                                   4
                                 )}
                             </td>
@@ -2119,14 +2133,14 @@ borderColor:'grey'
                                   key={index}
                                   className={`quartile-default quartile-${index + 1 >
                                     Math.ceil(
-                                      (classementlocal?.data?.classementType2?.rank3Ans /
-                                        classementlocal?.data?.classementType2?.rank3Anstotal) *
+                                      (classementlocal?.data?.classementType3?.rank3Ans /
+                                        classementlocal?.data?.classementType3?.rank3Anstotal) *
                                       4
                                     )
                                     ? quartileColors[
                                     Math.ceil(
-                                      (classementlocal?.data?.classementType2?.rank3Ans /
-                                        classementlocal?.data?.classementType2?.rank3Anstotal) *
+                                      (classementlocal?.data?.classementType3?.rank3Ans /
+                                        classementlocal?.data?.classementType3?.rank3Anstotal) *
                                       4
                                     )
                                     ]
@@ -2139,16 +2153,16 @@ borderColor:'grey'
                           <tr>
                             <td>5 ans</td>
                             <td style={{ textAlign: 'center' }}>
-                              {classementlocal?.data?.classementType2?.rank5Ans === undefined || classementlocal?.data?.classementType2?.rank5Ans == 0
+                              {classementlocal?.data?.classementType3?.rank5Ans === undefined || classementlocal?.data?.classementType3?.rank5Ans == 0
                                 ? "-"
-                                : `${classementlocal?.data?.classementType2?.rank5Ans} / ${classementlocal?.data?.classementType2?.rank5Anstotal}`}
+                                : `${classementlocal?.data?.classementType3?.rank5Ans} / ${classementlocal?.data?.classementType3?.rank5Anstotal}`}
                             </td>
                             <td className="text-right">
-                              {classementlocal?.data?.classementType2?.rank5Ans === undefined || classementlocal?.data?.classementType2?.rank5Anstotal === undefined || classementlocal?.data?.classementType2?.rank5Ans == 0
+                              {classementlocal?.data?.classementType3?.rank5Ans === undefined || classementlocal?.data?.classementType3?.rank5Anstotal === undefined || classementlocal?.data?.classementType3?.rank5Ans == 0
                                 ? "-"
                                 : Math.ceil(
-                                  (classementlocal?.data?.classementType2?.rank5Ans /
-                                    classementlocal?.data?.classementType2?.rank5Anstotal) *
+                                  (classementlocal?.data?.classementType3?.rank5Ans /
+                                    classementlocal?.data?.classementType3?.rank5Anstotal) *
                                   4
                                 )}
                             </td>
@@ -2158,14 +2172,14 @@ borderColor:'grey'
                                   key={index}
                                   className={`quartile-default quartile-${index + 1 >
                                     Math.ceil(
-                                      (classementlocal?.data?.classementType2?.rank5Ans /
-                                        classementlocal?.data?.classementType2?.rank5Anstotal) *
+                                      (classementlocal?.data?.classementType3?.rank5Ans /
+                                        classementlocal?.data?.classementType3?.rank5Anstotal) *
                                       4
                                     )
                                     ? quartileColors[
                                     Math.ceil(
-                                      (classementlocal?.data?.classementType2?.rank5Ans /
-                                        classementlocal?.data?.classementType2?.rank5Anstotal) *
+                                      (classementlocal?.data?.classementType3?.rank5Ans /
+                                        classementlocal?.data?.classementType3?.rank5Anstotal) *
                                       4
                                     )
                                     ]
