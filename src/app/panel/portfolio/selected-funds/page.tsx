@@ -143,9 +143,23 @@ export default function Fondselected() {
   const searchParams = useSearchParams();
   const id = useUserId();
 
-  const selectedfunds = searchParams.get('selectedfund');
+  const selectedfundsRaw = searchParams.get('selectedfund');
   const selectedportfeuille = searchParams.get('portefeuille');
-  const selectedValuename = searchParams.get('selectedValuename');
+  const selectedValuenameRaw = searchParams.get('selectedValuename');
+
+  const safeParseToCSV = (raw: string | null): string => {
+    if (!raw) return '';
+    try {
+      let parsed = JSON.parse(raw);
+      if (typeof parsed === 'string') {
+        try { parsed = JSON.parse(parsed); } catch {}
+      }
+      if (Array.isArray(parsed)) return parsed.join(',');
+      return String(parsed);
+    } catch { return raw; }
+  };
+  const selectedfunds = safeParseToCSV(selectedfundsRaw);
+  const selectedValuename = safeParseToCSV(selectedValuenameRaw);
   const [optionsPays, setOptionsPays] = useState([]);
   const [selectedPays, setSelectedPays] = useState<Pays | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);

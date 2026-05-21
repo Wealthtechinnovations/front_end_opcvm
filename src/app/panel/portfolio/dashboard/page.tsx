@@ -39,15 +39,34 @@ export default function Home() {
   const [endDate, setEndDate] = useState(null);
   const [base100Data, setBase100Data] = useState([]); // Nouvel état pour les données en base 100
 
+  const toJsonArrayString = (val: any): string => {
+    if (!val) return '[]';
+    if (Array.isArray(val)) return JSON.stringify(val);
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) return val;
+        return JSON.stringify([parsed]);
+      } catch {
+        return JSON.stringify(val.split(',').filter(Boolean));
+      }
+    }
+    return JSON.stringify([val]);
+  };
+
   const handleLinkClick = (item: any) => {
-    const href = `/panel/portfolio/portefeuillereconstitution?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
+    const funds = encodeURIComponent(toJsonArrayString(item?.funds));
+    const fundids = encodeURIComponent(toJsonArrayString(item?.fundids));
+    const href = `/panel/portfolio/portefeuillereconstitution?selectedValuename=${funds}&selectedfund=${fundids}&portefeuille=${item.id}`;
 
     // Use the router.push method to navigate
     router.push(href);
   };
 
   const handleLinkClickrobot = (item: any) => {
-    const href = `/panel/portfolio/portefeuillerobot?selectedValuename=${item?.funds}&selectedfund=${item?.fundids}&portefeuille=${item.id}`;
+    const funds = encodeURIComponent(toJsonArrayString(item?.funds));
+    const fundids = encodeURIComponent(toJsonArrayString(item?.fundids));
+    const href = `/panel/portfolio/portefeuillerobot?selectedValuename=${funds}&selectedfund=${fundids}&portefeuille=${item.id}`;
 
     // Use the router.push method to navigate
     router.push(href);
@@ -305,7 +324,7 @@ export default function Home() {
                                 <Link
                                   href={{
                                     pathname: '/panel/portfolio/fondsselected',
-                                    query: { id: id, selectedValuename: item?.funds, selectedfund: item?.fundids, portefeuille: item.id },
+                                    query: { id: id, selectedValuename: toJsonArrayString(item?.funds), selectedfund: toJsonArrayString(item?.fundids), portefeuille: item.id },
                                   }}
                                 >
                                   <button className="select-funds-button" style={{

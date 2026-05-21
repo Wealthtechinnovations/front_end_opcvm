@@ -50,8 +50,16 @@ export default function Reconstitution() {
   const searchParams = useSearchParams();
   const id = useUserId();
 
-  const selectedfunds = searchParams.get('selectedfund');
+  const selectedfundsRaw = searchParams.get('selectedfund');
   const selectedportfeuille = searchParams.get('portefeuille');
+  const selectedfunds = (() => {
+    if (!selectedfundsRaw) return '';
+    try {
+      let p = JSON.parse(selectedfundsRaw);
+      if (typeof p === 'string') { try { p = JSON.parse(p); } catch {} }
+      return Array.isArray(p) ? p.join(',') : selectedfundsRaw;
+    } catch { return selectedfundsRaw; }
+  })();
   const router = useRouter();
 
   const [portefeuille, setPortefeuille] = useState<Funds | null>(null);

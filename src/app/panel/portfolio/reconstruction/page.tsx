@@ -231,9 +231,25 @@ export default function PorteFeuile() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const selectedfunds = searchParams.get('selectedfund');
+  const selectedfundsRaw = searchParams.get('selectedfund');
   const selectedportfeuille = searchParams.get('portefeuille') || '';
-  const selectedValuename = searchParams.get('selectedValuename');
+  const selectedValuenameRaw = searchParams.get('selectedValuename');
+  const selectedfunds = (() => {
+    if (!selectedfundsRaw) return '';
+    try {
+      let p = JSON.parse(selectedfundsRaw);
+      if (typeof p === 'string') { try { p = JSON.parse(p); } catch {} }
+      return Array.isArray(p) ? p.join(',') : selectedfundsRaw;
+    } catch { return selectedfundsRaw; }
+  })();
+  const selectedValuename = (() => {
+    if (!selectedValuenameRaw) return '';
+    try {
+      let p = JSON.parse(selectedValuenameRaw);
+      if (typeof p === 'string') { try { p = JSON.parse(p); } catch {} }
+      return Array.isArray(p) ? p.join(',') : selectedValuenameRaw;
+    } catch { return selectedValuenameRaw; }
+  })();
   const id = useUserId();
 
 
