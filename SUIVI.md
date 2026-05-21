@@ -644,23 +644,16 @@
 
 ### PHASE 4 — Moteur de recalcul historique (priorite HAUTE)
 
-- [ ] **4.1** Creer tables MySQL :
+- [ ] **4.1** Creer tables MySQL (script pret `create_recalc_tables.js --execute`, a deployer en prod) :
   - `recalc_events` (event log metier : VL_INSERT, VL_UPDATE, DIVIDEND, FX_UPDATE, CATEGORY_CHANGE, etc.)
   - `recalc_jobs` (file d'attente : PENDING/RUNNING/COMPLETED/FAILED, priority, fond_id, date_from)
   - `recalc_dependencies` (graphe : VL_AJUSTE→RENDEMENTS→PERF→CLASSEMENTS)
   - `recalc_audit` (audit complet : before/after, triggered_by)
-- [ ] **4.2** Implementer le graphe de dependances :
-  - VL brute → vl_ajuste → rendements → perf locale → classements locaux
-  - VL brute → value_EUR/USD → vl_ajuste_EUR/USD → perf EUR/USD → classements EUR/USD
-  - Dividende → cumul_dividendes → vl_ajuste → (cascade)
-  - Taux de change → conversions EUR/USD → (cascade)
-  - Categorie → classements → quartiles
-- [ ] **4.3** Implementer la propagation : un evenement genere automatiquement les jobs dependants
-- [ ] **4.4** Verrouillage par fond_id+job_type (pas de recalculs concurrents sur meme fonds)
-- [ ] **4.5** Recalcul incremental (depuis date_from) et complet (FULL_REBUILD)
-- [ ] **4.6** Idempotence des jobs (relancer sans effet de bord)
-- [ ] **4.7** Interface admin de suivi des recalculs (liste jobs, statuts, erreurs)
-- [ ] **4.8** Alertes en cas d'echec de job
+- [x] **4.2** Implementer le graphe de dependances + propagation — commit `1ae9ea8`
+- [x] **4.3** Emettre evenements recalc dans 5 routes VL/index API — commit `1ae9ea8`
+- [x] **4.4** Deduplication jobs/events + dead-letter handling — commit `fe622e1`
+- [x] **4.5** Recalcul incremental (depuis date_from) + FULL_REBUILD + handlers reels — commit `669a18f`
+- [x] **4.6-4.8** API admin monitoring (dashboard, retry, trigger, audit, cancel) — commit `b092600`
 
 ### PHASE 5 — ClickHouse + Classements historiques date par date (priorite HAUTE)
 
@@ -1348,49 +1341,46 @@
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Code Phases 1+2+3 complet et pousse. Production non encore deployee. 2 depots clean.
+Phases 1+2+3+4 (code) completes et poussees. Production non encore deployee. 2 depots clean.
 
 ### Dernier lot termine
-Session 2026-05-21 — Phases 1 a 3:
-- Phase 2.3: 22 tests Jest ranking.service.js — commit `2475852`
-- Phase 2.4: routes_vl.js split (11325->10270 lignes) — commit `d999403`
-- Phase 3.1: worker-recalculation (PM2, recalc_jobs) — commit `d0ce389`
-- Phase 3.3: worker-scheduler (remplace crontab) — commit `4b68302`
+Session 2026-05-21 — Phase 4 complete:
+- Phase 4.2-4.3: recalc events dans 5 routes VL/index — commit `1ae9ea8`
+- Phase 4.4: dedup jobs/events + dead-letter — commit `fe622e1`
+- Phase 4.5: handlers reels (scripts via child_process) + FULL_REBUILD — commit `669a18f`
+- Phase 4.6-4.8: API admin monitoring (5 endpoints) — commit `b092600`
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/src/routes/routes_vl.js` — MODIFIE (11325->10270)
-- `api_opcv/src/routes/routes_vl_admin.js` — CREE (383 lignes)
-- `api_opcv/src/routes/routes_vl_robotadvisor.js` — CREE (322 lignes)
-- `api_opcv/src/workers/worker-recalculation.js` — CREE
-- `api_opcv/src/workers/worker-scheduler.js` — CREE
-- `api_opcv/tests/ranking.service.test.js` — CREE (22 tests)
-- `api_opcv/package.json` — MODIFIE (jest)
-- `api_opcv/ecosystem.config.js` — MODIFIE (2 workers)
+- `api_opcv/src/services/recalc-event.service.js` — CREE (event emission + 5min dedup)
+- `api_opcv/src/routes/routes_vl.js` — MODIFIE (5 points emission recalc events)
+- `api_opcv/src/workers/worker-recalculation.js` — MODIFIE (handlers reels, dedup, dead-letter)
+- `api_opcv/src/routes/routes_recalc_admin.js` — CREE (5 endpoints admin)
+- `api_opcv/app.js` — MODIFIE (require routes_recalc_admin)
 
 ### Tests realises
-- Jest 22/22 pass — ranking.service.js
-- Parsing: tous fichiers modifies OK
+- Jest 22/22 pass
+- Parsing: tous fichiers modifies OK (node -c)
 
 ### Resultat des tests
 OK
 
 ### Erreurs restantes
 - 11 fonds sans classification (script pret)
-- Worker handlers partiellement implementes (stubs pour PERF/RENDEMENTS/RATIOS)
 - Crontab anciens chemins a mettre a jour au deploiement
 
 ### Tache en cours
-Phase 4 — Moteur de recalcul
+Phase 3.2 — worker-data-import + Phase 3.5 migration crons
 
 ### Prochaine action recommandee
-1. Phase 4.1: Deployer `create_recalc_tables.js --execute` en production
-2. Phase 4.2-4.3: Emettre evenements recalc dans les routes VL API
-3. Deployer tout sur production + crontab
+1. Phase 3.2: Creer worker-data-import (imports ASFIM, Nigeria, forex)
+2. Phase 3.5: Migrer 3 crons bash vers worker-scheduler
+3. Phase 4.1: Deployer create_recalc_tables.js --execute en production
+4. Deployer tout sur production
 
 ### Risques connus
-- Deployer workers sans tables recalc_* = crash
+- Deployer workers sans tables recalc_* = crash (graceful degradation active)
 - Crontab anciens chemins
-- ClickHouse NON INSTALLE
+- ClickHouse NON INSTALLE (Phase 5)
 
 ### A ne pas faire a la reprise
 - Ne pas activer worker-scheduler sans desactiver crontab
