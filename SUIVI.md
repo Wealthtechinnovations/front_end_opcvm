@@ -553,7 +553,6 @@
 
 - [ ] Ajouter contraintes FK reelles MySQL (societe_id -> societes.id, fund_id -> fond_investissements.id)
 - [ ] Optimiser table classementfonds: 30+ colonnes de ranking -> table pivot
-- [ ] Migrer calculs lourds vers ClickHouse (deja integre, 3 tables)
 - [x] Ajouter index composite valorisations(fund_id, date) — inclus dans deploy_all_fixes.sh
 - [ ] Nettoyer tables inutilisees ou orphelines
 
@@ -599,6 +598,99 @@
 - [ ] Verifier aucune regression sur les pages publiques
 - [ ] Tests automatises (aucun test unitaire actuellement)
 - [ ] Securite: audit des endpoints API (auth, CORS, injection)
+
+---
+
+## PLAN ARCHITECTURE HYBRIDE — Classements dates, workers, ClickHouse, moteur de recalcul
+
+> Decisions techniques validees le 2026-05-21.
+> Voir `api_opcv/ARCHITECTURE_DIAGNOSTIC.md` pour le diagnostic complet.
+> Regle absolue : zero regression, approche additive, progressive, non destructive.
+
+### PHASE 1 — Stabilisation (priorite HAUTE, prerequis a toutes les phases suivantes)
+
+- [ ] **1.1** Endpoint `/health/detailed` — etat DB, tables (counts), derniere VL, dernier classement, ClickHouse status, PM2
+- [ ] **1.2** Clarifier wealthtech-api (process PM2 : actif ? utilise ? doublon ?)
+- [ ] **1.3** Nettoyer imports morts : `require('node-cron')` dans 13 fichiers routes (jamais utilise)
+- [ ] **1.4** Nettoyer agenda.js (configure avec MongoDB au lieu de MySQL, jamais utilise)
+- [ ] **1.5** Completer 11 fonds sans classification (NULL categorie_fundafrica)
+- [ ] **1.6** Monitoring crons : script sentinel qui verifie les logs du jour, alerte si echec
+- [ ] **1.7** Securisation ttyd : auth Basic + IP whitelist via Nginx (plan ttyd-agent)
+
+### PHASE 2 — Modularisation du monolithe (priorite HAUTE)
+
+- [ ] **2.1** Creer couche service `src/services/` :
+  - [ ] `performance.service.js` — logique calcul perf extraite de apigestionsavequotidien.js
+  - [ ] `ranking.service.js` — logique classement (calculateRank*)
+  - [ ] `vl.service.js` — logique VL/recalcul extraite de routes_vl.js
+  - [ ] `forex.service.js` — logique conversion devise
+- [ ] **2.2** Reorganiser scripts : deplacer 40+ scripts dans `scripts/` (sous-dossiers import/, fix/, recalc/, diag/)
+- [ ] **2.3** Premiers tests unitaires sur les services extraits
+- [ ] **2.4** Decouper routes_vl.js (11K lignes) en modules sans changer les URL de routes
+
+### PHASE 3 — Workers PM2 (priorite HAUTE)
+
+- [ ] **3.1** Creer `worker-recalculation` : process PM2 dedie, consume taches via table recalc_jobs
+  - Recalculs batch : performances locale/EUR/USD, classements 3 types x 3 devises, vl_ajuste, rendements
+- [ ] **3.2** Creer `worker-data-import` : process PM2 pour imports ASFIM, Nigeria, forex, indices
+- [ ] **3.3** Creer `worker-scheduler` : remplace crontab Linux par node-cron centralise dans PM2
+- [ ] **3.4** Creer `ttyd-agent` securise :
+  - Script menu controle (pas de shell libre)
+  - Utilisateur Linux dedie
+  - Nginx auth Basic + IP whitelist
+  - Commandes autorisees : pm2 status/logs, cat logs, health check, diagnostic
+  - Commandes interdites : rm, DROP, TRUNCATE, DELETE, git push, vim .env
+  - Journalisation toutes les actions
+- [ ] **3.5** Migrer les 3 crons bash vers worker-scheduler
+
+### PHASE 4 — Moteur de recalcul historique (priorite HAUTE)
+
+- [ ] **4.1** Creer tables MySQL :
+  - `recalc_events` (event log metier : VL_INSERT, VL_UPDATE, DIVIDEND, FX_UPDATE, CATEGORY_CHANGE, etc.)
+  - `recalc_jobs` (file d'attente : PENDING/RUNNING/COMPLETED/FAILED, priority, fond_id, date_from)
+  - `recalc_dependencies` (graphe : VL_AJUSTE→RENDEMENTS→PERF→CLASSEMENTS)
+  - `recalc_audit` (audit complet : before/after, triggered_by)
+- [ ] **4.2** Implementer le graphe de dependances :
+  - VL brute → vl_ajuste → rendements → perf locale → classements locaux
+  - VL brute → value_EUR/USD → vl_ajuste_EUR/USD → perf EUR/USD → classements EUR/USD
+  - Dividende → cumul_dividendes → vl_ajuste → (cascade)
+  - Taux de change → conversions EUR/USD → (cascade)
+  - Categorie → classements → quartiles
+- [ ] **4.3** Implementer la propagation : un evenement genere automatiquement les jobs dependants
+- [ ] **4.4** Verrouillage par fond_id+job_type (pas de recalculs concurrents sur meme fonds)
+- [ ] **4.5** Recalcul incremental (depuis date_from) et complet (FULL_REBUILD)
+- [ ] **4.6** Idempotence des jobs (relancer sans effet de bord)
+- [ ] **4.7** Interface admin de suivi des recalculs (liste jobs, statuts, erreurs)
+- [ ] **4.8** Alertes en cas d'echec de job
+
+### PHASE 5 — ClickHouse + Classements historiques date par date (priorite HAUTE)
+
+- [ ] **5.1** Installer ClickHouse sur le serveur de production
+- [ ] **5.2** Activer la sync MySQL→ClickHouse existante (clickhouse-sync.js)
+- [ ] **5.3** Creer table `classement_historique` dans ClickHouse :
+  - Colonnes : date_classement, fond_id, type_classement, devise, categorie
+  - Rangs : rang_3m/total_3m, rang_6m/total_6m, rang_1an/total_1an, rang_3ans/total_3ans, rang_5ans/total_5ans, rang_ytd/total_ytd
+  - Quartiles : quartile_3m, quartile_6m, quartile_1an, quartile_3ans, quartile_5ans, quartile_ytd
+  - Engine : ReplacingMergeTree, ORDER BY (date_classement, fond_id, type_classement, devise)
+  - Partition : toYYYYMM(date_classement)
+- [ ] **5.4** Creer table `performance_historique` dans ClickHouse (meme logique)
+- [ ] **5.5** Implementer le calcul de classement DATE PAR DATE :
+  - Pour chaque date D : identifier les fonds avec VL a D (±2 jours ouvres)
+  - Pour chaque horizon (3M, 6M, 1A, 3A, 5A, YTD) : verifier que le fonds a aussi une VL a D-horizon
+  - Si oui : calculer la perf = (VL(D) - VL(D-horizon)) / VL(D-horizon)
+  - Si non : exclure le fonds du classement pour cet horizon
+  - Classer les fonds eligibles par categorie (nationale, regionale, globale)
+  - Stocker rang, total, quartile pour cette date D
+- [ ] **5.6** Backfill historique : calculer classements pour toutes les dates passees (10 ans)
+- [ ] **5.7** Modifier API `/api/classementquartilemysql/:id` : retourner le classement A LA DATE du dernier VL du fonds (pas le snapshot courant)
+- [ ] **5.8** Modifier frontend : afficher la date du classement ("Classement au 20/05/2026")
+- [ ] **5.9** Activer les 4 routes analytics ClickHouse existantes (performance, market overview, top rankings, risk)
+
+### PHASE 6 — Services separes (priorite BASSE, seulement si justifie)
+
+- [ ] **6.1** Evaluer si le volume, la performance ou l'equipe justifient des microservices
+- [ ] **6.2** Si justifie : auth-service, payment-service, kyc-service, market-data-service, portfolio-service
+- [ ] **6.3** Ne PAS creer de microservices tant que le monolithe n'est pas propre et modulaire (Phase 2 terminee)
 
 ## Notes techniques importantes
 - Sequelize JSON columns (fundids, funds): auto-parse a la lecture, auto-serialize a l'ecriture
