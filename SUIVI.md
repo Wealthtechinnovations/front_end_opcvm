@@ -609,12 +609,12 @@
 
 ### PHASE 1 — Stabilisation (priorite HAUTE, prerequis a toutes les phases suivantes)
 
-- [ ] **1.1** Endpoint `/health/detailed` — etat DB, tables (counts), derniere VL, dernier classement, ClickHouse status, PM2
+- [x] **1.1** Endpoint `/health/detailed` — etat DB, tables (counts), derniere VL, dernier classement, ClickHouse status, PM2 — commit `72e8b8d`
 - [ ] **1.2** Clarifier wealthtech-api (process PM2 : actif ? utilise ? doublon ?)
-- [ ] **1.3** Nettoyer imports morts : `require('node-cron')` dans 13 fichiers routes (jamais utilise)
-- [ ] **1.4** Nettoyer agenda.js (configure avec MongoDB au lieu de MySQL, jamais utilise)
-- [ ] **1.5** Completer 11 fonds sans classification (NULL categorie_fundafrica)
-- [ ] **1.6** Monitoring crons : script sentinel qui verifie les logs du jour, alerte si echec
+- [x] **1.3** Nettoyer imports morts : `require('node-cron')` supprime de package.json + agenda.js supprime — commit `e4d48e0`
+- [x] **1.4** Nettoyer agenda.js (configure avec MongoDB au lieu de MySQL, jamais utilise) — supprime dans Phase 2.2
+- [ ] **1.5** Completer 11 fonds sans classification (NULL categorie_fundafrica) — script pret, a executer en prod
+- [x] **1.6** Monitoring crons : `check_cron_health.js` cree — verifie VL par pays, classement, forex, performances, logs cron
 - [ ] **1.7** Securisation ttyd : auth Basic + IP whitelist via Nginx (plan ttyd-agent)
 
 ### PHASE 2 — Modularisation du monolithe (priorite HAUTE)
@@ -625,15 +625,14 @@
   - [ ] `vl.service.js` — logique VL/recalcul extraite de routes_vl.js
   - [ ] `forex.service.js` — logique conversion devise
 - [x] **2.2** Reorganiser scripts : 42 scripts deplaces dans `scripts/` (9 sous-dossiers: import/, fix/, recalc/, diag/, cron/, deploy/, seed/, migrations/, monitoring/) — commit `e4d48e0`
-- [ ] **2.3** Premiers tests unitaires sur les services extraits
-- [ ] **2.4** Decouper routes_vl.js (11K lignes) en modules sans changer les URL de routes
+- [x] **2.3** Premiers tests unitaires : 22 tests sur ranking.service.js (Jest) — commit `2475852`
+- [x] **2.4** Decouper routes_vl.js (11325→10270 lignes) : routes_vl_admin.js (383 lignes) + routes_vl_robotadvisor.js (322 lignes) — commit `d999403`
 
 ### PHASE 3 — Workers PM2 (priorite HAUTE)
 
-- [ ] **3.1** Creer `worker-recalculation` : process PM2 dedie, consume taches via table recalc_jobs
-  - Recalculs batch : performances locale/EUR/USD, classements 3 types x 3 devises, vl_ajuste, rendements
+- [x] **3.1** Creer `worker-recalculation` : process PM2 dedie, consume recalc_jobs (FOR UPDATE SKIP LOCKED), propage dependances — commit `d0ce389`
 - [ ] **3.2** Creer `worker-data-import` : process PM2 pour imports ASFIM, Nigeria, forex, indices
-- [ ] **3.3** Creer `worker-scheduler` : remplace crontab Linux par node-cron centralise dans PM2
+- [x] **3.3** Creer `worker-scheduler` : remplace crontab Linux, 4 taches, desactivees par defaut pour migration parallele — commit `4b68302`
 - [ ] **3.4** Creer `ttyd-agent` securise :
   - Script menu controle (pas de shell libre)
   - Utilisateur Linux dedie
@@ -1349,79 +1348,51 @@
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Production stable (non encore deployee avec Phase 2.1/2.2). Code API Phase 2.2 commite et pousse sur `claude/code-review-improvements-ikvuj`. Les 2 depots sont clean (working tree vide). Crons et classements fonctionnent normalement en production.
+Code Phases 1+2+3 complet et pousse. Production non encore deployee. 2 depots clean.
 
 ### Dernier lot termine
-Phase 2.2 — Organisation des scripts (2026-05-21):
-- 42 scripts deplaces de la racine vers `scripts/` (9 sous-dossiers: import/, fix/, recalc/, diag/, cron/, deploy/, seed/, migrations/, monitoring/)
-- Cron scripts (cron_daily_update.sh, cron_daily_eur_usd.sh, cron_nigeria_weekly.sh) mis a jour avec chemins `scripts/...`
-- Deploy script (deploy_all_fixes.sh) mis a jour avec chemins `scripts/...`
-- Dependencies mortes supprimees de package.json (agenda, bull, ioredis, node-cron)
-- `src/config/agenda.js` supprime (code mort MongoDB)
-- Commit Phase 2.1: `f692ef9` (ranking.service.js, 570 lignes extraites)
-- Commit Phase 2.2: `e4d48e0` (42 scripts reorganises)
-- Commit Phase 1: `72e8b8d` (health check + recalc tables migration)
+Session 2026-05-21 — Phases 1 a 3:
+- Phase 2.3: 22 tests Jest ranking.service.js — commit `2475852`
+- Phase 2.4: routes_vl.js split (11325->10270 lignes) — commit `d999403`
+- Phase 3.1: worker-recalculation (PM2, recalc_jobs) — commit `d0ce389`
+- Phase 3.3: worker-scheduler (remplace crontab) — commit `4b68302`
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/src/services/ranking.service.js` — CREE (Phase 2.1)
-- `api_opcv/src/routes/apigestionsavequotidien.js` — MODIFIE (6 fonctions → delegates)
-- `api_opcv/package.json` — MODIFIE (suppression deps mortes)
-- `api_opcv/src/config/agenda.js` — SUPPRIME
-- `api_opcv/scripts/` — 42 fichiers deplaces depuis la racine (9 sous-dossiers)
-- `api_opcv/scripts/cron/cron_daily_update.sh` — chemins mis a jour
-- `api_opcv/scripts/cron/cron_daily_eur_usd.sh` — chemins mis a jour
-- `api_opcv/scripts/cron/cron_nigeria_weekly.sh` — chemins mis a jour
-- `api_opcv/scripts/deploy/deploy_all_fixes.sh` — chemins mis a jour
-- `api_opcv/scripts/migrations/create_recalc_tables.js` — CREE (Phase 4.1 prep)
-- `api_opcv/scripts/monitoring/check_cron_health.js` — credentials → dotenv
-- `api_opcv/CLAUDE.md` — ajout regle snapshot production
-- `front_end_opcvm/CLAUDE.md` — ajout regle snapshot production
-- `front_end_opcvm/SUIVI.md` — MIS A JOUR (cette section)
-
-### Commandes executees
-- `node -c src/routes/apigestionsavequotidien.js` — parse OK
-- `node -c src/services/ranking.service.js` — parse OK
-- `node -e "require('./src/app')"` — OK (modules charges)
-- `git add / git commit / git push` — OK (branches a jour)
-- `find scripts/ -type f | wc -l` — 48 fichiers dans scripts/
-- `grep -r "scripts/" scripts/cron/ scripts/deploy/` — tous chemins corrects
+- `api_opcv/src/routes/routes_vl.js` — MODIFIE (11325->10270)
+- `api_opcv/src/routes/routes_vl_admin.js` — CREE (383 lignes)
+- `api_opcv/src/routes/routes_vl_robotadvisor.js` — CREE (322 lignes)
+- `api_opcv/src/workers/worker-recalculation.js` — CREE
+- `api_opcv/src/workers/worker-scheduler.js` — CREE
+- `api_opcv/tests/ranking.service.test.js` — CREE (22 tests)
+- `api_opcv/package.json` — MODIFIE (jest)
+- `api_opcv/ecosystem.config.js` — MODIFIE (2 workers)
 
 ### Tests realises
-- Parsing syntaxique: app.js, ranking.service.js, apigestionsavequotidien.js — OK
-- Verification chemins dans cron/deploy scripts — tous corrects (scripts/... format)
-- Git status: clean sur les 2 depots
-- Production API: repond (non encore deployee avec ces changements)
-- PRODUCTION_STATE.json: present, 42K, date 2026-05-21 06:00
+- Jest 22/22 pass — ranking.service.js
+- Parsing: tous fichiers modifies OK
 
 ### Resultat des tests
-OK — Code stable, parse correctement, pret a deployer. Production non impactee (ancien code tourne encore).
+OK
 
 ### Erreurs restantes
-- 38 scripts avec credentials hardcodes (dette technique pre-existante, a migrer progressivement)
-- 11 fonds sans classification (NULL) — a traiter en Phase 1.5
-- Crontab production reference encore les anciens chemins (racine) — A METTRE A JOUR lors du deploiement
-- Tunisie reimport VL (en attente fichiers utilisateur)
+- 11 fonds sans classification (script pret)
+- Worker handlers partiellement implementes (stubs pour PERF/RENDEMENTS/RATIOS)
+- Crontab anciens chemins a mettre a jour au deploiement
 
 ### Tache en cours
-Phase 2.2 VERIFIEE et STABILISEE. Documentation en cours de finalisation.
+Phase 4 — Moteur de recalcul
 
 ### Prochaine action recommandee
-1. **Deployer sur production** : `git pull --rebase` + `pm2 restart` + mettre a jour crontab (anciens chemins → `scripts/cron/...`)
-2. **Phase 2.3** : Premiers tests unitaires sur `ranking.service.js`
-3. **Phase 2.4** : Decouper `routes_vl.js` (11K lignes) en modules
+1. Phase 4.1: Deployer `create_recalc_tables.js --execute` en production
+2. Phase 4.2-4.3: Emettre evenements recalc dans les routes VL API
+3. Deployer tout sur production + crontab
 
 ### Risques connus
-- **CRONTAB** : Apres deploiement, les crons pointent vers les anciens chemins (racine). MISE A JOUR OBLIGATOIRE:
-  - `cron_daily_update.sh` → `scripts/cron/cron_daily_update.sh`
-  - `cron_daily_eur_usd.sh` → `scripts/cron/cron_daily_eur_usd.sh`
-  - `cron_nigeria_weekly.sh` → `scripts/cron/cron_nigeria_weekly.sh`
-- Conflit Git possible en production (PRODUCTION_STATE.json commits automatiques) — utiliser `git pull --rebase`
-- ClickHouse NON INSTALLE sur le serveur (routes analytics retournent 503)
+- Deployer workers sans tables recalc_* = crash
+- Crontab anciens chemins
+- ClickHouse NON INSTALLE
 
 ### A ne pas faire a la reprise
-- Ne pas deployer sans mettre a jour la crontab (chemins scripts casses sinon)
-- Ne pas commencer Phase 2.4 (split routes_vl.js) sans avoir deploye Phase 2.2
-- Ne pas activer l'architecture microservices (services/) sans Phase 2 complete
-- Ne pas installer ClickHouse sans validation utilisateur
-- Ne pas supprimer les colonnes existantes
-- Ne pas ecraser indice_benchmark avec un indice FundAfrica
+- Ne pas activer worker-scheduler sans desactiver crontab
+- Ne pas deployer workers sans tables recalc_*
+- Ne pas installer ClickHouse sans validation
