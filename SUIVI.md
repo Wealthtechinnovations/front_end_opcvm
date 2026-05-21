@@ -1200,103 +1200,89 @@
 - Indices sans historique
 - Taux FX manquants
 
-### 2026-05-20 - Classement regional/Afrique: schema + ranking + type 3
-- **Statut**: COMMITE ET POUSSE, A DEPLOYER EN PRODUCTION
+### 2026-05-21 - Classement regional/Afrique: deploiement + fix MariaDB + fix date filter
+- **Statut**: DEPLOYE EN PRODUCTION (2026-05-21)
 - **Objectif**: Classements regionaux FundAfrica (cross-pays en EUR/USD) + classement Afrique (type 3)
 - **Bugs corriges**:
   1. Bug ligne 1199: `type_classement = 1` -> `2` pour classement regional local
   2. Regional ranking utilisait `categorie_regionale` (locale) -> maintenant `categorie_fundafrica_regionale` (referentiel)
+  3. **FIX MariaDB**: `lot_classement_regional_africa.js` utilisait `conn.execute()` pour `SHOW COLUMNS ... LIKE ?` (prepared statement non supporte par MariaDB) -> change en `conn.query()` (commit `f09ff95`)
+  4. **FIX date filter regional local**: `calculateRankregionalmysql` filtrait par `WHERE date = :datedebut` — chaque pays a une date differente, donc seul un pays etait inclus. Fix: subquery `INNER JOIN (SELECT fond_id, MAX(date)) GROUP BY fond_id` pour prendre la derniere perf de chaque fonds (commit `518bc78`)
 - **Changements schema (ADDITIFS)**: 2 colonnes ajoutees a 6 tables:
   - `categorie_fundafrica_regionale` VARCHAR(200) — performences, performences_eurs, performences_usds, classementfonds, classementfonds_eurs, classementfonds_usds
   - `categorie_fundafrica_globale` VARCHAR(200) — idem 6 tables
+  - **12/12 colonnes creees en production** (verified)
+  - **Backfill**: 57134 perf locale + 1941 EUR + 1974 USD
 - **Nouvelle fonction**: `calculateRankGlobaldev(category, fundId, devise)` — classement Afrique par `categorie_fundafrica_globale` dans performences_eurs/usds
-- **Routes modifiees**:
-  - `/api/classementmysql`: regional utilise `categorie_fundafrica_regionale`
-  - `/api/classementeur`: regional + type 3 Afrique (via `calculateRankGlobaldev`)
-  - `/api/classementusd`: idem
-  - `/api/classementquartilemysql/:id`: retourne `classementType3`
-  - `/api/classementquartiledev/:id/:dev`: retourne `classementType3`
-- **Scripts mis a jour**: fix_populate_performances.js, fix_populate_performances_eur_usd.js — incluent les nouvelles colonnes
-- **Migration**: `lot_classement_regional_africa.js` (ajoute colonnes + backfill depuis fond_investissements)
-- **Fichiers modifies**: 11 fichiers (6 modeles + 2 routes + 2 scripts + 1 migration)
-- **Commit API**: `40b1e28`
-- **Deploiement (a executer sur prod)**:
+- **Resultats deploiement production**:
+  - Migration: 12/12 colonnes creees, 0 erreurs
+  - Performances: 1185 fonds locale + 1185 EUR + 1185 USD, 0 erreurs
+  - Classement EUR: type1 (national), type2 (regional), type3 (Afrique) — VERIFIE OK
+  - Classement USD: idem — VERIFIE OK
+  - Classement local: type1 et type2 avaient meme total (bug date filter) — EN COURS DE FIX
+- **Commits API**: `40b1e28`, `f09ff95`, `518bc78`
+- **Deploiement**:
   ```bash
   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
   git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop
-  node lot_classement_regional_africa.js --execute
   pm2 restart api-monolith
-  node fix_populate_performances.js --force
-  node fix_populate_performances_eur_usd.js --devise EUR --force
-  node fix_populate_performances_eur_usd.js --devise USD --force
-  curl http://localhost:3005/api/classementmysql
-  curl http://localhost:3005/api/classementeur
-  curl http://localhost:3005/api/classementusd
-  ```
-- **Nettoyage /news (en attente execution)**:
-  ```bash
-  node fix_cleanup_news.js --execute
+  curl -s http://localhost:3005/api/classementmysql
   ```
 
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Production stable. LOT 3bis termine (1178/1189 fonds mappes). Classement regional/Afrique code et pousse (commit `40b1e28`), PAS ENCORE DEPLOYE.
+Production stable. Migration schema OK (12/12 colonnes). Performances repeuplees (1185 fonds x 3 devises, 0 erreurs). Classements EUR/USD OK (3 types chacun). Classement local en cours de recalcul.
 
 ### Dernier lot termine
-Classement regional/Afrique — schema + ranking + type 3 (2026-05-20):
-- 2 colonnes ajoutees a 6 tables (modeles Sequelize)
-- Bug type_classement=1->2 corrige (regional local)
-- calculateRankGlobaldev() cree (type 3 Afrique)
-- Routes classement EUR/USD: type 2 + type 3
-- Quartile routes: classementType3 retourne
-- processFundDevise/upsertPerformance: categories propagees
+Fix date filter classement regional local (2026-05-21):
+- `calculateRankregionalmysql`: `WHERE date = :datedebut` remplace par subquery `MAX(date)` par fond
+- Fix MariaDB `conn.execute()` -> `conn.query()` dans lot_classement_regional_africa.js
+- Deploiement migration + performances + classements EUR/USD execute par l'utilisateur
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/lot_classement_regional_africa.js` — migration script (NEW)
-- `api_opcv/src/models/performence.js` — +2 colonnes fundafrica
-- `api_opcv/src/models/performence_eurs.js` — +2 colonnes fundafrica
-- `api_opcv/src/models/performence_usds.js` — +2 colonnes fundafrica
-- `api_opcv/src/models/classementfond.js` — +2 colonnes fundafrica
-- `api_opcv/src/models/classementfond_eurs.js` — +2 colonnes fundafrica
-- `api_opcv/src/models/classementfond_usds.js` — +2 colonnes fundafrica
-- `api_opcv/src/routes/apigestionsavequotidien.js` — ranking functions + routes
-- `api_opcv/src/routes/apigestionquartile.js` — classementType3
-- `api_opcv/fix_populate_performances.js` — +2 colonnes SELECT/INSERT
-- `api_opcv/fix_populate_performances_eur_usd.js` — +2 colonnes SELECT/INSERT
+- `api_opcv/lot_classement_regional_africa.js` — conn.execute -> conn.query (commit `f09ff95`)
+- `api_opcv/src/routes/apigestionsavequotidien.js` — subquery MAX(date) regional (commit `518bc78`)
 
 ### Commandes executees
-- Syntax check OK (11 fichiers)
-- git commit + git push origin claude/code-review-improvements-ikvuj
+- git push origin claude/code-review-improvements-ikvuj (2 commits)
+- Utilisateur: migration --execute, PM2 restart, fix_populate_performances.js, fix_populate_performances_eur_usd.js
+- curl classementmysql (declanche depuis dev via URL externe)
+- curl classementquartilemysql/1131 — verifie OK
+- curl classementquartiledev/569/EUR — verifie OK (3 types avec totaux differents)
 
 ### Tests realises
-- Syntax check node -c sur tous les fichiers modifies: OK
-- Verification du diff: 446 additions, 59 suppressions
+- classementquartiledev/569/EUR: type1=16/513, type2=19/582, type3=61/727 — OK (3 niveaux differents)
+- classementquartiledev/569/USD: type1=193/233, type2=262/302, type3=402/447 — OK
+- classementquartilemysql/1131: type1=107/120, type2=107/120 (MEME total, fix pas encore deploye)
+- valLiq/569: code 200 — OK
+- searchFunds?q=maroc: code 200 — OK
 
 ### Resultat des tests
-OK (code compile). Deploiement et tests fonctionnels en attente.
+PARTIEL — EUR/USD classements OK, local classement type 2 pas encore recalcule avec le fix date filter (commit `518bc78` pas deploye).
 
 ### Erreurs restantes
+- Classement local type 2: meme total que type 1 (fix `518bc78` a deployer + recalculer)
 - 11 fonds sans classification (NULL)
 - Page /news: 5 publications test a nettoyer (fix_cleanup_news.js --execute)
 - LOT 5: indices historiques bloques (S&P payant, BVMAC inaccessible)
 - Frontend: pas encore de bloc d'affichage pour classement type 3 (Afrique)
 
 ### Tache en cours
-Deploiement classement regional/Afrique sur production
+Deploiement fix date filter classement regional local sur production
 
 ### Prochaine action recommandee
-1. Deployer sur production (voir commandes ci-dessus)
-2. Executer fix_cleanup_news.js --execute (nettoyage /news)
-3. Verifier les classements en production: curl classementquartiledev/:fondId/EUR
-4. Frontend: ajouter affichage du classement type 3 (Afrique) sur les pages fonds EUR/USD
+1. Deployer fix sur production: `git stash && git pull --rebase && git stash pop && pm2 restart api-monolith`
+2. Recalculer classement local: `curl -s http://localhost:3005/api/classementmysql`
+3. Verifier: `curl -s http://localhost:3005/api/classementquartilemysql/1131` (type 2 doit avoir un total > type 1)
+4. Executer fix_cleanup_news.js --execute (nettoyage /news)
+5. Frontend: ajouter affichage du classement type 3 (Afrique) sur les pages fonds EUR/USD
 
 ### Risques connus
-- Conflit Git en production du a PRODUCTION_STATE.json — mitiger avec `git stash`
-- Les colonnes doivent exister AVANT le restart PM2 (migration en premier)
-- Le recalcul performances+classements prend du temps (~15-20 min pour 1185 fonds)
+- Conflit Git en production du a PRODUCTION_STATE.json (sync_production.sh cron horaire) — mitiger avec `git stash`
+- MariaDB: toujours utiliser `conn.query()` (pas `conn.execute()`) pour SHOW COLUMNS et statements non-standard
 
 ### A ne pas faire a la reprise
-- Ne pas deployer l'API sans avoir execute lot_classement_regional_africa.js --execute d'abord
 - Ne pas supprimer les colonnes existantes (categorie_regionale, categorie_nationale)
 - Ne pas ecraser indice_benchmark avec un indice FundAfrica
+- Ne pas utiliser `conn.execute()` dans les scripts MySQL (MariaDB incompatible pour certaines commandes)
