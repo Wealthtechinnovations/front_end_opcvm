@@ -1388,7 +1388,17 @@ DEPLOIEMENT PRODUCTION EXECUTE LE 2026-05-21 — Tous les LOTs 0-5 termines avec
 - Cron `fix-brvm-nginx.py` inchange (chemin systeme)
 - Sauvegarde crontab avant modification dans `/tmp/crontab_before_lot5.txt`
 
-**LOT 6 — ClickHouse** : NON FAIT (pas installe sur le serveur)
+**LOT 6 — ClickHouse** : FAIT
+- ClickHouse 26.4.3.37 installe (apt, Ubuntu 22.04)
+- Service systemd enabled (auto-start au boot)
+- Database `fund_analytics` creee
+- Variables CLICKHOUSE_* ajoutees au .env production
+- Migration script : 2 tables creees (`classement_historique`, `performance_historique`)
+- API restart : ClickHouse detecte, 3 tables auto-creees (`fund_performance`, `fund_rankings`, `market_analytics`)
+- Sync initiale completee : 734,582 VL + 19,362 rankings + 5 pays
+- Fix `safeFloat()` pour donnees `#N/A` dans actif_net — commit api `85f7726`
+- Endpoints analytics operationnels (retournent 200 avec donnees)
+- Sync periodique configuree : toutes les 60 minutes
 
 ### Etat production actuel (2026-05-21 21:18 UTC)
 | Process | PM2 id | Status | Memoire |
@@ -1412,14 +1422,20 @@ DEPLOIEMENT PRODUCTION EXECUTE LE 2026-05-21 — Tous les LOTs 0-5 termines avec
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `ca90bd9`, sync origin
 - **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `1312d7d`, sync origin
 
+### Etat Git production (post LOT 6)
+- **api**: branche `claude/code-review-improvements-ikvuj`, commit `85f7726`
+- **frontend**: branche `claude/code-review-improvements-ikvuj`, commit `1312d7d`, clean
+
 ### Erreurs restantes
 - 7 fonds sans classification (AUTRES/INFRASTRUCTURE) — classification manuelle requise
-- ClickHouse non installe — routes analytics retournent 503 proprement
+- `total_aum` UEMOA affiche 8.1e+124 (donnee `montant_actif_net` corrompue dans MySQL) — cosmétique
+- Tables `classement_historique` et `performance_historique` vides (backfill separe a executer)
 - Erreur secondaire `ref_indices_fundafrica` dans script fix (table inexistante)
 
 ### Prochaine action recommandee
-- Installer ClickHouse si souhaite (LOT 6) — ressources suffisantes (15Gi RAM, 34G disque)
 - Classifier manuellement les 7 fonds restants
+- Backfill classement_historique et performance_historique (scripts dans scripts/recalc/)
+- Nettoyer les valeurs `montant_actif_net` corrompues dans MySQL
 - Activer progressivement worker-scheduler (apres validation des crons migres)
 
 ### A ne pas faire
