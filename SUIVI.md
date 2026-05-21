@@ -1229,55 +1229,94 @@
   curl -s http://localhost:3005/api/classementmysql
   ```
 
+### 2026-05-21 — Diagnostic architecture hybride, workers, ClickHouse, moteur de recalcul
+- **Statut**: DIAGNOSTIC TERMINE — AUCUN CODE MODIFIE
+- **Fichier cree**: `api_opcv/ARCHITECTURE_DIAGNOSTIC.md` (diagnostic complet)
+- **Sections**: A-M (13 sections, ~500 lignes)
+- **Constats principaux**:
+  - Monolithe semi-organise avec dette technique significative (routes_vl.js = 11K lignes)
+  - Architecture microservices preparee (services/) mais NON UTILISEE en production
+  - ClickHouse integre dans le code mais NON INSTALLE sur le serveur (analytics routes retournent 503)
+  - Agenda.js configure avec MongoDB (erreur) — code mort, jamais appele
+  - Bull/ioredis declares dans package.json mais jamais importes — code mort
+  - node-cron importe dans 13 fichiers routes mais jamais utilise (cron.schedule() jamais appele)
+  - Classement actuel = snapshot unique (MAX(date) par fonds, compare des dates differentes)
+  - Aucun moteur de recalcul structure (pas d'event log, pas de jobs, pas de dependances)
+  - 40+ scripts one-shot a la racine du projet (pas de repertoire scripts/)
+  - 3 crons bash actifs via crontab Linux (seul mecanisme de scheduling)
+- **Propositions** (plan 6 phases, sans regression):
+  - Phase 1: Stabilisation (health check, monitoring crons, securisation ttyd, nettoyage imports morts)
+  - Phase 2: Modularisation (couche service, reorganiser scripts, premiers tests)
+  - Phase 3: Workers (worker-recalculation, worker-data-import, worker-scheduler, ttyd-agent)
+  - Phase 4: Moteur de recalcul (tables recalc_events/jobs/dependencies/audit, graphe dependances)
+  - Phase 5: ClickHouse + classements historiques (install CH, classement date/date, backfill)
+  - Phase 6: Services separes (seulement si justifie)
+- **Aucun code modifie, aucune table modifiee, aucune route modifiee**
+- **API production verifiee**: health OK, classement 3 types OK (Type1=107/120, Type2=113/126, Type3=170/183)
+
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Production: classements EUR/USD OK (3 types). Classement local OK type 1+2 (type 3 pas encore calcule). Frontend EUR/USD deploye avec classementType3.
+Production stable. Classements 3 types OK (local, EUR, USD). Frontend deploye avec classementType3. Diagnostic architecture termine.
 
 ### Dernier lot termine
-Classement type 3 local + frontend local (2026-05-21):
-- API: ajout `calculateRankGlobalmysql` (groupe par `categorie_fundafrica_globale`, subquery MAX(date))
-- API: ajout type 3 dans `/api/classementmysql` (create + update)
-- Frontend: fix classementType3 sur page locale `FundView.tsx` (meme fix que EUR/USD)
-- Frontend: ajout `classementType3` a interface TypeScript des 3 pages (local, EUR, USD)
-- Build OK, commits + push OK
+Diagnostic architecture hybride (2026-05-21):
+- Lecture CLAUDE.md (2 depots) + SUIVI.md
+- Verification etat Git (2 depots clean)
+- Connexion API production (health OK, classement OK)
+- Exploration arborescence complete (routes, models, services, scripts, crons, middleware, ClickHouse)
+- Creation `api_opcv/ARCHITECTURE_DIAGNOSTIC.md` (13 sections, A-M)
+- Mise a jour SUIVI.md
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/src/routes/apigestionsavequotidien.js` — calculateRankGlobalmysql + type 3 dans classementmysql (commit `ce2577f`)
-- `front_end_opcvm/src/app/funds/[fondId]/FundView.tsx` — interface + 3e carte Afrique (commit `3403d95`)
+- `api_opcv/ARCHITECTURE_DIAGNOSTIC.md` — CREE (diagnostic complet)
+- `front_end_opcvm/SUIVI.md` — MIS A JOUR (cette section)
 
 ### Commandes executees
-- git push origin claude/code-review-improvements-ikvuj (API + frontend)
+- curl production API (health, classement, valLiq)
+- Exploration fichiers (ls, wc, grep, cat)
+- Aucune commande destructrice
 
 ### Tests realises
-- npm run build: OK (0 erreurs)
-- classementType3 references: 55 par fichier (local, EUR, USD)
-- classementType2 OK dans section regionale, classementType3 dans section Afrique
+- API production health check: OK
+- Classement fonds 1131: Type1=107/120, Type2=113/126, Type3=170/183 (OK)
+- Git status: clean sur les 2 depots
 
 ### Resultat des tests
-OK — Build propre, code correct.
+OK — Production stable, diagnostic en lecture seule.
 
 ### Erreurs restantes
 - 11 fonds sans classification (NULL)
-- Page /news: publications test a nettoyer (fix_cleanup_news.js --execute)
 - LOT 5: indices historiques bloques (S&P payant, BVMAC inaccessible)
+- Tunisie reimport VL (en attente fichiers utilisateur)
 
 ### Tache en cours
-Deploiement API + frontend + nettoyage news
+Validation du diagnostic par l'utilisateur avant toute action.
 
 ### Prochaine action recommandee
-1. Nettoyage news: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && node fix_cleanup_news.js` puis `node fix_cleanup_news.js --execute`
-2. Deployer API: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith`
-3. Recalculer classement local (maintenant avec type 3): `curl -s http://localhost:3005/api/classementmysql`
-4. Deployer frontend: `cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend`
-5. Verifier classement local type 3: `curl -s http://localhost:3005/api/classementquartilemysql/1131 | python3 -c "import sys,json; d=json.load(sys.stdin)['data']; print('Type1:', d.get('classementType1',{}).get('rank3Mois','?'), '/', d.get('classementType1',{}).get('rank3Moistotal','?')); print('Type2:', d.get('classementType2',{}).get('rank3Mois','?'), '/', d.get('classementType2',{}).get('rank3Moistotal','?')); print('Type3:', d.get('classementType3',{}).get('rank3Mois','?'), '/', d.get('classementType3',{}).get('rank3Moistotal','?'))"`
+1. **Utilisateur valide** le diagnostic ARCHITECTURE_DIAGNOSTIC.md
+2. **Decisions techniques** a prendre:
+   - ClickHouse vs MySQL pour classements historiques
+   - BullMQ+Redis vs table MySQL pour file de jobs
+   - Tolerance de date pour classements (±2j ouvres ?)
+   - Granularite classement historique (quotidien, hebdomadaire, mensuel ?)
+   - Clarifier wealthtech-api sur le serveur
+3. **Phase 1 — Stabilisation** (si valide):
+   - K01: Securiser ttyd (Nginx auth + IP whitelist)
+   - K02: Clarifier wealthtech-api
+   - K03: Health check detaille
+   - K06: 11 fonds sans classification
 
 ### Risques connus
 - Conflit Git en production du a PRODUCTION_STATE.json (sync_production.sh cron horaire) — mitiger avec `git stash`
 - MariaDB: toujours utiliser `conn.query()` (pas `conn.execute()`) pour SHOW COLUMNS et statements non-standard
 - Recalcul classement local prend ~3-5 min (1185 fonds x 3 types)
+- ClickHouse NON INSTALLE sur le serveur (routes analytics retournent 503)
 
 ### A ne pas faire a la reprise
+- Ne pas activer l'architecture microservices (services/) sans diagnostic complet
+- Ne pas installer ClickHouse sans validation utilisateur
+- Ne pas creer de workers sans couche service (Phase 2 avant Phase 3)
 - Ne pas supprimer les colonnes existantes (categorie_regionale, categorie_nationale)
 - Ne pas ecraser indice_benchmark avec un indice FundAfrica
 - Ne pas utiliser `conn.execute()` dans les scripts MySQL (MariaDB incompatible pour certaines commandes)
