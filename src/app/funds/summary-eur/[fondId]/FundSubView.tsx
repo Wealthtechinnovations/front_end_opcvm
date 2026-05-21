@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 import Header from '@/components/layout/Header'
 import { urlconstant, urlsite } from "@/lib/constants";
+import { formatDateFR } from "@/lib/utils";
 import ExportModal from './exportmodal';
 import { Modal, Button } from 'react-bootstrap';
 import Calendar from 'react-calendar';
@@ -1328,7 +1329,7 @@ borderColor:'grey'
 
                           <tr className="white-hover">
                             <td colSpan={3} className="p-t-1">
-                              <strong >Données 3 ans au {post?.data?.lastdatepreviousmonth}</strong>
+                              <strong >Données 3 ans au {formatDateFR(post?.data?.lastdatepreviousmonth)}</strong>
                             </td>
                           </tr>
                           <tr>
@@ -1404,7 +1405,7 @@ borderColor:'grey'
                     <div className="card-body">
                       <div className="d-md-flex justify-content-between align-items-center">
                         <div className="row">
-                          <p><span className="text-primary">Classement  au {post?.data?.lastdatepreviousmonth}</span> | {post?.data?.categorie_national}<span className="text-fade"></span></p>
+                          <p><span className="text-primary">Classement au {formatDateFR(post?.data?.lastdatepreviousmonth)}</span> | {post?.data?.categorie_national}<span className="text-fade"></span></p>
 
                         </div>
 
@@ -1670,7 +1671,7 @@ borderColor:'grey'
                     <div className="card-body">
                       <div className="d-md-flex justify-content-between align-items-center">
                         <div className="row">
-                          <p><span className="text-primary">Classement  au {post?.data?.lastdatepreviousmonth}</span> | {post?.data?.categorie_regional} <span className="text-fade"></span></p>
+                          <p><span className="text-primary">Classement au {formatDateFR(post?.data?.lastdatepreviousmonth)}</span> | {post?.data?.categorie_regional} <span className="text-fade"></span></p>
 
                         </div>
 
@@ -1936,7 +1937,7 @@ borderColor:'grey'
                     <div className="card-body">
                       <div className="d-md-flex justify-content-between align-items-center">
                         <div className="row">
-                          <p><span className="text-primary">Classement au {post?.data?.lastdatepreviousmonth}</span> | {post?.data?.categorie_globale} Afrique<span className="text-fade"></span></p>
+                          <p><span className="text-primary">Classement au {formatDateFR(post?.data?.lastdatepreviousmonth)}</span> | {post?.data?.categorie_globale} Afrique<span className="text-fade"></span></p>
 
                         </div>
 
@@ -2205,7 +2206,7 @@ borderColor:'grey'
                     <div className="card-body">
                       <div className="d-md-flex justify-content-between align-items-center">
                         <div className="row">
-                          <p><span className="text-primary">Indicateurs de risque au {post?.data?.lastdatepreviousmonth}</span> | <span className="text-fade"></span></p>
+                          <p><span className="text-primary">Indicateurs de risque au {formatDateFR(post?.data?.lastdatepreviousmonth)}</span> | <span className="text-fade"></span></p>
 
                         </div>
 
@@ -2337,7 +2338,7 @@ borderColor:'grey'
                     <div className="card-body">
                       <div className="d-md-flex justify-content-between align-items-center">
                         <div className="row">
-                          <p><span className="text-primary">L œil de l expert au {post?.data?.lastdatepreviousmonth}</span> | <span className="text-fade"></span></p>
+                          <p><span className="text-primary">L œil de l expert au {formatDateFR(post?.data?.lastdatepreviousmonth)}</span> | <span className="text-fade"></span></p>
 
                         </div>
 
@@ -2469,7 +2470,7 @@ borderColor:'grey'
                     <div className="card-body">
                       <div className="d-md-flex justify-content-between align-items-center">
                         <div className="row">
-                          <p><span className="text-primary">Indicateurs de risque au {post?.data?.lastdatepreviousmonth}</span> | <span className="text-fade"></span></p>
+                          <p><span className="text-primary">Indicateurs de risque au {formatDateFR(post?.data?.lastdatepreviousmonth)}</span> | <span className="text-fade"></span></p>
 
                         </div>
 
@@ -2601,7 +2602,7 @@ borderColor:'grey'
                     <div className="card-body">
                       <div className="d-md-flex justify-content-between align-items-center">
                         <div className="row">
-                          <p><span className="text-primary">L œil de l expert au {post?.data?.lastdatepreviousmonth}</span> | <span className="text-fade"></span></p>
+                          <p><span className="text-primary">L œil de l expert au {formatDateFR(post?.data?.lastdatepreviousmonth)}</span> | <span className="text-fade"></span></p>
 
                         </div>
 

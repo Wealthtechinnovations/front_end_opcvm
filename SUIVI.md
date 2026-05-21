@@ -634,14 +634,16 @@
 - [x] **3.1** Creer `worker-recalculation` : process PM2 dedie, consume recalc_jobs (FOR UPDATE SKIP LOCKED), propage dependances — commit `d0ce389`
 - [x] **3.2** Creer `worker-data-import` : process PM2 pour imports ASFIM, Nigeria, forex — commit `e3bbb79`
 - [x] **3.3** Creer `worker-scheduler` : remplace crontab Linux, 4 taches, desactivees par defaut pour migration parallele — commit `4b68302`
-- [ ] **3.4** Creer `ttyd-agent` securise :
-  - Script menu controle (pas de shell libre)
-  - Utilisateur Linux dedie
-  - Nginx auth Basic + IP whitelist
-  - Commandes autorisees : pm2 status/logs, cat logs, health check, diagnostic
-  - Commandes interdites : rm, DROP, TRUNCATE, DELETE, git push, vim .env
-  - Journalisation toutes les actions
-- [ ] **3.5** Migrer les 3 crons bash vers worker-scheduler
+- [x] **3.4** Creer `ttyd-agent` securise — commit `2016e67` :
+  - Script menu controle (pas de shell libre) — 15 commandes whitelisted
+  - BLOCKED_PATTERNS: rm -rf, DROP, TRUNCATE, DELETE, git push, .env, password
+  - Journalisation toutes les actions dans /var/log/ttyd-agent.log
+  - Confirmation requise pour operations restart
+  - Reste a faire: utilisateur Linux dedie + Nginx auth Basic + IP whitelist (Phase 1.7)
+- [x] **3.5** Migrer les 3 crons bash vers worker-scheduler — commit `e7c5407` :
+  - scheduler-state.json runtime override (enable/disable sans restart)
+  - API admin: GET /api/admin/scheduler/status + POST /api/admin/scheduler/toggle
+  - Taches desactivees par defaut pour migration parallele avec crontab
 
 ### PHASE 4 — Moteur de recalcul historique (priorite HAUTE)
 
@@ -669,7 +671,12 @@
 - [x] **5.7** API routes classement historique — commit `3fef414` :
   - GET /api/analytics/classement-historique/:fondId (classement a une date)
   - GET /api/analytics/classement-historique/:fondId/evolution (evolution dans le temps)
-- [ ] **5.8** Modifier frontend : afficher la date du classement ("Classement au 20/05/2026")
+- [x] **5.8** Modifier frontend : afficher la date du classement ("Classement au 20/05/2026")
+  - Helper `formatDateFR()` dans `src/lib/utils.ts` (YYYY-MM-DD → DD/MM/YYYY)
+  - Applique dans 3 vues: FundView.tsx (local), FundSubView.tsx (EUR), FundSubView.tsx (USD)
+  - Fix bug: FundView.tsx type1 national utilisait `lastDate` au lieu de `lastdatepreviousmonth`
+  - Fix cosmetic: double espace "Classement  au" → "Classement au"
+  - 21 occurrences formatees: Classement, Indicateurs de risque, L'oeil de l'expert, Donnees 3 ans
 - [ ] **5.9** Activer les 4 routes analytics ClickHouse existantes (performance, market overview, top rankings, risk)
 
 ### PHASE 6 — Services separes (priorite BASSE, seulement si justifie)
@@ -1335,35 +1342,25 @@
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Phases 1-5 (code) completes et poussees. 54 tests Jest passent. Production non encore deployee.
+Phases 1-5 (code) completes et poussees. Phase 5.8 (frontend dates) terminee. 54 tests Jest passent. Credentials securises (37 scripts). Build frontend OK.
 
 ### Dernier lot termine
-Session 2026-05-21 — Toutes les phases code:
-- Phase 2.1: 4 services (ranking, performance, forex, recalc-event) — commits divers
-- Phase 2.3: 54 tests Jest (ranking 22 + performance 17 + forex 15)
-- Phase 3.2: worker-data-import — commit `e3bbb79`
-- Phase 4.2-4.8: moteur recalcul complet — commits `1ae9ea8` a `b092600`
-- Phase 5.3-5.7: ClickHouse classements historiques (script + API) — commit `3fef414`
+Session 2026-05-21 (continuation) — LOTs completes:
+- LOT 1: Securite credentials — 37 scripts migres de hardcoded vers process.env.DB_PASSWORD — commit `388d068`
+- LOT 2: Phase 3.4 ttyd-agent — terminal controle securise, 15 commandes — commit `2016e67`
+- LOT 3: Phase 3.5 scheduler toggle — runtime overrides via API — commit `e7c5407`
+- LOT 4: Phase 5.8 frontend dates — formatDateFR(DD/MM/YYYY), 21 occurrences, 3 vues — a commiter
 
-### Fichiers crees/modifies dans cette session
-- `api_opcv/src/services/recalc-event.service.js` — CREE
-- `api_opcv/src/services/performance.service.js` — CREE
-- `api_opcv/src/services/forex.service.js` — CREE
-- `api_opcv/src/routes/routes_vl.js` — MODIFIE (5 points emission recalc)
-- `api_opcv/src/routes/routes_recalc_admin.js` — CREE (6 endpoints admin)
-- `api_opcv/src/routes/analytics.js` — MODIFIE (2 endpoints classement historique)
-- `api_opcv/src/workers/worker-recalculation.js` — MODIFIE (handlers, dedup, dead-letter)
-- `api_opcv/src/workers/worker-data-import.js` — CREE
-- `api_opcv/scripts/migrations/create_clickhouse_tables.js` — CREE
-- `api_opcv/scripts/recalc/recalc_classement_historique.js` — CREE
-- `api_opcv/tests/performance.service.test.js` — CREE (17 tests)
-- `api_opcv/tests/forex.service.test.js` — CREE (15 tests)
-- `api_opcv/ecosystem.config.js` — MODIFIE (worker-data-import)
-- `api_opcv/app.js` — MODIFIE (require routes_recalc_admin)
+### Fichiers modifies dans ce lot (LOT 4)
+- `front_end_opcvm/src/lib/utils.ts` — MODIFIE (ajout formatDateFR)
+- `front_end_opcvm/src/app/funds/[fondId]/FundView.tsx` — MODIFIE (import + 8 dates formatees + fix lastDate→lastdatepreviousmonth)
+- `front_end_opcvm/src/app/funds/summary-eur/[fondId]/FundSubView.tsx` — MODIFIE (import + 7 dates formatees)
+- `front_end_opcvm/src/app/funds/summary-usd/[fondId]/FundSubView.tsx` — MODIFIE (import + 7 dates formatees)
 
 ### Tests realises
-- Jest 54/54 pass (ranking 22, performance 17, forex 15)
-- Parsing: tous fichiers OK (node -c)
+- TypeScript: `npx tsc --noEmit` — 0 erreurs
+- Build: `npm run build` — 0 erreurs, toutes pages generees
+- Jest api_opcv: 54/54 pass (session precedente)
 
 ### Resultat des tests
 OK
@@ -1372,23 +1369,23 @@ OK
 - 11 fonds sans classification (script pret, attente execution en prod)
 
 ### Tache en cours
-Deploiement — tout le code est pret
+Commit + push Phase 5.8 frontend
 
-### Prochaine action recommandee (deploiement production)
-1. Deployer api_opcv : `git pull --rebase origin claude/code-review-improvements-ikvuj && pm2 restart api-monolith`
-2. Deployer front_end_opcvm : `git pull --rebase origin claude/code-review-improvements-ikvuj && npm run build && pm2 restart fundafrique-frontend`
-3. Creer tables recalc : `node scripts/migrations/create_recalc_tables.js --execute`
-4. Demarrer workers : `pm2 start ecosystem.config.js --only worker-recalculation,worker-data-import`
-5. Executer fix 11 fonds : `node scripts/fix/fix_11_fonds_sans_classification.js`
-6. Installer ClickHouse puis `node scripts/migrations/create_clickhouse_tables.js --execute`
-7. Backfill classements : `node scripts/recalc/recalc_classement_historique.js --full`
-8. Migration crontab : activer tasks dans worker-scheduler, desactiver dans crontab
+### Prochaine action recommandee
+1. Commiter et pousser Phase 5.8 (frontend)
+2. Deployer api_opcv : `git pull --rebase origin claude/code-review-improvements-ikvuj && pm2 restart api-monolith`
+3. Deployer front_end_opcvm : `git pull --rebase origin claude/code-review-improvements-ikvuj && npm run build && pm2 restart fundafrique-frontend`
+4. Creer tables recalc : `node scripts/migrations/create_recalc_tables.js --execute`
+5. Demarrer workers : `pm2 start ecosystem.config.js --only worker-recalculation,worker-data-import`
+6. Executer fix 11 fonds : `node scripts/fix/fix_11_fonds_sans_classification.js`
+7. Installer ClickHouse puis `node scripts/migrations/create_clickhouse_tables.js --execute`
+8. Backfill classements : `node scripts/recalc/recalc_classement_historique.js --full`
+9. Migration crontab : activer tasks dans worker-scheduler, desactiver dans crontab
 
 ### Risques connus
 - Workers sans tables recalc_* = graceful degradation (pas de crash)
 - Crontab anciens chemins a mettre a jour au deploiement
 - ClickHouse NON INSTALLE (Phase 5.1-5.2 deploiement)
-- 38 scripts avec credentials hardcodes (tech debt, securite faible)
 
 ### A ne pas faire a la reprise
 - Ne pas activer worker-scheduler sans desactiver crontab
