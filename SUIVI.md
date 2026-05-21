@@ -1345,7 +1345,7 @@
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-DEPLOIEMENT PRODUCTION EXECUTE LE 2026-05-21 — Tous les LOTs 0-5 termines avec succes.
+DEPLOIEMENT PRODUCTION EXECUTE LE 2026-05-21 — Tous les LOTs 0-6 termines + taches prioritaires A1-A4 executees.
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 
@@ -1422,21 +1422,48 @@ DEPLOIEMENT PRODUCTION EXECUTE LE 2026-05-21 — Tous les LOTs 0-5 termines avec
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `ca90bd9`, sync origin
 - **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `1312d7d`, sync origin
 
-### Etat Git production (post LOT 6)
-- **api**: branche `claude/code-review-improvements-ikvuj`, commit `85f7726`
-- **frontend**: branche `claude/code-review-improvements-ikvuj`, commit `1312d7d`, clean
+### Taches prioritaires A (completees 2026-05-21)
+
+**A1 — Classification 7 fonds restants** : FAIT
+- 5 fonds MAROC GARANTI → DIVERSIFIE (RMA CAPITAL GARANTI, EMERGENCE PERFORMANCE, CDG GARANTI, etc.)
+- 2 fonds NIGERIA DEBT/INCOME → OBLIGATIONS (FBN MONEY MARKET, STANBIC IBTC NIGERIAN DEBT & INCOME)
+- Total : 1196/1196 fonds classes (100% coverage, 0 NULL restant)
+
+**A2 — Pull API production** : FAIT
+- API mise a jour vers commit `10be188` (fix NaN fund_id + fix column names)
+- PM2 restart OK, API health OK
+
+**A3 — Backfill classement_historique** : FAIT
+- Test 30 jours : 14,617 rows OK
+- Full 10 ans : 1,428,484 rows inserees (2016-01 a 2026-05)
+- Fix `categorie_fundafrica` → `categorie_fundafrica_globale` — commit `5f94c2e`
+- Fix NaN fund_id filtering — commit `10be188`
+
+**A4 — Nettoyage donnees corrompues MySQL** : FAIT
+- 631 `#N/A` dans actif_net → NULL
+- 12 nombres avec espaces dans actif_net → nettoyage
+- 1 `NC` dans actif_net → NULL
+- 88 placeholder `9999999999` dans actif_net → NULL
+- 13 restants verifie (nombres avec espaces dans value/vl_ajuste)
+
+### Etat Git production (post taches A)
+- **api**: branche `claude/code-review-improvements-ikvuj`, commit `10be188`
+- **frontend**: branche `claude/code-review-improvements-ikvuj`, commit `1312d7d` (SUIVI.md updates pas encore deploys)
+
+### Etat Git local (post taches A)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `10be188`, sync origin
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `02060b8`, sync origin
 
 ### Erreurs restantes
-- 7 fonds sans classification (AUTRES/INFRASTRUCTURE) — classification manuelle requise
-- `total_aum` UEMOA affiche 8.1e+124 (donnee `montant_actif_net` corrompue dans MySQL) — cosmétique
-- Tables `classement_historique` et `performance_historique` vides (backfill separe a executer)
+- `total_aum` UEMOA affiche 8.1e+124 (donnee `montant_actif_net` corrompue) — rafraichi au prochain sync ClickHouse
+- Table `performance_historique` vide (backfill separe a executer)
 - Erreur secondaire `ref_indices_fundafrica` dans script fix (table inexistante)
 
 ### Prochaine action recommandee
-- Classifier manuellement les 7 fonds restants
-- Backfill classement_historique et performance_historique (scripts dans scripts/recalc/)
-- Nettoyer les valeurs `montant_actif_net` corrompues dans MySQL
-- Activer progressivement worker-scheduler (apres validation des crons migres)
+- B1: Correction indices par categorie (OBLIGATIONS→S&P Sovereign Bond, MONETAIRE→RATE_TO_DEFINE)
+- B2: Routes API referentiel (/api/ref/categories, /api/ref/indices, /api/ref/pays)
+- B5: Securisation ttyd Nginx (auth Basic + IP whitelist)
+- Backfill performance_historique
 
 ### A ne pas faire
 - Ne pas demarrer les microservices de Phase 6 (gateway, auth-service, etc.)
