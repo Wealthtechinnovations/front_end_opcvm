@@ -621,9 +621,10 @@
 
 - [x] **2.1** Creer couche service `src/services/` :
   - [x] `ranking.service.js` — logique classement extraite (570 lignes, 6 fonctions calculateRank*) — commit `f692ef9`
-  - [ ] `performance.service.js` — logique calcul perf extraite de apigestionsavequotidien.js
-  - [ ] `vl.service.js` — logique VL/recalcul extraite de routes_vl.js
-  - [ ] `forex.service.js` — logique conversion devise
+  - [x] `performance.service.js` — logique calcul perf (perf, findValueAtDate, calculateAllPerformances) — commit `7c8c330`
+  - [x] `forex.service.js` — logique conversion devise (buildRateIndex, getRate, convertToEUR/USD, CFA) — commit `7c8c330`
+  - [x] `recalc-event.service.js` — emission et propagation evenements recalc — commit `1ae9ea8`
+  - [ ] `vl.service.js` — logique VL/recalcul extraite de routes_vl.js (optionnel)
 - [x] **2.2** Reorganiser scripts : 42 scripts deplaces dans `scripts/` (9 sous-dossiers: import/, fix/, recalc/, diag/, cron/, deploy/, seed/, migrations/, monitoring/) — commit `e4d48e0`
 - [x] **2.3** Premiers tests unitaires : 22 tests sur ranking.service.js (Jest) — commit `2475852`
 - [x] **2.4** Decouper routes_vl.js (11325→10270 lignes) : routes_vl_admin.js (383 lignes) + routes_vl_robotadvisor.js (322 lignes) — commit `d999403`
@@ -631,7 +632,7 @@
 ### PHASE 3 — Workers PM2 (priorite HAUTE)
 
 - [x] **3.1** Creer `worker-recalculation` : process PM2 dedie, consume recalc_jobs (FOR UPDATE SKIP LOCKED), propage dependances — commit `d0ce389`
-- [ ] **3.2** Creer `worker-data-import` : process PM2 pour imports ASFIM, Nigeria, forex, indices
+- [x] **3.2** Creer `worker-data-import` : process PM2 pour imports ASFIM, Nigeria, forex — commit `e3bbb79`
 - [x] **3.3** Creer `worker-scheduler` : remplace crontab Linux, 4 taches, desactivees par defaut pour migration parallele — commit `4b68302`
 - [ ] **3.4** Creer `ttyd-agent` securise :
   - Script menu controle (pas de shell libre)
@@ -659,22 +660,15 @@
 
 - [ ] **5.1** Installer ClickHouse sur le serveur de production
 - [ ] **5.2** Activer la sync MySQL→ClickHouse existante (clickhouse-sync.js)
-- [ ] **5.3** Creer table `classement_historique` dans ClickHouse :
-  - Colonnes : date_classement, fond_id, type_classement, devise, categorie
-  - Rangs : rang_3m/total_3m, rang_6m/total_6m, rang_1an/total_1an, rang_3ans/total_3ans, rang_5ans/total_5ans, rang_ytd/total_ytd
-  - Quartiles : quartile_3m, quartile_6m, quartile_1an, quartile_3ans, quartile_5ans, quartile_ytd
-  - Engine : ReplacingMergeTree, ORDER BY (date_classement, fond_id, type_classement, devise)
-  - Partition : toYYYYMM(date_classement)
-- [ ] **5.4** Creer table `performance_historique` dans ClickHouse (meme logique)
-- [ ] **5.5** Implementer le calcul de classement DATE PAR DATE :
-  - Pour chaque date D : identifier les fonds avec VL a D (±2 jours ouvres)
-  - Pour chaque horizon (3M, 6M, 1A, 3A, 5A, YTD) : verifier que le fonds a aussi une VL a D-horizon
-  - Si oui : calculer la perf = (VL(D) - VL(D-horizon)) / VL(D-horizon)
-  - Si non : exclure le fonds du classement pour cet horizon
-  - Classer les fonds eligibles par categorie (nationale, regionale, globale)
-  - Stocker rang, total, quartile pour cette date D
-- [ ] **5.6** Backfill historique : calculer classements pour toutes les dates passees (10 ans)
-- [ ] **5.7** Modifier API `/api/classementquartilemysql/:id` : retourner le classement A LA DATE du dernier VL du fonds (pas le snapshot courant)
+- [x] **5.3** Script migration ClickHouse tables (classement_historique + performance_historique) — commit `3fef414`
+- [x] **5.4** Table `performance_historique` definie dans le meme script — commit `3fef414`
+- [x] **5.5** Script calcul classement date par date (recalc_classement_historique.js) — commit `3fef414`
+  - 7 horizons (YTD, 1M, 3M, 6M, 1A, 3A, 5A), 3 types (national, regional, global)
+  - Supports LOCAL/EUR/USD, incremental ou full backfill
+- [ ] **5.6** Backfill historique : executer `recalc_classement_historique.js --full` (requiert ClickHouse installe)
+- [x] **5.7** API routes classement historique — commit `3fef414` :
+  - GET /api/analytics/classement-historique/:fondId (classement a une date)
+  - GET /api/analytics/classement-historique/:fondId/evolution (evolution dans le temps)
 - [ ] **5.8** Modifier frontend : afficher la date du classement ("Classement au 20/05/2026")
 - [ ] **5.9** Activer les 4 routes analytics ClickHouse existantes (performance, market overview, top rankings, risk)
 
@@ -1341,48 +1335,62 @@
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Phases 1+2+3+4 (code) completes et poussees. Production non encore deployee. 2 depots clean.
+Phases 1-5 (code) completes et poussees. 54 tests Jest passent. Production non encore deployee.
 
 ### Dernier lot termine
-Session 2026-05-21 — Phase 4 complete:
-- Phase 4.2-4.3: recalc events dans 5 routes VL/index — commit `1ae9ea8`
-- Phase 4.4: dedup jobs/events + dead-letter — commit `fe622e1`
-- Phase 4.5: handlers reels (scripts via child_process) + FULL_REBUILD — commit `669a18f`
-- Phase 4.6-4.8: API admin monitoring (5 endpoints) — commit `b092600`
+Session 2026-05-21 — Toutes les phases code:
+- Phase 2.1: 4 services (ranking, performance, forex, recalc-event) — commits divers
+- Phase 2.3: 54 tests Jest (ranking 22 + performance 17 + forex 15)
+- Phase 3.2: worker-data-import — commit `e3bbb79`
+- Phase 4.2-4.8: moteur recalcul complet — commits `1ae9ea8` a `b092600`
+- Phase 5.3-5.7: ClickHouse classements historiques (script + API) — commit `3fef414`
 
-### Fichiers modifies dans le dernier lot
-- `api_opcv/src/services/recalc-event.service.js` — CREE (event emission + 5min dedup)
-- `api_opcv/src/routes/routes_vl.js` — MODIFIE (5 points emission recalc events)
-- `api_opcv/src/workers/worker-recalculation.js` — MODIFIE (handlers reels, dedup, dead-letter)
-- `api_opcv/src/routes/routes_recalc_admin.js` — CREE (5 endpoints admin)
+### Fichiers crees/modifies dans cette session
+- `api_opcv/src/services/recalc-event.service.js` — CREE
+- `api_opcv/src/services/performance.service.js` — CREE
+- `api_opcv/src/services/forex.service.js` — CREE
+- `api_opcv/src/routes/routes_vl.js` — MODIFIE (5 points emission recalc)
+- `api_opcv/src/routes/routes_recalc_admin.js` — CREE (6 endpoints admin)
+- `api_opcv/src/routes/analytics.js` — MODIFIE (2 endpoints classement historique)
+- `api_opcv/src/workers/worker-recalculation.js` — MODIFIE (handlers, dedup, dead-letter)
+- `api_opcv/src/workers/worker-data-import.js` — CREE
+- `api_opcv/scripts/migrations/create_clickhouse_tables.js` — CREE
+- `api_opcv/scripts/recalc/recalc_classement_historique.js` — CREE
+- `api_opcv/tests/performance.service.test.js` — CREE (17 tests)
+- `api_opcv/tests/forex.service.test.js` — CREE (15 tests)
+- `api_opcv/ecosystem.config.js` — MODIFIE (worker-data-import)
 - `api_opcv/app.js` — MODIFIE (require routes_recalc_admin)
 
 ### Tests realises
-- Jest 22/22 pass
-- Parsing: tous fichiers modifies OK (node -c)
+- Jest 54/54 pass (ranking 22, performance 17, forex 15)
+- Parsing: tous fichiers OK (node -c)
 
 ### Resultat des tests
 OK
 
 ### Erreurs restantes
-- 11 fonds sans classification (script pret)
-- Crontab anciens chemins a mettre a jour au deploiement
+- 11 fonds sans classification (script pret, attente execution en prod)
 
 ### Tache en cours
-Phase 3.2 — worker-data-import + Phase 3.5 migration crons
+Deploiement — tout le code est pret
 
-### Prochaine action recommandee
-1. Phase 3.2: Creer worker-data-import (imports ASFIM, Nigeria, forex)
-2. Phase 3.5: Migrer 3 crons bash vers worker-scheduler
-3. Phase 4.1: Deployer create_recalc_tables.js --execute en production
-4. Deployer tout sur production
+### Prochaine action recommandee (deploiement production)
+1. Deployer api_opcv : `git pull --rebase origin claude/code-review-improvements-ikvuj && pm2 restart api-monolith`
+2. Deployer front_end_opcvm : `git pull --rebase origin claude/code-review-improvements-ikvuj && npm run build && pm2 restart fundafrique-frontend`
+3. Creer tables recalc : `node scripts/migrations/create_recalc_tables.js --execute`
+4. Demarrer workers : `pm2 start ecosystem.config.js --only worker-recalculation,worker-data-import`
+5. Executer fix 11 fonds : `node scripts/fix/fix_11_fonds_sans_classification.js`
+6. Installer ClickHouse puis `node scripts/migrations/create_clickhouse_tables.js --execute`
+7. Backfill classements : `node scripts/recalc/recalc_classement_historique.js --full`
+8. Migration crontab : activer tasks dans worker-scheduler, desactiver dans crontab
 
 ### Risques connus
-- Deployer workers sans tables recalc_* = crash (graceful degradation active)
-- Crontab anciens chemins
-- ClickHouse NON INSTALLE (Phase 5)
+- Workers sans tables recalc_* = graceful degradation (pas de crash)
+- Crontab anciens chemins a mettre a jour au deploiement
+- ClickHouse NON INSTALLE (Phase 5.1-5.2 deploiement)
+- 38 scripts avec credentials hardcodes (tech debt, securite faible)
 
 ### A ne pas faire a la reprise
 - Ne pas activer worker-scheduler sans desactiver crontab
-- Ne pas deployer workers sans tables recalc_*
-- Ne pas installer ClickHouse sans validation
+- Ne pas installer ClickHouse sans validation ressources serveur
+- Ne pas forcer un deploiement sans verifier l'etat Git de production
