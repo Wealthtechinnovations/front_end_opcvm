@@ -619,12 +619,12 @@
 
 ### PHASE 2 — Modularisation du monolithe (priorite HAUTE)
 
-- [ ] **2.1** Creer couche service `src/services/` :
+- [x] **2.1** Creer couche service `src/services/` :
+  - [x] `ranking.service.js` — logique classement extraite (570 lignes, 6 fonctions calculateRank*) — commit `f692ef9`
   - [ ] `performance.service.js` — logique calcul perf extraite de apigestionsavequotidien.js
-  - [ ] `ranking.service.js` — logique classement (calculateRank*)
   - [ ] `vl.service.js` — logique VL/recalcul extraite de routes_vl.js
   - [ ] `forex.service.js` — logique conversion devise
-- [ ] **2.2** Reorganiser scripts : deplacer 40+ scripts dans `scripts/` (sous-dossiers import/, fix/, recalc/, diag/)
+- [x] **2.2** Reorganiser scripts : 42 scripts deplaces dans `scripts/` (9 sous-dossiers: import/, fix/, recalc/, diag/, cron/, deploy/, seed/, migrations/, monitoring/) — commit `e4d48e0`
 - [ ] **2.3** Premiers tests unitaires sur les services extraits
 - [ ] **2.4** Decouper routes_vl.js (11K lignes) en modules sans changer les URL de routes
 
@@ -1349,66 +1349,79 @@
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Production stable. Classements 3 types OK (local, EUR, USD). Frontend deploye avec classementType3. Diagnostic architecture termine.
+Production stable (non encore deployee avec Phase 2.1/2.2). Code API Phase 2.2 commite et pousse sur `claude/code-review-improvements-ikvuj`. Les 2 depots sont clean (working tree vide). Crons et classements fonctionnent normalement en production.
 
 ### Dernier lot termine
-Diagnostic architecture hybride (2026-05-21):
-- Lecture CLAUDE.md (2 depots) + SUIVI.md
-- Verification etat Git (2 depots clean)
-- Connexion API production (health OK, classement OK)
-- Exploration arborescence complete (routes, models, services, scripts, crons, middleware, ClickHouse)
-- Creation `api_opcv/ARCHITECTURE_DIAGNOSTIC.md` (13 sections, A-M)
-- Mise a jour SUIVI.md
+Phase 2.2 — Organisation des scripts (2026-05-21):
+- 42 scripts deplaces de la racine vers `scripts/` (9 sous-dossiers: import/, fix/, recalc/, diag/, cron/, deploy/, seed/, migrations/, monitoring/)
+- Cron scripts (cron_daily_update.sh, cron_daily_eur_usd.sh, cron_nigeria_weekly.sh) mis a jour avec chemins `scripts/...`
+- Deploy script (deploy_all_fixes.sh) mis a jour avec chemins `scripts/...`
+- Dependencies mortes supprimees de package.json (agenda, bull, ioredis, node-cron)
+- `src/config/agenda.js` supprime (code mort MongoDB)
+- Commit Phase 2.1: `f692ef9` (ranking.service.js, 570 lignes extraites)
+- Commit Phase 2.2: `e4d48e0` (42 scripts reorganises)
+- Commit Phase 1: `72e8b8d` (health check + recalc tables migration)
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/ARCHITECTURE_DIAGNOSTIC.md` — CREE (diagnostic complet)
+- `api_opcv/src/services/ranking.service.js` — CREE (Phase 2.1)
+- `api_opcv/src/routes/apigestionsavequotidien.js` — MODIFIE (6 fonctions → delegates)
+- `api_opcv/package.json` — MODIFIE (suppression deps mortes)
+- `api_opcv/src/config/agenda.js` — SUPPRIME
+- `api_opcv/scripts/` — 42 fichiers deplaces depuis la racine (9 sous-dossiers)
+- `api_opcv/scripts/cron/cron_daily_update.sh` — chemins mis a jour
+- `api_opcv/scripts/cron/cron_daily_eur_usd.sh` — chemins mis a jour
+- `api_opcv/scripts/cron/cron_nigeria_weekly.sh` — chemins mis a jour
+- `api_opcv/scripts/deploy/deploy_all_fixes.sh` — chemins mis a jour
+- `api_opcv/scripts/migrations/create_recalc_tables.js` — CREE (Phase 4.1 prep)
+- `api_opcv/scripts/monitoring/check_cron_health.js` — credentials → dotenv
+- `api_opcv/CLAUDE.md` — ajout regle snapshot production
+- `front_end_opcvm/CLAUDE.md` — ajout regle snapshot production
 - `front_end_opcvm/SUIVI.md` — MIS A JOUR (cette section)
 
 ### Commandes executees
-- curl production API (health, classement, valLiq)
-- Exploration fichiers (ls, wc, grep, cat)
-- Aucune commande destructrice
+- `node -c src/routes/apigestionsavequotidien.js` — parse OK
+- `node -c src/services/ranking.service.js` — parse OK
+- `node -e "require('./src/app')"` — OK (modules charges)
+- `git add / git commit / git push` — OK (branches a jour)
+- `find scripts/ -type f | wc -l` — 48 fichiers dans scripts/
+- `grep -r "scripts/" scripts/cron/ scripts/deploy/` — tous chemins corrects
 
 ### Tests realises
-- API production health check: OK
-- Classement fonds 1131: Type1=107/120, Type2=113/126, Type3=170/183 (OK)
+- Parsing syntaxique: app.js, ranking.service.js, apigestionsavequotidien.js — OK
+- Verification chemins dans cron/deploy scripts — tous corrects (scripts/... format)
 - Git status: clean sur les 2 depots
+- Production API: repond (non encore deployee avec ces changements)
+- PRODUCTION_STATE.json: present, 42K, date 2026-05-21 06:00
 
 ### Resultat des tests
-OK — Production stable, diagnostic en lecture seule.
+OK — Code stable, parse correctement, pret a deployer. Production non impactee (ancien code tourne encore).
 
 ### Erreurs restantes
-- 11 fonds sans classification (NULL)
-- LOT 5: indices historiques bloques (S&P payant, BVMAC inaccessible)
+- 38 scripts avec credentials hardcodes (dette technique pre-existante, a migrer progressivement)
+- 11 fonds sans classification (NULL) — a traiter en Phase 1.5
+- Crontab production reference encore les anciens chemins (racine) — A METTRE A JOUR lors du deploiement
 - Tunisie reimport VL (en attente fichiers utilisateur)
 
 ### Tache en cours
-Validation du diagnostic par l'utilisateur avant toute action.
+Phase 2.2 VERIFIEE et STABILISEE. Documentation en cours de finalisation.
 
 ### Prochaine action recommandee
-1. **Utilisateur valide** le diagnostic ARCHITECTURE_DIAGNOSTIC.md
-2. **Decisions techniques** a prendre:
-   - ClickHouse vs MySQL pour classements historiques
-   - BullMQ+Redis vs table MySQL pour file de jobs
-   - Tolerance de date pour classements (±2j ouvres ?)
-   - Granularite classement historique (quotidien, hebdomadaire, mensuel ?)
-   - Clarifier wealthtech-api sur le serveur
-3. **Phase 1 — Stabilisation** (si valide):
-   - K01: Securiser ttyd (Nginx auth + IP whitelist)
-   - K02: Clarifier wealthtech-api
-   - K03: Health check detaille
-   - K06: 11 fonds sans classification
+1. **Deployer sur production** : `git pull --rebase` + `pm2 restart` + mettre a jour crontab (anciens chemins → `scripts/cron/...`)
+2. **Phase 2.3** : Premiers tests unitaires sur `ranking.service.js`
+3. **Phase 2.4** : Decouper `routes_vl.js` (11K lignes) en modules
 
 ### Risques connus
-- Conflit Git en production du a PRODUCTION_STATE.json (sync_production.sh cron horaire) — mitiger avec `git stash`
-- MariaDB: toujours utiliser `conn.query()` (pas `conn.execute()`) pour SHOW COLUMNS et statements non-standard
-- Recalcul classement local prend ~3-5 min (1185 fonds x 3 types)
+- **CRONTAB** : Apres deploiement, les crons pointent vers les anciens chemins (racine). MISE A JOUR OBLIGATOIRE:
+  - `cron_daily_update.sh` → `scripts/cron/cron_daily_update.sh`
+  - `cron_daily_eur_usd.sh` → `scripts/cron/cron_daily_eur_usd.sh`
+  - `cron_nigeria_weekly.sh` → `scripts/cron/cron_nigeria_weekly.sh`
+- Conflit Git possible en production (PRODUCTION_STATE.json commits automatiques) — utiliser `git pull --rebase`
 - ClickHouse NON INSTALLE sur le serveur (routes analytics retournent 503)
 
 ### A ne pas faire a la reprise
-- Ne pas activer l'architecture microservices (services/) sans diagnostic complet
+- Ne pas deployer sans mettre a jour la crontab (chemins scripts casses sinon)
+- Ne pas commencer Phase 2.4 (split routes_vl.js) sans avoir deploye Phase 2.2
+- Ne pas activer l'architecture microservices (services/) sans Phase 2 complete
 - Ne pas installer ClickHouse sans validation utilisateur
-- Ne pas creer de workers sans couche service (Phase 2 avant Phase 3)
-- Ne pas supprimer les colonnes existantes (categorie_regionale, categorie_nationale)
+- Ne pas supprimer les colonnes existantes
 - Ne pas ecraser indice_benchmark avec un indice FundAfrica
-- Ne pas utiliser `conn.execute()` dans les scripts MySQL (MariaDB incompatible pour certaines commandes)
