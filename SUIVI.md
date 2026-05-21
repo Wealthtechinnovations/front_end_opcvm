@@ -1345,56 +1345,194 @@
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Phases 1-5 (code) completes et poussees. Phase 5.8 (frontend dates) terminee. 54 tests Jest passent. Credentials securises (37 scripts). Build frontend OK.
+Tout le code est termine, commite et pousse sur les deux depots. Les working trees sont clean. Les builds passent. Les tests passent. Aucune action production n'a ete executee.
 
 ### Dernier lot termine
-Session 2026-05-21 (continuation) — LOTs completes:
-- LOT 1: Securite credentials — 37 scripts migres de hardcoded vers process.env.DB_PASSWORD — commit `388d068`
-- LOT 2: Phase 3.4 ttyd-agent — terminal controle securise, 15 commandes — commit `2016e67`
-- LOT 3: Phase 3.5 scheduler toggle — runtime overrides via API — commit `e7c5407`
-- LOT 4: Phase 5.8 frontend dates — formatDateFR(DD/MM/YYYY), 21 occurrences, 3 vues — commit `89d28dc`
-- LOT 5: Portfolio serialisation JSON fix — 10 fichiers, meme pattern que investor — commit `ff4087e`
+Session 2026-05-21 — Securisation avant phase production (LOT 6):
+- Verification etat Git final : les deux depots sont propres, synchronises avec origin
+- Verification SUIVI.md : lots, commits, tests, risques documentes
+- Plan de reprise production redige (voir section dediee ci-dessous)
 
-### Fichiers modifies dans les derniers lots
-- `front_end_opcvm/src/lib/utils.ts` — MODIFIE (ajout formatDateFR)
-- `front_end_opcvm/src/app/funds/[fondId]/FundView.tsx` — MODIFIE (8 dates formatees + fix lastDate→lastdatepreviousmonth)
-- `front_end_opcvm/src/app/funds/summary-eur/[fondId]/FundSubView.tsx` — MODIFIE (7 dates formatees)
-- `front_end_opcvm/src/app/funds/summary-usd/[fondId]/FundSubView.tsx` — MODIFIE (7 dates formatees)
-- `front_end_opcvm/src/app/panel/portfolio/dashboard/page.tsx` — MODIFIE (toJsonArrayString)
-- `front_end_opcvm/src/app/panel/portfolio/selected-funds/page.tsx` — MODIFIE (safeParseToCSV)
-- `front_end_opcvm/src/app/panel/portfolio/reconstruction/*.tsx` — 8 fichiers MODIFIES (double-decode IIFE)
+LOTs precedents (meme session):
+- LOT 1: Securite credentials — 37 scripts migres de hardcoded vers process.env.DB_PASSWORD — commit api `388d068`
+- LOT 2: Phase 3.4 ttyd-agent — terminal controle securise, 15 commandes — commit api `2016e67`
+- LOT 3: Phase 3.5 scheduler toggle — runtime overrides via API — commit api `e7c5407`
+- LOT 4: Phase 5.8 frontend dates — formatDateFR(DD/MM/YYYY), 21 occurrences, 3 vues — commit front `89d28dc`
+- LOT 5: Portfolio serialisation JSON fix — 10 fichiers, meme pattern que investor — commit front `ff4087e`
+- Nettoyage: package-lock.json apres suppression dead deps — commit api `a47dccb`
+
+### Etat Git verifie le 2026-05-21
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `a47dccb`, clean, sync origin
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `21a261a`, clean, sync origin
 
 ### Tests realises
-- TypeScript: `npx tsc --noEmit` — 0 erreurs
-- Build: `npm run build` — 0 erreurs, toutes pages generees
-- Jest api_opcv: 54/54 pass (session precedente)
+- TypeScript frontend: `npx tsc --noEmit` — 0 erreurs
+- Build frontend: `npm run build` — 217/217 pages, 0 erreurs
+- Jest api_opcv: 54/54 pass (ranking 22 + performance 17 + forex 15)
+- Parsing api_opcv: tous fichiers nouveaux OK (node -c)
 
 ### Resultat des tests
-OK
+OK — tout passe
 
 ### Erreurs restantes
-- 11 fonds sans classification (script pret, attente execution en prod)
+- 11 fonds sans classification (script pret `fix_11_fonds_sans_classification.js`, attente execution en prod)
+- Tables recalc_* pas encore creees (script pret `create_recalc_tables.js`, attente execution en prod)
 
 ### Tache en cours
-Toutes les taches code sont terminees. Reste : deploiement production.
+Aucune. Tout le code faisable hors production est termine.
 
 ### Prochaine action recommandee
-1. Commiter et pousser Phase 5.8 (frontend)
-2. Deployer api_opcv : `git pull --rebase origin claude/code-review-improvements-ikvuj && pm2 restart api-monolith`
-3. Deployer front_end_opcvm : `git pull --rebase origin claude/code-review-improvements-ikvuj && npm run build && pm2 restart fundafrique-frontend`
-4. Creer tables recalc : `node scripts/migrations/create_recalc_tables.js --execute`
-5. Demarrer workers : `pm2 start ecosystem.config.js --only worker-recalculation,worker-data-import`
-6. Executer fix 11 fonds : `node scripts/fix/fix_11_fonds_sans_classification.js`
-7. Installer ClickHouse puis `node scripts/migrations/create_clickhouse_tables.js --execute`
-8. Backfill classements : `node scripts/recalc/recalc_classement_historique.js --full`
-9. Migration crontab : activer tasks dans worker-scheduler, desactiver dans crontab
+Executer le PLAN DE REPRISE PRODUCTION ci-dessous, apres validation explicite.
 
 ### Risques connus
-- Workers sans tables recalc_* = graceful degradation (pas de crash)
-- Crontab anciens chemins a mettre a jour au deploiement
-- ClickHouse NON INSTALLE (Phase 5.1-5.2 deploiement)
+- **Divergence Git production** : `sync_production.sh` (cron horaire) peut avoir pousse des commits PRODUCTION_STATE.json sur le serveur, creant une divergence. Toujours utiliser `git pull --rebase`.
+- **Crontab chemins** : les crons production referencent les anciens chemins de scripts. Apres deploiement API, verifier et mettre a jour les chemins dans crontab si les scripts ont ete deplaces dans `scripts/`.
+- **Workers sans tables recalc** : graceful degradation (pas de crash, les services catchent "doesn't exist"). Mais les events recalc emis par l'API seront silencieusement ignores jusqu'a creation des tables.
+- **ClickHouse non installe** : les 6 routes analytics retournent 503 proprement via le middleware `requireClickHouse`. Pas de crash.
+- **ecosystem.config.js** : contient 8 microservices (Phase 6) + 3 workers. Les microservices ne doivent PAS etre demarres (Phase 6 = priorite BASSE). Utiliser `--only` pour demarrer uniquement les workers.
 
 ### A ne pas faire a la reprise
-- Ne pas activer worker-scheduler sans desactiver crontab
-- Ne pas installer ClickHouse sans validation ressources serveur
-- Ne pas forcer un deploiement sans verifier l'etat Git de production
+- Ne pas demarrer les microservices de Phase 6 (gateway, auth-service, etc.)
+- Ne pas activer worker-scheduler sans desactiver les crons correspondants dans crontab
+- Ne pas installer ClickHouse sans valider les ressources serveur (RAM, disque)
+- Ne pas forcer un deploiement sans verifier l'etat Git du serveur de production d'abord
+- Ne pas modifier la base de donnees sans backup prealable
+- Ne pas demarrer les workers avant d'avoir cree les tables recalc
+
+---
+
+## PLAN DE REPRISE PRODUCTION — A EXECUTER APRES VALIDATION
+
+> Ce plan est un guide. Aucune etape ne doit etre executee sans validation explicite de l'utilisateur.
+> Chaque etape doit etre validee avant de passer a la suivante.
+
+### Prerequis d'acces production
+- Acces SSH au serveur `africafunds.chainsolutions.fr`
+- Chemin API : `/var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api`
+- Chemin Frontend : `/var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend`
+- Utilisateur MySQL : `fund_opcvm` (credentials dans `.env` sur le serveur)
+- PM2 processes : `api-monolith` (id:10), `fundafrique-frontend` (id:11)
+
+### Variables d'environnement necessaires (deja dans .env sur le serveur)
+- `DB_HOST=127.0.0.1` / `DB_USER=fund_opcvm` / `DB_PASSWORD` / `DB_NAME=fund_opcvm`
+- `API_URL=http://localhost:3005`
+- `SCHEDULER_LOG_DIR=/var/log`
+- `WORKER_POLL_INTERVAL=10000` / `WORKER_LOCK_TIMEOUT=300000` / `WORKER_ID=recalc-1`
+- `IMPORT_POLL_INTERVAL=30000`
+
+### Sauvegardes a faire AVANT toute action
+1. **Backup base de donnees** : `mysqldump -u fund_opcvm -p fund_opcvm > backup_fund_opcvm_$(date +%Y%m%d_%H%M%S).sql`
+2. **Snapshot Git serveur** : `cd api && git stash && git log --oneline -5` (noter le commit actuel)
+3. **Snapshot Git frontend** : `cd frontend && git stash && git log --oneline -5`
+4. **Copie crontab** : `crontab -l > crontab_backup_$(date +%Y%m%d).txt`
+5. **PRODUCTION_STATE.json** : copier le fichier actuel comme reference
+
+### Ordre recommande des actions (par groupes independants)
+
+#### GROUPE A — Deploiement code (prerequis : sauvegardes faites)
+
+**A1. Deployer api_opcv**
+```bash
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+git stash
+git pull --rebase origin claude/code-review-improvements-ikvuj
+git stash pop
+pm2 restart api-monolith
+```
+**Validation A1** : `curl -s http://localhost:3005/health | python3 -m json.tool` → doit retourner `status: ok`
+**Validation A1 bis** : `curl -s http://localhost:3005/health/detailed | python3 -m json.tool` → verifier tables, counts
+**Rollback A1** : `git checkout <commit_avant>` puis `pm2 restart api-monolith`
+
+**A2. Deployer front_end_opcvm**
+```bash
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend
+git stash
+git pull --rebase origin claude/code-review-improvements-ikvuj
+git stash pop
+npm run build
+pm2 restart fundafrique-frontend
+```
+**Validation A2** : naviguer sur `https://africafunds.chainsolutions.fr/home`, verifier page d'accueil
+**Validation A2 bis** : ouvrir une fiche fonds → verifier "Classement au DD/MM/YYYY" (format francais)
+**Validation A2 ter** : ouvrir un fonds en EUR et USD → verifier les dates formatees
+**Rollback A2** : `git checkout <commit_avant>` puis `npm run build && pm2 restart fundafrique-frontend`
+
+#### GROUPE B — Tables et workers (prerequis : GROUPE A deploye et valide)
+
+**B1. Creer les tables recalc**
+```bash
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+node scripts/migrations/create_recalc_tables.js --execute
+```
+**Validation B1** : `mysql -u fund_opcvm -p fund_opcvm -e "SHOW TABLES LIKE 'recalc%';"` → 4 tables
+**Rollback B1** : `DROP TABLE IF EXISTS recalc_audit, recalc_jobs, recalc_dependencies, recalc_events;`
+
+**B2. Demarrer les workers (PAS les microservices)**
+```bash
+pm2 start ecosystem.config.js --only worker-recalculation
+pm2 start ecosystem.config.js --only worker-data-import
+```
+**Validation B2** : `pm2 status` → les deux workers en status `online`
+**Validation B2 bis** : `pm2 logs worker-recalculation --nostream --lines 5` → pas d'erreur fatale
+**Rollback B2** : `pm2 stop worker-recalculation worker-data-import`
+
+**B3. Executer fix 11 fonds sans classification**
+```bash
+node scripts/fix/fix_11_fonds_sans_classification.js
+```
+**Validation B3** : le script affiche le nombre de fonds corriges
+**Rollback B3** : aucun (le script ne fait que remplir des champs NULL)
+
+#### GROUPE C — ClickHouse (prerequis : GROUPE B valide, priorite BASSE)
+
+**C1. Verifier les ressources serveur**
+```bash
+free -h        # Au moins 2 Go RAM disponible
+df -h /        # Au moins 10 Go disque disponible
+```
+
+**C2. Installer ClickHouse** (si ressources suffisantes)
+```bash
+# Voir https://clickhouse.com/docs/en/install pour Ubuntu/Debian
+# Apres installation : systemctl start clickhouse-server
+```
+**Validation C2** : `clickhouse-client -q "SELECT 1"` → retourne 1
+
+**C3. Creer les tables ClickHouse**
+```bash
+node scripts/migrations/create_clickhouse_tables.js --execute
+```
+
+**C4. Backfill classements historiques**
+```bash
+node scripts/recalc/recalc_classement_historique.js --full
+```
+**Validation C4** : le script affiche le nombre de classements inseres
+
+#### GROUPE D — Migration crontab (prerequis : GROUPES A+B valides, PAS avant)
+
+**D1. Verifier crontab actuelle**
+```bash
+crontab -l
+```
+**Comparer les chemins des scripts avec les nouveaux chemins dans `scripts/`**
+
+**D2. Mettre a jour les chemins crontab** (si les scripts ont ete deplaces)
+- Anciens chemins directs → nouveaux chemins dans `scripts/cron/`, `scripts/monitoring/`
+- NE PAS supprimer de crons tant que worker-scheduler n'est pas valide en production
+
+**D3. Activer progressivement worker-scheduler** (optionnel, migration graduelle)
+```bash
+# Via API :
+curl -X POST http://localhost:3005/api/admin/scheduler/toggle -H 'Content-Type: application/json' -d '{"taskName":"cron-health-check","enabled":true}'
+# Puis verifier dans les logs que le scheduler execute correctement
+# Seulement apres validation : activer les autres taches et desactiver les crons correspondants
+```
+
+### Points a ne pas faire sans validation explicite
+- Ne PAS demarrer les microservices Phase 6 (gateway, auth-service, fund-service, etc.)
+- Ne PAS faire `pm2 start ecosystem.config.js` sans `--only` (demarrerait tout y compris les microservices)
+- Ne PAS supprimer les crons avant validation du worker-scheduler
+- Ne PAS installer ClickHouse si les ressources serveur sont insuffisantes
+- Ne PAS modifier le .env de production
+- Ne PAS executer de scripts de fix/import sans backup DB prealable
