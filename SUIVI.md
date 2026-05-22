@@ -1454,16 +1454,98 @@ DEPLOIEMENT PRODUCTION EXECUTE LE 2026-05-21 — Tous les LOTs 0-6 termines + ta
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `10be188`, sync origin
 - **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `02060b8`, sync origin
 
+### B1 — Referentiel FundAfrica (execute 2026-05-22)
+
+**Bug fix require** : 34 scripts avaient `const mysql = require('dotenv')` — tous crashaient a l'execution. Corrige commit `abc9482`.
+**Fix path seed** : `referentiel_fundafrica.json` chemin corrige (`__dirname` → `../../`) — commit `c7761d4`.
+
+**Mapping indices execute sur production** (lot3 --execute --force) :
+- 1189/1189 fonds actifs mappes avec indice_fundafrica (100%)
+- OBLIGATIONS 480 → S&P Sovereign Bond Index par pays
+- ACTIONS 183 → indices locaux (MASI, NSE All Share, BRVM Composite, BVMAC, etc.)
+- DIVERSIFIE 363 → COMPOSITE_TO_BUILD (benchmark composite a definir)
+- MONETAIRE 163 → RATE_TO_DEFINE (taux reference a definir)
+- 5 pays : MAROC 640, NIGERIA 280, TUNISIE 124, UEMOA 111, CEMAC 34
+- indice_benchmark (declare par le fonds) : NON MODIFIE (1043 fonds preserves)
+- Tables ref deja existantes en production (seed execute precedemment)
+- Note : seed script echoue car referentiel_fundafrica.json introuvable (chemin corrige mais non re-deploye)
+
 ### Erreurs restantes
 - `total_aum` UEMOA affiche 8.1e+124 (donnee `montant_actif_net` corrompue) — rafraichi au prochain sync ClickHouse
 - Table `performance_historique` vide (backfill separe a executer)
-- Erreur secondaire `ref_indices_fundafrica` dans script fix (table inexistante)
+- seed_referentiel_fundafrica.js : fix chemin commite mais pas encore deploye (commit `c7761d4`)
+
+### Etat Git production (post B1)
+- **api**: branche `claude/code-review-improvements-ikvuj`, commit `abc9482` + 9 snapshots ahead
+- **frontend**: branche `claude/code-review-improvements-ikvuj`, commit `1312d7d`
+
+### Etat Git local (post B1)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `c7761d4`, sync origin
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `c7000b9`, sync origin
+
+### B2 — Routes API referentiel (complete 2026-05-22)
+
+8 endpoints crees dans `src/routes/apigestionreferentiel.js` — commit `e2b8784` :
+- GET /api/ref/categories (filtres: niveau, classification, pays)
+- GET /api/ref/indices (filtres: statut, classification, niveau)
+- GET /api/ref/indices/stats (agregation par statut et classification)
+- GET /api/ref/pays (zones geographiques referentiel)
+- GET /api/ref/asset-classes (4 classes d'actifs)
+- GET /api/ref/sources (sources donnees indices)
+- GET /api/ref/mapping (vue fonds→indices avec filtres)
+- GET /api/ref/mapping/summary (couverture mapping par pays/classification)
+Enregistre dans app.js ligne 131. Degradation gracieuse si tables ref absentes.
+
+### Points de vigilance — Audit metriques risque (2026-05-22)
+
+**Etat des metriques calculees (via /api/ratiosnew/:year/:id) :**
+| Metrique | Calcule | Stocke MySQL | Sync ClickHouse |
+|----------|---------|--------------|-----------------|
+| Volatilite (1an/3an/5an) | OUI | OUI | OUI |
+| Sharpe | OUI | OUI | OUI |
+| Sortino | OUI | OUI | OUI |
+| Tracking Error | OUI | OUI (indRef requis) | OUI |
+| Information Ratio | OUI | OUI | OUI |
+| Beta / Beta haussier / Beta baissier | OUI | OUI | OUI |
+| Up/Down Capture | OUI | OUI | OUI |
+| Omega | OUI | OUI | OUI |
+| Skewness / Kurtosis | OUI | OUI | OUI |
+| Max Drawdown | OUI | OUI | OUI |
+| Calmar | OUI | OUI | OUI |
+| DSR | OUI | OUI | OUI |
+| VAR 95% / 99% | OUI | OUI | OUI |
+| **R2 (correlation)** | OUI (calculerR2) | **NON** | **NON** |
+| **Alpha** | **NON** | **NON** | **NON** |
+
+**Performances stockees en MySQL et ClickHouse :**
+- Perf glissante (YTD, 1M, 3M, 6M, 1A, 3A, 5A, 8A, 10A) : OUI MySQL + ClickHouse
+- Perf annualisee (Fonds) : OUI
+- Perf annualisee (Categorie) : calculee a la volee, PAS stockee
+- Perf annualisee (Indice) : calculee depuis indice_references, PAS stockee
+- Volatilite Cat / Perte Max Cat : calculees a la volee, PAS stockees
+
+**Indices et donnees benchmark :**
+- Table `indice_references` contient les VL historiques des benchmarks
+- Colonne `indRef` / `indRef_EUR` / `indRef_USD` dans valorisations = valeur indice a chaque date VL
+- Metriques dependant de l'indice : Beta, Tracking Error, IR, R2, Up/Down Capture
+- Mapping B1 execute : 1189 fonds ont `indice_fundafrica` mais les calculs utilisent `indice_benchmark` (declare)
+
+**GAPS a corriger (TODO) :**
+1. R2 : calcule dans newratios.js mais jamais persiste → ajouter colonnes r2_1an/3an/5an dans performences + sync ClickHouse
+2. Alpha : pas implemente → a ajouter (Alpha = Rp - [Rf + Beta * (Rm - Rf)])
+3. Perf Cat / Vol Cat / Perte Max Cat : calculees on-demand → envisager pre-calcul pour perf
+4. NaN % visible sur screenshot (Difference Cat) : categorie_national null pour certains fonds → verifier data
+5. Perf Indice FundAfrica vs Indice declare : le frontend affiche `indice_benchmark` (declare), pas `indice_fundafrica`
+6. Table `performance_historique` ClickHouse : toujours vide, pas de script de backfill
+7. SQL injection potentielle dans analytics.js (string interpolation dans queries ClickHouse) → a parametriser
 
 ### Prochaine action recommandee
-- B1: Correction indices par categorie (OBLIGATIONS→S&P Sovereign Bond, MONETAIRE→RATE_TO_DEFINE)
-- B2: Routes API referentiel (/api/ref/categories, /api/ref/indices, /api/ref/pays)
+- B3: Frontend affichage indice FundAfrica distinct du benchmark declare
+- B4: Ajouter R2 et Alpha aux calculs de ratios (newratios.js + persistance MySQL + sync ClickHouse)
 - B5: Securisation ttyd Nginx (auth Basic + IP whitelist)
+- B6: Nettoyer 244 VL Nigeria extremes
 - Backfill performance_historique
+- Deployer B2 routes referentiel sur production
 
 ### A ne pas faire
 - Ne pas demarrer les microservices de Phase 6 (gateway, auth-service, etc.)
