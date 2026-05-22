@@ -222,6 +222,11 @@ interface Funds {
         type_investissement: any;
         pays: any;
         meilleursFonds: any;
+        indice_fundafrica: any;
+        indice_fundafrica_id: any;
+        categorie_fundafrica_locale: any;
+        categorie_fundafrica_regionale: any;
+        categorie_fundafrica_globale: any;
 
     };
 }
