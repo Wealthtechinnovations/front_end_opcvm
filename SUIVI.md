@@ -1602,16 +1602,30 @@ Fichiers crees dans front_end_opcvm :
 - CHANGELOG.md, CODE_REVIEW.md, ROADMAP.md, README_DEV.md (4 nouveaux fichiers)
 - CLAUDE.md et SUIVI.md deja existants et a jour
 
+### B3 — Affichage indice FundAfrica distinct du benchmark (complete 2026-05-22)
+
+**API** (`apigestionfonds.js`) : ajout de `indice_fundafrica`, `indice_fundafrica_id`, `categorie_fundafrica_locale`, `categorie_fundafrica_regionale`, `categorie_fundafrica_globale` dans les reponses JSON de `/api/valLiq/:id` et `/api/valLiqdev/:id/:devise`.
+
+**Frontend** (3 pages summary) :
+- `funds/[fondId]/FundView.tsx` : remplacement des placeholders vides par Benchmark declare / Indice FundAfrica / Cat. FundAfrica locale/regionale/globale
+- `funds/summary-eur/[fondId]/FundSubView.tsx` : idem + types TypeScript mis a jour
+- `funds/summary-usd/[fondId]/FundSubView.tsx` : idem
+- Commits : API `38c716a`, frontend `e13eded`
+
+### Classements relances (2026-05-22 ~21:10)
+
+- classementmysql : OK ("finishrank"), 504 Nginx timeout mais batch complete
+- classementeur : OK ("finishrank")
+- classementusd : en cours
+
 ### Prochaine action recommandee
-1. Verifier classementmysql en production : `SELECT COUNT(*) FROM classementfonds;` (attendu > 3227)
-2. Si OK, relancer classementeur puis classementusd
-3. B3: Frontend affichage indice FundAfrica distinct du benchmark declare
-4. B5: Securisation ttyd Nginx (auth Basic + IP whitelist)
-5. B6: Nettoyer 244 VL Nigeria extremes
-6. Backfill performance_historique
+1. Verifier classementusd termine
+2. Deployer API + frontend en production (git pull + pm2 restart + npm run build)
+3. B5: Securisation ttyd Nginx (auth Basic + IP whitelist)
+4. B6: Nettoyer 244 VL Nigeria extremes
+5. Backfill performance_historique
 
 ### A ne pas faire
-- Ne pas relancer classementmysql si batch deja en cours (TRUNCATE puis recalcul)
 - Ne pas demarrer les microservices de Phase 6 (gateway, auth-service, etc.)
 - Ne pas activer worker-scheduler sans desactiver les crons correspondants dans crontab
 - Ne pas faire `pm2 start ecosystem.config.js` sans `--only`
