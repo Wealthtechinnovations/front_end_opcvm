@@ -1360,11 +1360,11 @@ export default function Fond() {
                                                                     <p><strong></strong>&nbsp; </p>
                                                                     <p><strong></strong>&nbsp; </p>
                                                                     <p><strong>Site du régulateur:</strong>: <a href={post?.data?.sitewebregulateur}>{post?.data?.sitewebregulateur}</a></p>
-                                                                    <p><strong>Categorie fundafrica (EUR)</strong> </p>
-                                                                    <p><strong>Indice de réference global fundafrica</strong>: </p>
-                                                                    <p><strong>Indice de réference  local fundafrica</strong>: {post?.data?.ID_indice}</p>
-                                                                    <p><strong>Indice de réference sous régional fundafrica</strong>: </p>
-                                                                    <p><strong>Benchmark</strong>: {post?.data?.indice_benchmark}  </p>
+                                                                    <p><strong>Benchmark declare</strong>: {post?.data?.indice_benchmark || '-'}</p>
+                                                                    <p><strong>Indice FundAfrica</strong>: {post?.data?.indice_fundafrica || '-'}</p>
+                                                                    <p><strong>Cat. FundAfrica locale</strong>: {post?.data?.categorie_fundafrica_locale || '-'}</p>
+                                                                    <p><strong>Cat. FundAfrica regionale</strong>: {post?.data?.categorie_fundafrica_regionale || '-'}</p>
+                                                                    <p><strong>Cat. FundAfrica globale</strong>: {post?.data?.categorie_fundafrica_globale || '-'}</p>
                                                                 </div>
                                                             </div>
                                                         </div>
