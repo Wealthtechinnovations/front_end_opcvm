@@ -1584,15 +1584,34 @@ Enregistre dans app.js ligne 131. Degradation gracieuse si tables ref absentes.
 5. Execute : `TUNISIE_DATA_DIR="/tmp/tunisie_data/TUNISIE VL/final_v183" node scripts/import/import_vl_tunisie_cmf.js --execute --force`
 6. Post-import : `node scripts/recalc/recalc_vl_ajuste.js && node scripts/fix/fix_populate_performances.js --force --pays Tunisie`
 
+### Import Tunisie CMF V1.8.3 — EXECUTE (2026-05-22)
+- 227,998 VL inserees + 61,650 mises a jour
+- 7 nouveaux fonds crees (131 total Tunisie)
+- 1,055 dividendes integres (122 fonds)
+- Recalcul VL ajustees + EUR/USD + performances
+- Correction casse "Tunisie" -> "TUNISIE"
+
+### Fix routes classement — DEPLOYE (2026-05-22 ~20:00)
+- 7 lignes `limit: 500,` parasites dans apigestionsavequotidien.js (commit b6919c0) retirees
+- Fix deploye, PM2 restart OK (4 processes online)
+- curl /api/classementmysql retourne vide (batch en cours, normal pour 1200+ fonds)
+- Verification en attente
+
+### Documentation gouvernance — CREEE (2026-05-22)
+Fichiers crees dans front_end_opcvm :
+- CHANGELOG.md, CODE_REVIEW.md, ROADMAP.md, README_DEV.md (4 nouveaux fichiers)
+- CLAUDE.md et SUIVI.md deja existants et a jour
+
 ### Prochaine action recommandee
-- **TUNISIE** : Deployer et executer import CMF V1.8.3 (voir etapes ci-dessus)
-- B3: Frontend affichage indice FundAfrica distinct du benchmark declare
-- B5: Securisation ttyd Nginx (auth Basic + IP whitelist)
-- B6: Nettoyer 244 VL Nigeria extremes
-- Backfill performance_historique
-- Deployer frontend SUIVI.md sur production
+1. Verifier classementmysql en production : `SELECT COUNT(*) FROM classementfonds;` (attendu > 3227)
+2. Si OK, relancer classementeur puis classementusd
+3. B3: Frontend affichage indice FundAfrica distinct du benchmark declare
+4. B5: Securisation ttyd Nginx (auth Basic + IP whitelist)
+5. B6: Nettoyer 244 VL Nigeria extremes
+6. Backfill performance_historique
 
 ### A ne pas faire
+- Ne pas relancer classementmysql si batch deja en cours (TRUNCATE puis recalcul)
 - Ne pas demarrer les microservices de Phase 6 (gateway, auth-service, etc.)
 - Ne pas activer worker-scheduler sans desactiver les crons correspondants dans crontab
 - Ne pas faire `pm2 start ecosystem.config.js` sans `--only`
