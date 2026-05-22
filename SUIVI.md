@@ -556,15 +556,29 @@
 - [x] Ajouter index composite valorisations(fund_id, date) — inclus dans deploy_all_fixes.sh
 - [ ] Nettoyer tables inutilisees ou orphelines
 
-### TODO FUTUR — Tunisie: reimport VL avec dividendes
-**Priorite: A FAIRE (fichiers fournis par l'utilisateur, 200-220 Mo chacun)**
-- [ ] Recevoir fichiers VL Tunisie avec bonnes VL + dividendes
-- [ ] Analyser structure des fichiers (colonnes, format dates, devises)
-- [ ] Ecraser VL existantes Tunisie avec les nouvelles valeurs corrigees
+### Tunisie: reimport VL CMF V1.8.3 avec dividendes
+**Priorite: EN COURS**
+- [x] Telecharger fichiers VL Tunisie CMF V1.8.3 depuis Google Drive (gdown, 543 Mo)
+- [x] Analyser structure: 203 fonds, 347 090 VL (2011-05-25 → 2026-05-18), 1 055 dividendes
+- [x] Analyser referentiel: 127 fonds actifs (derniere VL >= 2026), 76 fonds historiques fermes
+- [x] Matching fonds CMF → production: 122 matches (exact/partial), 81 non-matches
+- [x] Creer script import: `scripts/import/import_vl_tunisie_cmf.js` — commit `c024913`
+- [ ] Deployer et executer sur production (pull + copie CSV + dry-run + execute)
 - [ ] Recalculer vl_ajuste pour Tunisie apres reimport
 - [ ] Recalculer EUR/USD pour Tunisie
+- [ ] Re-peupler performances + classements Tunisie
 - [ ] Re-peupler rendements Tunisie
-- Note: en attente des instructions et fichiers de l'utilisateur
+- **Donnees source**: CMF Tunisie export final V1.8.3 (2026-05-19)
+  - VL_MASTER: 347 090 VL, 203 fonds, CSV UTF-8-SIG separateur point-virgule
+  - DIVIDENDES: 1 055 dividendes (1 025 avec dates valides, 30 sans date), 122 fonds
+  - REFERENTIEL: 203 fonds avec metadata (SGP, categorie, periodicite, ISIN, affectation)
+  - 29 VL extremes exclues (conservees en audit)
+  - Categories: ACTIONS 111, OBLIGATIONS 66, DIVERSIFIE 26
+  - Periodicite: QUOTIDIENNE 126, HEBDOMADAIRE 77
+  - 127 fonds actifs (derniere VL >= 2026), 76 fonds historiques fermes
+- **Production actuelle**: 124 fonds Tunisie, VL 2022-01-03 → 2024-07-24 (~648 VL/fonds)
+- **Apres import**: 127+ fonds actifs, VL 2011 → 2026-05-18 (~2960 VL/fonds actifs)
+- **Script**: `import_vl_tunisie_cmf.js` (TUNISIE_DATA_DIR configurable, dry-run/execute/force)
 
 ### Panel admin - cockpit administration
 - [ ] Gestion rattachement fonds <-> societes de gestion (admin UI)
@@ -1558,8 +1572,20 @@ Enregistre dans app.js ligne 131. Degradation gracieuse si tables ref absentes.
 - **api_opcv**: commit `a0d6acb`, sync origin
 - **front_end_opcvm**: commit `bf09e4b`, sync origin
 
+### Tunisie CMF V1.8.3 — Import VL + Dividendes (en cours 2026-05-22)
+
+**Analyse complete** : FAIT (les 3 fichiers CSV + base SQLite + README + schema telecharges et analyses)
+**Script import** : `scripts/import/import_vl_tunisie_cmf.js` — commit `c024913`
+**A executer sur production** :
+1. Pull code : `cd /var/www/...api && git pull --rebase origin claude/code-review-improvements-ikvuj`
+2. Installer gdown : `pip3 install gdown`
+3. Telecharger CSV : `gdown --folder "https://drive.google.com/drive/folders/15UvFbjr8VbVJqQ5XWkRuWVHwsh8qkHlx" -O /tmp/tunisie_data/`
+4. Dry-run : `TUNISIE_DATA_DIR="/tmp/tunisie_data/TUNISIE VL/final_v183" node scripts/import/import_vl_tunisie_cmf.js --dry-run`
+5. Execute : `TUNISIE_DATA_DIR="/tmp/tunisie_data/TUNISIE VL/final_v183" node scripts/import/import_vl_tunisie_cmf.js --execute --force`
+6. Post-import : `node scripts/recalc/recalc_vl_ajuste.js && node scripts/fix/fix_populate_performances.js --force --pays Tunisie`
+
 ### Prochaine action recommandee
-- Deployer B2+B4 sur production (pull + migration + restart)
+- **TUNISIE** : Deployer et executer import CMF V1.8.3 (voir etapes ci-dessus)
 - B3: Frontend affichage indice FundAfrica distinct du benchmark declare
 - B5: Securisation ttyd Nginx (auth Basic + IP whitelist)
 - B6: Nettoyer 244 VL Nigeria extremes
