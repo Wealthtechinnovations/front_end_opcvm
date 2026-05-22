@@ -1539,13 +1539,32 @@ Enregistre dans app.js ligne 131. Degradation gracieuse si tables ref absentes.
 6. Table `performance_historique` ClickHouse : toujours vide, pas de script de backfill
 7. SQL injection potentielle dans analytics.js (string interpolation dans queries ClickHouse) → a parametriser
 
+### B4 — R2 et Alpha Jensen (complete 2026-05-22)
+
+**Calcul Alpha Jensen** ajoute dans `apigestionratios.js` pour toutes periodes (1A/3A/5A/8A/10A) :
+- Formule : Alpha = Rp - [Rf + Beta * (Rm - Rf)]
+- Variables deja disponibles : perfAnnualisee, tauxsr, beta, perfAnnualiseeInd
+- Ajoute dans la reponse JSON API (`alphaJensen`)
+- Ajoute dans les fallbacks (valeur '-' quand pas de donnees)
+
+**Persistance R2** : deja calcule par `calculerR2()` mais jamais stocke
+- Ajoute r2 + alphaJensen dans `getRatioDataFields` → MySQL
+- Ajoute r2 + alpha dans ClickHouse insert (`insertIntoClickHouse`)
+- 6 nouvelles colonnes dans modele performence.js : r2_1an/3an/5an, alpha1an/3an/5an
+- Script migration : `scripts/migrations/add_r2_alpha_columns.js` (3 tables)
+- Commits : `a0d6acb`
+
+### Etat Git local (post B4)
+- **api_opcv**: commit `a0d6acb`, sync origin
+- **front_end_opcvm**: commit `bf09e4b`, sync origin
+
 ### Prochaine action recommandee
+- Deployer B2+B4 sur production (pull + migration + restart)
 - B3: Frontend affichage indice FundAfrica distinct du benchmark declare
-- B4: Ajouter R2 et Alpha aux calculs de ratios (newratios.js + persistance MySQL + sync ClickHouse)
 - B5: Securisation ttyd Nginx (auth Basic + IP whitelist)
 - B6: Nettoyer 244 VL Nigeria extremes
 - Backfill performance_historique
-- Deployer B2 routes referentiel sur production
+- Deployer frontend SUIVI.md sur production
 
 ### A ne pas faire
 - Ne pas demarrer les microservices de Phase 6 (gateway, auth-service, etc.)
