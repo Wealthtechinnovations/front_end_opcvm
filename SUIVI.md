@@ -1630,10 +1630,25 @@ Fichiers crees dans front_end_opcvm :
 - `sync_production.sh` : suppression credentials DB hardcodes, remplaces par sourcing .env
 - `cron_daily_update.sh` + `cron_nigeria_weekly.sh` : ajout `set -e`
 
-**LOT C (fix NaN className frontend)** : FAIT — commit `f8ae92e` (pousse)
-- `performance/[fondId]/page.tsx` : ajout helpers `perfColorClass`/`diffColorClass`
-- Correction de ~40 cellules de performance qui affichaient vert (text-success) pour des donnees manquantes
+**LOT C (fix NaN className frontend)** : FAIT — commits `f8ae92e` + `8ab9da3` (pousses)
+- `performance/[fondId]/page.tsx` : ajout helpers `perfColorClass`/`diffColorClass` (~40 cellules)
+- `[fondId]/FundView.tsx` : 29 patterns fixes
+- `summary-eur/FundSubView.tsx` : 29 patterns fixes
+- `summary-usd/FundSubView.tsx` : 29 patterns fixes
+- `portfolio/FundSubView.tsx` : 20 patterns fixes
+- Total : 147 patterns coriges dans 5 fichiers
 - Build OK (0 erreurs)
+
+**LOT D (elimination eval() RCE)** : FAIT — commit `1187ccb` (pousse)
+- `routes_vl.js` : 144 appels eval() elimines → remplaces par parseFloat() comparisons
+- Vulnerabilite RCE critique : req.body.formData.value injecte directement dans eval()
+- eval(key) variable lookup → remplacement par objet fieldValues
+
+**LOT E (securite supplementaire API)** : FAIT — commits `2f320b5` + `8834c14` (pousses)
+- `apigestionsavequotidien.js` : parametrisation ClickHouse SELECT dans calculateRank/calculateRankregional
+- `cron_health_check.sh` : nouveau script cron monitoring quotidien (22h)
+- `app.js` : rate limiting strict auth routes (10 req/15min) sur login/password
+- 13 fichiers routes : ajout multer fileSize limit 5MB (etait illimite)
 
 **Diagnostic data staleness (au 2026-06-01)** :
 | Pays | Derniere VL | Retard | Automatisation |
@@ -1653,13 +1668,30 @@ Fichiers crees dans front_end_opcvm :
 - UEMOA : MANQUE — import_vl_uemoa.js existe mais necessite XLSX telecharge manuellement (BRVM)
 - CEMAC : MANQUE — aucun script d'import, aucune source de donnees identifiee
 
+### Etat Git local (post session 2026-06-01)
+- **api_opcv**: commit `8834c14`, branche `claude/code-review-improvements-ikvuj`, sync origin
+- **front_end_opcvm**: commit `8ab9da3` + docs update en cours, branche `claude/code-review-improvements-ikvuj`
+
 ### Prochaine action recommandee
-1. **Deployer API + frontend** en production (git pull + pm2 restart + npm run build)
-2. B5: Securisation ttyd Nginx (auth Basic + IP whitelist)
-3. B6: Nettoyer 244 VL Nigeria extremes
-4. Backfill performance_historique ClickHouse
-5. Investiguer sources CMF Tunisie (scraper web possible?) et BRVM UEMOA pour automatisation
-6. Identifier source COSUMAF pour CEMAC
+1. **PRIORITE 1 — Deployer API en production** :
+   ```bash
+   cd /var/www/.../api && git pull --rebase origin claude/code-review-improvements-ikvuj && pm2 restart api-monolith
+   ```
+   Corrections deployes : eval() RCE, SQL injection, rate limiting, multer limits
+2. **PRIORITE 2 — Deployer frontend en production** :
+   ```bash
+   cd /var/www/.../frontend && git pull --rebase origin claude/code-review-improvements-ikvuj && npm run build && pm2 restart fundafrique-frontend
+   ```
+   Corrections deployes : NaN className (147 cellules), TypeScript types
+3. **PRIORITE 3 — Ajouter cron_health_check.sh** dans crontab production :
+   ```
+   0 22 * * * /var/www/.../api/scripts/cron/cron_health_check.sh >> /var/log/africafunds_health.log 2>&1
+   ```
+4. B5: Securisation ttyd Nginx (auth Basic + IP whitelist)
+5. B6: Nettoyer 244 VL Nigeria extremes
+6. Backfill performance_historique ClickHouse
+7. Investiguer sources CMF Tunisie (scraper web possible?) et BRVM UEMOA pour automatisation
+8. Identifier source COSUMAF pour CEMAC
 
 ### A ne pas faire
 - Ne pas demarrer les microservices de Phase 6 (gateway, auth-service, etc.)

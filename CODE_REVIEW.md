@@ -64,3 +64,24 @@
 - Fichier: services/gateway/index.js + serviceRegistry.js
 - Probleme: Architecture microservices preparee mais non utilisee en production (monolithe actif)
 - Recommandation: Documenter comme roadmap, ne pas activer sans migration complete
+
+### 12. ~~eval() RCE dans routes_vl.js~~ — CORRIGE (2026-06-01)
+- 144 appels eval() avec donnees utilisateur (req.body.formData.value)
+- Remplacement par parseFloat() comparisons et objet fieldValues
+- Commit: `1187ccb` (api_opcv)
+
+### 13. ~~Multer sans limite de taille~~ — CORRIGE (2026-06-01)
+- 13 fichiers routes avec `multer({ dest: 'uploads/' })` sans fileSize limit
+- Ajout `limits: { fileSize: 5 * 1024 * 1024 }` (5MB)
+- Commit: `8834c14` (api_opcv)
+
+### 14. ~~Rate limiting insuffisant sur auth~~ — CORRIGE (2026-06-01)
+- Routes login/password avaient seulement le rate limit global (200/15min)
+- Ajout rate limit strict 10 req/15min sur /api/login, /api/userlogin, /api/forgot-password, /api/reset-password
+- Commit: `8834c14` (api_opcv)
+
+### 15. ClickHouse queries non parametrees dans apigestionsavequotidien.js (batch routes)
+- INSERT INTO et ALTER TABLE UPDATE avec interpolation directe
+- Risque: FAIBLE (donnees viennent de MySQL, pas d'input utilisateur)
+- Recommandation: Refactorer vers client.insert() pour les INSERT (effort moyen)
+- Les SELECT ont ete parametres (commit `2f320b5`)

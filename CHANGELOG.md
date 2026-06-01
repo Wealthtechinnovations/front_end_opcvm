@@ -8,9 +8,20 @@
 - Ajout `set -e` dans cron_daily_update.sh et cron_nigeria_weekly.sh
 - Fix .toJSON() sur objets ClickHouse dans apigestionquartile.js
 
+### Securite critique (API)
+- Elimination 144 eval() RCE dans routes_vl.js (filtres fonds avec user input)
+- Rate limiting strict 10/15min sur routes auth (login, password)
+- Multer file size limit 5MB sur 13 routes upload (etait illimite)
+- Parametrisation ClickHouse SELECT dans batch classement
+
 ### Frontend
-- Fix NaN className dans performance page : cellules manquantes n'affichent plus vert
-- Helpers perfColorClass/diffColorClass (40+ cellules corrigees)
+- Fix NaN className dans 5 pages : 147 cellules performance corrigees
+  (performance, summary local/EUR/USD, portfolio)
+- Helpers perfColorClass/diffColorClass pour page performance
+- isNaN guard automatise pour toutes les autres pages
+
+### Monitoring
+- Nouveau cron_health_check.sh (quotidien 22h)
 
 ### Diagnostic
 - Audit complet automatisation data : MAROC+NIGERIA OK, Tunisie/UEMOA/CEMAC manuels
