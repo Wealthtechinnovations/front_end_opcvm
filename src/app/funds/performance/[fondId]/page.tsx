@@ -50,6 +50,16 @@ interface PerformancesState {
   monthlyPerformance: { [key: string]: number };
   annualPerformance: { [key: string]: number };
 }
+function perfColorClass(val: any): string {
+  const n = parseFloat(val);
+  return isNaN(n) ? '' : n < 0 ? 'text-danger' : 'text-success';
+}
+
+function diffColorClass(a: any, b: any): string {
+  const diff = parseFloat(a) - parseFloat(b);
+  return isNaN(diff) ? '' : diff < 0 ? 'text-danger' : 'text-success';
+}
+
 export default function Performance() {
   const params = useParams();
   const [showDescription, setShowDescription] = useState(false);
@@ -605,127 +615,127 @@ borderColor:'grey'
                                             <tbody>
                                               <tr className="text-center">
                                                 <td className="text-left">Fonds</td>
-                                                <td className={`text-center  ${parseFloat(post?.data?.performances?.data?.perfVeille) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(post?.data?.performances?.data?.perfVeille)) ? '-' : parseFloat(post?.data?.performances?.data?.perfVeille).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf4Semaines) < 0 ? 'text-danger' : 'text-success'}  `}>{isNaN(parseFloat(post?.data?.performances?.data?.perf4Semaines)) ? '-' : parseFloat(post?.data?.performances?.data?.perf4Semaines).toFixed(2)}%</td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf3Mois) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(post?.data?.performances?.data?.perf3Mois)) ? '-' : parseFloat(post?.data?.performances?.data?.perf3Mois).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf6Mois) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(post?.data?.performances?.data?.perf6Mois)) ? '-' : parseFloat(post?.data?.performances?.data?.perf6Mois).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf4Semaines) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(post?.data?.performances?.data?.perf4Semaines)) ? '-' : parseFloat(post?.data?.performances?.data?.perf4Semaines).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf1An) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(post?.data?.performances?.data?.perf1An)) ? '-' : parseFloat(post?.data?.performances?.data?.perf1An).toFixed(2)}%</td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf3Ans) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(post?.data?.performances?.data?.perf3Ans)) ? '-' : parseFloat(post?.data?.performances?.data?.perf3Ans).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf5Ans) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(post?.data?.performances?.data?.perf5Ans)) ? '-' : parseFloat(post?.data?.performances?.data?.perf5Ans).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf8Ans) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(post?.data?.performances?.data?.perf8Ans)) ? '-' : parseFloat(post?.data?.performances?.data?.perf8Ans).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf10Ans) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(post?.data?.performances?.data?.perf10Ans)) ? '-' : parseFloat(post?.data?.performances?.data?.perf10Ans).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances?.data?.perfVeille)}`}>{isNaN(parseFloat(post?.data?.performances?.data?.perfVeille)) ? '-' : parseFloat(post?.data?.performances?.data?.perfVeille).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances?.data?.perf4Semaines)}`}>{isNaN(parseFloat(post?.data?.performances?.data?.perf4Semaines)) ? '-' : parseFloat(post?.data?.performances?.data?.perf4Semaines).toFixed(2)}%</td>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances?.data?.perf3Mois)}`}>{isNaN(parseFloat(post?.data?.performances?.data?.perf3Mois)) ? '-' : parseFloat(post?.data?.performances?.data?.perf3Mois).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances?.data?.perf6Mois)}`}>{isNaN(parseFloat(post?.data?.performances?.data?.perf6Mois)) ? '-' : parseFloat(post?.data?.performances?.data?.perf6Mois).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances?.data?.perf4Semaines)}`}>{isNaN(parseFloat(post?.data?.performances?.data?.perf4Semaines)) ? '-' : parseFloat(post?.data?.performances?.data?.perf4Semaines).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances?.data?.perf1An)}`}>{isNaN(parseFloat(post?.data?.performances?.data?.perf1An)) ? '-' : parseFloat(post?.data?.performances?.data?.perf1An).toFixed(2)}%</td>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances?.data?.perf3Ans)}`}>{isNaN(parseFloat(post?.data?.performances?.data?.perf3Ans)) ? '-' : parseFloat(post?.data?.performances?.data?.perf3Ans).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances?.data?.perf5Ans)}`}>{isNaN(parseFloat(post?.data?.performances?.data?.perf5Ans)) ? '-' : parseFloat(post?.data?.performances?.data?.perf5Ans).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances?.data?.perf8Ans)}`}>{isNaN(parseFloat(post?.data?.performances?.data?.perf8Ans)) ? '-' : parseFloat(post?.data?.performances?.data?.perf8Ans).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances?.data?.perf10Ans)}`}>{isNaN(parseFloat(post?.data?.performances?.data?.perf10Ans)) ? '-' : parseFloat(post?.data?.performances?.data?.perf10Ans).toFixed(2)} %</td>
                                               </tr>
                                               <tr className="text-center">
                                                 <td className="text-left">Catégorie</td>
-                                                <td className={`text-center ${post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perfveille && parseFloat(post?.data?.performances.data?.performancesCategorie[0].moyenne_perfveille) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perfveille)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perfveille)) ? '-' : parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perfveille).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf4s && parseFloat(post?.data?.performances.data?.performancesCategorie[0].moyenne_perf4s) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf4s)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf4s)) || isNaN(parseFloat(post?.data?.performances?.data?.perf4Semaines)) ? '-' : parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf4s).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf3m && parseFloat(post?.data?.performances.data?.performancesCategorie[0].moyenne_perf3m) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf3m)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_ytd)) || isNaN(parseFloat(post?.data?.performances?.data?.perf1erJanvier)) ? '-' : parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf3m).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf6m && parseFloat(post?.data?.performances.data?.performancesCategorie[0].moyenne_perf6m) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf6m)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_ytd)) || isNaN(parseFloat(post?.data?.performances?.data?.perf1erJanvier)) ? '-' : parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf6m).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${post?.data?.performances.data?.performancesCategorie[0]?.moyenne_ytd && parseFloat(post?.data?.performances.data?.performancesCategorie[0].moyenne_ytd) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_ytd)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_ytd)) || isNaN(parseFloat(post?.data?.performances?.data?.perf1erJanvier)) ? '-' : parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_ytd).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf1an && parseFloat(post?.data?.performances.data?.performancesCategorie[0].moyenne_perf1an) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf1an)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_ytd)) || isNaN(parseFloat(post?.data?.performances?.data?.perf1erJanvier)) ? '-' : parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf1an).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf3ans && parseFloat(post?.data?.performances.data?.performancesCategorie[0].moyenne_perf3ans) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf3ans)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_ytd)) || isNaN(parseFloat(post?.data?.performances?.data?.perf1erJanvier)) ? '-' : parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf3ans).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf5ans && parseFloat(post?.data?.performances.data?.performancesCategorie[0].moyenne_perf5ans) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf5ans)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_ytd)) || isNaN(parseFloat(post?.data?.performances?.data?.perf1erJanvier)) ? '-' : parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf5ans).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf8ans && parseFloat(post?.data?.performances.data?.performancesCategorie[0].moyenne_perf8ans) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf8ans)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_ytd)) || isNaN(parseFloat(post?.data?.performances?.data?.perf1erJanvier)) ? '-' : parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf8ans).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf10ans && parseFloat(post?.data?.performances.data?.performancesCategorie[0].moyenne_perf10ans) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${perfColorClass(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf10ans)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_ytd)) || isNaN(parseFloat(post?.data?.performances?.data?.perf1erJanvier)) ? '-' : parseFloat(post?.data?.performances.data?.performancesCategorie[0]?.moyenne_perf10ans).toFixed(2)} %
                                                 </td>
                                               </tr>
                                               <tr className="text-center">
                                                 <td className="text-left">Différence</td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perfVeille) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perfveille) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perfVeille, post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perfveille)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perfVeille) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perfveille)) ? '-' : (parseFloat(post?.data?.performances?.data?.perfVeille) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perfveille)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf4Semaines) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf4s) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf4Semaines, post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf4s)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf4Semaines) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf4s)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf4Semaines) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf4s)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf3Mois) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf3m) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf3Mois, post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf3m)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf3Mois) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf3m)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf3Mois) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf3m)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf6Mois) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf6m) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf6Mois, post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf6m)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf6Mois) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf6m)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf6Mois) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf6m)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf1erJanvier) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_ytd) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf1erJanvier, post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_ytd)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf1erJanvier) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_ytd)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf1erJanvier) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_ytd)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf1An) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf1an) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf1An, post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf1an)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf1An) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf1an)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf1An) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf1an)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf3Ans) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf3ans) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf3Ans, post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf3ans)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf3Ans) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf3ans)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf3Ans) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf3ans)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf5Ans) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf5ans) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf5Ans, post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf5ans)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf5Ans) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf5ans)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf5Ans) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf5ans)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf8Ans) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf8ans) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf8Ans, post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf8ans)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf8Ans) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf8ans)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf8Ans) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf8ans)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf10Ans) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf10ans) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf10Ans, post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf10ans)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf10Ans) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf10ans)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf10Ans) - parseFloat(post?.data?.performances?.data?.performancesCategorie[0]?.moyenne_perf10ans)).toFixed(2)} %
                                                 </td>
                                               </tr>
 
                                               <tr className="text-center">
                                                 <td className="text-left">Indice*</td>
-                                                <td className={`text-center ${parseFloat(posti?.data?.perfVeille) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(posti?.data?.perfVeille)) ? '-' : parseFloat(posti?.data?.perfVeille).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(posti?.data?.perf4Semaines) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(posti?.data?.perf4Semaines)) ? '-' : parseFloat(posti?.data?.perf4Semaines).toFixed(2)}%</td>
-                                                <td className={`text-center ${parseFloat(posti?.data?.perf3Mois) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(posti?.data?.perf3Mois)) ? '-' : parseFloat(posti?.data?.perf3Mois).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(posti?.data?.perf6Mois) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(posti?.data?.perf6Mois)) ? '-' : parseFloat(posti?.data?.perf6Mois).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(posti?.data?.perf4Semaines) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(posti?.data?.perf4Semaines)) ? '-' : parseFloat(posti?.data?.perf4Semaines).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(posti?.data?.perf1An) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(posti?.data?.perf1An)) ? '-' : parseFloat(posti?.data?.perf1An).toFixed(2)}%</td>
-                                                <td className={`text-center ${parseFloat(posti?.data?.perf3Ans) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(posti?.data?.perf3Ans)) ? '-' : parseFloat(posti?.data?.perf3Ans).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(posti?.data?.perf5Ans) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(posti?.data?.perf5Ans)) ? '-' : parseFloat(posti?.data?.perf5Ans).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(posti?.data?.perf8Ans) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(posti?.data?.perf8Ans)) ? '-' : parseFloat(posti?.data?.perf8Ans).toFixed(2)} %</td>
-                                                <td className={`text-center ${parseFloat(posti?.data?.perf10Ans) < 0 ? 'text-danger' : 'text-success'} `}>{isNaN(parseFloat(posti?.data?.perf10Ans)) ? '-' : parseFloat(posti?.data?.perf10Ans).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(posti?.data?.perfVeille)}`}>{isNaN(parseFloat(posti?.data?.perfVeille)) ? '-' : parseFloat(posti?.data?.perfVeille).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(posti?.data?.perf4Semaines)}`}>{isNaN(parseFloat(posti?.data?.perf4Semaines)) ? '-' : parseFloat(posti?.data?.perf4Semaines).toFixed(2)}%</td>
+                                                <td className={`text-center ${perfColorClass(posti?.data?.perf3Mois)}`}>{isNaN(parseFloat(posti?.data?.perf3Mois)) ? '-' : parseFloat(posti?.data?.perf3Mois).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(posti?.data?.perf6Mois)}`}>{isNaN(parseFloat(posti?.data?.perf6Mois)) ? '-' : parseFloat(posti?.data?.perf6Mois).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(posti?.data?.perf4Semaines)}`}>{isNaN(parseFloat(posti?.data?.perf4Semaines)) ? '-' : parseFloat(posti?.data?.perf4Semaines).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(posti?.data?.perf1An)}`}>{isNaN(parseFloat(posti?.data?.perf1An)) ? '-' : parseFloat(posti?.data?.perf1An).toFixed(2)}%</td>
+                                                <td className={`text-center ${perfColorClass(posti?.data?.perf3Ans)}`}>{isNaN(parseFloat(posti?.data?.perf3Ans)) ? '-' : parseFloat(posti?.data?.perf3Ans).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(posti?.data?.perf5Ans)}`}>{isNaN(parseFloat(posti?.data?.perf5Ans)) ? '-' : parseFloat(posti?.data?.perf5Ans).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(posti?.data?.perf8Ans)}`}>{isNaN(parseFloat(posti?.data?.perf8Ans)) ? '-' : parseFloat(posti?.data?.perf8Ans).toFixed(2)} %</td>
+                                                <td className={`text-center ${perfColorClass(posti?.data?.perf10Ans)}`}>{isNaN(parseFloat(posti?.data?.perf10Ans)) ? '-' : parseFloat(posti?.data?.perf10Ans).toFixed(2)} %</td>
                                               </tr>
                                               <tr className="text-center">
                                                 <td className="text-left">Différence</td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perfVeille) - parseFloat(posti?.data?.perfVeille) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perfVeille, posti?.data?.perfVeille)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perfVeille) - parseFloat(posti?.data?.perfVeille)) ? '-' : (parseFloat(post?.data?.performances?.data?.perfVeille) - parseFloat(posti?.data?.perfVeille)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf4Semaines) - parseFloat(posti?.data?.perf4Semaines) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf4Semaines, posti?.data?.perf4Semaines)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf4Semaines) - parseFloat(posti?.data?.perf4Semaines)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf4Semaines) - parseFloat(posti?.data?.perf4Semaines)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf3Mois) - parseFloat(posti?.data?.perf3Mois) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf3Mois, posti?.data?.perf3Mois)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf3Mois) - parseFloat(posti?.data?.perf3Mois)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf3Mois) - parseFloat(posti?.data?.perf3Mois)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf6Mois) - parseFloat(posti?.data?.perf6Mois) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf6Mois, posti?.data?.perf6Mois)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf6Mois) - parseFloat(posti?.data?.perf6Mois)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf6Mois) - parseFloat(posti?.data?.perf6Mois)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf1erJanvier) - parseFloat(posti?.data?.perf1erJanvier) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf1erJanvier, posti?.data?.perf1erJanvier)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf1erJanvier) - parseFloat(posti?.data?.perf1erJanvier)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf1erJanvier) - parseFloat(posti?.data?.perf1erJanvier)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf1An) - parseFloat(posti?.data?.perf1An) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf1An, posti?.data?.perf1An)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf1An) - parseFloat(posti?.data?.perf1An)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf1An) - parseFloat(posti?.data?.perf1An)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf3Ans) - parseFloat(posti?.data?.perf3Ans) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf3Ans, posti?.data?.perf3Ans)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf3Ans) - parseFloat(posti?.data?.perf3Ans)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf3Ans) - parseFloat(posti?.data?.perf3Ans)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf5Ans) - parseFloat(posti?.data?.perf5Ans) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf5Ans, posti?.data?.perf5Ans)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf5Ans) - parseFloat(posti?.data?.perf5Ans)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf5Ans) - parseFloat(posti?.data?.perf5Ans)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf8Ans) - parseFloat(posti?.data?.perf8Ans) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf8Ans, posti?.data?.perf8Ans)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf8Ans) - parseFloat(posti?.data?.perf8Ans)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf8Ans) - parseFloat(posti?.data?.perf8Ans)).toFixed(2)} %
                                                 </td>
-                                                <td className={`text-center ${parseFloat(post?.data?.performances?.data?.perf10Ans) - parseFloat(posti?.data?.perf10Ans) < 0 ? 'text-danger' : 'text-success'}`}>
+                                                <td className={`text-center ${diffColorClass(post?.data?.performances?.data?.perf10Ans, posti?.data?.perf10Ans)}`}>
                                                   {isNaN(parseFloat(post?.data?.performances?.data?.perf10Ans) - parseFloat(posti?.data?.perf10Ans)) ? '-' : (parseFloat(post?.data?.performances?.data?.perf10Ans) - parseFloat(posti?.data?.perf10Ans)).toFixed(2)} %
                                                 </td>
                                               </tr>
