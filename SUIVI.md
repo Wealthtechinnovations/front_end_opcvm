@@ -1618,12 +1618,48 @@ Fichiers crees dans front_end_opcvm :
 - classementeur : OK ("finishrank")
 - classementusd : en cours
 
+### Session 2026-06-01 — Audit complet + corrections securite + NaN fix
+
+**LOT A (diagnostic complet)** : FAIT
+- Audit complet de l'application (crons, data collection, API routes, frontend)
+- Identification de tous les problemes classes par severite
+
+**LOT B (corrections securite API)** : FAIT — commit `acb09b8` (pousse)
+- `analytics.js` : parametrisation ClickHouse queries pour routes classement-historique (SQL injection fixee)
+- `apigestionquartile.js` : suppression .toJSON() sur objets ClickHouse plain
+- `sync_production.sh` : suppression credentials DB hardcodes, remplaces par sourcing .env
+- `cron_daily_update.sh` + `cron_nigeria_weekly.sh` : ajout `set -e`
+
+**LOT C (fix NaN className frontend)** : FAIT — commit `f8ae92e` (pousse)
+- `performance/[fondId]/page.tsx` : ajout helpers `perfColorClass`/`diffColorClass`
+- Correction de ~40 cellules de performance qui affichaient vert (text-success) pour des donnees manquantes
+- Build OK (0 erreurs)
+
+**Diagnostic data staleness (au 2026-06-01)** :
+| Pays | Derniere VL | Retard | Automatisation |
+|------|-------------|--------|----------------|
+| MAROC | 2026-05-25 | 7j | Cron quotidien (ASFIM scraper) |
+| TUNISIE | 2026-05-18 | 14j | Script import existe, PAS de cron (CMF CSV manuel) |
+| NIGERIA | 2026-05-08 | 24j | Cron hebdo (SEC Python extractor) |
+| UEMOA | 2025-10-15 | 229j | Script import existe, PAS de cron (BRVM XLSX manuel) |
+| CEMAC | 2024-12-12 | 537j | AUCUN script, AUCUNE source identifiee |
+
+**Diagnostic automatisation crons** :
+- MAROC : OK (cron_daily_update.sh, quotidien 20h, ASFIM API)
+- NIGERIA : OK (cron_nigeria_weekly.sh, lundi 10h, SEC Excel)
+- Forex : OK (scrape_forex_import.js, quotidien dans cron_daily_update.sh)
+- EUR/USD recalc : OK (cron_daily_eur_usd.sh, quotidien 21h30)
+- TUNISIE : MANQUE — import_vl_tunisie_cmf.js existe mais necessite CSV telecharges manuellement (CMF n'a pas d'API publique)
+- UEMOA : MANQUE — import_vl_uemoa.js existe mais necessite XLSX telecharge manuellement (BRVM)
+- CEMAC : MANQUE — aucun script d'import, aucune source de donnees identifiee
+
 ### Prochaine action recommandee
-1. Verifier classementusd termine
-2. Deployer API + frontend en production (git pull + pm2 restart + npm run build)
-3. B5: Securisation ttyd Nginx (auth Basic + IP whitelist)
-4. B6: Nettoyer 244 VL Nigeria extremes
-5. Backfill performance_historique
+1. **Deployer API + frontend** en production (git pull + pm2 restart + npm run build)
+2. B5: Securisation ttyd Nginx (auth Basic + IP whitelist)
+3. B6: Nettoyer 244 VL Nigeria extremes
+4. Backfill performance_historique ClickHouse
+5. Investiguer sources CMF Tunisie (scraper web possible?) et BRVM UEMOA pour automatisation
+6. Identifier source COSUMAF pour CEMAC
 
 ### A ne pas faire
 - Ne pas demarrer les microservices de Phase 6 (gateway, auth-service, etc.)

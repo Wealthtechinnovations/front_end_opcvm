@@ -1,5 +1,21 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
+## [2026-06-01] Audit securite + corrections frontend
+
+### Securite (API)
+- Fix injection SQL dans analytics.js : routes classement-historique parametrees (ClickHouse)
+- Fix credentials hardcodes dans sync_production.sh : remplaces par sourcing .env
+- Ajout `set -e` dans cron_daily_update.sh et cron_nigeria_weekly.sh
+- Fix .toJSON() sur objets ClickHouse dans apigestionquartile.js
+
+### Frontend
+- Fix NaN className dans performance page : cellules manquantes n'affichent plus vert
+- Helpers perfColorClass/diffColorClass (40+ cellules corrigees)
+
+### Diagnostic
+- Audit complet automatisation data : MAROC+NIGERIA OK, Tunisie/UEMOA/CEMAC manuels
+- Identification staleness : UEMOA 229j, CEMAC 537j
+
 ## [2026-05-22] Import Tunisie CMF V1.8.3
 - Import 227,998 VL + 61,650 mises a jour pour 131 fonds Tunisie
 - Creation de 7 nouveaux fonds (SICAV CAPITALISATION PLUS, AFC AMANETT SICAV, FCP CEA BMCE CAPITAL VALUE, FCP BNA CEA, ATTIJARI PREMIUM SICAV, STRATEGIE HIGH YIELD SICAV, FCP VALEURS MONETAIRE)

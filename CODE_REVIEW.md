@@ -2,12 +2,11 @@
 
 ## Risques critiques
 
-### 1. Injection SQL dans analytics.js
+### 1. ~~Injection SQL dans analytics.js~~ — CORRIGE (2026-06-01)
 - Fichier: src/routes/analytics.js
-- Probleme: Interpolation directe de parametres dans les requetes ClickHouse
-- Impact: Injection SQL potentielle
-- Priorite: HAUTE
-- Recommandation: Utiliser des requetes parametrees
+- Probleme: Interpolation directe de parametres dans les requetes ClickHouse (classement-historique routes)
+- Correction: Whitelist validation pour devise/date + requetes parametrees ClickHouse ({paramName:Type} + query_params)
+- Commit: `acb09b8` (api_opcv)
 
 ### 2. Pas d'index UNIQUE sur valorisations(fund_id, date)
 - Table: valorisations
@@ -37,13 +36,29 @@
 - Probleme: Table creee mais jamais peuplee
 - Recommandation: Implementer le backfill depuis MySQL
 
-### 7. 11 fonds sans classification
-- Probleme: 11 fonds avec categorie_national = NULL
-- Recommandation: Identifier et corriger manuellement
+### 7. ~~11 fonds sans classification~~ — CORRIGE (2026-05-21)
+- Correction: Tous les 1196 fonds classes (100% coverage)
+- Voir tache A1 dans SUIVI.md
 
-### 8. NaN dans affichage performances
-- Probleme: Certaines performances affichent NaN% sur le frontend
-- Recommandation: Ajouter validation cote API et optional chaining cote frontend
+### 8. ~~NaN dans affichage performances~~ — CORRIGE (2026-06-01)
+- Fichier: src/app/funds/performance/[fondId]/page.tsx
+- Probleme: parseFloat(undefined) < 0 retourne false → cellules vides affichees en vert (text-success)
+- Correction: Helpers `perfColorClass`/`diffColorClass` qui retournent '' pour NaN
+- Commit: `f8ae92e` (front_end_opcvm)
+
+### 10. Credentials hardcodes dans sync_production.sh — CORRIGE (2026-06-01)
+- Fichier: scripts/deploy/sync_production.sh
+- Probleme: Mot de passe DB en clair dans le script
+- Correction: Remplacement par `source .env` + variables avec fallback
+- Commit: `acb09b8` (api_opcv)
+
+### 11. Manque d'automatisation data pour Tunisie, UEMOA, CEMAC
+- TUNISIE: Script import existe (import_vl_tunisie_cmf.js) mais pas de scraper CMF automatise
+- UEMOA: Script import existe (import_vl_uemoa.js) mais pas de scraper BRVM automatise
+- CEMAC: Aucun script, aucune source identifiee (COSUMAF)
+- Priorite: HAUTE
+- Impact: Donnees UEMOA stales 229 jours, CEMAC 537 jours
+- Recommandation: Investiguer APIs/sites regulateurs pour automatisation
 
 ### 9. Gateway microservices non active
 - Fichier: services/gateway/index.js + serviceRegistry.js
