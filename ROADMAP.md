@@ -51,9 +51,10 @@ Plateforme de reference pour les OPCVM africains : donnees VL, performances, cla
 
 ## En cours
 
-### Deploiement securite + CMF Tunisie (PRIORITE HAUTE)
+### Deploiement securite + CMF Tunisie + Forex TND (PRIORITE HAUTE)
 - Commits securite + CMF scraper pushes, a deployer sur production
 - 14 jours de VL Tunisie manquantes a rattraper (2026-05-19 → 2026-06-01)
+- Fix forex EUR/TND (ECB fallback + cross-rate derivation): code pousse, a deployer + executer backfill
 
 ### Priorite B restante
 - B5 : Securisation ttyd (auth Basic + IP whitelist)

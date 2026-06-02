@@ -46,6 +46,8 @@ npm run build && pm2 restart fundafrique-frontend
 - fix_tsr_per_country.js : TSR par pays
 - import_vl_tunisie_cmf.js : Import VL Tunisie CMF (batch CSV, manuel)
 - import_vl_nigeria_sec.js : Import VL Nigeria SEC (batch, manuel)
+- scrape_forex_import.js : Import forex 20+ paires (Yahoo Finance + ECB fallback + cross-rate derivation)
+- check_forex_tnd.js : Diagnostic EUR/TND data quality (read-only)
 
 ## Scrapers automatises
 - cmf_tunisie_daily.py : Scraper CMF Tunisie quotidien (Python)

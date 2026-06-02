@@ -1417,86 +1417,79 @@ Corrections deployees (commits pushes, a deployer sur production):
 
 **Statut**: DEPLOYE EN PRODUCTION (2026-06-02).
 
+### LOT T4 — Fix forex EUR/TND data quality (2026-06-02)
+
+**Probleme identifie**: Table `devisedechanges` contient 5,959 entries EUR/TND mais seule 1 avec value>0. Yahoo Finance ne retourne pas de donnees TND valides. Impact: toutes les conversions EUR pour fonds tunisiens utilisent un seul point de donnee.
+
+**Fix applique** (commit `97a5f22`):
+1. ECB Data API comme fallback pour EUR/* quand Yahoo retourne <100 entries valides
+2. Cross-rate derivation: USD/X = EUR/X / EUR/USD pour paires avec donnees insuffisantes
+3. UPDATE retroactif des entrees value=0 existantes
+4. Script diagnostic read-only: `scripts/diag/check_forex_tnd.js`
+
+**Note**: ECB n'a pas TND/MAD/NGN — la derivation cross-rate est la solution principale.
+
+**Fichiers modifies**: `scripts/import/scrape_forex_import.js`, `scripts/diag/check_forex_tnd.js` (nouveau)
+**Statut**: Code pousse, a deployer et executer sur production.
+**Documentation mise a jour**: CHANGELOG.md, CODE_REVIEW.md (#16), ROADMAP.md, README_DEV.md
+
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-02 : Production DEPLOYE et CMF import EXECUTE avec succes. 1,259 VL Tunisie importees.
+Session 2026-06-02 : Production deploye (2x). CMF import OK (1,259 VL). Forex fix ECB+cross-rate pousse.
 
 ### Dernier lot termine
-LOT T3 — Deploiement production confirme + CMF Tunisie import production OK
+LOT T4 — Fix forex EUR/TND: ajout ECB fallback + cross-rate derivation + cleanup value=0
 
-### Deploiement production confirme (2026-06-02)
-- API deploye: commit `0c59730` → securite + CMF scraper + TRUNCATE fix
-- Frontend deploye: commit `2b4d90c` → NaN fix + docs, build 0 erreur
-- Python deps installees (rapidfuzz, pymysql, openpyxl, xlrd, beautifulsoup4)
-- PM2 restart OK (api-monolith + fundafrique-frontend + workers)
-- CMF dry-run: 1,269 NAV parsees, 127/127 fonds matches, 0 erreurs
-- CMF production import: **1,259 VL inserees**, 10 doublons ignores, 0 erreurs
-  - Dates importees: 2026-05-13, 2026-05-19 a 2026-06-02 (10 fichiers)
-  - Matching: 125 EXACT, 1 PARTIAL, 1 FUZZY, 0 extreme variations
-  - Tables audit creees: cmf_import_audit, cmf_extreme_variations, cmf_new_funds_queue
-- Verification API: /api/valLiq/866 HTTP 200, /api/ref/pays HTTP 200 (29 pays)
-- Fix deploy script: /api/pays → /api/ref/pays (commit `6156414`)
-
-### Investigations post-deploiement
-- **EUR/TND taux**: OK — 5,959 entrees EUR/TND + 6,282 USD/TND dans devisedechanges (2003-2026-05-29)
-- **Route /api/pays**: N'EXISTE PAS — route correcte = `/api/ref/pays` (corrige dans deploy script)
-- **Fund 2425 (SICAV AMEN, TUNISIE)**: VL confirmee a 62.885 au 2026-05-29, performances calculees (YTD 2.84%)
-- **Gap taux de change**: Rates s'arretent au 2026-05-29 — VL du 30 mai au 2 juin utilisent taux le plus proche (fallback OK)
+### Probleme identifie et corrige (LOT T4)
+- **Probleme**: Table `devisedechanges` a 5,959 entries EUR/TND mais seule 1 avec value>0. Yahoo Finance ne renvoie pas de donnees TND valides. Toutes les VL Tunisie utilisent un seul taux de change pour les conversions EUR/USD.
+- **Fix**: Amelioration `scrape_forex_import.js` (commit `97a5f22`):
+  1. ECB Data API comme fallback pour EUR/* quand Yahoo <100 entries
+  2. Cross-rate derivation: USD/X = EUR/X / EUR/USD pour paires insuffisantes
+  3. Correction entrees value=0 existantes (UPDATE SET value WHERE value=0)
+  4. Script diagnostic: `scripts/diag/check_forex_tnd.js` (read-only)
+- **Note**: ECB n'a pas TND/MAD/NGN dans son API. La derivation cross-rate est la solution principale.
 
 ### Prochaine action recommandee
-Executer sur le serveur de production ces commandes POST-IMPORT:
+Deployer et executer sur le serveur de production:
 ```bash
 cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
 
-# 1. Backfill forex 30 mai - 2 juin (comble le gap des taux de change)
-node scripts/import/scrape_forex_import.js today
+# 0. Deployer le code (inclut le fix forex ECB+cross-rate)
+git stash 2>/dev/null; git pull --rebase origin claude/code-review-improvements-ikvuj; git stash pop 2>/dev/null
+pm2 restart api-monolith
 
-# 2. Recalcul EUR/USD daily rates pour les 1,259 nouvelles VL
-node scripts/recalc/recalc_eur_usd_daily_rate.js
+# 1. Diagnostic taux TND (read-only)
+node scripts/diag/check_forex_tnd.js
 
-# 3. Recalcul VL Ajuste (Total Return NAV avec dividendes)
-node scripts/recalc/recalc_vl_ajuste.js
+# 2. Backfill forex complet (ECB fallback + cross-rate + fix value=0)
+node scripts/import/scrape_forex_import.js
 
-# 4. Recalcul performances locale (tous les fonds)
-curl -s http://localhost:3005/api/saveperfdatemysql/1/600
-curl -s http://localhost:3005/api/saveperfdatemysql/601/1200
-curl -s http://localhost:3005/api/saveperfdatemysql/1201/3000
+# 3. Re-diagnostic pour verifier l'amelioration
+node scripts/diag/check_forex_tnd.js
 
-# 5. Recalcul performances EUR/USD
-node scripts/fix/fix_populate_performances_eur_usd.js --devise BOTH
-
-# 6. Recalcul classements (local + EUR + USD)
-curl -s http://localhost:3005/api/classementmysql --max-time 300
-curl -s http://localhost:3005/api/classementeur --max-time 300
-curl -s http://localhost:3005/api/classementusd --max-time 300
-```
-
-Ou simplement lancer le cron complet:
-```bash
+# 4. Recalcul complet (9 etapes: forex, rates, vl_ajuste, perf, classements)
 bash scripts/cron/cron_daily_update.sh
-```
 
-Puis ajouter les crons (crontab -e):
-```
-0 19 * * 1-5  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_tunisie_daily.sh >> /dev/null 2>&1
-0 22 * * *    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_health_check.sh >> /dev/null 2>&1
+# 5. Ajouter les crons (crontab -e):
+# 0 19 * * 1-5  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_tunisie_daily.sh >> /dev/null 2>&1
+# 0 22 * * *    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_health_check.sh >> /dev/null 2>&1
 ```
 
 ### Risques connus
-- Gap taux de change (30 mai - 2 juin) : corrigeable par `scrape_forex_import.js today`
-- Les performances des 1,259 nouvelles VL Tunisie ne sont PAS encore recalculees
-- Classements Tunisie pas encore a jour (les routes classement marchent mais donnees pas recalculees)
-- Si site CMF change de structure, adapter le scraper
+- ECB n'a pas de donnees TND/MAD/NGN — la derivation cross-rate depend de Yahoo EUR/USD + Yahoo EUR/TND
+- Si Yahoo ne retourne AUCUNE donnee pour EUR/TND, il faudra ajouter une source alternative (BCT, exchangerate-api)
+- Performances des 1,259 VL Tunisie pas encore recalculees (attente run cron_daily_update.sh)
+- Classements Tunisie pas a jour
 
 ### A ne pas faire a la reprise
 - Ne pas re-executer CMF --production (deja fait, 1,259 VL inserees)
 - Ne pas modifier le schema de la table valorisations
-- Ne pas faire TRUNCATE sur les tables classement (deja corrige en transactionnel)
+- Ne pas faire TRUNCATE sur les tables classement
 
 ### Etat Git local (2026-06-02)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `6156414`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `2b4d90c`, sync origin, clean
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `97a5f22`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, SUIVI.md+CHANGELOG+CODE_REVIEW+ROADMAP+README_DEV modifies, a commiter et pusher
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 

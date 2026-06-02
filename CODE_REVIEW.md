@@ -87,3 +87,11 @@
 - Risque: FAIBLE (donnees viennent de MySQL, pas d'input utilisateur)
 - Recommandation: Refactorer vers client.insert() pour les INSERT (effort moyen)
 - Les SELECT ont ete parametres (commit `2f320b5`)
+
+### 16. Forex EUR/TND data quality — IDENTIFIE (2026-06-02), fix pousse
+- Table: devisedechanges
+- Probleme: 5,959 entries EUR/TND mais seule 1 avec value>0 (Yahoo Finance ne renvoie pas TND valide)
+- Impact: Toutes les conversions EUR pour fonds tunisiens utilisent un seul point de donnee
+- Fix: ECB fallback + cross-rate derivation + cleanup value=0 dans scrape_forex_import.js
+- Commit API: `97a5f22`
+- Statut: Code pousse, a deployer et executer sur production

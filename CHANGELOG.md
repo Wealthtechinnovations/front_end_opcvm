@@ -1,6 +1,19 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
-## [2026-06-02] CMF Tunisie Automated Daily Scraper + Fix classement
+## [2026-06-02] CMF Tunisie + Forex EUR/TND fix + Fix classement
+
+### Fix forex EUR/TND data quality (LOT T4)
+- Probleme: 5,959 entries EUR/TND dans devisedechanges mais seule 1 avec value>0 (Yahoo Finance ne renvoie pas TND valide)
+- Ajout ECB Data API comme fallback pour EUR/* quand Yahoo <100 entries valides
+- Ajout derivation cross-rate: USD/X = EUR/X / EUR/USD pour paires insuffisantes
+- Correction UPDATE des entrees existantes avec value=0 (remplissage retroactif)
+- Script diagnostic: scripts/diag/check_forex_tnd.js (read-only, verification taux TND)
+- Script: scripts/import/scrape_forex_import.js (ameliore)
+- Commit API: `97a5f22`
+
+### Fix deploy health check
+- Correction route /api/pays (n'existe pas) → /api/ref/pays dans deploy_2026_06_02.sh
+- Commit API: `6156414`
 
 ### Fix classement destructif
 - Routes /api/classementmysql, /api/classementeur, /api/classementusd:
