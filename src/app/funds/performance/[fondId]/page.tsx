@@ -793,7 +793,7 @@ borderColor:'grey'
                                                   const indiceItem = slicedPostc && slicedPostc[index];
 
                                                   // Vérifiez si fondsItem et indiceItem sont définis avant d'essayer d'accéder à leurs éléments
-                                                  if (fondsItem && indiceItem && fondsItem[1] !== undefined && indiceItem[1] !== undefined) {
+                                                  if (fondsItem && indiceItem && fondsItem[2] != null && indiceItem[1] != null && !isNaN(fondsItem[2]) && !isNaN(indiceItem[1])) {
                                                     const difference = fondsItem[2] - indiceItem[1];
                                                     return <td key={index} className={`text-center ${difference < 0 ? 'text-danger' : 'text-success'}`}>{difference.toFixed(2)} %</td>;
                                                   } else {
