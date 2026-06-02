@@ -1356,10 +1356,116 @@
 - **Aucun code modifie, aucune table modifiee, aucune route modifiee**
 - **API production verifiee**: health OK, classement 3 types OK (Type1=107/120, Type2=113/126, Type3=170/183)
 
+## Session 2026-06-02 — CMF Tunisie Automated Daily Scraper
+
+### Pipeline CMF Tunisie automatise (LOT T1)
+
+**Objectif**: Automatiser l'import quotidien des VL Tunisie depuis le site CMF (https://www.cmf.tn/valeurs-liquidatives-des-titres-opcvm)
+
+**Fichiers crees**:
+- `scripts/scraper/cmf_tunisie_daily.py` — Script Python principal (scraper + parser + import)
+- `scripts/scraper/requirements_cmf.txt` — Dependances Python
+- `scripts/cron/cron_tunisie_daily.sh` — Wrapper cron (Mon-Fri 19h)
+
+**Fonctionnalites implementees**:
+1. Scraping CMF website multi-pages (9 pages de pagination)
+2. Detection automatique du format de fichier (XLSX/XLS/HTML-table)
+3. Parsing Excel bi-section (Capitalisation + Distribution avec dividendes)
+4. Extraction de la date depuis le nom de fichier (format YYMMDD)
+5. Normalisation des noms de fonds et matching multi-niveaux (exact, partial, fuzzy avec rapidfuzz)
+6. Detection des variations extremes >20% → quarantaine (table `cmf_extreme_variations`)
+7. File de validation pour nouveaux fonds inconnus (table `cmf_new_funds_queue`)
+8. Conversion EUR/USD via table `devisedechanges` existante
+9. Import idempotent (deduplication par fund_id+date)
+10. Mode dry-run / production avec lockfile
+11. Audit trail (table `cmf_import_audit`)
+12. Rapports JSON dans `data/tunisie_cmf/staging/`
+13. Logs horodates dans `data/tunisie_cmf/logs/`
+
+**Test dry-run (sans DB)**: OK
+- 235 fichiers CMF decouverts (9 pages)
+- 28 fichiers telecharges (lookback 45 jours)
+- 3,550 NAV rows parsees, 1,854 dividendes, 0 erreurs
+- 127 fonds par fichier, structure correcte
+
+**Tables audit creees automatiquement par le script**:
+- `cmf_import_audit` — Journal d'import
+- `cmf_extreme_variations` — VL quarantinees (variation >20%)
+- `cmf_new_funds_queue` — Fonds inconnus en attente de validation
+
+**Adaptation du referentiel Python**:
+- PostgreSQL → MySQL (pymysql)
+- `fund_nav_history` → `valorisations` (schema 28 colonnes)
+- `funds` → `fond_investissements`
+- EUR/USD conversion via `devisedechanges`
+- Compatible avec import_vl_tunisie_cmf.js existant (meme schema valorisations)
+
+**Cron recommande**: `0 19 * * 1-5 /path/to/scripts/cron/cron_tunisie_daily.sh`
+(avant cron_daily_update.sh a 20h pour que les recalculs incluent les nouvelles VL)
+
+**Statut**: Script cree et teste en dry-run. Deploiement production a faire.
+
+### Securite session 2026-06-01 (rappel)
+
+Corrections deployees (commits pushes, a deployer sur production):
+- eval() RCE elimine (routes_vl.js) — commit `1187ccb`
+- ClickHouse queries parameterisees (apigestionsavequotidien.js) — commit `2f320b5`
+- Auth rate limiting 10/15min — commit `8834c14`
+- Multer 5MB file size limit sur 13 routes — commit `8834c14`
+- NaN className frontend corrige (5 pages, 147 patterns) — commits `f8ae92e`, `8ab9da3`
+- Health check cron cree — commit `2f320b5`
+
+**A deployer sur production**: `git pull + pm2 restart` sur les deux depots.
+
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-DEPLOIEMENT PRODUCTION EXECUTE LE 2026-05-21 — Tous les LOTs 0-6 termines + taches prioritaires A1-A4 executees.
+Session 2026-06-02 : CMF Tunisie scraper cree et teste en dry-run. Securite session 2026-06-01 commitee et pushee mais pas encore deployee sur production.
+
+### Dernier lot termine
+LOT T1 — Creation du pipeline CMF Tunisie automatise (scraper + parser + import + cron)
+
+### Fichiers modifies dans le dernier lot
+- `api_opcv/scripts/scraper/cmf_tunisie_daily.py` (NOUVEAU)
+- `api_opcv/scripts/scraper/requirements_cmf.txt` (NOUVEAU)
+- `api_opcv/scripts/cron/cron_tunisie_daily.sh` (NOUVEAU)
+- `api_opcv/.gitignore` (ajout data/tunisie_cmf exclusions)
+- `front_end_opcvm/SUIVI.md` (mise a jour)
+- `front_end_opcvm/CODE_REVIEW.md` (mise a jour)
+- `front_end_opcvm/CHANGELOG.md` (mise a jour)
+
+### Tests realises
+- Dry-run sans DB : 235 fichiers decouverts, 28 telecharges, 3550 NAV parsees, 0 erreurs
+- Verification structure Excel CMF (schema bi-section capitalisation/distribution)
+- Verification normalisation noms de fonds (127 fonds corrects)
+
+### Resultat des tests
+OK (dry-run) — import production a tester apres deploiement
+
+### Tache en cours
+Commit et push du pipeline CMF Tunisie
+
+### Prochaine action recommandee
+1. Commit et push le pipeline CMF Tunisie
+2. Deployer corrections securite + CMF scraper sur production (`git pull + pm2 restart`)
+3. Installer les dependances Python sur production (`pip3 install -r scripts/scraper/requirements_cmf.txt`)
+4. Tester `python3 scripts/scraper/cmf_tunisie_daily.py --dry-run` sur production (avec DB)
+5. Executer `python3 scripts/scraper/cmf_tunisie_daily.py --production` pour importer les VL manquantes
+6. Ajouter le cron `0 19 * * 1-5 cron_tunisie_daily.sh`
+
+### Risques connus
+- Le scraper necessite que les dependances Python soient installees sur le serveur de production
+- Si le site CMF change de structure HTML ou de format Excel, le parser devra etre adapte
+- Les taux EUR/TND et USD/TND doivent etre a jour dans `devisedechanges` pour la conversion
+
+### A ne pas faire a la reprise
+- Ne pas executer en mode --production sans avoir verifie la connexion DB
+- Ne pas modifier le schema de la table valorisations
+- Ne pas supprimer les fichiers Excel telecharges (utiles pour re-parse si necessaire)
+
+### Etat Git local
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `8834c14`, 3 fichiers non commits (scraper)
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `b3083e6`, SUIVI.md modifie
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 

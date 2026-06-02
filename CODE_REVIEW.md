@@ -52,13 +52,15 @@
 - Correction: Remplacement par `source .env` + variables avec fallback
 - Commit: `acb09b8` (api_opcv)
 
-### 11. Manque d'automatisation data pour Tunisie, UEMOA, CEMAC
-- TUNISIE: Script import existe (import_vl_tunisie_cmf.js) mais pas de scraper CMF automatise
+### 11. ~~Manque d'automatisation data pour Tunisie~~ — CORRIGE (2026-06-02) / UEMOA, CEMAC
+- ~~TUNISIE: Script import existe (import_vl_tunisie_cmf.js) mais pas de scraper CMF automatise~~
+  - Correction: Scraper Python automatise cree (`scripts/scraper/cmf_tunisie_daily.py`)
+  - Scraping CMF multi-pages, parsing Excel bi-section, matching fuzzy, quarantaine extremes >20%
+  - Cron recommande: `0 19 * * 1-5` (avant cron_daily_update)
 - UEMOA: Script import existe (import_vl_uemoa.js) mais pas de scraper BRVM automatise
 - CEMAC: Aucun script, aucune source identifiee (COSUMAF)
-- Priorite: HAUTE
+- Priorite restante: MOYENNE (UEMOA/CEMAC)
 - Impact: Donnees UEMOA stales 229 jours, CEMAC 537 jours
-- Recommandation: Investiguer APIs/sites regulateurs pour automatisation
 
 ### 9. Gateway microservices non active
 - Fichier: services/gateway/index.js + serviceRegistry.js

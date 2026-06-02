@@ -1,5 +1,20 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
+## [2026-06-02] CMF Tunisie Automated Daily Scraper
+
+### Automatisation data Tunisie
+- Nouveau scraper Python automatise: `scripts/scraper/cmf_tunisie_daily.py`
+- Scraping CMF multi-pages (9 pages, ~235 fichiers)
+- Parsing Excel bi-section (Capitalisation + Distribution avec dividendes)
+- Matching fonds multi-niveaux (exact, partial, fuzzy via rapidfuzz)
+- Quarantaine variations extremes >20% (table `cmf_extreme_variations`)
+- File validation nouveaux fonds (table `cmf_new_funds_queue`)
+- Import idempotent, transactionnel, avec conversion EUR/USD
+- Mode dry-run / production avec lockfile
+- Audit trail (table `cmf_import_audit`)
+- Cron wrapper: `scripts/cron/cron_tunisie_daily.sh` (Mon-Fri 19h)
+- Test dry-run: 3,550 NAV parsees, 0 erreurs, 127 fonds/fichier
+
 ## [2026-06-01] Audit securite + corrections frontend
 
 ### Securite (API)
