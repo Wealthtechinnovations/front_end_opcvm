@@ -1403,7 +1403,7 @@
 **Cron recommande**: `0 19 * * 1-5 /path/to/scripts/cron/cron_tunisie_daily.sh`
 (avant cron_daily_update.sh a 20h pour que les recalculs incluent les nouvelles VL)
 
-**Statut**: Script cree et teste en dry-run. Deploiement production a faire.
+**Statut**: DEPLOYE EN PRODUCTION (2026-06-02). 1,259 VL importees pour 10 dates (2026-05-13 a 2026-06-02).
 
 ### Securite session 2026-06-01 (rappel)
 
@@ -1415,73 +1415,88 @@ Corrections deployees (commits pushes, a deployer sur production):
 - NaN className frontend corrige (5 pages, 147 patterns) — commits `f8ae92e`, `8ab9da3`
 - Health check cron cree — commit `2f320b5`
 
-**A deployer sur production**: `git pull + pm2 restart` sur les deux depots.
+**Statut**: DEPLOYE EN PRODUCTION (2026-06-02).
 
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-02 : Tous les commits pushes (securite + CMF scraper + TRUNCATE fix + deploy script + docs). Production pas encore mise a jour.
+Session 2026-06-02 : Production DEPLOYE et CMF import EXECUTE avec succes. 1,259 VL Tunisie importees.
 
 ### Dernier lot termine
-LOT T2 — Fix TRUNCATE destructif dans 3 routes classement + script deploiement + docs completes
+LOT T3 — Deploiement production confirme + CMF Tunisie import production OK
 
-### Fichiers modifies dans la session 2026-06-02
-**API (api_opcv)** — commits `a4771ac`, `0c59730`:
-- `scripts/scraper/cmf_tunisie_daily.py` (NOUVEAU — scraper CMF Tunisie)
-- `scripts/scraper/requirements_cmf.txt` (NOUVEAU — deps Python)
-- `scripts/cron/cron_tunisie_daily.sh` (NOUVEAU — wrapper cron)
-- `scripts/deploy/deploy_2026_06_02.sh` (NOUVEAU — script deploiement)
-- `src/routes/apigestionsavequotidien.js` (TRUNCATE → transactionnel)
-- `.gitignore` (ajout data/tunisie_cmf exclusions)
+### Deploiement production confirme (2026-06-02)
+- API deploye: commit `0c59730` → securite + CMF scraper + TRUNCATE fix
+- Frontend deploye: commit `2b4d90c` → NaN fix + docs, build 0 erreur
+- Python deps installees (rapidfuzz, pymysql, openpyxl, xlrd, beautifulsoup4)
+- PM2 restart OK (api-monolith + fundafrique-frontend + workers)
+- CMF dry-run: 1,269 NAV parsees, 127/127 fonds matches, 0 erreurs
+- CMF production import: **1,259 VL inserees**, 10 doublons ignores, 0 erreurs
+  - Dates importees: 2026-05-13, 2026-05-19 a 2026-06-02 (10 fichiers)
+  - Matching: 125 EXACT, 1 PARTIAL, 1 FUZZY, 0 extreme variations
+  - Tables audit creees: cmf_import_audit, cmf_extreme_variations, cmf_new_funds_queue
+- Verification API: /api/valLiq/866 HTTP 200, /api/ref/pays HTTP 200 (29 pays)
+- Fix deploy script: /api/pays → /api/ref/pays (commit `6156414`)
 
-**Frontend (front_end_opcvm)** — commits `e5270d5`, `4a1f2b1`:
-- `SUIVI.md` (mise a jour session)
-- `CHANGELOG.md` (ajout entree 2026-06-02)
-- `CODE_REVIEW.md` (TRUNCATE marque CORRIGE + Tunisie marque CORRIGE)
-- `ROADMAP.md` (mise a jour complete stats + securite + automatisation)
-- `README_DEV.md` (ajout scraper + crons)
-
-### Tests realises
-- Dry-run CMF scraper sans DB : 235 fichiers decouverts, 28 telecharges, 3550 NAV parsees, 0 erreurs
-- Verification structure Excel CMF (schema bi-section capitalisation/distribution)
-- Verification normalisation noms de fonds (127 fonds corrects)
-- API production accessible (HTTP 200 sur /api/valLiq/866 et /api/pays)
-
-### Resultat des tests
-OK — tous les commits pushes, pret pour deploiement production
-
-### Tache en cours
-Deploiement production
+### Investigations post-deploiement
+- **EUR/TND taux**: OK — 5,959 entrees EUR/TND + 6,282 USD/TND dans devisedechanges (2003-2026-05-29)
+- **Route /api/pays**: N'EXISTE PAS — route correcte = `/api/ref/pays` (corrige dans deploy script)
+- **Fund 2425 (SICAV AMEN, TUNISIE)**: VL confirmee a 62.885 au 2026-05-29, performances calculees (YTD 2.84%)
+- **Gap taux de change**: Rates s'arretent au 2026-05-29 — VL du 30 mai au 2 juin utilisent taux le plus proche (fallback OK)
 
 ### Prochaine action recommandee
-Executer sur le serveur de production:
+Executer sur le serveur de production ces commandes POST-IMPORT:
 ```bash
 cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
-bash scripts/deploy/deploy_2026_06_02.sh
+
+# 1. Backfill forex 30 mai - 2 juin (comble le gap des taux de change)
+node scripts/import/scrape_forex_import.js today
+
+# 2. Recalcul EUR/USD daily rates pour les 1,259 nouvelles VL
+node scripts/recalc/recalc_eur_usd_daily_rate.js
+
+# 3. Recalcul VL Ajuste (Total Return NAV avec dividendes)
+node scripts/recalc/recalc_vl_ajuste.js
+
+# 4. Recalcul performances locale (tous les fonds)
+curl -s http://localhost:3005/api/saveperfdatemysql/1/600
+curl -s http://localhost:3005/api/saveperfdatemysql/601/1200
+curl -s http://localhost:3005/api/saveperfdatemysql/1201/3000
+
+# 5. Recalcul performances EUR/USD
+node scripts/fix/fix_populate_performances_eur_usd.js --devise BOTH
+
+# 6. Recalcul classements (local + EUR + USD)
+curl -s http://localhost:3005/api/classementmysql --max-time 300
+curl -s http://localhost:3005/api/classementeur --max-time 300
+curl -s http://localhost:3005/api/classementusd --max-time 300
 ```
-Puis manuellement:
-1. Verifier dry-run CMF scraper
-2. Executer import CMF production
-3. Ajouter crons (tunisie + health check)
+
+Ou simplement lancer le cron complet:
+```bash
+bash scripts/cron/cron_daily_update.sh
+```
+
+Puis ajouter les crons (crontab -e):
+```
+0 19 * * 1-5  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_tunisie_daily.sh >> /dev/null 2>&1
+0 22 * * *    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_health_check.sh >> /dev/null 2>&1
+```
 
 ### Risques connus
-- Le scraper necessite que les dependances Python soient installees sur le serveur de production
-- Si le site CMF change de structure HTML ou de format Excel, le parser devra etre adapte
-- Les taux EUR/TND et USD/TND doivent etre a jour dans `devisedechanges` pour la conversion
-- Classement routes modifiees (TRUNCATE → transaction) — tester apres deploiement
+- Gap taux de change (30 mai - 2 juin) : corrigeable par `scrape_forex_import.js today`
+- Les performances des 1,259 nouvelles VL Tunisie ne sont PAS encore recalculees
+- Classements Tunisie pas encore a jour (les routes classement marchent mais donnees pas recalculees)
+- Si site CMF change de structure, adapter le scraper
 
 ### A ne pas faire a la reprise
-- Ne pas executer CMF --production sans avoir verifie le dry-run avec DB
+- Ne pas re-executer CMF --production (deja fait, 1,259 VL inserees)
 - Ne pas modifier le schema de la table valorisations
-- Ne pas supprimer les fichiers Excel telecharges
+- Ne pas faire TRUNCATE sur les tables classement (deja corrige en transactionnel)
 
 ### Etat Git local (2026-06-02)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `0c59730`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `4a1f2b1`, sync origin, clean
-
-### Etat Git production (avant deploiement)
-- **api**: commit `1121e21` (auto-snapshot) — 11 commits derriere
-- **frontend**: commit `1c8d7f0` — 5 commits derriere
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `6156414`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `2b4d90c`, sync origin, clean
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 
