@@ -1433,53 +1433,99 @@ Corrections deployees (commits pushes, a deployer sur production):
 **Statut**: Code pousse, a deployer et executer sur production.
 **Documentation mise a jour**: CHANGELOG.md, CODE_REVIEW.md (#16), ROADMAP.md, README_DEV.md
 
+### LOT T5 — Deep audit + bug fixes API + frontend (2026-06-02)
+
+**Audit automatise** (2 agents paralleles: API routes + Frontend):
+
+**Bugs critiques corriges API** (commit `f3ddd6a`):
+1. `apigestionpays.js`: `totalfondscompose += totalfondscompose` doublait au lieu d'incrementer (3 occurrences, impact: comptage fonds errone sur pages pays)
+2. `apigestionpays.js`: `findCategoryByFundId()` crash si fond inexistant (null dereference)
+3. `apigestionpays.js`: `result5.latestDate` crash si pas de VL (3 occurrences)
+4. `apigestionsociete.js`: `.find().toJSON()` crash si societe non trouvee
+5. `apigestionfonds.js`: `searchFunds` — selectedPays/selectedRegion dans la requete mais pas dans replacements (crash Sequelize), conditions mutuellement exclusives au lieu de cumulatives
+6. `apigestionfonds.js`: `getfondbyidmeta` — null dereference si fond inexistant + nom_fond null
+7. `apigestionfonds.js`: `getfondbyid` — crash si req.query.funds absent + code_ISIN duplique
+8. `routes_vl_admin.js`: 6 routes sans `.catch()` (requetes qui hangent en cas d'erreur DB)
+9. `sequelize.js`: ajout retry 5 tentatives + pool eviction + match patterns pour erreurs connexion transitoires
+
+**Bugs critiques corriges Frontend** (commit `4af1b35`):
+1. `[fondId]/page.server.ts`: aucun try/catch (crash entier si API indisponible)
+2. 6 autres `page.server.ts`: pas de response.ok check ni fund?.funds null guard avant destructuring
+3. `sitemap.ts`: pas de response.ok check sur 3 fetch API (crash generation sitemap)
+4. `performance/page.tsx`: `difference.toFixed(2)` sans NaN guard (crash si donnees manquantes)
+
+**Production API down**: Detecte durant cette session — tous les endpoints DB retournent 500, endpoints sans DB (health, login) OK. Probablement MySQL connection lost. Necessite restart PM2/MySQL sur serveur.
+
+**Fichiers modifies API**: sequelize.js, apigestionfonds.js, apigestionpays.js, apigestionsociete.js, routes_vl_admin.js
+**Fichiers modifies Frontend**: 7 page.server.ts, sitemap.ts, performance/page.tsx
+**Build frontend**: OK (0 erreur)
+**Statut**: Pushes, a deployer
+
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-02 : Production deploye (2x). CMF import OK (1,259 VL). Forex fix ECB+cross-rate pousse.
+Session 2026-06-02 : LOT T5 complete (deep audit + bug fixes). Forex fix T4 pousse. Production API down (500 sur DB routes).
 
 ### Dernier lot termine
-LOT T4 — Fix forex EUR/TND: ajout ECB fallback + cross-rate derivation + cleanup value=0
+LOT T5 — Deep audit + correction bugs critiques API et frontend
 
-### Probleme identifie et corrige (LOT T4)
-- **Probleme**: Table `devisedechanges` a 5,959 entries EUR/TND mais seule 1 avec value>0. Yahoo Finance ne renvoie pas de donnees TND valides. Toutes les VL Tunisie utilisent un seul taux de change pour les conversions EUR/USD.
-- **Fix**: Amelioration `scrape_forex_import.js` (commit `97a5f22`):
-  1. ECB Data API comme fallback pour EUR/* quand Yahoo <100 entries
-  2. Cross-rate derivation: USD/X = EUR/X / EUR/USD pour paires insuffisantes
-  3. Correction entrees value=0 existantes (UPDATE SET value WHERE value=0)
-  4. Script diagnostic: `scripts/diag/check_forex_tnd.js` (read-only)
-- **Note**: ECB n'a pas TND/MAD/NGN dans son API. La derivation cross-rate est la solution principale.
+### Fichiers modifies dans le dernier lot
+**API** (commit `f3ddd6a`): sequelize.js, apigestionfonds.js, apigestionpays.js, apigestionsociete.js, routes_vl_admin.js
+**Frontend** (commit `4af1b35`): 7 page.server.ts, sitemap.ts, performance/page.tsx
+**Documentation** (commit `b86a4b3`): SUIVI.md, CHANGELOG.md, CODE_REVIEW.md, ROADMAP.md, README_DEV.md
+
+### Tests realises
+- Build frontend: OK (0 erreur, 217+ pages)
+- API production check: 500 sur tous les endpoints DB (MySQL connexion perdue)
+- Frontend production: HTTP 200 OK
+
+### ALERTE PRODUCTION
+L'API de production retourne 500 sur tous les endpoints utilisant la base de donnees. Le serveur Express tourne mais MySQL est inaccessible. Actions requises sur le serveur:
+1. Verifier MySQL: `systemctl status mysql` / `systemctl restart mysql`
+2. Redemarrer API: `pm2 restart api-monolith`
+3. Verifier: `curl http://localhost:3005/api/valLiq/866`
 
 ### Prochaine action recommandee
-Deployer et executer sur le serveur de production:
+**PRIORITE 1 — Restaurer la production** (sur le serveur):
 ```bash
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+# Verifier et redemarrer MySQL si necessaire
+systemctl status mysql
+# Si down: systemctl restart mysql
 
-# 0. Deployer le code (inclut le fix forex ECB+cross-rate)
+# Deployer le nouveau code (inclut DB resilience + bug fixes + forex fix)
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
 git stash 2>/dev/null; git pull --rebase origin claude/code-review-improvements-ikvuj; git stash pop 2>/dev/null
 pm2 restart api-monolith
 
-# 1. Diagnostic taux TND (read-only)
-node scripts/diag/check_forex_tnd.js
+# Verifier que l'API repond
+curl -s http://localhost:3005/api/valLiq/866 | head -c 100
 
-# 2. Backfill forex complet (ECB fallback + cross-rate + fix value=0)
+# Deployer frontend
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend
+git stash 2>/dev/null; git pull --rebase origin claude/code-review-improvements-ikvuj; git stash pop 2>/dev/null
+npm run build && pm2 restart fundafrique-frontend
+```
+
+**PRIORITE 2 — Backfill forex TND** (apres restauration):
+```bash
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+node scripts/diag/check_forex_tnd.js
 node scripts/import/scrape_forex_import.js
-
-# 3. Re-diagnostic pour verifier l'amelioration
 node scripts/diag/check_forex_tnd.js
-
-# 4. Recalcul complet (9 etapes: forex, rates, vl_ajuste, perf, classements)
 bash scripts/cron/cron_daily_update.sh
+```
 
-# 5. Ajouter les crons (crontab -e):
-# 0 19 * * 1-5  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_tunisie_daily.sh >> /dev/null 2>&1
-# 0 22 * * *    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_health_check.sh >> /dev/null 2>&1
+**PRIORITE 3 — Crons manquants**:
+```
+# crontab -e — ajouter:
+0 19 * * 1-5  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_tunisie_daily.sh >> /dev/null 2>&1
+0 22 * * *    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_health_check.sh >> /dev/null 2>&1
 ```
 
 ### Risques connus
+- **Production API down** — MySQL connexion perdue, necessite intervention sur le serveur
 - ECB n'a pas de donnees TND/MAD/NGN — la derivation cross-rate depend de Yahoo EUR/USD + Yahoo EUR/TND
-- Si Yahoo ne retourne AUCUNE donnee pour EUR/TND, il faudra ajouter une source alternative (BCT, exchangerate-api)
-- Performances des 1,259 VL Tunisie pas encore recalculees (attente run cron_daily_update.sh)
+- Performances des 1,259 VL Tunisie pas encore recalculees
 - Classements Tunisie pas a jour
 
 ### A ne pas faire a la reprise
@@ -1488,8 +1534,8 @@ bash scripts/cron/cron_daily_update.sh
 - Ne pas faire TRUNCATE sur les tables classement
 
 ### Etat Git local (2026-06-02)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `97a5f22`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, SUIVI.md+CHANGELOG+CODE_REVIEW+ROADMAP+README_DEV modifies, a commiter et pusher
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `f3ddd6a`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `4af1b35`, SUIVI.md a pusher
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 

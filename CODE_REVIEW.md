@@ -88,7 +88,24 @@
 - Recommandation: Refactorer vers client.insert() pour les INSERT (effort moyen)
 - Les SELECT ont ete parametres (commit `2f320b5`)
 
-### 16. Forex EUR/TND data quality — IDENTIFIE (2026-06-02), fix pousse
+### 16. ~~totalfondscompose logic bug~~ — CORRIGE (2026-06-02)
+- Fichier: src/routes/apigestionpays.js (lignes 457, 501, 545)
+- Probleme: `totalfondscompose += totalfondscompose` doublait la valeur au lieu d'incrementer (+= 1)
+- Impact: Comptage fonds errone sur les pages pays (EUR, USD, local)
+- Commit API: `f3ddd6a`
+
+### 17. ~~6 routes admin sans .catch()~~ — CORRIGE (2026-06-02)
+- Fichier: src/routes/routes_vl_admin.js
+- Routes: getfraisbyadmin, getfondbyadmin, getfondbyuser, getfondbyuservalide, getfondbysociete, getfondbypays
+- Probleme: .then() sans .catch() — requetes qui hangent en cas d'erreur DB
+- Commit API: `f3ddd6a`
+
+### 18. ~~7 page.server.ts crash si API indisponible~~ — CORRIGE (2026-06-02)
+- Fichiers: funds/[fondId], documents, download-nav, history, portfolio, summary-eur, summary-usd
+- Probleme: pas de response.ok check ni null guard sur fund.funds
+- Commit Frontend: `4af1b35`
+
+### 19. Forex EUR/TND data quality — IDENTIFIE (2026-06-02), fix pousse
 - Table: devisedechanges
 - Probleme: 5,959 entries EUR/TND mais seule 1 avec value>0 (Yahoo Finance ne renvoie pas TND valide)
 - Impact: Toutes les conversions EUR pour fonds tunisiens utilisent un seul point de donnee

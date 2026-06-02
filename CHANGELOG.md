@@ -15,6 +15,17 @@
 - Correction route /api/pays (n'existe pas) → /api/ref/pays dans deploy_2026_06_02.sh
 - Commit API: `6156414`
 
+### Deep audit + bug fixes (LOT T5)
+- API: fix totalfondscompose doubling (3 occurrences apigestionpays.js) — comptage fonds errone
+- API: fix 5 null dereferences critiques (apigestionpays, apigestionsociete, apigestionfonds)
+- API: fix searchFunds broken replacements (selectedPays/selectedRegion non passes a Sequelize)
+- API: add .catch() sur 6 routes admin sans error handler (requetes qui hangent)
+- API: DB resilience — retry 5 tentatives avec match patterns erreurs connexion
+- Frontend: fix 7 page.server.ts crash quand API indisponible
+- Frontend: fix sitemap.ts crash sur fetch error
+- Frontend: fix performance diff NaN toFixed crash
+- Commits: `f3ddd6a` (API), `4af1b35` (Frontend)
+
 ### Fix classement destructif
 - Routes /api/classementmysql, /api/classementeur, /api/classementusd:
   TRUNCATE remplace par DELETE transactionnel (rollback si erreur mid-recalcul)
