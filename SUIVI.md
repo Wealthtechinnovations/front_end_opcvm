@@ -1420,52 +1420,68 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-02 : CMF Tunisie scraper cree et teste en dry-run. Securite session 2026-06-01 commitee et pushee mais pas encore deployee sur production.
+Session 2026-06-02 : Tous les commits pushes (securite + CMF scraper + TRUNCATE fix + deploy script + docs). Production pas encore mise a jour.
 
 ### Dernier lot termine
-LOT T1 — Creation du pipeline CMF Tunisie automatise (scraper + parser + import + cron)
+LOT T2 — Fix TRUNCATE destructif dans 3 routes classement + script deploiement + docs completes
 
-### Fichiers modifies dans le dernier lot
-- `api_opcv/scripts/scraper/cmf_tunisie_daily.py` (NOUVEAU)
-- `api_opcv/scripts/scraper/requirements_cmf.txt` (NOUVEAU)
-- `api_opcv/scripts/cron/cron_tunisie_daily.sh` (NOUVEAU)
-- `api_opcv/.gitignore` (ajout data/tunisie_cmf exclusions)
-- `front_end_opcvm/SUIVI.md` (mise a jour)
-- `front_end_opcvm/CODE_REVIEW.md` (mise a jour)
-- `front_end_opcvm/CHANGELOG.md` (mise a jour)
+### Fichiers modifies dans la session 2026-06-02
+**API (api_opcv)** — commits `a4771ac`, `0c59730`:
+- `scripts/scraper/cmf_tunisie_daily.py` (NOUVEAU — scraper CMF Tunisie)
+- `scripts/scraper/requirements_cmf.txt` (NOUVEAU — deps Python)
+- `scripts/cron/cron_tunisie_daily.sh` (NOUVEAU — wrapper cron)
+- `scripts/deploy/deploy_2026_06_02.sh` (NOUVEAU — script deploiement)
+- `src/routes/apigestionsavequotidien.js` (TRUNCATE → transactionnel)
+- `.gitignore` (ajout data/tunisie_cmf exclusions)
+
+**Frontend (front_end_opcvm)** — commits `e5270d5`, `4a1f2b1`:
+- `SUIVI.md` (mise a jour session)
+- `CHANGELOG.md` (ajout entree 2026-06-02)
+- `CODE_REVIEW.md` (TRUNCATE marque CORRIGE + Tunisie marque CORRIGE)
+- `ROADMAP.md` (mise a jour complete stats + securite + automatisation)
+- `README_DEV.md` (ajout scraper + crons)
 
 ### Tests realises
-- Dry-run sans DB : 235 fichiers decouverts, 28 telecharges, 3550 NAV parsees, 0 erreurs
+- Dry-run CMF scraper sans DB : 235 fichiers decouverts, 28 telecharges, 3550 NAV parsees, 0 erreurs
 - Verification structure Excel CMF (schema bi-section capitalisation/distribution)
 - Verification normalisation noms de fonds (127 fonds corrects)
+- API production accessible (HTTP 200 sur /api/valLiq/866 et /api/pays)
 
 ### Resultat des tests
-OK (dry-run) — import production a tester apres deploiement
+OK — tous les commits pushes, pret pour deploiement production
 
 ### Tache en cours
-Commit et push du pipeline CMF Tunisie
+Deploiement production
 
 ### Prochaine action recommandee
-1. Commit et push le pipeline CMF Tunisie
-2. Deployer corrections securite + CMF scraper sur production (`git pull + pm2 restart`)
-3. Installer les dependances Python sur production (`pip3 install -r scripts/scraper/requirements_cmf.txt`)
-4. Tester `python3 scripts/scraper/cmf_tunisie_daily.py --dry-run` sur production (avec DB)
-5. Executer `python3 scripts/scraper/cmf_tunisie_daily.py --production` pour importer les VL manquantes
-6. Ajouter le cron `0 19 * * 1-5 cron_tunisie_daily.sh`
+Executer sur le serveur de production:
+```bash
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+bash scripts/deploy/deploy_2026_06_02.sh
+```
+Puis manuellement:
+1. Verifier dry-run CMF scraper
+2. Executer import CMF production
+3. Ajouter crons (tunisie + health check)
 
 ### Risques connus
 - Le scraper necessite que les dependances Python soient installees sur le serveur de production
 - Si le site CMF change de structure HTML ou de format Excel, le parser devra etre adapte
 - Les taux EUR/TND et USD/TND doivent etre a jour dans `devisedechanges` pour la conversion
+- Classement routes modifiees (TRUNCATE → transaction) — tester apres deploiement
 
 ### A ne pas faire a la reprise
-- Ne pas executer en mode --production sans avoir verifie la connexion DB
+- Ne pas executer CMF --production sans avoir verifie le dry-run avec DB
 - Ne pas modifier le schema de la table valorisations
-- Ne pas supprimer les fichiers Excel telecharges (utiles pour re-parse si necessaire)
+- Ne pas supprimer les fichiers Excel telecharges
 
-### Etat Git local
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `8834c14`, 3 fichiers non commits (scraper)
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `b3083e6`, SUIVI.md modifie
+### Etat Git local (2026-06-02)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `0c59730`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `4a1f2b1`, sync origin, clean
+
+### Etat Git production (avant deploiement)
+- **api**: commit `1121e21` (auto-snapshot) — 11 commits derriere
+- **frontend**: commit `1c8d7f0` — 5 commits derriere
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 

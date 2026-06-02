@@ -1,6 +1,10 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
-## [2026-06-02] CMF Tunisie Automated Daily Scraper
+## [2026-06-02] CMF Tunisie Automated Daily Scraper + Fix classement
+
+### Fix classement destructif
+- Routes /api/classementmysql, /api/classementeur, /api/classementusd:
+  TRUNCATE remplace par DELETE transactionnel (rollback si erreur mid-recalcul)
 
 ### Automatisation data Tunisie
 - Nouveau scraper Python automatise: `scripts/scraper/cmf_tunisie_daily.py`
