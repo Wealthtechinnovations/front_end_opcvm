@@ -15,11 +15,11 @@
 - Priorite: MOYENNE
 - Recommandation: Ajouter un index UNIQUE apres nettoyage des doublons existants
 
-### 3. Route classementmysql TRUNCATE destructif
+### 3. ~~Route classementmysql TRUNCATE destructif~~ — CORRIGE (2026-06-02)
 - Fichier: src/routes/apigestionsavequotidien.js
-- Probleme: /api/classementmysql fait TRUNCATE avant recalcul. Si interrompu, donnees perdues.
-- Priorite: MOYENNE
-- Recommandation: Utiliser une table temporaire ou un flag de version
+- Probleme: 3 routes classement (local/EUR/USD) faisaient TRUNCATE avant recalcul. Si interrompu, donnees perdues.
+- Correction: Remplacement TRUNCATE par DELETE transactionnel (transaction.commit/rollback)
+- Routes corrigees: /api/classementmysql, /api/classementeur, /api/classementusd
 
 ## Dette technique
 
