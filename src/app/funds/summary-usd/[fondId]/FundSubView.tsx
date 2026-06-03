@@ -37,7 +37,7 @@ async function getclassement(id: number, dev: string) {
 }
 
 async function getperfcategorieannuel(id: number) {
-  const dev = "EUR"
+  const dev = "USD"
 
   const data = (
     await fetch(`${urlconstant}/api/performancesdevcategorie/fond/${id}/${dev}`)
