@@ -155,10 +155,11 @@
 
 ## Dette technique restante
 
-### 25. routes_vl.js — 11 .then() sans .catch() hors try/catch
-- Lignes: 3135, 3209, 4578, 4791, 5069, 5095, 5122, 5668, 6647, 7022, 8652
-- Impact: Requetes qui pourraient hang en cas d'erreur
-- Priorite: FAIBLE (risque mitige par Express global error handler)
+### 25. ~~routes_vl.js — 11 .then() sans .catch() hors try/catch~~ — CORRIGE (2026-06-03)
+- Routes: getportefeuillebyuser, getportefeuille, getDevises, getSocietes, getSocietesbypays, getPays, getData, performancesportefeuillewithindice, ratiosportefeuille, ratiosportefeuilledev
+- /api/comparaison etait deja correctement gere
+- Solution: Ajout .catch() avec log + res.status(500).json
+- Commit API: `5b70838`
 
 ### 26. 87% des fetch() frontend sans response.ok check
 - 638 appels fetch(), seulement 81 avec response.ok check (12.7%)

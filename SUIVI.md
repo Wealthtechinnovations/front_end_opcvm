@@ -1461,6 +1461,20 @@ Corrections deployees (commits pushes, a deployer sur production):
 **Build frontend**: OK (0 erreur)
 **Statut**: Pushes, a deployer
 
+### 2026-06-03 - LOT T9: routes_vl.js - 10 .catch() ajoutes
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER
+- **Probleme**: 11 .then() sans .catch() dans routes_vl.js → erreurs Sequelize silencieuses, requests qui hang jusqu'a timeout client
+- **Solution**: Ajout .catch(err => res.status(500).json({...})) sur chaque route
+- **Routes corrigees**:
+  - /api/getportefeuillebyuser/:id, /api/getportefeuille/:id
+  - /api/getDevises, /api/getSocietes, /api/getSocietesbypays/:pays, /api/getPays
+  - /api/getData, /api/performancesportefeuillewithindice/...
+  - /api/ratiosportefeuille/:year/:id, /api/ratiosportefeuilledev/:year/:id/:devise
+- **Note**: /api/comparaison etait deja correctement gere (false positive lors du scan)
+- **Verification**: node -c routes_vl.js → SYNTAX OK
+- **Risque regression**: NUL (additif uniquement)
+- **Commit API**: `5b70838`
+
 ### 2026-06-03 - LOT T8: Analyse bout en bout + corrections critiques
 - **Statut**: COMMITE ET POUSSE, A DEPLOYER
 - **Analyse complete**: 4 agents paralleles — crons, ClickHouse, frontend, securite API
@@ -1481,10 +1495,16 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-03 : LOT T8 — Analyse complete de l'application + corrections critiques.
-Production saine. API et frontend deployes. MariaDB restauree.
+Session 2026-06-03 : LOT T9 — Reliability fix routes_vl.js. Production saine, API et frontend a deployer.
 
 ### Dernier lot termine
+LOT T9 — 10 .catch() ajoutes a routes_vl.js (resilience erreurs DB)
+- Toutes les routes GET sans gestion d'erreur retournent maintenant 500 propre au lieu de hang
+- /api/getportefeuille*, /api/getDevises, /api/getSocietes*, /api/getPays, /api/getData, /api/perform...portefeuille..., /api/ratios*portefeuille*
+- Verification syntaxe OK
+- Commit API: `5b70838`
+
+### Lot precedent T8
 LOT T8 — Analyse bout en bout + corrections securite/data (2026-06-03)
 
 **Corrections effectuees:**
@@ -1549,8 +1569,8 @@ cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && g
 - Ne pas installer ClickHouse sans planification memoire (risque OOM)
 
 ### Etat Git (2026-06-03)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `5540d95`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `b7c962b`, sync origin, clean (SUIVI.md modifie localement)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `5b70838`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `14c49cb`, sync origin (SUIVI.md modifie localement)
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 
