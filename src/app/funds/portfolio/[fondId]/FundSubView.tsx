@@ -240,10 +240,6 @@ export default function Fond() {
   const params = useParams();
 
   const id = Number(params.fondId);
-  const randomPercentage: string = ((Math.random() * 200) - 100).toFixed(2);
-
-  const randomPercentage1 = ((Math.random() * 200) - 100).toFixed(2);
-  const randomPercentage2 = ((Math.random() * 200) - 100).toFixed(2);
 
   const [selectedPeriod, setSelectedPeriod] = useState('1 year'); // Initialize with the default selected period
   const [filteredData, setFilteredData] = useState<Option[]>([]);
@@ -1183,8 +1179,8 @@ borderColor:'grey'
                               {isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[1]?.[2])) ? '-' : parseFloat(post?.data?.performances?.data?.adaptValues1?.[1]?.[2]).toFixed(2)} %
                             </td>
 
-                            <td className={`text-right highlight ${Number(randomPercentage) < 0 ? 'text-danger' : 'text-success'}`}>
-                              {isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[1]?.[2])) ? '-' : randomPercentage} %
+                            <td className="text-right highlight">
+                              -
                             </td>
 
                           </tr>
@@ -1193,16 +1189,16 @@ borderColor:'grey'
                             <td className={`text-right ${isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[2]?.[2])) ? '' : parseFloat(post?.data?.performances?.data?.adaptValues1?.[2]?.[2]) < 0 ? 'text-danger' : 'text-success'}`}>
                               {isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[2]?.[2])) ? '-' : parseFloat(post?.data?.performances?.data?.adaptValues1?.[2]?.[2]).toFixed(2)} %
                             </td>
-                            <td className={`text-right highlight ${Number(randomPercentage1) < 0 ? 'text-danger' : 'text-success'}`}>
-                              {isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[2]?.[2])) ? '-' : randomPercentage1} %
+                            <td className="text-right highlight">
+                              -
                             </td>        </tr>
                           <tr>
                             <td> Perf.  {post?.data?.performances?.data?.adaptValues1?.[1]?.[0] - 2}</td>
                             <td className={`text-right ${isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[3]?.[2])) ? '' : parseFloat(post?.data?.performances?.data?.adaptValues1?.[3]?.[2]) < 0 ? 'text-danger' : 'text-success'}`}>
                               {isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[3]?.[2])) ? '-' : parseFloat(post?.data?.performances?.data?.adaptValues1?.[3]?.[2]).toFixed(2)} %
                             </td>
-                            <td className={`text-right highlight ${Number(randomPercentage2) < 0 ? 'text-danger' : 'text-success'}`}>
-                              {isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[3]?.[2])) ? '-' : randomPercentage2} %
+                            <td className="text-right highlight">
+                              -
                             </td>                    </tr>
 
 

@@ -271,10 +271,6 @@ export default function Fond() {
   const params = useParams();
 
   const id = Number(params.fondId);
-  const randomPercentage: string = ((Math.random() * 200) - 100).toFixed(2);
-
-  const randomPercentage1 = ((Math.random() * 200) - 100).toFixed(2);
-  const randomPercentage2 = ((Math.random() * 200) - 100).toFixed(2);
 
   const [selectedPeriod, setSelectedPeriod] = useState('1 year'); // Initialize with the default selected period
   const [filteredData, setFilteredData] = useState<Option[]>([]);
