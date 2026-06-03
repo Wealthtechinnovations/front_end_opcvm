@@ -210,14 +210,16 @@ export default function Fondselected() {
 
       try {
         const response = await fetch(`${urlconstant}/api/getfondsanomalie/${fondid}`);
-        const data = await response.json();
-        //  setFundsData(data.data);
+        if (response.ok) {
+          const data = await response.json();
+          //  setFundsData(data.data);
 
 
 
 
-        // Mettez à jour l'état avec les données récupérées
-        setFundsData(data.data);
+          // Mettez à jour l'état avec les données récupérées
+          setFundsData(data.data);
+        }
       } catch (error) {
         console.error("Erreur lors de l'appel API :", error);
       }

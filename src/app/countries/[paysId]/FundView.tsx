@@ -23,28 +23,25 @@ import Swal from "sweetalert2";
  * @returns {Promise} - Les données du classement du fond.
  */
 async function getsociete(id: string) {
-  const data = (
-    await fetch(`${urlconstant}/api/getPaysbyidfisrt/${id}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getPaysbyidfisrt/${id}`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 
 async function getpays() {
-  const data = (
-    await fetch(`${urlconstant}/api/getPays`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getPays`);
+  if (!response.ok) return null;
+  return response.json();
 }
 async function getfavoris(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/favoritesdata/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-      },
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/favoritesdata/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 /**
  * Fonction asynchrone pour obtenir les dernières valeurs de fonds.

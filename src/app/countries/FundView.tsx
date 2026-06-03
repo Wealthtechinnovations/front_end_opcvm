@@ -21,8 +21,9 @@ interface Option {
 }
 
 async function getpays() {
-  const data = (await fetch(`${urlconstant}/api/getPaysall`)).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getPaysall`);
+  if (!response.ok) return null;
+  return response.json();
 }
 
 export default function Comparaison() {

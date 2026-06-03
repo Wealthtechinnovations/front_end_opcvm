@@ -25,10 +25,9 @@ interface Funds {
   };
 }
 async function getsociete() {
-  const data = (
-    await fetch(`${urlconstant}/api/getsocieterecherche`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getsocieterecherche`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 const optionsCategorie = [
   { value: "Obligations", label: 'Obligations' },
@@ -69,16 +68,14 @@ interface FormData {
 }
 
 async function getlastvl1() {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFunds`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/searchFunds`);
+  if (!response.ok) return null;
+  return response.json();
 }
 async function getpays() {
-  const data = (
-    await fetch(`${urlconstant}/api/getPays`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getPays`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 interface PageProps {
   params: {

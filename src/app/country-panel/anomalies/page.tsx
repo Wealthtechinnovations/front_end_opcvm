@@ -21,13 +21,11 @@ interface Funds {
 }
 
 async function getAnomalie(societegestionParam: any) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getallfondsvlanomalie?pays=${societegestionParam}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getallfondsvlanomalie?pays=${societegestionParam}`, {
+    method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
+  });
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 interface PageProps {
   searchParams: {

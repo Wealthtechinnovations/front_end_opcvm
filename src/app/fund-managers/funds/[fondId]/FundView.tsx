@@ -25,19 +25,16 @@ import { generateFundSlug } from "@/lib/utils";
  * @returns {Promise} - Les données du classement du fond.
  */
 async function getsociete(id: string) {
-  const data = (
-    await fetch(`${urlconstant}/api/getSocietebyidfisrt/${id}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getSocietebyidfisrt/${id}`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 async function getFonds(id: string) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getfondbysociete/${id}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getfondbysociete/${id}`, {
+    method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
+  });
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 /**
  * Fonction asynchrone pour obtenir les dernières valeurs de fonds.

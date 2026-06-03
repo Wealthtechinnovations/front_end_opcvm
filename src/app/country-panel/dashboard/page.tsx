@@ -26,19 +26,16 @@ interface Funds {
 }
 
 async function getsociete(id: string) {
-  const data = (
-    await fetch(`${urlconstant}/api/getSocietebyid/${id}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getSocietebyid/${id}`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 async function getFonds(id: string) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getfondbyuser/${id}?pays=${id}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getfondbyuser/${id}?pays=${id}`, {
+    method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 interface Actualite {
   date: string; // Assurez-vous que le type de date correspond à ce que votre API renvoie
@@ -50,34 +47,29 @@ interface Actualite {
   // Ajoutez d'autres propriétés si nécessaire
 }
 async function getactualite() {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getactualite`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getactualite`, {
+    method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
+  });
+  if (!response.ok) return [];
+  return response.json();
 }
 
 
 
 async function getpays() {
-  const data = (
-    await fetch(`${urlconstant}/api/getPays`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getPays`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 async function getregulateur(selectedPays: any) {
-  const data = (
-    await fetch(`${urlconstant}/api/getRegulateur?pays=${selectedPays}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getRegulateur?pays=${selectedPays}`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 async function getdevise(selectedPays: any) {
-  const data = (
-    await fetch(`${urlconstant}/api/getDevise?pays=${selectedPays}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getDevise?pays=${selectedPays}`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 interface PageProps {
   searchParams: {

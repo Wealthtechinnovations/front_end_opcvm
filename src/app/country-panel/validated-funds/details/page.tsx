@@ -67,26 +67,26 @@ interface Funds {
 }
 async function getMissingDates(fundId: number) {
   const response = await fetch(`${urlconstant}/dates-manquantes/${fundId}`);
+  if (!response.ok) return [];
   const data = await response.json();
   return data.missingDates;
 }
 
 async function getMissingindDates(fundId: number) {
   const response = await fetch(`${urlconstant}/dates-indRef-null/${fundId}`);
+  if (!response.ok) return [];
   const data = await response.json();
   return data.datesWithIndRefNull;
 }
 async function getFonds(id: number) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/valLiq/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-      },
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/valLiq/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 
 interface PageProps {

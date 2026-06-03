@@ -148,22 +148,19 @@ interface FormData {
 
 
 async function getpays() {
-  const data = (
-    await fetch(`${urlconstant}/api/getPays`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getPays`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 async function getregulateur(selectedPays: any) {
-  const data = (
-    await fetch(`${urlconstant}/api/getRegulateur?pays=${selectedPays}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getRegulateur?pays=${selectedPays}`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 async function getdevise(selectedPays: any) {
-  const data = (
-    await fetch(`${urlconstant}/api/getDevise?pays=${selectedPays}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getDevise?pays=${selectedPays}`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 interface PageProps {
   searchParams: {

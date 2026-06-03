@@ -25,13 +25,11 @@ import { generateFundSlug } from "@/lib/utils";
  */
 
 async function getFonds(id: string) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getfondbypays/${id}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getfondbypays/${id}`, {
+    method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
+  });
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 /**
  * Fonction asynchrone pour obtenir les dernières valeurs de fonds.

@@ -30,13 +30,11 @@ interface Actualite {
   // Ajoutez d'autres propriétés si nécessaire
 }
 async function getactualite() {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getactualite`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getactualite`, {
+    method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
+  });
+  if (!response.ok) return [];
+  return response.json();
 }
 
 

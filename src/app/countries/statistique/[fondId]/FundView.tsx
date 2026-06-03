@@ -24,15 +24,14 @@ import Swal from "sweetalert2";
  */
 
 async function getfavoris(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/favoritesdata/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-      },
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/favoritesdata/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 /**
  * Fonction asynchrone pour obtenir les dernières valeurs de fonds.
@@ -211,13 +210,15 @@ export default function Fond() {
           }
         });
         const response = await fetch(`${urlconstant}/api/getPaysbyidstat/${id}`);
-        const responseData = await response.json();
-        settotalfonds(responseData.data.totalfonds)
-        settotalfondsignore(responseData.data.totalfondsignore)
-        settotalfondscompose(responseData.data.totalfondscompose)
-        setData(responseData.data.repartition);
-        setData1(responseData.data.results2);
-        setData2(responseData.data.performa);
+        if (response.ok) {
+          const responseData = await response.json();
+          settotalfonds(responseData.data.totalfonds)
+          settotalfondsignore(responseData.data.totalfondsignore)
+          settotalfondscompose(responseData.data.totalfondscompose)
+          setData(responseData.data.repartition);
+          setData1(responseData.data.results2);
+          setData2(responseData.data.performa);
+        }
         Swal.close(); // Close the loading popup
 
 

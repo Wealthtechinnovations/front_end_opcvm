@@ -23,28 +23,25 @@ import Swal from "sweetalert2";
  * @returns {Promise} - Les données du classement du fond.
  */
 async function getsociete(id: string) {
-  const data = (
-    await fetch(`${urlconstant}/api/getSocietebyidfisrt/${id}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getSocietebyidfisrt/${id}`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 
 async function getallsociete() {
-  const data = (
-    await fetch(`${urlconstant}/api/getsocieterecherche`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getsocieterecherche`);
+  if (!response.ok) return null;
+  return response.json();
 }
 async function getfavoris(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/favoritesdata/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-      },
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/favoritesdata/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 /**
  * Fonction asynchrone pour obtenir les dernières valeurs de fonds.
@@ -210,15 +207,17 @@ export default function Fond() {
     setSelectedDevise(selectedValue)
 
     const response = await fetch(`${urlconstant}/api/getSocietebyidfisrt/${id}?query=${selectedValue}`);
-    const data = await response.json();
-    setData(data.data.graph);
-    setData1(data.data.fundCountByYear);
-    setManagementCompany(prevState => ({
-      ...prevState,
-      sumActifNet: data.data.sumActifNet,
-      latestDate: data.data.latestDate,
-      nbreFond: data.data.nbrePart
-    }));
+    if (response.ok) {
+      const data = await response.json();
+      setData(data.data.graph);
+      setData1(data.data.fundCountByYear);
+      setManagementCompany(prevState => ({
+        ...prevState,
+        sumActifNet: data.data.sumActifNet,
+        latestDate: data.data.latestDate,
+        nbreFond: data.data.nbrePart
+      }));
+    }
     Swal.close(); // Close the loading popup
 
   };

@@ -22,13 +22,11 @@ interface Funds {
 }
 
 async function getFonds(id: string) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getfondbyuser/${id}?pays=${id}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getfondbyuser/${id}?pays=${id}`, {
+    method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 interface PageProps {
   searchParams: {

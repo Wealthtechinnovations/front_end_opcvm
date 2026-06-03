@@ -2,10 +2,22 @@ import { urlconstant, urlsite } from "@/lib/constants";
 
 export async function generateMetadata({ params }: { params: { fondId: string } }) {
     const societeNom = params.fondId.replace(/-/g, ' ');
-    const response = await fetch(`${urlconstant}/api/getsocieteidmeta/${societeNom}`);
-    const fund = await response.json();
 
-    const { nom, pays } = fund.data.societe;
+    let nom = societeNom;
+    let pays = '';
+
+    try {
+        const response = await fetch(`${urlconstant}/api/getsocieteidmeta/${societeNom}`);
+        if (response.ok) {
+            const fund = await response.json();
+            if (fund?.data?.societe) {
+                nom = fund.data.societe.nom || societeNom;
+                pays = fund.data.societe.pays || '';
+            }
+        }
+    } catch {
+        // Fall back to slug-derived name
+    }
 
     return {
         title: `OPCVM gérés par ${nom} ${pays} | Fundafrique`,

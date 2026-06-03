@@ -23,13 +23,15 @@ interface Option {
 }
 
 async function getsociete() {
-  const data = (await fetch(`${urlconstant}/api/getsocieterecherche`)).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getsocieterecherche`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 
 async function getpays() {
-  const data = (await fetch(`${urlconstant}/api/getPays`)).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getPays`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 
 export default function Comparaison() {
