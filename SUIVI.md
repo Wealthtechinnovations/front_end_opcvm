@@ -1521,7 +1521,14 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-03 : LOT T10-T12 — Classements local+EUR/USD corriges (code), page USD benchmark corrige. Production saine (verifiee par API: pages 200, endpoints 200). A DEPLOYER + RECALCUL classements requis.
+Session 2026-06-03 (suite) : LOT T8-T12 DEPLOYES en production (API `b758e01` + Frontend `37cde96`, pm2 restart OK, build frontend OK). 2 crons ajoutes au crontab prod (cron_tunisie_daily 19h L-V, cron_health_check 22h). Scripts cron presents+executables dans le depot.
+
+### POINT BLOQUANT OUVERT — classementType1 (national) toujours VIDE en prod
+- Apres deploiement + recalcul, `classementquartilemysql/866` renvoie toujours classementType1 VIDE (type2/type3 OK).
+- Cause possible A : le recalcul `/api/classementmysql` n'a PAS reellement abouti (sorties curl noyees dans le copier-coller, pas de "finishrank" confirme).
+- Cause possible B : pour le fonds 866, `performences.categorie_nationale` est NULL ou sans self-row → `calculateRankNational` renvoie {error} → aucune ligne type1 creee (route apigestionsavequotidien.js ligne 712 cree seulement si code==200).
+- Le code du fix (commit `6644682`, calculateRankNational MAX(date)/fond) est bien dans le chemin d'appel (calculateRankmysql delegue a ranking.calculateRankNational, ligne 351).
+- DIAGNOSTIC REQUIS sur le VPS (DB inaccessible depuis l'env dev) : voir "Prochaine action recommandee".
 
 ### Dernier lot termine
 LOT T10/T11/T12 — Correction classements + page USD
