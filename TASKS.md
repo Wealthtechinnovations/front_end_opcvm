@@ -15,12 +15,13 @@
 | T11 | 2026-06-03 | Totaux EUR/USD gonfles → keepLatestPerFund() | Deploye + recalc OK | `6644682` |
 | T12 | 2026-06-03 | Page USD benchmark annuel EUR→USD | Deploye | `be1b45e` |
 | T13 | 2026-06-03 | Diagnostic liaison indices↔fonds (couverture indRef EUR/USD) | Diagnostic pret | `e06798b` |
-| T14 | 2026-06-03 | #26 response.ok : 9 pages fonds critiques durci (672 fetch audites) | Commite, a deployer | `4c49a44` |
+| T14 | 2026-06-03 | #26 response.ok : 9 pages fonds critiques (672 fetch audites) | Deploye, 9 pages 200 | `4c49a44` |
+| T16 | 2026-06-03 | #26 response.ok : 26 pages secondaires (countries, country-panel, fund-managers) | Commite, a deployer | `2814e9a` |
 
 ## Prochain lot envisage
 
-- LOT T15 : Corrections indRef EUR/USD suite T13 (recalc TND, mapping BRVM→UEMOA, decision metier CEMAC)
-- LOT T16 : response.ok sur pages secondaires (fund-managers, countries, panels)
-- LOT T17 : Fix incohérence route_vl.js multiplication vs division (P5 T13)
+- LOT T15 : Corrections indRef EUR/USD suite T13 (recalc TND, mapping BRVM→UEMOA, decision metier CEMAC) — ATTEND donnees DB du VPS
+- LOT T17 : Fix incohérence route_vl.js multiplication vs division (P5 T13) — route prod sensible
+- LOT T18 : #28 factoriser duplication panel/investor vs panel/portfolio
 
 > Pour reprendre : lire SUIVI.md > POINT DE REPRISE COURANT, puis CODE_REVIEW.md.

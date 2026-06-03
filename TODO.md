@@ -13,11 +13,13 @@
 
 ## A deployer (pret, commite, non encore en prod)
 
-- [ ] **#26 response.ok** : 9 pages fonds critiques durci (commit `4c49a44`). Deployer frontend.
-- [ ] **T13 diagnostic indices** : rapport + requetes SQL pret (commit API `e06798b`). Actions data a lancer sur VPS.
+- [x] **T14 #26** : 9 pages fonds critiques durci (commit `4c49a44`) — DEPLOYE, 9 pages 200
+- [ ] **T16 #26 suite** : 26 pages secondaires durci (commit `2814e9a`). Deployer frontend.
+- [ ] **T15 (suite T13)** : corrections indRef EUR/USD — ATTEND donnees DB du VPS (commande node fournie)
 
 ## Dette technique a traiter (cf CODE_REVIEW.md)
 
+- [ ] #32 — Fix routes_vl.js multiplication→division (route prod sensible, T17)
 - [ ] #28 — Factoriser la duplication panel/investor vs panel/portfolio (~100 pages)
 - [ ] #27 — Script de backfill ClickHouse `performance_historique` (quand ClickHouse en prod)
 - [ ] #2 — Index UNIQUE sur valorisations(fund_id, date) apres nettoyage doublons

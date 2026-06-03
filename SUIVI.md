@@ -1521,13 +1521,14 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-03 (suite 2) : TOUS LES LOTS T8-T14 COMPLETS.
-- T8-T12 DEPLOYES en production (API + Frontend + pm2 restart + recalcul classements).
-- Classement type1 (national) CONFIRME OK apres 2e recalcul (1er avait echoue silencieusement).
-- 7 crons actifs dans crontab production (dont 2 nouveaux : tunisie_daily + health_check).
-- T13 diagnostic indices commite (`e06798b`): 3 causes racines identifiees (TUNISIE recalc TND, UEMOA mapping BRVM, CEMAC aucun indice).
-- T14 (#26 response.ok) commite (`4c49a44`): 9 pages fonds critiques durci, build OK. A deployer.
+Session 2026-06-03 (suite 3) : TOUS LES LOTS T8-T16 COMPLETS.
+- T8-T12 DEPLOYES en production (API + Frontend + pm2 restart + recalcul classements). type1 national CONFIRME OK.
+- T14 (#26) DEPLOYE et VERIFIE (9 pages fonds HTTP 200, classements local/EUR/USD OK).
+- T16 (#26 suite) COMMITE (`2814e9a`): 26 pages secondaires durci, build independant OK, QA zero regression. A DEPLOYER.
+- T13 diagnostic indices commite (`e06798b`): 3 causes racines (TUNISIE recalc TND, UEMOA mapping BRVM, CEMAC aucun indice). T15 = corrections, attend donnees DB du VPS.
+- 7 crons actifs dans crontab production.
 - Tous les .md mis a jour (les 2 depots).
+- Connexion production : API HTTPS live (verifiee), PRODUCTION_STATE.json, pont VPS (commandes node/SQL). Socket MySQL direct non joignable depuis sandbox (MySQL bind localhost = securite).
 
 ### Diagnostic classement national (RESOLU)
 - Fond 866 : categorie_nationale = "OBLIGATIONS MAROC", 22 lignes perf, max date 2026-05-18, 300 peers.
@@ -1537,12 +1538,18 @@ Session 2026-06-03 (suite 2) : TOUS LES LOTS T8-T14 COMPLETS.
 - Cause : le 1er curl `classementmysql` n'avait pas abouti (sorties noyees dans le copier-coller).
 
 ### Dernier lot termine
-LOT T14 (#26) — response.ok guards sur 9 pages fonds critiques
+LOT T16 (#26 suite) — response.ok guards sur 26 pages secondaires
+- 115 fetch audites, 26 fichiers durcis (countries/, country-panel/, fund-managers/)
+- Meme pattern T14. Fallback par consommateur: null / {data:[]} / [] (.map)
+- QA verifie: tous les acces directs data.data.X alimentes par {data:[]} (pas de crash)
+- Build frontend INDEPENDANT OK (0 erreur). Zero regression
+- Commit frontend: `2814e9a`
+- Rapport: T_RESPONSE_OK_AUDIT.md (section T16 appended)
+
+### Lot precedent T14 (#26) — response.ok guards sur 9 pages fonds critiques
 - 672 fetch audites, 9 fichiers durcis (summary local/EUR/USD, portfolio, download-nav, history, documents, performance, search)
-- Pattern: `if (!response.ok) return null` ou `{data:[]}` selon consommateur. Zero regression (aucune URL/calcul/logique metier modifie)
-- Build frontend OK (0 erreur)
-- Commit frontend: `4c49a44`
-- Rapport: T_RESPONSE_OK_AUDIT.md
+- Pattern: `if (!response.ok) return null` ou `{data:[]}` selon consommateur. Zero regression
+- Build OK. Commit frontend: `4c49a44`. DEPLOYE (9 pages HTTP 200 verifiees)
 
 ### Lot precedent T13 — Diagnostic liaison indices↔fonds
 - TUNISIE 24%: indRef local 100% mais conversion recalc partielle (dev_libelle non normalise ou recalc `active=1` partiel)

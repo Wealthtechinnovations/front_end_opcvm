@@ -59,11 +59,12 @@
   - Cron deploye: `0 19 * * 1-5` dans crontab production (2026-06-03)
 - UEMOA: Script import existe (import_vl_uemoa.js) mais pas de scraper BRVM automatise
 
-### 26. ~~Generalisation response.ok frontend~~ — CORRIGE PARTIELLEMENT (2026-06-03)
-- Probleme: 87% des 672 fetch() frontend faisaient `.json()` sans verifier `response.ok`, causant des crashs JSON.parse quand API renvoie 404/500.
-- Correction: 9 pages fonds critiques durci (summary local/EUR/USD, portfolio, download-nav, history, documents, performance, search). Pattern: `if (!response.ok) return null` ou `{data:[]}` selon consommateur.
-- Reste: pages fund-managers/, countries/, panels/ (meme pattern, lot ulterieur T16).
-- Commit Frontend: `4c49a44`
+### 26. ~~Generalisation response.ok frontend~~ — CORRIGE (2026-06-03, T14+T16)
+- Probleme: 87% des fetch() frontend faisaient `.json()` sans verifier `response.ok`, causant des crashs JSON.parse quand API renvoie 404/500.
+- T14: 9 pages fonds critiques durci (summary local/EUR/USD, portfolio, download-nav, history, documents, performance, search). Commit `4c49a44`. DEPLOYE.
+- T16: 26 pages secondaires durci (countries/, country-panel/, fund-managers/). 115 fetch audites. Commit `2814e9a`. A deployer.
+- Pattern: `if (!response.ok) return null|{data:[]}|[]` selon consommateur (verifie). Build OK, QA zero regression.
+- Reste: helpers morts non touches (volontaire), formulaires entremeles (fondscharge) notes pour traitement ulterieur prudent.
 
 ### 31. Diagnostic couverture indRef EUR/USD (T13, 2026-06-03)
 - TUNISIE 24%: indRef local 100%, conversion recalc partielle (dev_libelle non normalise probable)

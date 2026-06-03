@@ -13,9 +13,12 @@
 - cron_daily_eur_usd.sh: bit executable ajoute. Commit API `5540d95`
 - 2 crons ajoutes au crontab production : cron_tunisie_daily.sh (19h L-V), cron_health_check.sh (22h)
 
-### Pret a deployer (T13/T14)
+### Deploye (T14)
+- T14 (#26): response.ok guards sur 9 pages fonds critiques (672 fetch audites, 0 erreur build). Commit Frontend `4c49a44`. Verifie: 9 pages HTTP 200.
+
+### Pret a deployer (T13/T16)
 - T13: Diagnostic liaison indices↔fonds — causes racines couverture EUR/USD (TUNISIE 24%/UEMOA 22%/CEMAC 0%). Commit API `e06798b`
-- T14 (#26): response.ok guards sur 9 pages fonds critiques (672 fetch audites, 0 erreur build). Commit Frontend `4c49a44`
+- T16 (#26 suite): response.ok guards sur 26 pages secondaires (countries/, country-panel/, fund-managers/). 115 fetch audites, build independant OK, QA zero regression. Commit Frontend `2814e9a`
 
 ## [2026-06-02] CMF Tunisie + Forex EUR/TND fix + Fix classement
 
