@@ -153,6 +153,26 @@
 - Correction: chmod +x
 - Commit API: `5540d95`
 
+### 29. ~~Classement national local (type 1) systematiquement vide~~ — CORRIGE (2026-06-03)
+- Fichier: src/services/ranking.service.js (calculateRankNational)
+- Probleme: filtre `WHERE date = :date` (datejour du fond) exigeait que tous les pairs aient la meme derniere date de VL. Comme les fonds se mettent a jour a des jours differents, le classement national etait vide → non affiche sur la page devise locale.
+- Correction: `MAX(date)` par fond (INNER JOIN), pattern identique au regional/global valide
+- Effet: apres recalcul `classementmysql`
+- Commit API: `6644682`
+
+### 30. ~~Totaux classement EUR/USD gonfles (doublons de date)~~ — CORRIGE (2026-06-03)
+- Fichier: src/services/ranking.service.js (calculateRankNationalDev/RegionalDev/GlobalDev)
+- Probleme: lecture de TOUTES les dates par fond dans performences_eurs/usds (~4/fond) → totaux multiplies (ex OBLIGATIONS MAROC USD: 1883 au lieu de ~344), rangs fausses
+- Correction: helper `keepLatestPerFund()` (derniere date par fond)
+- Effet: apres recalcul `classementeur`/`classementusd`
+- Commit API: `6644682`
+
+### 31. ~~Page USD: benchmark annuel en EUR~~ — CORRIGE (2026-06-03)
+- Fichier: src/app/funds/summary-usd/[fondId]/FundSubView.tsx (getperfcategorieannuel)
+- Probleme: `dev="EUR"` hardcode sur la page USD → performance categorie annuelle du benchmark en EUR
+- Correction: `dev="USD"`
+- Commit Frontend: `be1b45e`
+
 ## Dette technique restante
 
 ### 25. ~~routes_vl.js — 11 .then() sans .catch() hors try/catch~~ — CORRIGE (2026-06-03)

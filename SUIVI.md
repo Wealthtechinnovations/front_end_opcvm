@@ -1461,6 +1461,32 @@ Corrections deployees (commits pushes, a deployer sur production):
 **Build frontend**: OK (0 erreur)
 **Statut**: Pushes, a deployer
 
+### 2026-06-03 - LOT T10/T11/T12: Classements (local + EUR/USD) + page USD
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER + RECALCUL REQUIS
+- **Diagnostic production** (connexion API reelle, pas a l'aveugle):
+  - classementquartilemysql/866 = 200 mais `classementType1` (national) VIDE ; type2/type3 OK
+  - Echantillon 8 fonds: type1 quasi-systematiquement vide (sauf fond 1200)
+  - classementquartiledev/866/USD: totaux GONFLES (national=1883 vs 344 attendu local)
+  - valLiqdev/866/USD = 200 (API USD OK) ; pages USD/EUR/local toutes HTTP 200
+- **LOT T10 — Classement national local vide (root cause)**:
+  - `calculateRankNational` utilisait `WHERE date = :date` (date fixe = datejour du fond)
+  - Les pairs ayant des dernieres VL a des dates differentes etaient exclus → national vide
+  - Fix: `MAX(date)` par fond (INNER JOIN), pattern identique au regional/global valide
+  - Fichier: `api_opcv/src/services/ranking.service.js`
+- **LOT T11 — Totaux EUR/USD gonfles**:
+  - `calculateRankNationalDev/RegionalDev/GlobalDev` prenaient TOUTES les dates par fond (~4/fond)
+  - → totaux de classement multiplies, rangs fausses
+  - Fix: helper `keepLatestPerFund()` (derniere date par fond) avant le ranking
+  - Fichier: `api_opcv/src/services/ranking.service.js`
+  - **Commit API**: `6644682`
+- **LOT T12 — Page USD benchmark annuel en EUR**:
+  - `getperfcategorieannuel` (summary-usd) hardcodait `dev="EUR"` → benchmark EUR sur page USD
+  - Fix: `dev="USD"`. Build 217/217 OK
+  - **Commit Frontend**: `be1b45e`
+- **IMPORTANT**: les fonctions calculateRank* ALIMENTENT les tables classement lors du batch.
+  Les corrections prennent effet APRES recalcul (voir Prochaine action recommandee).
+- **Risque regression**: NUL (national etait casse, dev gonfle ; on ne fait qu'ameliorer)
+
 ### 2026-06-03 - LOT T9: routes_vl.js - 10 .catch() ajoutes
 - **Statut**: COMMITE ET POUSSE, A DEPLOYER
 - **Probleme**: 11 .then() sans .catch() dans routes_vl.js → erreurs Sequelize silencieuses, requests qui hang jusqu'a timeout client
@@ -1495,13 +1521,19 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-03 : LOT T9 — Reliability fix routes_vl.js. Production saine, API et frontend a deployer.
+Session 2026-06-03 : LOT T10-T12 — Classements local+EUR/USD corriges (code), page USD benchmark corrige. Production saine (verifiee par API: pages 200, endpoints 200). A DEPLOYER + RECALCUL classements requis.
 
 ### Dernier lot termine
-LOT T9 — 10 .catch() ajoutes a routes_vl.js (resilience erreurs DB)
-- Toutes les routes GET sans gestion d'erreur retournent maintenant 500 propre au lieu de hang
-- /api/getportefeuille*, /api/getDevises, /api/getSocietes*, /api/getPays, /api/getData, /api/perform...portefeuille..., /api/ratios*portefeuille*
-- Verification syntaxe OK
+LOT T10/T11/T12 — Correction classements + page USD
+- T10: calculateRankNational utilise MAX(date)/fond (national local etait vide)
+- T11: keepLatestPerFund() dedupe EUR/USD (totaux gonfles 1883→~344)
+- T12: page USD getperfcategorieannuel dev EUR→USD
+- Commits: API `6644682`, Frontend `be1b45e`
+- Build frontend 217/217 OK, syntaxe ranking.service.js OK
+- ATTENTION: effet apres recalcul des classements (batch)
+
+### Lot precedent T9 — 10 .catch() ajoutes a routes_vl.js (resilience erreurs DB)
+- Routes GET portefeuille/devises/societes/pays/data/ratios → 500 propre au lieu de hang
 - Commit API: `5b70838`
 
 ### Lot precedent T8
@@ -1536,19 +1568,38 @@ LOT T8 — Analyse bout en bout + corrections securite/data (2026-06-03)
 
 ### Prochaine action recommandee
 
-**DEPLOIEMENT PRODUCTION** — Deployer les 3 derniers commits:
+**ETAPE 1 — DEPLOIEMENT API** (inclut classements + .catch + auth admin + valLiq 404):
 ```bash
-# API
 cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
+```
 
-# Frontend
+**ETAPE 2 — RECALCUL CLASSEMENTS** (OBLIGATOIRE apres deploiement API pour appliquer T10/T11):
+```bash
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+curl -s "http://localhost:3005/api/classementmysql"   # classements locaux (national maintenant peuple)
+curl -s "http://localhost:3005/api/classementeur"      # classements EUR (totaux corriges)
+curl -s "http://localhost:3005/api/classementusd"      # classements USD (totaux corriges)
+# Verification:
+curl -s "http://localhost:3005/api/classementquartilemysql/866" | head -c 300   # classementType1 doit etre rempli
+```
+
+**ETAPE 3 — DEPLOIEMENT FRONTEND** (page USD benchmark + random data + null safety):
+```bash
 cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
 ```
 
-**CRONS A AJOUTER en production** (crontab -e):
+**ETAPE 4 — CRONS A AJOUTER** (crontab -e):
 ```
 0 19 * * 1-5  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_tunisie_daily.sh >> /var/log/cron_tunisie.log 2>&1
 0 22 * * *    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_health_check.sh >> /var/log/africafunds_health.log 2>&1
+```
+
+**ETAPE 5 — VERIFICATION POST-DEPLOIEMENT**:
+```bash
+# Classement local non vide:
+curl -s https://africafunds.chainsolutions.fr/api/classementquartilemysql/866 | python3 -c "import sys,json;d=json.load(sys.stdin)['data'];print('type1 national:', 'OK' if d['classementType1'] else 'VIDE')"
+# Totaux USD coherents (< 500 pour une categorie nationale):
+curl -s https://africafunds.chainsolutions.fr/api/classementquartiledev/866/USD | python3 -c "import sys,json;d=json.load(sys.stdin)['data'];print('USD national total:', d['classementType1'].get('rank1Antotal'))"
 ```
 
 **DONNEES STALES a investiguer:**
@@ -1568,9 +1619,9 @@ cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && g
 - Ne pas faire TRUNCATE sur les tables classement
 - Ne pas installer ClickHouse sans planification memoire (risque OOM)
 
-### Etat Git (2026-06-03)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `5b70838`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `14c49cb`, sync origin (SUIVI.md modifie localement)
+### Etat Git (2026-06-03 - LOT T12)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `6644682`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `be1b45e`, sync origin (docs en cours)
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 
