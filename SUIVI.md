@@ -1464,9 +1464,16 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-02 : LOT T5 complete (deep audit + bug fixes). Forex fix T4 pousse. Production API down (500 sur DB routes).
+Session 2026-06-03 : LOT T6 DEPLOYE EN PRODUCTION. API f3ddd6a + Frontend 1f98ba9 deployes (git pull + pm2 restart + build 217/217 OK). MariaDB restauree (OOM 2026-06-02 corrige). Production saine : API valLiq/866 (local+EUR base 100) OK, /api/ref/pays = 29 pays OK, frontend HTTP 200.
 
 ### Dernier lot termine
+LOT T6 — Deploiement production des corrections T4 (forex EUR/TND) + T5 (deep audit bugs)
+- API deployee : f3ddd6a (DB resilience, searchFunds, totalfondscompose, null safety, 6 routes .catch) + 97a5f22 (forex ECB fallback)
+- Frontend deploye : 1f98ba9 (7 page.server.ts crash-safe, sitemap, perf NaN), build 217/217 pages 0 erreur
+- PM2 : api-monolith + fundafrique-frontend online apres restart
+- Verifications production : valLiq/866 200, valLiqdev/866/EUR 200 (graphs 1000+ points base 100), ref/pays 200 (29 pays)
+
+### Lot precedent
 LOT T5 — Deep audit + correction bugs critiques API et frontend
 
 ### Fichiers modifies dans le dernier lot
@@ -1479,34 +1486,16 @@ LOT T5 — Deep audit + correction bugs critiques API et frontend
 - API production check: 500 sur tous les endpoints DB (MySQL connexion perdue)
 - Frontend production: HTTP 200 OK
 
-### ALERTE PRODUCTION
-L'API de production retourne 500 sur tous les endpoints utilisant la base de donnees. Le serveur Express tourne mais MySQL est inaccessible. Actions requises sur le serveur:
-1. Verifier MySQL: `systemctl status mysql` / `systemctl restart mysql`
-2. Redemarrer API: `pm2 restart api-monolith`
-3. Verifier: `curl http://localhost:3005/api/valLiq/866`
+### ETAT PRODUCTION : SAINE (2026-06-03)
+MariaDB restauree, API et frontend deployes et verifies. Plus d'alerte active.
+- api-monolith online, fundafrique-frontend online (pm2)
+- Endpoints testes 200 : valLiq/866, valLiqdev/866/EUR, ref/pays
+- Note : OOM-kill MariaDB du 2026-06-02 a surveiller (cause memoire VPS, ClickHouse ~922MB principal consommateur)
 
 ### Prochaine action recommandee
-**PRIORITE 1 — Restaurer la production** (sur le serveur):
-```bash
-# Verifier et redemarrer MySQL si necessaire
-systemctl status mysql
-# Si down: systemctl restart mysql
+**PRIORITE 1 — TERMINEE** : deploiement production effectue avec succes (LOT T6).
 
-# Deployer le nouveau code (inclut DB resilience + bug fixes + forex fix)
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
-git stash 2>/dev/null; git pull --rebase origin claude/code-review-improvements-ikvuj; git stash pop 2>/dev/null
-pm2 restart api-monolith
-
-# Verifier que l'API repond
-curl -s http://localhost:3005/api/valLiq/866 | head -c 100
-
-# Deployer frontend
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend
-git stash 2>/dev/null; git pull --rebase origin claude/code-review-improvements-ikvuj; git stash pop 2>/dev/null
-npm run build && pm2 restart fundafrique-frontend
-```
-
-**PRIORITE 2 — Backfill forex TND** (apres restauration):
+**PRIORITE 2 — Backfill forex TND** (a executer sur le serveur):
 ```bash
 cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
 node scripts/diag/check_forex_tnd.js
