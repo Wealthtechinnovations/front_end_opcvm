@@ -1467,6 +1467,15 @@ Corrections deployees (commits pushes, a deployer sur production):
 Session 2026-06-03 : LOT T6 DEPLOYE EN PRODUCTION. API f3ddd6a + Frontend 1f98ba9 deployes (git pull + pm2 restart + build 217/217 OK). MariaDB restauree (OOM 2026-06-02 corrige). Production saine : API valLiq/866 (local+EUR base 100) OK, /api/ref/pays = 29 pays OK, frontend HTTP 200.
 
 ### Dernier lot termine
+LOT T7 — Fix crash page fonds "reading '1'" (FundView.tsx) + verif forex TND
+- Bug: FundView.tsx lignes 1558/1567/1576, className ternaire accedait slicedPostc[N][1] en branche else quand slicedPostc[N] undefined
+- Declencheur: fonds rendement < 4 perfs annuelles benchmark (ex AC SECUR RENDEMENT MA0000038630)
+- Fix: garde `!slicedPostc?.[N] || isNaN(...)` couvrant la branche else
+- Build: 217/217 OK 0 erreur
+- Forex TND: diagnostic production OK (EUR/TND 5963 entrees 100% value>0), scrape execute 0 correction => PRIORITE 2 RESOLUE
+- A deployer sur production (git pull + build + pm2 restart frontend)
+
+### Lot precedent T6
 LOT T6 — Deploiement production des corrections T4 (forex EUR/TND) + T5 (deep audit bugs)
 - API deployee : f3ddd6a (DB resilience, searchFunds, totalfondscompose, null safety, 6 routes .catch) + 97a5f22 (forex ECB fallback)
 - Frontend deploye : 1f98ba9 (7 page.server.ts crash-safe, sitemap, perf NaN), build 217/217 pages 0 erreur

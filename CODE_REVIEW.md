@@ -105,7 +105,22 @@
 - Probleme: pas de response.ok check ni null guard sur fund.funds
 - Commit Frontend: `4af1b35`
 
-### 19. Forex EUR/TND data quality — IDENTIFIE (2026-06-02), fix pousse
+### 20. ~~Crash page fonds "Cannot read properties of undefined (reading '1')"~~ — CORRIGE (2026-06-03)
+- Fichier: src/app/funds/[fondId]/FundView.tsx (lignes 1558, 1567, 1576)
+- Probleme: className ternaire `slicedPostc && slicedPostc[N] && isNaN(...) ? '' : parseFloat(slicedPostc[N][1]) < 0 ...`
+  La branche else evalue `slicedPostc[N][1]` quand `slicedPostc[N]` est undefined → crash client.
+- Declencheur: fonds "rendement" avec < 4 perfs annuelles benchmark (slicedPostc = postc.data.multipliedValues)
+  Ex: AC SECUR RENDEMENT (MA0000038630)
+- Correction: garde `!slicedPostc?.[N] || isNaN(...)` qui couvre aussi la branche else (coherent avec cellules valeur)
+- Commit Frontend: a deployer
+
+### 19. ~~Forex EUR/TND data quality~~ — RESOLU (2026-06-03)
+- Diagnostic production 2026-06-03: EUR/TND = 5963 entrees, 100% value>0, derniere 2026-06-03
+- Le probleme initial (1 seule value>0) etait deja resolu par les imports anterieurs
+- scrape_forex_import.js execute: 0 corrections necessaires, donnees saines
+- Note residuelle: EUR/TND min_val=0.06 (vs max 3.46) → quelques entrees anciennes suspectes a investiguer (priorite FAIBLE)
+
+### 19-bis. Forex EUR/TND data quality — historique (2026-06-02)
 - Table: devisedechanges
 - Probleme: 5,959 entries EUR/TND mais seule 1 avec value>0 (Yahoo Finance ne renvoie pas TND valide)
 - Impact: Toutes les conversions EUR pour fonds tunisiens utilisent un seul point de donnee
