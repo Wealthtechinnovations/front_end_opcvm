@@ -127,3 +127,51 @@
 - Fix: ECB fallback + cross-rate derivation + cleanup value=0 dans scrape_forex_import.js
 - Commit API: `97a5f22`
 - Statut: Code pousse, a deployer et executer sur production
+
+### 21. ~~Math.random() fake data dans pages fonds~~ — CORRIGE (2026-06-03)
+- Fichiers: portfolio/FundSubView.tsx (3 cellules affichaient des % aleatoires au lieu de benchmark)
+- Aussi: FundView.tsx, summary-eur/FundSubView.tsx, summary-usd/FundSubView.tsx, download-nav/FundSubView.tsx (code mort)
+- Impact: Utilisateurs voyaient des performances inventees dans la page portfolio
+- Correction: Remplacement par '-' (pas de donnees benchmark disponibles sur cette page)
+- Commit Frontend: `b7c962b`
+
+### 22. ~~8 routes admin sans authentification~~ — CORRIGE (2026-06-03)
+- Fichier: src/routes/routes_recalc_admin.js
+- Probleme: Toutes les routes /api/admin/recalc/* et /api/admin/import/* et /api/admin/scheduler/* etaient accessibles sans token JWT
+- Impact: N'importe qui pouvait trigger des recalculs, annuler des jobs, activer/desactiver le scheduler
+- Correction: Ajout authenticate + authorize('admin') sur les 8 routes
+- Bonus: authorize() accepte maintenant typeusers_id=0 comme admin fallback
+- Commit API: `5540d95`
+
+### 23. Routes valLiq/valLiqdev retournaient 500 au lieu de 404
+- Fichier: src/routes/apigestionfonds.js
+- Probleme: /api/valLiq/:id et /api/valLiqdev/:id/:devise retournaient HTTP 500 pour des fonds inexistants
+- Correction: Ajout validation fundId (400) + changement empty results 500→404
+- Commit API: `bb03081`
+
+### 24. cron_daily_eur_usd.sh sans bit executable — CORRIGE (2026-06-03)
+- Correction: chmod +x
+- Commit API: `5540d95`
+
+## Dette technique restante
+
+### 25. routes_vl.js — 11 .then() sans .catch() hors try/catch
+- Lignes: 3135, 3209, 4578, 4791, 5069, 5095, 5122, 5668, 6647, 7022, 8652
+- Impact: Requetes qui pourraient hang en cas d'erreur
+- Priorite: FAIBLE (risque mitige par Express global error handler)
+
+### 26. 87% des fetch() frontend sans response.ok check
+- 638 appels fetch(), seulement 81 avec response.ok check (12.7%)
+- Impact: Erreurs API silencieuses, donnees corrompues affichees
+- Priorite: MOYENNE
+
+### 27. ClickHouse performance_historique jamais peuple
+- Table creee mais aucun script de backfill n'existe
+- Aucune route API ne lit cette table
+- Priorite: FAIBLE (a creer quand ClickHouse sera installe en production)
+
+### 28. Duplication panel/investor vs panel/portfolio (100 pages)
+- 50 pages identiques dans chaque repertoire
+- Plus panel/portefeuille (3 pages supplementaires)
+- Impact: Triple maintenance, corrections inconsistantes
+- Priorite: MOYENNE

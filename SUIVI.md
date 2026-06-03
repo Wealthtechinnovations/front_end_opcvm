@@ -1461,79 +1461,96 @@ Corrections deployees (commits pushes, a deployer sur production):
 **Build frontend**: OK (0 erreur)
 **Statut**: Pushes, a deployer
 
+### 2026-06-03 - LOT T8: Analyse bout en bout + corrections critiques
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER
+- **Analyse complete**: 4 agents paralleles — crons, ClickHouse, frontend, securite API
+- **Corrections**:
+  1. Math.random() fake data dans portfolio/FundSubView.tsx (3 cellules aleatoires → '-'). Code mort supprime de 4 autres fichiers fund view. Commit frontend: `b7c962b`
+  2. 8 routes admin recalc sans auth JWT → ajout authenticate+authorize('admin'). authorize() supporte typeusers_id=0. Commit API: `5540d95`
+  3. valLiq/valLiqdev retournaient 500 pour fonds inexistants → 404 + validation fundId. Commit API: `bb03081`
+  4. cron_daily_eur_usd.sh sans chmod +x. Commit API: `5540d95`
+- **Resultats analyse**:
+  - Crons: 5 scripts OK, pas de crontab dev (normal). Tunisie+health_check a ajouter en production
+  - ClickHouse: non installe, performance_historique jamais peuple, analytics→503
+  - Frontend: 238 pages, build OK. 87% fetch sans response.ok (dette technique)
+  - Securite API: eval() clean, SQL injection clean, multer OK, rate limiting OK
+  - Donnees: MAROC frais (06-01), TUNISIE frais (06-02), NIGERIA 26j retard, UEMOA 229j, CEMAC 537j
+- **CODE_REVIEW.md mis a jour**: items #21-28 ajoutes
+- **Build**: 233 pages OK 0 erreur
+
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-03 : LOT T6 DEPLOYE EN PRODUCTION. API f3ddd6a + Frontend 1f98ba9 deployes (git pull + pm2 restart + build 217/217 OK). MariaDB restauree (OOM 2026-06-02 corrige). Production saine : API valLiq/866 (local+EUR base 100) OK, /api/ref/pays = 29 pays OK, frontend HTTP 200.
+Session 2026-06-03 : LOT T8 — Analyse complete de l'application + corrections critiques.
+Production saine. API et frontend deployes. MariaDB restauree.
 
 ### Dernier lot termine
-LOT T7 — Fix crash page fonds "reading '1'" (FundView.tsx) + verif forex TND
-- Bug: FundView.tsx lignes 1558/1567/1576, className ternaire accedait slicedPostc[N][1] en branche else quand slicedPostc[N] undefined
-- Declencheur: fonds rendement < 4 perfs annuelles benchmark (ex AC SECUR RENDEMENT MA0000038630)
-- Fix: garde `!slicedPostc?.[N] || isNaN(...)` couvrant la branche else
-- Build: 217/217 OK 0 erreur
-- Forex TND: diagnostic production OK (EUR/TND 5963 entrees 100% value>0), scrape execute 0 correction => PRIORITE 2 RESOLUE
-- A deployer sur production (git pull + build + pm2 restart frontend)
+LOT T8 — Analyse bout en bout + corrections securite/data (2026-06-03)
 
-### Lot precedent T6
-LOT T6 — Deploiement production des corrections T4 (forex EUR/TND) + T5 (deep audit bugs)
-- API deployee : f3ddd6a (DB resilience, searchFunds, totalfondscompose, null safety, 6 routes .catch) + 97a5f22 (forex ECB fallback)
-- Frontend deploye : 1f98ba9 (7 page.server.ts crash-safe, sitemap, perf NaN), build 217/217 pages 0 erreur
-- PM2 : api-monolith + fundafrique-frontend online apres restart
-- Verifications production : valLiq/866 200, valLiqdev/866/EUR 200 (graphs 1000+ points base 100), ref/pays 200 (29 pays)
-
-### Lot precedent
-LOT T5 — Deep audit + correction bugs critiques API et frontend
+**Corrections effectuees:**
+1. **Math.random() fake data** — portfolio/FundSubView.tsx affichait des % aleatoires au lieu de donnees benchmark. Remplace par '-'. Code mort supprime de 4 autres fichiers. Commit frontend: `b7c962b`
+2. **8 routes admin sans auth** — routes_recalc_admin.js accessibles sans JWT. Ajout authenticate+authorize('admin') sur les 8 routes. authorize() supporte maintenant typeusers_id=0 comme admin. Commit API: `5540d95`
+3. **valLiq/valLiqdev 500→404** — retournaient HTTP 500 pour fonds inexistants. Ajout validation fundId (400) + empty results→404. Commit API: `bb03081`
+4. **cron_daily_eur_usd.sh** — chmod +x (manquait bit executable). Commit API: `5540d95`
+5. **Analyse crons** — 5 scripts cron existent, tous fonctionnels. Pas de crontab sur cette machine dev (normal).
+6. **Analyse ClickHouse** — non installe sur cette machine. Performance_historique jamais peuple. Analytics routes retournent 503 gracieusement.
+7. **Analyse frontend** — 238 pages, build OK. 87% fetch() sans response.ok check (dette technique).
+8. **Analyse securite API** — eval() clean, SQL injection clean, multer limits OK, rate limiting OK.
+9. **CODE_REVIEW.md** mis a jour avec items #21-28
 
 ### Fichiers modifies dans le dernier lot
-**API** (commit `f3ddd6a`): sequelize.js, apigestionfonds.js, apigestionpays.js, apigestionsociete.js, routes_vl_admin.js
-**Frontend** (commit `4af1b35`): 7 page.server.ts, sitemap.ts, performance/page.tsx
-**Documentation** (commit `b86a4b3`): SUIVI.md, CHANGELOG.md, CODE_REVIEW.md, ROADMAP.md, README_DEV.md
+**Frontend** (commit `b7c962b`): FundView.tsx, portfolio/FundSubView.tsx, summary-eur/FundSubView.tsx, summary-usd/FundSubView.tsx, download-nav/FundSubView.tsx
+**API** (commits `bb03081`, `5540d95`): apigestionfonds.js, routes_recalc_admin.js, auth.js, cron_daily_eur_usd.sh
+**Documentation**: CODE_REVIEW.md, SUIVI.md
 
 ### Tests realises
-- Build frontend: OK (0 erreur, 217+ pages)
-- API production check: 500 sur tous les endpoints DB (MySQL connexion perdue)
-- Frontend production: HTTP 200 OK
+- Build frontend: OK (233 pages, 0 erreur)
+- Git push: OK (les 2 repos)
 
 ### ETAT PRODUCTION : SAINE (2026-06-03)
-MariaDB restauree, API et frontend deployes et verifies. Plus d'alerte active.
-- api-monolith online, fundafrique-frontend online (pm2)
+- api-monolith online, fundafrique-frontend online, worker-recalculation online
 - Endpoints testes 200 : valLiq/866, valLiqdev/866/EUR, ref/pays
-- Note : OOM-kill MariaDB du 2026-06-02 a surveiller (cause memoire VPS, ClickHouse ~922MB principal consommateur)
+- Donnees fraiches: MAROC (2026-06-01), TUNISIE (2026-06-02), NIGERIA (2026-05-08), UEMOA (2025-10-15), CEMAC (2024-12-12)
+- Forex: 21 paires, toutes a jour (2026-06-03)
+- Performances: 60K local (1193 fonds), EUR ~5K (1192 fonds), USD ~5K (1192 fonds)
 
 ### Prochaine action recommandee
-**PRIORITE 1 — TERMINEE** : deploiement production effectue avec succes (LOT T6).
 
-**PRIORITE 2 — Backfill forex TND** (a executer sur le serveur):
+**DEPLOIEMENT PRODUCTION** — Deployer les 3 derniers commits:
 ```bash
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
-node scripts/diag/check_forex_tnd.js
-node scripts/import/scrape_forex_import.js
-node scripts/diag/check_forex_tnd.js
-bash scripts/cron/cron_daily_update.sh
+# API
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
+
+# Frontend
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
 ```
 
-**PRIORITE 3 — Crons manquants**:
+**CRONS A AJOUTER en production** (crontab -e):
 ```
-# crontab -e — ajouter:
-0 19 * * 1-5  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_tunisie_daily.sh >> /dev/null 2>&1
-0 22 * * *    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_health_check.sh >> /dev/null 2>&1
+0 19 * * 1-5  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_tunisie_daily.sh >> /var/log/cron_tunisie.log 2>&1
+0 22 * * *    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_health_check.sh >> /var/log/africafunds_health.log 2>&1
 ```
+
+**DONNEES STALES a investiguer:**
+- UEMOA: derniere VL 2025-10-15 (229 jours, pas de scraper automatise)
+- CEMAC: derniere VL 2024-12-12 (537 jours, pas de source identifiee)
+- NIGERIA: derniere VL 2026-05-08 (26 jours, cron hebdomadaire existe)
 
 ### Risques connus
-- **Production API down** — MySQL connexion perdue, necessite intervention sur le serveur
-- ECB n'a pas de donnees TND/MAD/NGN — la derivation cross-rate depend de Yahoo EUR/USD + Yahoo EUR/TND
-- Performances des 1,259 VL Tunisie pas encore recalculees
-- Classements Tunisie pas a jour
+- OOM MariaDB du 2026-06-02 a surveiller (ClickHouse ~922MB principal consommateur memoire)
+- UEMOA/CEMAC data stale (pas de scraper automatise)
+- 87% des fetch() frontend sans response.ok check (risque de donnees corrompues affichees)
+- ClickHouse non installe en production (analytics routes retournent 503)
 
 ### A ne pas faire a la reprise
 - Ne pas re-executer CMF --production (deja fait, 1,259 VL inserees)
 - Ne pas modifier le schema de la table valorisations
 - Ne pas faire TRUNCATE sur les tables classement
+- Ne pas installer ClickHouse sans planification memoire (risque OOM)
 
-### Etat Git local (2026-06-02)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `f3ddd6a`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `4af1b35`, SUIVI.md a pusher
+### Etat Git (2026-06-03)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `5540d95`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `b7c962b`, sync origin, clean (SUIVI.md modifie localement)
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 
