@@ -36,13 +36,14 @@ Plateforme de reference pour les OPCVM africains : donnees VL, performances, cla
 - UEMOA : import_vl_uemoa.js (BRVM, manuel) — A AUTOMATISER
 - CEMAC : aucun script, aucune source (COSUMAF) — A INVESTIGUER
 
-### Crons actifs
+### Crons actifs (7 au total, tous deployes dans crontab 2026-06-03)
 - cron_daily_update.sh (lun-ven 20h) : ASFIM + forex + recalculs (9 etapes)
+- cron_tunisie_daily.sh (lun-ven 19h) : CMF Tunisie scraper — DEPLOYE 2026-06-03
 - cron_daily_eur_usd.sh (21h30) : perf EUR/USD + classements
+- cron_health_check.sh (22h quotidien) : monitoring sante systeme — DEPLOYE 2026-06-03
 - cron_nigeria_weekly.sh (lundi 10h) : SEC Nigeria
 - sync_production.sh (horaire) : snapshot PRODUCTION_STATE.json
-- cron_health_check.sh (22h quotidien) : monitoring sante systeme — CREE, a deployer
-- cron_tunisie_daily.sh (lun-ven 19h) : CMF Tunisie scraper — CREE, a deployer
+- fix-brvm-nginx.py (toutes les 5 min) : fix Nginx BRVM
 
 ### Frontend
 - Fiches fonds (local/EUR/USD), comparaisons, graphiques Highcharts

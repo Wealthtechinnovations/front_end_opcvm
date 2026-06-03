@@ -3,17 +3,21 @@
 > Source de verite operationnelle : **SUIVI.md** (ce depot). Dette technique detaillee : **CODE_REVIEW.md**. Vision moyen/long terme : **ROADMAP.md**.
 > Ce fichier est une vue synthetique des actions a court terme. Ne pas dupliquer les details ici.
 
-## A faire immediatement (deploiement en attente)
+## Deploye le 2026-06-03
 
-- [ ] **Deployer API** (commit `6644682`) : `git pull --rebase` + `pm2 restart api-monolith`
-- [ ] **Recalculer les classements** apres deploiement API : `classementmysql`, `classementeur`, `classementusd`
-- [ ] **Deployer Frontend** (commit `be1b45e`) : `git pull --rebase` + `npm run build` + `pm2 restart fundafrique-frontend`
-- [ ] **Ajouter 2 crons** (crontab) : `cron_tunisie_daily.sh` (19h L-V), `cron_health_check.sh` (22h)
-- [ ] **Verifier post-deploiement** : classementType1 non vide, totaux USD coherents (voir SUIVI.md ETAPE 5)
+- [x] **Deployer API** (commits T8-T11) : `git pull --rebase` + `pm2 restart api-monolith` — FAIT
+- [x] **Recalculer les classements** : `classementmysql` + `classementeur` + `classementusd` — FAIT (type1 OK)
+- [x] **Deployer Frontend** (commits T8-T12) : `git pull --rebase` + `npm run build` + `pm2 restart` — FAIT
+- [x] **Ajouter 2 crons** : `cron_tunisie_daily.sh` (19h L-V) + `cron_health_check.sh` (22h) — FAIT
+- [x] **Classement national type1 confirme OK** en production apres recalcul
+
+## A deployer (pret, commite, non encore en prod)
+
+- [ ] **#26 response.ok** : 9 pages fonds critiques durci (commit `4c49a44`). Deployer frontend.
+- [ ] **T13 diagnostic indices** : rapport + requetes SQL pret (commit API `e06798b`). Actions data a lancer sur VPS.
 
 ## Dette technique a traiter (cf CODE_REVIEW.md)
 
-- [ ] #26 — Generaliser le check `response.ok` sur les fetch frontend (12.7% couverts)
 - [ ] #28 — Factoriser la duplication panel/investor vs panel/portfolio (~100 pages)
 - [ ] #27 — Script de backfill ClickHouse `performance_historique` (quand ClickHouse en prod)
 - [ ] #2 — Index UNIQUE sur valorisations(fund_id, date) apres nettoyage doublons

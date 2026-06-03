@@ -1,19 +1,21 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
-## [2026-06-03] Classements (local+EUR/USD) + securite + resilience
+## [2026-06-03] Classements + securite + resilience + response.ok + diagnostic indices
 
-### Classements corriges (LOT T10/T11/T12)
-- Classement NATIONAL local etait systematiquement vide (filtre date fixe) → MAX(date)/fond. Commit API `6644682`
+### Deploye en production (T8-T12)
+- Classement NATIONAL local etait systematiquement vide (filtre date fixe) → MAX(date)/fond. Commit API `6644682`. **RECALCUL EFFECTUE, type1 OK.**
 - Totaux classement EUR/USD gonfles par doublons de date → dedup keepLatestPerFund(). Commit API `6644682`
 - Page USD affichait le benchmark annuel en EUR → corrige en USD. Commit Frontend `be1b45e`
-- NOTE: recalcul des classements requis apres deploiement (classementmysql/eur/usd)
-
-### Securite & resilience (LOT T8/T9)
 - 8 routes admin recalc protegees par JWT authenticate+authorize('admin'). Commit API `5540d95`
 - 10 routes routes_vl.js: ajout .catch() (fin des requetes qui hangent). Commit API `5b70838`
 - valLiq/valLiqdev: 404 au lieu de 500 pour fonds inexistants. Commit API `bb03081`
 - Suppression Math.random() (fausses performances) sur pages fonds. Commit Frontend `b7c962b`
 - cron_daily_eur_usd.sh: bit executable ajoute. Commit API `5540d95`
+- 2 crons ajoutes au crontab production : cron_tunisie_daily.sh (19h L-V), cron_health_check.sh (22h)
+
+### Pret a deployer (T13/T14)
+- T13: Diagnostic liaison indices↔fonds — causes racines couverture EUR/USD (TUNISIE 24%/UEMOA 22%/CEMAC 0%). Commit API `e06798b`
+- T14 (#26): response.ok guards sur 9 pages fonds critiques (672 fetch audites, 0 erreur build). Commit Frontend `4c49a44`
 
 ## [2026-06-02] CMF Tunisie + Forex EUR/TND fix + Fix classement
 

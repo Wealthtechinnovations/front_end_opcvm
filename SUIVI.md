@@ -1521,23 +1521,36 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-03 (suite) : LOT T8-T12 DEPLOYES en production (API `b758e01` + Frontend `37cde96`, pm2 restart OK, build frontend OK). 2 crons ajoutes au crontab prod (cron_tunisie_daily 19h L-V, cron_health_check 22h). Scripts cron presents+executables dans le depot.
+Session 2026-06-03 (suite 2) : TOUS LES LOTS T8-T14 COMPLETS.
+- T8-T12 DEPLOYES en production (API + Frontend + pm2 restart + recalcul classements).
+- Classement type1 (national) CONFIRME OK apres 2e recalcul (1er avait echoue silencieusement).
+- 7 crons actifs dans crontab production (dont 2 nouveaux : tunisie_daily + health_check).
+- T13 diagnostic indices commite (`e06798b`): 3 causes racines identifiees (TUNISIE recalc TND, UEMOA mapping BRVM, CEMAC aucun indice).
+- T14 (#26 response.ok) commite (`4c49a44`): 9 pages fonds critiques durci, build OK. A deployer.
+- Tous les .md mis a jour (les 2 depots).
 
-### POINT BLOQUANT OUVERT — classementType1 (national) toujours VIDE en prod
-- Apres deploiement + recalcul, `classementquartilemysql/866` renvoie toujours classementType1 VIDE (type2/type3 OK).
-- Cause possible A : le recalcul `/api/classementmysql` n'a PAS reellement abouti (sorties curl noyees dans le copier-coller, pas de "finishrank" confirme).
-- Cause possible B : pour le fonds 866, `performences.categorie_nationale` est NULL ou sans self-row → `calculateRankNational` renvoie {error} → aucune ligne type1 creee (route apigestionsavequotidien.js ligne 712 cree seulement si code==200).
-- Le code du fix (commit `6644682`, calculateRankNational MAX(date)/fond) est bien dans le chemin d'appel (calculateRankmysql delegue a ranking.calculateRankNational, ligne 351).
-- DIAGNOSTIC REQUIS sur le VPS (DB inaccessible depuis l'env dev) : voir "Prochaine action recommandee".
+### Diagnostic classement national (RESOLU)
+- Fond 866 : categorie_nationale = "OBLIGATIONS MAROC", 22 lignes perf, max date 2026-05-18, 300 peers.
+- 0 lignes categorie_nationale NULL dans performences (100% couverture).
+- classementfonds 866 : type 2 + type 3 existaient, type 1 absent (n'avait jamais ete cree).
+- Apres 2e recalcul `classementmysql` → "finishrank" confirme → type1 national OK.
+- Cause : le 1er curl `classementmysql` n'avait pas abouti (sorties noyees dans le copier-coller).
 
 ### Dernier lot termine
-LOT T10/T11/T12 — Correction classements + page USD
-- T10: calculateRankNational utilise MAX(date)/fond (national local etait vide)
-- T11: keepLatestPerFund() dedupe EUR/USD (totaux gonfles 1883→~344)
-- T12: page USD getperfcategorieannuel dev EUR→USD
-- Commits: API `6644682`, Frontend `be1b45e`
-- Build frontend 217/217 OK, syntaxe ranking.service.js OK
-- ATTENTION: effet apres recalcul des classements (batch)
+LOT T14 (#26) — response.ok guards sur 9 pages fonds critiques
+- 672 fetch audites, 9 fichiers durcis (summary local/EUR/USD, portfolio, download-nav, history, documents, performance, search)
+- Pattern: `if (!response.ok) return null` ou `{data:[]}` selon consommateur. Zero regression (aucune URL/calcul/logique metier modifie)
+- Build frontend OK (0 erreur)
+- Commit frontend: `4c49a44`
+- Rapport: T_RESPONSE_OK_AUDIT.md
+
+### Lot precedent T13 — Diagnostic liaison indices↔fonds
+- TUNISIE 24%: indRef local 100% mais conversion recalc partielle (dev_libelle non normalise ou recalc `active=1` partiel)
+- UEMOA 22%: mapping pays→indice BRVM utilise noms individuels au lieu de 'UEMOA'
+- CEMAC 0%: aucun indice dans indices_references (taux de change OK, probleme = source indice)
+- Incohérence latente: routes_vl.js:3027-3039 convertit par multiplication (regle projet: division)
+- Rapport: `api_opcv/T13_DIAGNOSTIC_INDICES.md` (8 requetes SQL, 5 propositions)
+- Commit API: `e06798b`
 
 ### Lot precedent T9 — 10 .catch() ajoutes a routes_vl.js (resilience erreurs DB)
 - Routes GET portefeuille/devises/societes/pays/data/ratios → 500 propre au lieu de hang
@@ -1575,29 +1588,21 @@ LOT T8 — Analyse bout en bout + corrections securite/data (2026-06-03)
 
 ### Prochaine action recommandee
 
-**ETAPE 1 — DEPLOIEMENT API** (inclut classements + .catch + auth admin + valLiq 404):
-```bash
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
-```
-
-**ETAPE 2 — RECALCUL CLASSEMENTS** (OBLIGATOIRE apres deploiement API pour appliquer T10/T11):
-```bash
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
-curl -s "http://localhost:3005/api/classementmysql"   # classements locaux (national maintenant peuple)
-curl -s "http://localhost:3005/api/classementeur"      # classements EUR (totaux corriges)
-curl -s "http://localhost:3005/api/classementusd"      # classements USD (totaux corriges)
-# Verification:
-curl -s "http://localhost:3005/api/classementquartilemysql/866" | head -c 300   # classementType1 doit etre rempli
-```
-
-**ETAPE 3 — DEPLOIEMENT FRONTEND** (page USD benchmark + random data + null safety):
+**DEPLOYER T14 (response.ok frontend) — commite, pret :**
 ```bash
 cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
 ```
 
-**ETAPE 4 — CRONS A AJOUTER** (crontab -e):
+**VERIFIER apres deploiement T14 :**
+```bash
+# Page fonds locale (doit afficher correctement meme si API down):
+curl -sI https://africafunds.chainsolutions.fr/funds/summary/test-866 | head -3
+# Classements toujours OK:
+curl -s https://africafunds.chainsolutions.fr/api/classementquartilemysql/866 | python3 -c "import sys,json;d=json.load(sys.stdin)['data'];print('type1:', 'OK' if d['classementType1'] else 'VIDE')"
 ```
-0 19 * * 1-5  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_tunisie_daily.sh >> /var/log/cron_tunisie.log 2>&1
+
+**SUITE T15 (couverture indRef) — lancer diagnostics SQL depuis VPS :**
+Voir `api_opcv/T13_DIAGNOSTIC_INDICES.md` section 4 (8 requetes SELECT pret a coller)
 0 22 * * *    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_health_check.sh >> /var/log/africafunds_health.log 2>&1
 ```
 

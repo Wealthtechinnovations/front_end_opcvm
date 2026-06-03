@@ -56,8 +56,28 @@
 - ~~TUNISIE: Script import existe (import_vl_tunisie_cmf.js) mais pas de scraper CMF automatise~~
   - Correction: Scraper Python automatise cree (`scripts/scraper/cmf_tunisie_daily.py`)
   - Scraping CMF multi-pages, parsing Excel bi-section, matching fuzzy, quarantaine extremes >20%
-  - Cron recommande: `0 19 * * 1-5` (avant cron_daily_update)
+  - Cron deploye: `0 19 * * 1-5` dans crontab production (2026-06-03)
 - UEMOA: Script import existe (import_vl_uemoa.js) mais pas de scraper BRVM automatise
+
+### 26. ~~Generalisation response.ok frontend~~ — CORRIGE PARTIELLEMENT (2026-06-03)
+- Probleme: 87% des 672 fetch() frontend faisaient `.json()` sans verifier `response.ok`, causant des crashs JSON.parse quand API renvoie 404/500.
+- Correction: 9 pages fonds critiques durci (summary local/EUR/USD, portfolio, download-nav, history, documents, performance, search). Pattern: `if (!response.ok) return null` ou `{data:[]}` selon consommateur.
+- Reste: pages fund-managers/, countries/, panels/ (meme pattern, lot ulterieur T16).
+- Commit Frontend: `4c49a44`
+
+### 31. Diagnostic couverture indRef EUR/USD (T13, 2026-06-03)
+- TUNISIE 24%: indRef local 100%, conversion recalc partielle (dev_libelle non normalise probable)
+- UEMOA 22%: indRef local incomplet, mapping pays→indice BRVM utilise noms individuels (Cote Ivoire, Senegal) au lieu de 'UEMOA'
+- CEMAC 0%: aucun indice CEMAC dans indices_references (paires EUR/XAF et USD/XAF existent, probleme source indice pas change)
+- Diagnostic complet: `api_opcv/T13_DIAGNOSTIC_INDICES.md` (8 requetes SQL pret, 5 propositions correction)
+- Commit API: `e06798b`
+
+### 32. Incohérence conversion devise routes_vl.js (identifiee T13)
+- Fichier: api_opcv/src/routes/routes_vl.js lignes 3027-3039
+- Probleme: Conversion par MULTIPLICATION au lieu de DIVISION (regle projet: valeur_locale / taux)
+- Impact: Route VL production, lot dedie requis (T17)
+- Risque: MOYEN (affecte les VL converties en temps reel via cette route)
+- Statut: NON corrige, documente pour traitement prudent
 - CEMAC: Aucun script, aucune source identifiee (COSUMAF)
 - Priorite restante: MOYENNE (UEMOA/CEMAC)
 - Impact: Donnees UEMOA stales 229 jours, CEMAC 537 jours

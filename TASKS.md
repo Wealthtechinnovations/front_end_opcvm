@@ -9,15 +9,18 @@
 | T5 | 2026-06-02 | Deep audit (totalfondscompose, null safety, DB resilience) | Deploye | `f3ddd6a`, `4af1b35` |
 | T6 | 2026-06-03 | Deploiement production T4+T5 | Deploye | — |
 | T7 | 2026-06-03 | Crash page fonds 'reading 1' (FundView slicedPostc) | Deploye | `ddf7b3f` |
-| T8 | 2026-06-03 | Analyse bout en bout + securite (auth admin, Math.random, valLiq 404) | A deployer | `5540d95`, `bb03081`, `b7c962b` |
-| T9 | 2026-06-03 | routes_vl.js : 10 .catch() (resilience) | A deployer | `5b70838` |
-| T10 | 2026-06-03 | Classement national local vide → MAX(date)/fond | A deployer + recalc | `6644682` |
-| T11 | 2026-06-03 | Totaux EUR/USD gonfles → keepLatestPerFund() | A deployer + recalc | `6644682` |
-| T12 | 2026-06-03 | Page USD benchmark annuel EUR→USD | A deployer | `be1b45e` |
+| T8 | 2026-06-03 | Analyse bout en bout + securite (auth admin, Math.random, valLiq 404) | Deploye | `5540d95`, `bb03081`, `b7c962b` |
+| T9 | 2026-06-03 | routes_vl.js : 10 .catch() (resilience) | Deploye | `5b70838` |
+| T10 | 2026-06-03 | Classement national local vide → MAX(date)/fond | Deploye + recalc OK | `6644682` |
+| T11 | 2026-06-03 | Totaux EUR/USD gonfles → keepLatestPerFund() | Deploye + recalc OK | `6644682` |
+| T12 | 2026-06-03 | Page USD benchmark annuel EUR→USD | Deploye | `be1b45e` |
+| T13 | 2026-06-03 | Diagnostic liaison indices↔fonds (couverture indRef EUR/USD) | Diagnostic pret | `e06798b` |
+| T14 | 2026-06-03 | #26 response.ok : 9 pages fonds critiques durci (672 fetch audites) | Commite, a deployer | `4c49a44` |
 
 ## Prochain lot envisage
 
-- LOT T13 : revue ciblee liaison indices↔fonds + couverture indRef EUR/USD (TUNISIE 24%, UEMOA 22%, CEMAC 0%)
-- LOT T14 : generalisation response.ok check frontend (CODE_REVIEW #26)
+- LOT T15 : Corrections indRef EUR/USD suite T13 (recalc TND, mapping BRVM→UEMOA, decision metier CEMAC)
+- LOT T16 : response.ok sur pages secondaires (fund-managers, countries, panels)
+- LOT T17 : Fix incohérence route_vl.js multiplication vs division (P5 T13)
 
 > Pour reprendre : lire SUIVI.md > POINT DE REPRISE COURANT, puis CODE_REVIEW.md.
