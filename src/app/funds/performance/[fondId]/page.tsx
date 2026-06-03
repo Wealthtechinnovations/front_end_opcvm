@@ -18,28 +18,24 @@ interface Post {
 
 }
 async function getlastvl(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/valLiq/${id}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/valLiq/${id}`);
+  if (!response.ok) return null;
+  return response.json();
 }
 async function getperfind(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/performancesindice/fond/${id}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/performancesindice/fond/${id}`);
+  if (!response.ok) return null;
+  return response.json();
 }
 async function getperfcategorieannuel(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/performancescategorie/fond/${id}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/performancescategorie/fond/${id}`);
+  if (!response.ok) return null;
+  return response.json();
 }
 async function getlastvl1() {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFunds`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/searchFunds`);
+  if (!response.ok) return null;
+  return response.json();
 }
 interface Option1 {
 

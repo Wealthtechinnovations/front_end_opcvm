@@ -25,32 +25,29 @@ import { faFileDownload, faPhoneAlt, faEnvelope } from '@fortawesome/free-solid-
  * @returns {Promise} - Les données du classement du fond.
  */
 async function getclassement(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/classementquartilemysql/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-      },
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/classementquartilemysql/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 async function getdateavailable(fondId: any) {
-  const data = (
-    await fetch(`${urlconstant}/api/getdateavailable/${fondId}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getdateavailable/${fondId}`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 async function getfavoris(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/favoritesdata/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-      },
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/favoritesdata/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 
 const buttonStyle = {
@@ -67,10 +64,9 @@ const buttonStyle = {
  * @returns {Promise} - Les dernières valeurs de fonds.
  */
 async function getlastvl1() {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFunds`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/searchFunds`);
+  if (!response.ok) return null;
+  return response.json();
 }
 /**
  * Fonction asynchrone pour obtenir les détails d'une publication.
@@ -80,15 +76,14 @@ async function getlastvl1() {
  * @returns {Promise} - Les détails de la publication.
  */
 async function getPost(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/valLiq/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-      },
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/valLiq/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 
 
@@ -256,12 +251,16 @@ export default function Fond() {
       try {
         const url = `${urlconstant}/api/performancemonthyear/fond/${id}`;
         const response = await fetch(url);
-        const data = await response.json(); // Extrayez les données JSON de la réponse
-        setPerformances(data); // Mettez à jour l'état avec les données extraites
+        if (response.ok) {
+          const data = await response.json(); // Extrayez les données JSON de la réponse
+          setPerformances(data); // Mettez à jour l'état avec les données extraites
+        }
         const url1 = `${urlconstant}/api/performanceindicemonthyear/fond/${id}`;
         const response1 = await fetch(url1);
-        const data1 = await response1.json(); // Extrayez les données JSON de la réponse
-        setPerformancesindices(data1); // Mettez à jour l'état avec les données extraites
+        if (response1.ok) {
+          const data1 = await response1.json(); // Extrayez les données JSON de la réponse
+          setPerformancesindices(data1); // Mettez à jour l'état avec les données extraites
+        }
 
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -307,12 +306,16 @@ export default function Fond() {
 
       const url = `${urlconstant}/api/performancemonthyear/fond/${id}?query=${selectedValue}`;
       const response = await fetch(url);
-      const data = await response.json(); // Extrayez les données JSON de la réponse
-      setPerformances(data); // Mettez à jour l'état avec les données extraites
+      if (response.ok) {
+        const data = await response.json(); // Extrayez les données JSON de la réponse
+        setPerformances(data); // Mettez à jour l'état avec les données extraites
+      }
       const url1 = `${urlconstant}/api/performanceindicemonthyear/fond/${id}?query=${selectedValue}`;
       const response1 = await fetch(url1);
-      const data1 = await response1.json(); // Extrayez les données JSON de la réponse
-      setPerformancesindices(data1); // Mettez à jour l'état avec les données extraites
+      if (response1.ok) {
+        const data1 = await response1.json(); // Extrayez les données JSON de la réponse
+        setPerformancesindices(data1); // Mettez à jour l'état avec les données extraites
+      }
 
       let url5;
       if (e.target.value == "EUR" || e.target.value == "USD") {
@@ -322,6 +325,10 @@ export default function Fond() {
 
       }
       const response5 = await fetch(url5);
+      if (!response5.ok) {
+        Swal.close();
+        return;
+      }
       const data5 = await response5.json(); // Extrayez les données JSON de la réponse
       setPost(data5); // Mettez à jour l'état avec les données extraites
       const datasgraph = data5?.data?.graphs.map((item: { dates: any; values: any; valuesInd: any; }) => ({

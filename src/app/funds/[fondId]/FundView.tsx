@@ -73,13 +73,14 @@ async function getdateavailable(fondId: any) {
     try {
         const response = await fetch(`${urlconstant}/api/getdateavailable/${fondId}`);
         if (!response.ok) {
-            throw new Error('Erreur lors de la récupération des dates disponibles');
+            return { data: [] };
         }
         const data = await response.json();
         return data;
     } catch (error) {
         console.error('Erreur lors de la récupération des données de classement:', error);
         // Affichez un message d'erreur à l'utilisateur si nécessaire
+        return { data: [] };
     }
 }
 // ... code existant ...
@@ -108,10 +109,9 @@ async function getfavoris(id: number) {
  * @returns {Promise} - Les dernières valeurs de fonds.
  */
 async function getlastvl1() {
-    const data = (
-        await fetch(`${urlconstant}/api/searchFunds`)
-    ).json();
-    return data;
+    const response = await fetch(`${urlconstant}/api/searchFunds`);
+    if (!response.ok) return null;
+    return response.json();
 }
 /**
  * Fonction asynchrone pour obtenir les détails d'une publication.
@@ -121,21 +121,19 @@ async function getlastvl1() {
  * @returns {Promise} - Les détails de la publication.
  */
 async function getPost(id: number) {
-    const data = (
-        await fetch(`${urlconstant}/api/valLiq/${id}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-            },
-        })
-    ).json();
-    return data;
+    const response = await fetch(`${urlconstant}/api/valLiq/${id}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
+        },
+    });
+    if (!response.ok) return null;
+    return response.json();
 }
 async function getperfcategorieannuel(id: number) {
-    const data = (
-        await fetch(`${urlconstant}/api/performancescategorie/fond/${id}`)
-    ).json();
-    return data;
+    const response = await fetch(`${urlconstant}/api/performancescategorie/fond/${id}`);
+    if (!response.ok) return null;
+    return response.json();
 }
 
 /**

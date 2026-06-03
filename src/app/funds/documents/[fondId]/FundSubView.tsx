@@ -26,15 +26,14 @@ import Swal from 'sweetalert2';
  * @returns {Promise} - Les données du classement du fond.
  */
 async function getfavoris(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/favoritesdata/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-      },
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/favoritesdata/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 
 const buttonStyle = {
@@ -51,10 +50,9 @@ const buttonStyle = {
  * @returns {Promise} - Les dernières valeurs de fonds.
  */
 async function getlastvl1() {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFunds`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/searchFunds`);
+  if (!response.ok) return null;
+  return response.json();
 }
 /**
  * Fonction asynchrone pour obtenir les détails d'une publication.
@@ -64,15 +62,14 @@ async function getlastvl1() {
  * @returns {Promise} - Les détails de la publication.
  */
 async function getPost(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/valLiq/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-      },
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/valLiq/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 
 

@@ -25,42 +25,38 @@ import Swal from 'sweetalert2';
  * @returns {Promise} - Les données du classement du fond.
  */
 async function getclassement(id: number, dev: string) {
-  const data = (
-    await fetch(`${urlconstant}/api/classementquartiledev/${id}/${dev}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-      },
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/classementquartiledev/${id}/${dev}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 
 async function getperfcategorieannuel(id: number) {
   const dev = "USD"
 
-  const data = (
-    await fetch(`${urlconstant}/api/performancesdevcategorie/fond/${id}/${dev}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/performancesdevcategorie/fond/${id}/${dev}`);
+  if (!response.ok) return null;
+  return response.json();
 }
 
 async function getdateavailable(fondId: any) {
-  const data = (
-    await fetch(`${urlconstant}/api/getdateavailable/${fondId}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getdateavailable/${fondId}`);
+  if (!response.ok) return { data: [] };
+  return response.json();
 }
 async function getfavoris(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/favoritesdata/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-      },
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/favoritesdata/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 /**
  * Fonction asynchrone pour obtenir les dernières valeurs de fonds.
@@ -69,10 +65,9 @@ async function getfavoris(id: number) {
  * @returns {Promise} - Les dernières valeurs de fonds.
  */
 async function getlastvl1() {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFunds`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/searchFunds`);
+  if (!response.ok) return null;
+  return response.json();
 }
 /**
  * Fonction asynchrone pour obtenir les détails d'une publication.
@@ -82,15 +77,14 @@ async function getlastvl1() {
  * @returns {Promise} - Les détails de la publication.
  */
 async function getPost(id: number, dev: string) {
-  const data = (
-    await fetch(`${urlconstant}/api/valLiqdev/${id}/${dev}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-      },
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/valLiqdev/${id}/${dev}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 
 /**

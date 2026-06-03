@@ -28,13 +28,19 @@ interface Societe {
 }
 
 async function getfonds() {
-  return (await fetch(`${urlconstant}/api/searchFunds`)).json();
+  const response = await fetch(`${urlconstant}/api/searchFunds`);
+  if (!response.ok) return null;
+  return response.json();
 }
 async function getallsociete() {
-  return (await fetch(`${urlconstant}/api/getsocieterecherche`)).json();
+  const response = await fetch(`${urlconstant}/api/getsocieterecherche`);
+  if (!response.ok) return null;
+  return response.json();
 }
 async function getpays() {
-  return (await fetch(`${urlconstant}/api/getPays`)).json();
+  const response = await fetch(`${urlconstant}/api/getPays`);
+  if (!response.ok) return null;
+  return response.json();
 }
 
 const optionsCategorie = [
