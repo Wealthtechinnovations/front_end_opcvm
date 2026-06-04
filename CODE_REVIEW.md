@@ -67,11 +67,11 @@
 - Reste: helpers morts non touches (volontaire), formulaires entremeles (fondscharge) notes pour traitement ulterieur prudent.
 
 ### 31. Diagnostic couverture indRef EUR/USD (T13, 2026-06-03)
-- TUNISIE 24%: indRef local 100%, conversion recalc partielle (dev_libelle non normalise probable)
-- UEMOA 22%: indRef local incomplet, mapping pays→indice BRVM utilise noms individuels (Cote Ivoire, Senegal) au lieu de 'UEMOA'
-- CEMAC 0%: aucun indice CEMAC dans indices_references (paires EUR/XAF et USD/XAF existent, probleme source indice pas change)
-- Diagnostic complet: `api_opcv/T13_DIAGNOSTIC_INDICES.md` (8 requetes SQL pret, 5 propositions correction)
-- Commit API: `e06798b`
+- TUNISIE 24%: indRef local peuple mais conversion indRef_EUR/USD partielle. Cause a investiguer (diagnostics SQL VPS necessaires). dev_libelle confirme clean = 'TND', forex pairs confirmees presentes et a jour
+- UEMOA 22%: mapping pays→indice BRVM utilisait noms individuels au lieu de 'UEMOA' → **FIX T15** `f6d7cb2` (ajout 'UEMOA' dans INDEX_CONFIG)
+- CEMAC 0%: aucun indice CEMAC dans indices_references (paires EUR/XAF et USD/XAF existent, probleme = source indice BVMAC a identifier)
+- Diagnostic complet: `api_opcv/T13_DIAGNOSTIC_INDICES.md`
+- Commit diagnostic: `e06798b`, commit fix: `f6d7cb2`
 
 ### 32. Incohérence conversion devise routes_vl.js (identifiee T13)
 - Fichier: api_opcv/src/routes/routes_vl.js lignes 3027-3039
@@ -79,9 +79,16 @@
 - Impact: Route VL production, lot dedie requis (T17)
 - Risque: MOYEN (affecte les VL converties en temps reel via cette route)
 - Statut: NON corrige, documente pour traitement prudent
-- CEMAC: Aucun script, aucune source identifiee (COSUMAF)
-- Priorite restante: MOYENNE (UEMOA/CEMAC)
-- Impact: Donnees UEMOA stales 229 jours, CEMAC 537 jours
+
+### 33. import_indices_excel.js step 4 multiplication→division (identifiee T15)
+- Fichier: api_opcv/scripts/import/import_indices_excel.js lignes 476-477
+- Probleme: `indRef * rate` au lieu de `indRef / rate` pour conversion EUR/USD
+- **FIX T15** `f6d7cb2`: corrige en division (coherent avec recalc_eur_usd_daily_rate.js)
+- Statut: CORRIGE, a deployer + re-executer sur VPS
+
+### 34. Donnees UEMOA/CEMAC stales
+- UEMOA: donnees stales 233 jours (derniere VL 2025-10-15), pas de scraper BRVM automatise
+- CEMAC: donnees stales 539 jours (derniere VL 2024-12-12), aucune source COSUMAF identifiee
 
 ### 9. Gateway microservices non active
 - Fichier: services/gateway/index.js + serviceRegistry.js
