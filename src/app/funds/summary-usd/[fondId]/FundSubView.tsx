@@ -630,7 +630,7 @@ export default function Fond() {
     setSelectedFund(selectedOption);
   };
 
-  const quartile = Math.ceil(classementlocal?.data?.classementType1.rank5Ans / classementlocal?.data?.classementType1.rank5Anstotal * 4);
+  const quartile = Math.ceil(classementlocal?.data?.classementType1?.rank5Ans / classementlocal?.data?.classementType1?.rank5Anstotal * 4);
   // Define quartile colors
   const quartileColors: {
     [key: number]: string;
@@ -1300,7 +1300,7 @@ borderColor:'grey'
                             <td className={`text-right ${isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[1]?.[2])) ? '' : parseFloat(post?.data?.performances?.data?.adaptValues1?.[1]?.[2]) < 0 ? 'text-danger' : 'text-success'}`}>
                               {isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[1]?.[2])) ? '-' : parseFloat(post?.data?.performances?.data?.adaptValues1?.[1]?.[2]).toFixed(2)} %
                             </td>
-                            <td className={`text-right ${slicedPostc && slicedPostc[1] && isNaN(parseFloat(slicedPostc[1][2])) ? '' : parseFloat(slicedPostc[1][2]) < 0 ? 'text-danger' : 'text-success'}`}>
+                            <td className={`text-right ${slicedPostc?.[1] && !isNaN(parseFloat(slicedPostc[1][2])) ? (parseFloat(slicedPostc[1][2]) < 0 ? 'text-danger' : 'text-success') : ''}`}>
                               {slicedPostc && slicedPostc[1] && !isNaN(parseFloat(slicedPostc[1][2])) ? parseFloat(slicedPostc[1][2]).toFixed(2) + '%' : '-'}
                             </td>
                           </tr>
@@ -1309,7 +1309,7 @@ borderColor:'grey'
                             <td className={`text-right ${isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[2]?.[2])) ? '' : parseFloat(post?.data?.performances?.data?.adaptValues1?.[2]?.[2]) < 0 ? 'text-danger' : 'text-success'}`}>
                               {isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[2]?.[2])) ? '-' : parseFloat(post?.data?.performances?.data?.adaptValues1?.[2]?.[2]).toFixed(2)} %
                             </td>
-                            <td className={`text-right ${slicedPostc && slicedPostc[2] && isNaN(parseFloat(slicedPostc[2][2])) ? '' : parseFloat(slicedPostc[2][2]) < 0 ? 'text-danger' : 'text-success'}`}>
+                            <td className={`text-right ${slicedPostc?.[2] && !isNaN(parseFloat(slicedPostc[2][2])) ? (parseFloat(slicedPostc[2][2]) < 0 ? 'text-danger' : 'text-success') : ''}`}>
                               {slicedPostc && slicedPostc[2] && !isNaN(parseFloat(slicedPostc[2][2])) ? parseFloat(slicedPostc[2][2]).toFixed(2) + '%' : '-'}
                             </td>
                           </tr>
@@ -1318,7 +1318,7 @@ borderColor:'grey'
                             <td className={`text-right ${isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[3]?.[2])) ? '' : parseFloat(post?.data?.performances?.data?.adaptValues1?.[3]?.[2]) < 0 ? 'text-danger' : 'text-success'}`}>
                               {isNaN(parseFloat(post?.data?.performances?.data?.adaptValues1?.[3]?.[2])) ? '-' : parseFloat(post?.data?.performances?.data?.adaptValues1?.[3]?.[2]).toFixed(2)} %
                             </td>
-                            <td className={`text-right ${slicedPostc && slicedPostc[3] && isNaN(parseFloat(slicedPostc[3][2])) ? '' : parseFloat(slicedPostc[3][2]) < 0 ? 'text-danger' : 'text-success'}`}>
+                            <td className={`text-right ${slicedPostc?.[3] && !isNaN(parseFloat(slicedPostc[3][2])) ? (parseFloat(slicedPostc[3][2]) < 0 ? 'text-danger' : 'text-success') : ''}`}>
                               {slicedPostc && slicedPostc[3] && !isNaN(parseFloat(slicedPostc[3][2])) ? parseFloat(slicedPostc[3][2]).toFixed(2) + '%' : '-'}
                             </td>
                           </tr>
