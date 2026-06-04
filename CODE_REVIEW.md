@@ -66,12 +66,14 @@
 - Pattern: `if (!response.ok) return null|{data:[]}|[]` selon consommateur (verifie). Build OK, QA zero regression.
 - Reste: helpers morts non touches (volontaire), formulaires entremeles (fondscharge) notes pour traitement ulterieur prudent.
 
-### 31. Diagnostic couverture indRef EUR/USD (T13, 2026-06-03)
-- TUNISIE 24%: indRef local peuple mais conversion indRef_EUR/USD partielle. Cause a investiguer (diagnostics SQL VPS necessaires). dev_libelle confirme clean = 'TND', forex pairs confirmees presentes et a jour
-- UEMOA 22%: mapping pays→indice BRVM utilisait noms individuels au lieu de 'UEMOA' → **FIX T15** `f6d7cb2` (ajout 'UEMOA' dans INDEX_CONFIG)
-- CEMAC 0%: aucun indice CEMAC dans indices_references (paires EUR/XAF et USD/XAF existent, probleme = source indice BVMAC a identifier)
-- Diagnostic complet: `api_opcv/T13_DIAGNOSTIC_INDICES.md`
-- Commit diagnostic: `e06798b`, commit fix: `f6d7cb2`
+### 31. Diagnostic couverture indRef EUR/USD (T13→T15, donnees reelles 2026-06-04 PRODUCTION_STATE.json)
+Donnees reelles au niveau VL (snapshot 17:00 apres recalc) :
+- TUNISIE: indRef LOCAL **100%** (302906/302906), conversion EUR/USD **24%** (73523). Le gap est UNIQUEMENT la conversion (pas le local). Hypothese: VL avec value=0/NULL sautees par recalc (WHERE value>0). A traiter lors de la refonte data Tunisie (fichier utilisateur a venir).
+- UEMOA: indRef local **22%** (7577/33830). Cause: mapping BRVM n'incluait pas 'UEMOA' (fonds ont pays='UEMOA') → **FIX T15** `f6d7cb2`. BRVM present dans indice_references (6880 entrees →2026-05-15). Re-executer step 2 (fallback DB T15b) → ~100%.
+- CEMAC 0%: aucun indice CEMAC dans indice_references. Decision metier (sourcer BVMAC).
+- Excel `Historique_Indices_Complet.xlsx` ABSENT du VPS → import plantait. **FIX T15b** `ac1cf98`: fallback DB indice_references.
+- Outil diagnostic read-only: `scripts/diag/check_indref_coverage.js` (T15b).
+- Commits: diagnostic `e06798b`, fix mapping+division `f6d7cb2`, resilience+diag `ac1cf98`
 
 ### 32. Incohérence conversion devise routes_vl.js (identifiee T13)
 - Fichier: api_opcv/src/routes/routes_vl.js lignes 3027-3039

@@ -1520,8 +1520,27 @@ Corrections deployees (commits pushes, a deployer sur production):
 
 ## POINT DE REPRISE COURANT
 
+### DIAGNOSTIC PRODUCTION REEL (PRODUCTION_STATE.json 2026-06-04T17:00, APRES recalc EUR/USD)
+Source de verite = snapshot horaire. Couverture indRef au niveau VL :
+| Pays | VL total | indRef local | indRef EUR/USD |
+|------|----------|--------------|----------------|
+| MAROC | 533 809 | 529 823 (99.3%) | 99.3% OK |
+| NIGERIA | 53 718 | 53 718 (100%) | 99.9% OK |
+| TUNISIE | 302 906 | 302 906 (100%) | 73 523 (24%) — GAP CONVERSION |
+| UEMOA | 33 830 | 7 577 (22%) | 7 577 (22%) — GAP LOCAL |
+| CEMAC | 2 134 | 0 (0%) | 0% — aucun indice |
+
+Indices dispo dans indice_references : BRVM 6880 (→2026-05-15), Tunindex 6881, MASI 6880, NSE 6880, MONIA 1000.
+
+**Conclusions (corrige T13) :**
+- TUNISIE : indRef LOCAL deja 100%. Le gap est UNIQUEMENT la conversion EUR/USD (24%). Hypothese: VL avec value=0/NULL (placeholder) que le recalc saute (WHERE value>0) mais qui ont un indRef. A confirmer via check_indref_coverage.js + requete value>0 vs =0.
+- UEMOA : indRef local 22% car mapping BRVM n'incluait pas 'UEMOA' (fonds ont pays='UEMOA'). Fix T15 + fallback DB T15b → re-executer step 2 fera monter a ~100% (BRVM couvre toutes les dates UEMOA).
+- CEMAC : 0%, aucun indice CEMAC source. Decision metier (sourcer BVMAC).
+
 ### Dernier etat stable
-Session 2026-06-04 : T15 code fixes COMMITES + PUSHES.
+Session 2026-06-04 : T15 + T15b code fixes COMMITES + PUSHES.
+- T15b (`ac1cf98`): import_indices_excel.js resilient (fallback DB indice_references si Excel absent, step 4 sans Excel, matching id_indice insensible casse) + nouveau script read-only scripts/diag/check_indref_coverage.js
+- Decouverte production: Historique_Indices_Complet.xlsx ABSENT du VPS → import plantait. Fallback DB resout (BRVM/Tunindex/etc. presents dans indice_references).
 - T8-T12 DEPLOYES en production. type1 national CONFIRME OK.
 - T14 (#26) DEPLOYE et VERIFIE (9 pages fonds HTTP 200).
 - T16 (#26 suite) DEPLOYE (32 fichiers, pages /countries 200, /fund-managers/search 200).
@@ -1606,9 +1625,53 @@ LOT T8 — Analyse bout en bout + corrections securite/data (2026-06-03)
 - Forex: 21 paires, toutes a jour (2026-06-03)
 - Performances: 60K local (1193 fonds), EUR ~5K (1192 fonds), USD ~5K (1192 fonds)
 
-### Prochaine action recommandee
+### Prochaine action recommandee (T15c — UEMOA indRef, voie sure)
 
-**1. DEPLOYER T15 (API) :**
+**1. DEPLOYER T15b (API) :**
+```bash
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
+```
+
+**2. DIAGNOSTIC AVANT (script node read-only, remplace le SQL colle dans bash) :**
+```bash
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+node scripts/diag/check_indref_coverage.js
+```
+
+**3. PEUPLER indRef LOCAL UEMOA (fallback DB indice_references, BRVM) :**
+```bash
+# Rapport (lecture seule) — doit maintenant trouver le fallback DB:
+node scripts/import/import_indices_excel.js --step 2 --pays UEMOA
+# Si coherent, executer le peuplement local:
+node scripts/import/import_indices_excel.js --execute --step 2 --pays UEMOA
+# Puis conversion EUR/USD (division, T15):
+node scripts/import/import_indices_excel.js --execute --step 4 --pays UEMOA
+```
+
+**4. PROPAGER perfs + classements (scripts au bon chemin scripts/fix/) :**
+```bash
+node scripts/fix/fix_populate_performances_eur_usd.js --pays UEMOA
+curl -s http://localhost:3005/api/classementeur > /dev/null && echo "classementeur OK"
+curl -s http://localhost:3005/api/classementusd > /dev/null && echo "classementusd OK"
+```
+
+**5. DIAGNOSTIC APRES (verifier UEMOA monte vers ~100%) :**
+```bash
+node scripts/diag/check_indref_coverage.js --pays UEMOA
+```
+
+**6. (Optionnel) Diagnostic gap conversion TUNISIE — comprendre les 24% :**
+```bash
+node scripts/diag/check_indref_coverage.js --pays TUNISIE
+```
+
+**NOTE TUNISIE** : ne PAS retoucher maintenant. L'utilisateur va fournir un fichier
+de VL Tunisie corrigees (avec dividendes) a re-importer. Le gap conversion 24%
+sera traite a ce moment-la (refonte data Tunisie).
+
+---
+
+**Ancienne procedure (archivee) :**
 ```bash
 cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
 ```
