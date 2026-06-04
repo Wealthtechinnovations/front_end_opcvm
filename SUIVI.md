@@ -1461,6 +1461,23 @@ Corrections deployees (commits pushes, a deployer sur production):
 **Build frontend**: OK (0 erreur)
 **Statut**: Pushes, a deployer
 
+### 2026-06-04 - LOT T19: Fix crash pages fonds EUR/USD "reading '1'"
+- **Statut**: COMMITE + BUILD OK, A DEPLOYER (frontend)
+- **Symptome**: `/funds/summary-eur/1130` et `/funds/summary-usd/1130` (et tous les fonds) affichaient "Une erreur est survenue — Cannot read properties of undefined (reading '1')"
+- **Diagnostic live** (API testee en production):
+  - valLiqdev/1130/EUR → 200 OK, performancesdev → 200 OK, classementquartiledev/1130/EUR → 200 OK
+  - Donnees backend SAINES — bug 100% frontend (rendu)
+- **Cause racine**: dans FundSubView.tsx (EUR + USD), le className des cellules perf annuelles avait une branche else NON protegee:
+  - `${slicedPostc && slicedPostc[1] && isNaN(...) ? '' : parseFloat(slicedPostc[1][2]) < 0 ? ...}`
+  - Au premier rendu `postc` (state) = null → `slicedPostc` = undefined → la condition court-circuite vers le else → `slicedPostc[1]` leve "reading '1'"
+  - Les cellules valeur etaient protegees, mais PAS le className
+  - La page locale `/funds/[fondId]` utilisait deja le bon pattern (`!slicedPostc?.[1] || ...`) → elle ne crashait pas
+- **Fix**: className reecrit en `${slicedPostc?.[n] && !isNaN(parseFloat(slicedPostc[n][2])) ? (parseFloat(...) < 0 ? 'text-danger' : 'text-success') : ''}` (lignes ~1301/1310/1319 EUR, ~1303/1312/1321 USD)
+  - Aussi protege `quartile` = `classementType1?.rank5Ans` (etait `classementType1.rank5Ans`)
+- **Fichiers**: summary-eur/[fondId]/FundSubView.tsx, summary-usd/[fondId]/FundSubView.tsx (8 corrections)
+- **Build**: OK (0 erreur). Page locale inchangee. Commit frontend: `0dc046b`
+- **Note doc**: la route appelee par le front est `/api/classementquartiledev/:id/:devise` (SANS `/fond/`), alors que CLAUDE.md documente `/api/classementquartiledev/fond/:id/:devise`. La variante `/fond/` renvoie 404. Le front utilise la bonne (200). A corriger dans CLAUDE.md ulterieurement (doc only).
+
 ### 2026-06-04 - LOT T17 (#32): Fix routes_vl.js multiplication→division (10 lignes)
 - **Statut**: COMMITE, A DEPLOYER
 - **Probleme**: 10 lignes dans routes_vl.js utilisaient multiplication au lieu de division pour conversion local→EUR/USD
@@ -1598,18 +1615,19 @@ LOT T15c — Execution complete chaine UEMOA en production
 - 7 fonds TUNISIE (ids 2869-2875) toujours sans indRef (recemment importes CMF, pas dans index data)
 
 ### Dernier lot termine
-LOT T17 (#32) — Fix routes_vl.js multiplication→division (10 lignes, 2 routes)
-- Fichier modifie: `api_opcv/src/routes/routes_vl.js`
-- Routes corrigees:
-  - `POST /api/updateValues/:id` (lignes 3027-3039): value_EUR/USD
-  - `POST /api/uploadsfilevl/:id` (lignes 6334-6347): value_EUR/USD, actif_net_EUR/USD, dividende_EUR/USD
-- Changement: `* exchangeRates.value` → `/ exchangeRates.value` (regle OPCVM: DIVISION)
-- Preuve interne: indRef (lignes 6352-6353 du meme fichier) utilisait deja la division correcte
-- Note: les conversions EUR↔USD portefeuille (lignes 2383-2392, 2518-2527) sont un cross rate different — non modifiees
-- Zero regression sur les routes existantes
+LOT T19 — Fix crash pages fonds EUR/USD "Cannot read properties of undefined (reading '1')"
+- Fichiers: `summary-eur/[fondId]/FundSubView.tsx`, `summary-usd/[fondId]/FundSubView.tsx`
+- className des perf annuelles: branche else non protegee `parseFloat(slicedPostc[n][2])` → crash quand `slicedPostc` undefined (premier rendu, postc=null)
+- Fix: guard `slicedPostc?.[n] && !isNaN(...)` avant la logique couleur + `classementType1?.rank5Ans`
+- T17 (API) DEJA DEPLOYE en production (recalc 926377 VL execute, 0 erreur, division confirmee)
+- Build frontend OK. Commit frontend: `0dc046b`
 
 ### Prochaine action recommandee
-**Deployer T17 sur VPS** puis executer `recalc_eur_usd_daily_rate.js` pour corriger les donnees historiques affectees par le bug multiplication.
+**Deployer T19 (frontend)** pour reparer les pages fonds EUR/USD:
+```bash
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
+```
+Puis verifier: `https://africafunds.chainsolutions.fr/funds/summary-eur/1130` et `/summary-usd/1130` (ne doivent plus afficher "Une erreur est survenue").
 
 **En attente :**
 - TUNISIE EUR/USD gap (24%) : utilisateur fournira fichier VL corrigees avec dividendes

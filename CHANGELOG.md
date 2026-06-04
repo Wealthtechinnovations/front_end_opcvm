@@ -1,8 +1,15 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
-## [2026-06-04] UEMOA indRef 22% → 100% + Fix conversion multiplication→division
+## [2026-06-04] UEMOA indRef 100% + Fix conversion + Fix crash pages EUR/USD
 
-### Pret a deployer (T17)
+### Pret a deployer (T19)
+- **Fix CRITIQUE**: pages fonds EUR/USD crashaient ("Cannot read properties of undefined (reading '1')")
+  - Cause: className perf annuelles dereferencait slicedPostc[n][2] sans guard (premier rendu, postc=null)
+  - Fix: guard optional chaining sur summary-eur + summary-usd FundSubView.tsx
+  - Donnees backend saines (valLiqdev/performancesdev/classementquartiledev = 200) — bug 100% frontend
+  - Build OK. Commit `0dc046b`
+
+### Deploye en production (T17)
 - **Fix CRITIQUE**: routes_vl.js 10 lignes multiplication→division pour conversion local→EUR/USD
   - `POST /api/updateValues/:id` (saisie manuelle VL): value_EUR/USD
   - `POST /api/uploadsfilevl/:id` (upload CSV): value_EUR/USD, actif_net_EUR/USD, dividende_EUR/USD
