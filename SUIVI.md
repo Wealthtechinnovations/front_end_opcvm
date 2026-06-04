@@ -1521,13 +1521,26 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-03 (suite 3) : TOUS LES LOTS T8-T16 COMPLETS.
-- T8-T12 DEPLOYES en production (API + Frontend + pm2 restart + recalcul classements). type1 national CONFIRME OK.
-- T14 (#26) DEPLOYE et VERIFIE (9 pages fonds HTTP 200, classements local/EUR/USD OK).
-- T16 (#26 suite) COMMITE (`2814e9a`): 26 pages secondaires durci, build independant OK, QA zero regression. A DEPLOYER.
-- T13 diagnostic indices commite (`e06798b`): 3 causes racines (TUNISIE recalc TND, UEMOA mapping BRVM, CEMAC aucun indice). T15 = corrections, attend donnees DB du VPS.
+Session 2026-06-04 : T15 code fixes COMMITES + PUSHES.
+- T8-T12 DEPLOYES en production. type1 national CONFIRME OK.
+- T14 (#26) DEPLOYE et VERIFIE (9 pages fonds HTTP 200).
+- T16 (#26 suite) DEPLOYE (32 fichiers, pages /countries 200, /fund-managers/search 200).
+- T13 diagnostic indices commite (`e06798b`).
+- T15 LOT 1 — 2 corrections code dans `import_indices_excel.js` (commit `f6d7cb2`):
+  1. UEMOA mapping: ajout 'UEMOA' dans BRVM_UEMOA pays array (111 fonds ne matchaient pas)
+  2. Step 4 multiplication→division: `indRef * rate` → `indRef / rate` (regle OPCVM: DIVISION)
 - 7 crons actifs dans crontab production.
-- Tous les .md mis a jour (les 2 depots).
+
+### Dernier lot termine
+LOT T15 partie 1 — Corrections code import_indices_excel.js
+- Fichier modifie: `api_opcv/scripts/import/import_indices_excel.js`
+- Fix 1 (ligne 73): Ajout 'UEMOA' dans INDEX_CONFIG BRVM_UEMOA.pays[]
+  - Cause racine: DB a pays='UEMOA' pour 111 fonds, mais mapping listait uniquement les noms de pays individuels (Cote d'Ivoire, Senegal, etc.) → 0% match
+- Fix 2 (lignes 476-477): `vl.indRef * rate` → `vl.indRef / rate`
+  - Cause racine: step 4 (convertIndRefCurrency) utilisait multiplication au lieu de division
+  - Le script recalc_eur_usd_daily_rate.js utilisait deja la division correcte (ligne 273)
+- Commit API: `f6d7cb2`
+- Push: OK
 - Connexion production : API HTTPS live (verifiee), PRODUCTION_STATE.json, pont VPS (commandes node/SQL). Socket MySQL direct non joignable depuis sandbox (MySQL bind localhost = securite).
 
 ### Diagnostic classement national (RESOLU)
@@ -1595,30 +1608,66 @@ LOT T8 — Analyse bout en bout + corrections securite/data (2026-06-03)
 
 ### Prochaine action recommandee
 
-**DEPLOYER T14 (response.ok frontend) — commite, pret :**
+**1. DEPLOYER T15 (API) :**
 ```bash
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
 ```
 
-**VERIFIER apres deploiement T14 :**
-```bash
-# Page fonds locale (doit afficher correctement meme si API down):
-curl -sI https://africafunds.chainsolutions.fr/funds/summary/test-866 | head -3
-# Classements toujours OK:
-curl -s https://africafunds.chainsolutions.fr/api/classementquartilemysql/866 | python3 -c "import sys,json;d=json.load(sys.stdin)['data'];print('type1:', 'OK' if d['classementType1'] else 'VIDE')"
+**2. DIAGNOSTICS SQL TUNISIE (sur VPS, SELECT-only) :**
+```sql
+-- Q1: Combien de fonds TUNISIE ont indRef local peuple vs NULL?
+SELECT
+  COUNT(DISTINCT v.fund_id) as total_tunisie_funds,
+  COUNT(DISTINCT CASE WHEN v.indRef IS NOT NULL AND v.indRef > 0 THEN v.fund_id END) as funds_with_indref,
+  SUM(CASE WHEN v.indRef IS NOT NULL AND v.indRef > 0 THEN 1 ELSE 0 END) as vl_with_indref,
+  SUM(CASE WHEN v.indRef IS NULL OR v.indRef = 0 THEN 1 ELSE 0 END) as vl_without_indref,
+  COUNT(*) as total_vl
+FROM valorisations v
+JOIN fond_investissements fi ON fi.id = v.fund_id
+WHERE fi.pays = 'TUNISIE';
+
+-- Q2: Tunindex dans indice_references?
+SELECT COUNT(*) as entries, MIN(date) as first_date, MAX(date) as last_date
+FROM indice_references WHERE id_indice = 'TUNINDEX';
+
+-- Q3: Coverage indRef_EUR/USD pour UEMOA (avant fix)
+SELECT
+  COUNT(DISTINCT v.fund_id) as total_uemoa_funds,
+  COUNT(DISTINCT CASE WHEN v.indRef IS NOT NULL AND v.indRef > 0 THEN v.fund_id END) as funds_with_indref_local,
+  COUNT(DISTINCT CASE WHEN v.indRef_EUR IS NOT NULL AND v.indRef_EUR > 0 THEN v.fund_id END) as funds_with_indref_eur,
+  SUM(CASE WHEN v.indRef IS NOT NULL AND v.indRef > 0 THEN 1 ELSE 0 END) as vl_indref_local,
+  SUM(CASE WHEN v.indRef_EUR IS NOT NULL AND v.indRef_EUR > 0 THEN 1 ELSE 0 END) as vl_indref_eur
+FROM valorisations v
+JOIN fond_investissements fi ON fi.id = v.fund_id
+WHERE fi.pays = 'UEMOA';
+
+-- Q4: Echantillon 5 fonds TUNISIE avec/sans indRef
+SELECT fi.id, fi.nom_fond, fi.active,
+  (SELECT COUNT(*) FROM valorisations WHERE fund_id=fi.id AND indRef IS NOT NULL AND indRef > 0) as vl_with_indref,
+  (SELECT COUNT(*) FROM valorisations WHERE fund_id=fi.id) as total_vl
+FROM fond_investissements fi
+WHERE fi.pays = 'TUNISIE'
+ORDER BY fi.id
+LIMIT 10;
 ```
 
-**SUITE T15 (couverture indRef) — lancer diagnostics SQL depuis VPS :**
-Voir `api_opcv/T13_DIAGNOSTIC_INDICES.md` section 4 (8 requetes SELECT pret a coller)
-0 22 * * *    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && bash scripts/cron/cron_health_check.sh >> /var/log/africafunds_health.log 2>&1
+**3. RE-EXECUTER import_indices_excel.js (apres deploiement T15 API) :**
+```bash
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+# D'abord en mode rapport:
+node scripts/import/import_indices_excel.js --step 2 --pays UEMOA
+# Si OK, executer:
+node scripts/import/import_indices_excel.js --execute --step 2 --pays UEMOA
+# Puis conversion EUR/USD:
+node scripts/import/import_indices_excel.js --execute --step 4 --pays UEMOA
 ```
 
-**ETAPE 5 — VERIFICATION POST-DEPLOIEMENT**:
+**4. RE-EXECUTER recalc pour propager indRef_EUR/USD TUNISIE :**
 ```bash
-# Classement local non vide:
-curl -s https://africafunds.chainsolutions.fr/api/classementquartilemysql/866 | python3 -c "import sys,json;d=json.load(sys.stdin)['data'];print('type1 national:', 'OK' if d['classementType1'] else 'VIDE')"
-# Totaux USD coherents (< 500 pour une categorie nationale):
-curl -s https://africafunds.chainsolutions.fr/api/classementquartiledev/866/USD | python3 -c "import sys,json;d=json.load(sys.stdin)['data'];print('USD national total:', d['classementType1'].get('rank1Antotal'))"
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+node scripts/recalc/recalc_eur_usd_daily_rate.js --dry-run
+# Verifier le rapport, puis si OK:
+node scripts/recalc/recalc_eur_usd_daily_rate.js
 ```
 
 **DONNEES STALES a investiguer:**
@@ -1629,14 +1678,18 @@ curl -s https://africafunds.chainsolutions.fr/api/classementquartiledev/866/USD 
 ### Risques connus
 - OOM MariaDB du 2026-06-02 a surveiller (ClickHouse ~922MB principal consommateur memoire)
 - UEMOA/CEMAC data stale (pas de scraper automatise)
-- 87% des fetch() frontend sans response.ok check (risque de donnees corrompues affichees)
+- Dette #26 quasi resolue: T14 (9 pages) + T16 (26 pages) = 35 pages durcies. Reste ~50% fetch sans response.ok (pages panel admin/investor/management surtout)
 - ClickHouse non installe en production (analytics routes retournent 503)
+- routes_vl.js:3027-3039 multiplication au lieu de division (T17, route prod sensible, PAS encore corrige)
+- import_indices_excel.js step 4: fix commite mais PAS encore deploye ni re-execute
 
 ### A ne pas faire a la reprise
 - Ne pas re-executer CMF --production (deja fait, 1,259 VL inserees)
 - Ne pas modifier le schema de la table valorisations
 - Ne pas faire TRUNCATE sur les tables classement
 - Ne pas installer ClickHouse sans planification memoire (risque OOM)
+- Ne pas executer import_indices_excel.js --execute SANS deployer le commit f6d7cb2 d'abord (sinon multiplication au lieu de division)
+- Ne pas corriger routes_vl.js multiplication sans lot dedie (T17) avec diagnostic complet
 
 ### Etat Git (2026-06-03 - LOT T12)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `6644682`, sync origin, clean

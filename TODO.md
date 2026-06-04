@@ -14,8 +14,8 @@
 ## A deployer (pret, commite, non encore en prod)
 
 - [x] **T14 #26** : 9 pages fonds critiques durci (commit `4c49a44`) — DEPLOYE, 9 pages 200
-- [ ] **T16 #26 suite** : 26 pages secondaires durci (commit `2814e9a`). Deployer frontend.
-- [ ] **T15 (suite T13)** : corrections indRef EUR/USD — ATTEND donnees DB du VPS (commande node fournie)
+- [x] **T16 #26 suite** : 26 pages secondaires durci (commit `2814e9a`). DEPLOYE, pages 200.
+- [ ] **T15 (suite T13)** : corrections indRef EUR/USD — Code commite (`f6d7cb2`), a deployer + executer sur VPS
 
 ## Dette technique a traiter (cf CODE_REVIEW.md)
 

@@ -16,12 +16,13 @@
 | T12 | 2026-06-03 | Page USD benchmark annuel EUR→USD | Deploye | `be1b45e` |
 | T13 | 2026-06-03 | Diagnostic liaison indices↔fonds (couverture indRef EUR/USD) | Diagnostic pret | `e06798b` |
 | T14 | 2026-06-03 | #26 response.ok : 9 pages fonds critiques (672 fetch audites) | Deploye, 9 pages 200 | `4c49a44` |
-| T16 | 2026-06-03 | #26 response.ok : 26 pages secondaires (countries, country-panel, fund-managers) | Commite, a deployer | `2814e9a` |
+| T16 | 2026-06-03 | #26 response.ok : 26 pages secondaires (countries, country-panel, fund-managers) | Deploye, pages 200 | `2814e9a` |
+| T15 | 2026-06-04 | Fix indRef: UEMOA mapping + step4 mul→div | Commite, a deployer+executer | `f6d7cb2` |
 
 ## Prochain lot envisage
 
-- LOT T15 : Corrections indRef EUR/USD suite T13 (recalc TND, mapping BRVM→UEMOA, decision metier CEMAC) — ATTEND donnees DB du VPS
-- LOT T17 : Fix incohérence route_vl.js multiplication vs division (P5 T13) — route prod sensible
+- LOT T15 suite : Deployer API commit `f6d7cb2`, executer import_indices step 2+4 UEMOA, recalc TUNISIE, diagnostics SQL
+- LOT T17 : Fix incohérence routes_vl.js:3027-3039 multiplication vs division (#32) — route prod sensible
 - LOT T18 : #28 factoriser duplication panel/investor vs panel/portfolio
 
 > Pour reprendre : lire SUIVI.md > POINT DE REPRISE COURANT, puis CODE_REVIEW.md.
