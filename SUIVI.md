@@ -1461,6 +1461,29 @@ Corrections deployees (commits pushes, a deployer sur production):
 **Build frontend**: OK (0 erreur)
 **Statut**: Pushes, a deployer
 
+### 2026-06-04 - LOT T15/T15b/T15c: UEMOA indRef 22% → 100% (local + EUR + USD)
+- **Statut**: DEPLOYE ET VERIFIE EN PRODUCTION
+- **Probleme**: UEMOA indRef coverage a 22% (8/111 fonds, 7577/33830 VL)
+- **Causes racines identifiees (T13 diagnostic)**:
+  1. import_indices_excel.js mapping BRVM n'incluait pas 'UEMOA' (fonds ont pays='UEMOA')
+  2. step 4 utilisait multiplication au lieu de division pour conversion EUR/USD
+  3. Fichier Excel absent du VPS → script crashait meme pour step 4 qui n'en a pas besoin
+- **Corrections code (T15/T15b, commits API `f6d7cb2`, `ac1cf98`, `2990351`)**:
+  - Ajout 'UEMOA' dans INDEX_CONFIG BRVM_UEMOA.pays[]
+  - Step 4: `indRef * rate` → `indRef / rate` (regle OPCVM: DIVISION)
+  - Fallback DB si Excel absent (`loadIndexDataFromDB()`)
+  - Case-insensitive id_indice matching (Tunindex vs TUNINDEX)
+  - Nouveau script read-only `scripts/diag/check_indref_coverage.js`
+- **Execution production (T15c, sur VPS)**:
+  - Step 2 UEMOA: 33 829 VL indRef local peuples, 111 liens fonds-indice
+  - Step 4 UEMOA: 26 253 VL convertis EUR/USD par DIVISION
+  - Performances EUR/USD: 108 fonds UEMOA recalcules
+  - Classements EUR/USD: recalcules
+- **Resultat final**: **111/111 fonds (100%), 33 830/33 830 VL (100%)** local + EUR + USD
+- **Sanity check**: UEMOA XOF local=198.58 eur=0.29 → DIVISION (OK)
+- **Fichiers API modifies**: scripts/import/import_indices_excel.js, scripts/diag/check_indref_coverage.js (nouveau)
+- **Zero regression**
+
 ### 2026-06-03 - LOT T10/T11/T12: Classements (local + EUR/USD) + page USD
 - **Statut**: COMMITE ET POUSSE, A DEPLOYER + RECALCUL REQUIS
 - **Diagnostic production** (connexion API reelle, pas a l'aveugle):
@@ -1520,243 +1543,73 @@ Corrections deployees (commits pushes, a deployer sur production):
 
 ## POINT DE REPRISE COURANT
 
-### DIAGNOSTIC PRODUCTION REEL (PRODUCTION_STATE.json 2026-06-04T17:00, APRES recalc EUR/USD)
-Source de verite = snapshot horaire. Couverture indRef au niveau VL :
-| Pays | VL total | indRef local | indRef EUR/USD |
-|------|----------|--------------|----------------|
-| MAROC | 533 809 | 529 823 (99.3%) | 99.3% OK |
-| NIGERIA | 53 718 | 53 718 (100%) | 99.9% OK |
-| TUNISIE | 302 906 | 302 906 (100%) | 73 523 (24%) — GAP CONVERSION |
-| UEMOA | 33 830 | 7 577 (22%) | 7 577 (22%) — GAP LOCAL |
-| CEMAC | 2 134 | 0 (0%) | 0% — aucun indice |
+### COUVERTURE indRef PRODUCTION (2026-06-04, APRES T15c)
+| Pays | VL total | indRef local | indRef EUR | indRef USD | Statut |
+|------|----------|--------------|------------|------------|--------|
+| MAROC | 533 809 | 529 823 (99.3%) | 99.3% | 99.3% | OK |
+| NIGERIA | 53 718 | 53 718 (100%) | 99.9% | 99.9% | OK |
+| TUNISIE | 302 906 | 302 906 (100%) | 73 523 (24%) | 73 523 (24%) | GAP CONVERSION (attente fichier utilisateur) |
+| **UEMOA** | **33 830** | **33 830 (100%)** | **33 830 (100%)** | **33 830 (100%)** | **RESOLU T15c** |
+| CEMAC | 2 134 | 0 (0%) | 0% | 0% | Aucun indice BVMAC (decision metier) |
 
-Indices dispo dans indice_references : BRVM 6880 (→2026-05-15), Tunindex 6881, MASI 6880, NSE 6880, MONIA 1000.
-
-**Conclusions (corrige T13) :**
-- TUNISIE : indRef LOCAL deja 100%. Le gap est UNIQUEMENT la conversion EUR/USD (24%). Hypothese: VL avec value=0/NULL (placeholder) que le recalc saute (WHERE value>0) mais qui ont un indRef. A confirmer via check_indref_coverage.js + requete value>0 vs =0.
-- UEMOA : indRef local 22% car mapping BRVM n'incluait pas 'UEMOA' (fonds ont pays='UEMOA'). Fix T15 + fallback DB T15b → re-executer step 2 fera monter a ~100% (BRVM couvre toutes les dates UEMOA).
-- CEMAC : 0%, aucun indice CEMAC source. Decision metier (sourcer BVMAC).
+**UEMOA avant/apres T15c :**
+- AVANT : 8/111 fonds (7.2%), 7 577/33 830 VL (22.4%) local/EUR/USD
+- APRES : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local/EUR/USD
+- Sanity check division : UEMOA XOF local=198.58 eur=0.29 → DIVISION (OK)
+- Performances EUR/USD recalculees : 108 fonds UEMOA
+- Classements EUR/USD recalcules
 
 ### Dernier etat stable
-Session 2026-06-04 : T15 + T15b code fixes COMMITES + PUSHES.
-- T15b (`ac1cf98`): import_indices_excel.js resilient (fallback DB indice_references si Excel absent, step 4 sans Excel, matching id_indice insensible casse) + nouveau script read-only scripts/diag/check_indref_coverage.js
-- Decouverte production: Historique_Indices_Complet.xlsx ABSENT du VPS → import plantait. Fallback DB resout (BRVM/Tunindex/etc. presents dans indice_references).
-- T8-T12 DEPLOYES en production. type1 national CONFIRME OK.
-- T14 (#26) DEPLOYE et VERIFIE (9 pages fonds HTTP 200).
-- T16 (#26 suite) DEPLOYE (32 fichiers, pages /countries 200, /fund-managers/search 200).
-- T13 diagnostic indices commite (`e06798b`).
-- T15 LOT 1 — 2 corrections code dans `import_indices_excel.js` (commit `f6d7cb2`):
-  1. UEMOA mapping: ajout 'UEMOA' dans BRVM_UEMOA pays array (111 fonds ne matchaient pas)
-  2. Step 4 multiplication→division: `indRef * rate` → `indRef / rate` (regle OPCVM: DIVISION)
-- 7 crons actifs dans crontab production.
+Session 2026-06-04 : **T15c DEPLOYE ET VERIFIE EN PRODUCTION — UEMOA 100%.**
+- T15 (`f6d7cb2`): UEMOA mapping + step 4 multiplication→division
+- T15b (`ac1cf98`, `2990351`): DB fallback + case-insensitive matching + diagnostic script
+- T15c (deploye sur VPS): execution complete chaine UEMOA en production :
+  - Step 2 : 33 829 VL indRef local peuples, 111 liens fonds-indice crees
+  - Step 4 : 26 253 VL convertis EUR/USD (7 577 deja ok)
+  - Performances EUR/USD : 108 fonds UEMOA recalcules
+  - Classements EUR/USD : recalcules
+  - Diagnostic APRES : 111/111 fonds, 33 830/33 830 VL, 100% sur les 3 devises
+- T8-T16 DEPLOYES et VERIFIES en production
+- 7 crons actifs dans crontab production
 
 ### Dernier lot termine
-LOT T15 partie 1 — Corrections code import_indices_excel.js
-- Fichier modifie: `api_opcv/scripts/import/import_indices_excel.js`
-- Fix 1 (ligne 73): Ajout 'UEMOA' dans INDEX_CONFIG BRVM_UEMOA.pays[]
-  - Cause racine: DB a pays='UEMOA' pour 111 fonds, mais mapping listait uniquement les noms de pays individuels (Cote d'Ivoire, Senegal, etc.) → 0% match
-- Fix 2 (lignes 476-477): `vl.indRef * rate` → `vl.indRef / rate`
-  - Cause racine: step 4 (convertIndRefCurrency) utilisait multiplication au lieu de division
-  - Le script recalc_eur_usd_daily_rate.js utilisait deja la division correcte (ligne 273)
-- Commit API: `f6d7cb2`
-- Push: OK
-- Connexion production : API HTTPS live (verifiee), PRODUCTION_STATE.json, pont VPS (commandes node/SQL). Socket MySQL direct non joignable depuis sandbox (MySQL bind localhost = securite).
+LOT T15c — Execution complete chaine UEMOA en production
+- Scripts executes sur VPS :
+  1. `node scripts/import/import_indices_excel.js --execute --step 2 --pays UEMOA` → 33 829 VL mis a jour
+  2. `node scripts/import/import_indices_excel.js --execute --step 4 --pays UEMOA` → 26 253 VL convertis
+  3. `node scripts/fix/fix_populate_performances_eur_usd.js --pays UEMOA` → 108 fonds EUR+USD
+  4. `curl http://localhost:3005/api/classementeur` → OK
+  5. `curl http://localhost:3005/api/classementusd` → OK
+  6. `node scripts/diag/check_indref_coverage.js --pays UEMOA` → 100% confirme
+- Aucun code modifie dans ce lot (execution uniquement)
+- Zero erreur, zero regression
+- 7 fonds TUNISIE (ids 2869-2875) toujours sans indRef (recemment importes CMF, pas dans index data)
 
-### Diagnostic classement national (RESOLU)
-- Fond 866 : categorie_nationale = "OBLIGATIONS MAROC", 22 lignes perf, max date 2026-05-18, 300 peers.
-- 0 lignes categorie_nationale NULL dans performences (100% couverture).
-- classementfonds 866 : type 2 + type 3 existaient, type 1 absent (n'avait jamais ete cree).
-- Apres 2e recalcul `classementmysql` → "finishrank" confirme → type1 national OK.
-- Cause : le 1er curl `classementmysql` n'avait pas abouti (sorties noyees dans le copier-coller).
+### Prochaine action recommandee
+**T17 (#32) : Fix routes_vl.js:3027-3039 multiplication→division**
+- Tache sensible (route API production utilisee pour la saisie/upload VL)
+- Diagnostic d'abord : lire le code, identifier l'impact exact, verifier si le bug affecte les donnees en base ou seulement le retour API
+- Ne pas toucher tant que le diagnostic n'est pas termine
 
-### Dernier lot termine
-LOT T16 (#26 suite) — response.ok guards sur 26 pages secondaires
-- 115 fetch audites, 26 fichiers durcis (countries/, country-panel/, fund-managers/)
-- Meme pattern T14. Fallback par consommateur: null / {data:[]} / [] (.map)
-- QA verifie: tous les acces directs data.data.X alimentes par {data:[]} (pas de crash)
-- Build frontend INDEPENDANT OK (0 erreur). Zero regression
-- Commit frontend: `2814e9a`
-- Rapport: T_RESPONSE_OK_AUDIT.md (section T16 appended)
-
-### Lot precedent T14 (#26) — response.ok guards sur 9 pages fonds critiques
-- 672 fetch audites, 9 fichiers durcis (summary local/EUR/USD, portfolio, download-nav, history, documents, performance, search)
-- Pattern: `if (!response.ok) return null` ou `{data:[]}` selon consommateur. Zero regression
-- Build OK. Commit frontend: `4c49a44`. DEPLOYE (9 pages HTTP 200 verifiees)
-
-### Lot precedent T13 — Diagnostic liaison indices↔fonds
-- TUNISIE 24%: indRef local 100% mais conversion recalc partielle (dev_libelle non normalise ou recalc `active=1` partiel)
-- UEMOA 22%: mapping pays→indice BRVM utilise noms individuels au lieu de 'UEMOA'
-- CEMAC 0%: aucun indice dans indices_references (taux de change OK, probleme = source indice)
-- Incohérence latente: routes_vl.js:3027-3039 convertit par multiplication (regle projet: division)
-- Rapport: `api_opcv/T13_DIAGNOSTIC_INDICES.md` (8 requetes SQL, 5 propositions)
-- Commit API: `e06798b`
-
-### Lot precedent T9 — 10 .catch() ajoutes a routes_vl.js (resilience erreurs DB)
-- Routes GET portefeuille/devises/societes/pays/data/ratios → 500 propre au lieu de hang
-- Commit API: `5b70838`
-
-### Lot precedent T8
-LOT T8 — Analyse bout en bout + corrections securite/data (2026-06-03)
-
-**Corrections effectuees:**
-1. **Math.random() fake data** — portfolio/FundSubView.tsx affichait des % aleatoires au lieu de donnees benchmark. Remplace par '-'. Code mort supprime de 4 autres fichiers. Commit frontend: `b7c962b`
-2. **8 routes admin sans auth** — routes_recalc_admin.js accessibles sans JWT. Ajout authenticate+authorize('admin') sur les 8 routes. authorize() supporte maintenant typeusers_id=0 comme admin. Commit API: `5540d95`
-3. **valLiq/valLiqdev 500→404** — retournaient HTTP 500 pour fonds inexistants. Ajout validation fundId (400) + empty results→404. Commit API: `bb03081`
-4. **cron_daily_eur_usd.sh** — chmod +x (manquait bit executable). Commit API: `5540d95`
-5. **Analyse crons** — 5 scripts cron existent, tous fonctionnels. Pas de crontab sur cette machine dev (normal).
-6. **Analyse ClickHouse** — non installe sur cette machine. Performance_historique jamais peuple. Analytics routes retournent 503 gracieusement.
-7. **Analyse frontend** — 238 pages, build OK. 87% fetch() sans response.ok check (dette technique).
-8. **Analyse securite API** — eval() clean, SQL injection clean, multer limits OK, rate limiting OK.
-9. **CODE_REVIEW.md** mis a jour avec items #21-28
-
-### Fichiers modifies dans le dernier lot
-**Frontend** (commit `b7c962b`): FundView.tsx, portfolio/FundSubView.tsx, summary-eur/FundSubView.tsx, summary-usd/FundSubView.tsx, download-nav/FundSubView.tsx
-**API** (commits `bb03081`, `5540d95`): apigestionfonds.js, routes_recalc_admin.js, auth.js, cron_daily_eur_usd.sh
-**Documentation**: CODE_REVIEW.md, SUIVI.md
-
-### Tests realises
-- Build frontend: OK (233 pages, 0 erreur)
-- Git push: OK (les 2 repos)
-
-### ETAT PRODUCTION : SAINE (2026-06-03)
-- api-monolith online, fundafrique-frontend online, worker-recalculation online
-- Endpoints testes 200 : valLiq/866, valLiqdev/866/EUR, ref/pays
-- Donnees fraiches: MAROC (2026-06-01), TUNISIE (2026-06-02), NIGERIA (2026-05-08), UEMOA (2025-10-15), CEMAC (2024-12-12)
-- Forex: 21 paires, toutes a jour (2026-06-03)
-- Performances: 60K local (1193 fonds), EUR ~5K (1192 fonds), USD ~5K (1192 fonds)
-
-### Prochaine action recommandee (T15c — UEMOA indRef, voie sure)
-
-**1. DEPLOYER T15b (API) :**
-```bash
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
-```
-
-**2. DIAGNOSTIC AVANT (script node read-only, remplace le SQL colle dans bash) :**
-```bash
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
-node scripts/diag/check_indref_coverage.js
-```
-
-**3. PEUPLER indRef LOCAL UEMOA (fallback DB indice_references, BRVM) :**
-```bash
-# Rapport (lecture seule) — doit maintenant trouver le fallback DB:
-node scripts/import/import_indices_excel.js --step 2 --pays UEMOA
-# Si coherent, executer le peuplement local:
-node scripts/import/import_indices_excel.js --execute --step 2 --pays UEMOA
-# Puis conversion EUR/USD (division, T15):
-node scripts/import/import_indices_excel.js --execute --step 4 --pays UEMOA
-```
-
-**4. PROPAGER perfs + classements (scripts au bon chemin scripts/fix/) :**
-```bash
-node scripts/fix/fix_populate_performances_eur_usd.js --pays UEMOA
-curl -s http://localhost:3005/api/classementeur > /dev/null && echo "classementeur OK"
-curl -s http://localhost:3005/api/classementusd > /dev/null && echo "classementusd OK"
-```
-
-**5. DIAGNOSTIC APRES (verifier UEMOA monte vers ~100%) :**
-```bash
-node scripts/diag/check_indref_coverage.js --pays UEMOA
-```
-
-**6. (Optionnel) Diagnostic gap conversion TUNISIE — comprendre les 24% :**
-```bash
-node scripts/diag/check_indref_coverage.js --pays TUNISIE
-```
-
-**NOTE TUNISIE** : ne PAS retoucher maintenant. L'utilisateur va fournir un fichier
-de VL Tunisie corrigees (avec dividendes) a re-importer. Le gap conversion 24%
-sera traite a ce moment-la (refonte data Tunisie).
-
----
-
-**Ancienne procedure (archivee) :**
-```bash
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
-```
-
-**2. DIAGNOSTICS SQL TUNISIE (sur VPS, SELECT-only) :**
-```sql
--- Q1: Combien de fonds TUNISIE ont indRef local peuple vs NULL?
-SELECT
-  COUNT(DISTINCT v.fund_id) as total_tunisie_funds,
-  COUNT(DISTINCT CASE WHEN v.indRef IS NOT NULL AND v.indRef > 0 THEN v.fund_id END) as funds_with_indref,
-  SUM(CASE WHEN v.indRef IS NOT NULL AND v.indRef > 0 THEN 1 ELSE 0 END) as vl_with_indref,
-  SUM(CASE WHEN v.indRef IS NULL OR v.indRef = 0 THEN 1 ELSE 0 END) as vl_without_indref,
-  COUNT(*) as total_vl
-FROM valorisations v
-JOIN fond_investissements fi ON fi.id = v.fund_id
-WHERE fi.pays = 'TUNISIE';
-
--- Q2: Tunindex dans indice_references?
-SELECT COUNT(*) as entries, MIN(date) as first_date, MAX(date) as last_date
-FROM indice_references WHERE id_indice = 'TUNINDEX';
-
--- Q3: Coverage indRef_EUR/USD pour UEMOA (avant fix)
-SELECT
-  COUNT(DISTINCT v.fund_id) as total_uemoa_funds,
-  COUNT(DISTINCT CASE WHEN v.indRef IS NOT NULL AND v.indRef > 0 THEN v.fund_id END) as funds_with_indref_local,
-  COUNT(DISTINCT CASE WHEN v.indRef_EUR IS NOT NULL AND v.indRef_EUR > 0 THEN v.fund_id END) as funds_with_indref_eur,
-  SUM(CASE WHEN v.indRef IS NOT NULL AND v.indRef > 0 THEN 1 ELSE 0 END) as vl_indref_local,
-  SUM(CASE WHEN v.indRef_EUR IS NOT NULL AND v.indRef_EUR > 0 THEN 1 ELSE 0 END) as vl_indref_eur
-FROM valorisations v
-JOIN fond_investissements fi ON fi.id = v.fund_id
-WHERE fi.pays = 'UEMOA';
-
--- Q4: Echantillon 5 fonds TUNISIE avec/sans indRef
-SELECT fi.id, fi.nom_fond, fi.active,
-  (SELECT COUNT(*) FROM valorisations WHERE fund_id=fi.id AND indRef IS NOT NULL AND indRef > 0) as vl_with_indref,
-  (SELECT COUNT(*) FROM valorisations WHERE fund_id=fi.id) as total_vl
-FROM fond_investissements fi
-WHERE fi.pays = 'TUNISIE'
-ORDER BY fi.id
-LIMIT 10;
-```
-
-**3. RE-EXECUTER import_indices_excel.js (apres deploiement T15 API) :**
-```bash
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
-# D'abord en mode rapport:
-node scripts/import/import_indices_excel.js --step 2 --pays UEMOA
-# Si OK, executer:
-node scripts/import/import_indices_excel.js --execute --step 2 --pays UEMOA
-# Puis conversion EUR/USD:
-node scripts/import/import_indices_excel.js --execute --step 4 --pays UEMOA
-```
-
-**4. RE-EXECUTER recalc pour propager indRef_EUR/USD TUNISIE :**
-```bash
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
-node scripts/recalc/recalc_eur_usd_daily_rate.js --dry-run
-# Verifier le rapport, puis si OK:
-node scripts/recalc/recalc_eur_usd_daily_rate.js
-```
-
-**DONNEES STALES a investiguer:**
-- UEMOA: derniere VL 2025-10-15 (229 jours, pas de scraper automatise)
-- CEMAC: derniere VL 2024-12-12 (537 jours, pas de source identifiee)
-- NIGERIA: derniere VL 2026-05-08 (26 jours, cron hebdomadaire existe)
+**En attente :**
+- TUNISIE EUR/USD gap (24%) : utilisateur fournira fichier VL corrigees avec dividendes
+- CEMAC 0% : sourcer indice BVMAC (decision metier)
+- T18 (#28) : factoriser duplication panel/investor vs panel/portfolio
 
 ### Risques connus
-- OOM MariaDB du 2026-06-02 a surveiller (ClickHouse ~922MB principal consommateur memoire)
-- UEMOA/CEMAC data stale (pas de scraper automatise)
-- Dette #26 quasi resolue: T14 (9 pages) + T16 (26 pages) = 35 pages durcies. Reste ~50% fetch sans response.ok (pages panel admin/investor/management surtout)
-- ClickHouse non installe en production (analytics routes retournent 503)
-- routes_vl.js:3027-3039 multiplication au lieu de division (T17, route prod sensible, PAS encore corrige)
-- import_indices_excel.js step 4: fix commite mais PAS encore deploye ni re-execute
+- routes_vl.js:3027-3039 utilise multiplication au lieu de division pour conversion indRef EUR/USD (bug latent, n'affecte que les retours API, pas les donnees en base qui sont peuplees par les scripts)
+- 7 fonds TUNISIE (2869-2875) sans indRef (importes recemment CMF, pas dans index data historique)
+- CEMAC 0% indRef (pas d'indice BVMAC dans indice_references)
+- sync_production.sh cron push peut creer des conflits git (toujours `git pull --rebase` avant push)
 
 ### A ne pas faire a la reprise
-- Ne pas re-executer CMF --production (deja fait, 1,259 VL inserees)
-- Ne pas modifier le schema de la table valorisations
-- Ne pas faire TRUNCATE sur les tables classement
-- Ne pas installer ClickHouse sans planification memoire (risque OOM)
-- Ne pas executer import_indices_excel.js --execute SANS deployer le commit f6d7cb2 d'abord (sinon multiplication au lieu de division)
-- Ne pas corriger routes_vl.js multiplication sans lot dedie (T17) avec diagnostic complet
+- Ne PAS modifier les donnees TUNISIE — attendre le fichier utilisateur
+- Ne PAS modifier routes_vl.js sans diagnostic complet prealable
+- Ne PAS supposer que la couverture indRef est complete (CEMAC toujours a 0%)
 
-### Etat Git (2026-06-03 - LOT T12)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `6644682`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `be1b45e`, sync origin (docs en cours)
+### Etat Git (2026-06-04 - LOT T15c)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `2990351`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `c8af9a7`, sync origin, clean
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 

@@ -66,14 +66,13 @@
 - Pattern: `if (!response.ok) return null|{data:[]}|[]` selon consommateur (verifie). Build OK, QA zero regression.
 - Reste: helpers morts non touches (volontaire), formulaires entremeles (fondscharge) notes pour traitement ulterieur prudent.
 
-### 31. Diagnostic couverture indRef EUR/USD (T13→T15, donnees reelles 2026-06-04 PRODUCTION_STATE.json)
-Donnees reelles au niveau VL (snapshot 17:00 apres recalc) :
-- TUNISIE: indRef LOCAL **100%** (302906/302906), conversion EUR/USD **24%** (73523). Le gap est UNIQUEMENT la conversion (pas le local). Hypothese: VL avec value=0/NULL sautees par recalc (WHERE value>0). A traiter lors de la refonte data Tunisie (fichier utilisateur a venir).
-- UEMOA: indRef local **22%** (7577/33830). Cause: mapping BRVM n'incluait pas 'UEMOA' (fonds ont pays='UEMOA') → **FIX T15** `f6d7cb2`. BRVM present dans indice_references (6880 entrees →2026-05-15). Re-executer step 2 (fallback DB T15b) → ~100%.
-- CEMAC 0%: aucun indice CEMAC dans indice_references. Decision metier (sourcer BVMAC).
-- Excel `Historique_Indices_Complet.xlsx` ABSENT du VPS → import plantait. **FIX T15b** `ac1cf98`: fallback DB indice_references.
-- Outil diagnostic read-only: `scripts/diag/check_indref_coverage.js` (T15b).
-- Commits: diagnostic `e06798b`, fix mapping+division `f6d7cb2`, resilience+diag `ac1cf98`
+### 31. ~~Couverture indRef EUR/USD~~ — UEMOA RESOLU (T15c, 2026-06-04), TUNISIE/CEMAC ouvert
+Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local + EUR + USD.
+- Avant T15: 8/111 fonds (7.2%), 7 577/33 830 VL (22.4%)
+- Corrections: mapping BRVM + division EUR/USD + DB fallback + case-insensitive matching
+- Commits API: `f6d7cb2`, `ac1cf98`, `2990351`. Execution prod: step 2 + step 4 + perfs + classements.
+- TUNISIE: indRef LOCAL 100%, conversion EUR/USD 24%. Attente fichier utilisateur pour refonte data.
+- CEMAC 0%: aucun indice BVMAC dans indice_references. Decision metier requise.
 
 ### 32. Incohérence conversion devise routes_vl.js (identifiee T13)
 - Fichier: api_opcv/src/routes/routes_vl.js lignes 3027-3039
@@ -82,11 +81,10 @@ Donnees reelles au niveau VL (snapshot 17:00 apres recalc) :
 - Risque: MOYEN (affecte les VL converties en temps reel via cette route)
 - Statut: NON corrige, documente pour traitement prudent
 
-### 33. import_indices_excel.js step 4 multiplication→division (identifiee T15)
-- Fichier: api_opcv/scripts/import/import_indices_excel.js lignes 476-477
-- Probleme: `indRef * rate` au lieu de `indRef / rate` pour conversion EUR/USD
-- **FIX T15** `f6d7cb2`: corrige en division (coherent avec recalc_eur_usd_daily_rate.js)
-- Statut: CORRIGE, a deployer + re-executer sur VPS
+### 33. ~~import_indices_excel.js step 4 multiplication→division~~ — CORRIGE ET DEPLOYE (T15c)
+- **FIX T15** `f6d7cb2`: `indRef * rate` → `indRef / rate` (division, coherent avec recalc_eur_usd_daily_rate.js)
+- **DEPLOYE** et re-execute en production: 26 253 VL UEMOA convertis correctement
+- Sanity check: XOF local=198.58 eur=0.29 → DIVISION confirmee (OK)
 
 ### 34. Donnees UEMOA/CEMAC stales
 - UEMOA: donnees stales 233 jours (derniere VL 2025-10-15), pas de scraper BRVM automatise

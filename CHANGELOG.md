@@ -1,5 +1,15 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
+## [2026-06-04] UEMOA indRef 22% → 100% (T15/T15b/T15c)
+
+### Deploye en production
+- **UEMOA indRef couverture**: 22% → **100%** (111/111 fonds, 33830/33830 VL) local + EUR + USD
+- Fix import_indices_excel.js: ajout 'UEMOA' dans mapping BRVM + multiplication→division EUR/USD. Commits API: `f6d7cb2`
+- Resilience: DB fallback quand Excel absent + case-insensitive matching. Commits API: `ac1cf98`, `2990351`
+- Nouveau script diagnostic read-only: `scripts/diag/check_indref_coverage.js`
+- Execution production: step 2 (33829 VL) + step 4 (26253 VL) + perfs EUR/USD (108 fonds) + classements
+- Sanity check: DIVISION confirmee (XOF local=198.58, eur=0.29)
+
 ## [2026-06-03] Classements + securite + resilience + response.ok + diagnostic indices
 
 ### Deploye en production (T8-T12)
