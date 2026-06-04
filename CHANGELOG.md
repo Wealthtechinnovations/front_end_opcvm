@@ -1,6 +1,12 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
-## [2026-06-04] UEMOA indRef 22% → 100% (T15/T15b/T15c)
+## [2026-06-04] UEMOA indRef 22% → 100% + Fix conversion multiplication→division
+
+### Pret a deployer (T17)
+- **Fix CRITIQUE**: routes_vl.js 10 lignes multiplication→division pour conversion local→EUR/USD
+  - `POST /api/updateValues/:id` (saisie manuelle VL): value_EUR/USD
+  - `POST /api/uploadsfilevl/:id` (upload CSV): value_EUR/USD, actif_net_EUR/USD, dividende_EUR/USD
+  - Les deux routes ecrivent directement en base — le bug affectait les donnees inserees via l'UI
 
 ### Deploye en production
 - **UEMOA indRef couverture**: 22% → **100%** (111/111 fonds, 33830/33830 VL) local + EUR + USD

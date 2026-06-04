@@ -74,12 +74,14 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - TUNISIE: indRef LOCAL 100%, conversion EUR/USD 24%. Attente fichier utilisateur pour refonte data.
 - CEMAC 0%: aucun indice BVMAC dans indice_references. Decision metier requise.
 
-### 32. Incohérence conversion devise routes_vl.js (identifiee T13)
-- Fichier: api_opcv/src/routes/routes_vl.js lignes 3027-3039
-- Probleme: Conversion par MULTIPLICATION au lieu de DIVISION (regle projet: valeur_locale / taux)
-- Impact: Route VL production, lot dedie requis (T17)
-- Risque: MOYEN (affecte les VL converties en temps reel via cette route)
-- Statut: NON corrige, documente pour traitement prudent
+### 32. ~~Incohérence conversion devise routes_vl.js~~ — CORRIGE (T17, 2026-06-04)
+- Fichier: api_opcv/src/routes/routes_vl.js
+- Probleme: 10 lignes utilisaient MULTIPLICATION au lieu de DIVISION pour conversion local→EUR/USD
+- Routes affectees: `POST /api/updateValues/:id` (lignes 3027-3039) + `POST /api/uploadsfilevl/:id` (lignes 6334-6347)
+- Champs corriges: value_EUR/USD, actif_net_EUR/USD, dividende_EUR/USD
+- Preuve de la regle: indRef_EUR/USD dans le meme fichier (lignes 6352-6353) utilisait deja la division correcte
+- Impact: ces routes ecrivent directement en base — les VL inserees via upload CSV ou saisie manuelle avaient des conversions EUR/USD fausses
+- Note: les conversions EUR↔USD dans le contexte portefeuille (lignes 2383-2392, 2518-2527) sont un cas different (cross rate) et n'ont pas ete modifiees
 
 ### 33. ~~import_indices_excel.js step 4 multiplication→division~~ — CORRIGE ET DEPLOYE (T15c)
 - **FIX T15** `f6d7cb2`: `indRef * rate` → `indRef / rate` (division, coherent avec recalc_eur_usd_daily_rate.js)

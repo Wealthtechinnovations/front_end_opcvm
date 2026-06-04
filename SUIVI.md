@@ -1461,6 +1461,18 @@ Corrections deployees (commits pushes, a deployer sur production):
 **Build frontend**: OK (0 erreur)
 **Statut**: Pushes, a deployer
 
+### 2026-06-04 - LOT T17 (#32): Fix routes_vl.js multiplication→division (10 lignes)
+- **Statut**: COMMITE, A DEPLOYER
+- **Probleme**: 10 lignes dans routes_vl.js utilisaient multiplication au lieu de division pour conversion local→EUR/USD
+- **Impact CRITIQUE**: ces routes ecrivent DIRECTEMENT en base de donnees (valorisations)
+  - `POST /api/updateValues/:id`: value_EUR, value_USD (saisie manuelle VL)
+  - `POST /api/uploadsfilevl/:id`: value_EUR/USD, actif_net_EUR/USD, dividende_EUR/USD (upload CSV)
+- **Preuve interne**: indRef dans le meme fichier (lignes 6352-6353) utilisait deja la division correcte
+- **Fix**: `* exchangeRatesEUR.value` → `/ exchangeRatesEUR.value` (idem USD) sur les 10 lignes
+- **Non modifie**: conversions EUR↔USD portefeuille (lignes 2383-2392, 2518-2527) = cross rate different
+- **Fichier API modifie**: src/routes/routes_vl.js
+- **Zero regression** (le recalc quotidien utilise deja la division et ecrase les valeurs)
+
 ### 2026-06-04 - LOT T15/T15b/T15c: UEMOA indRef 22% → 100% (local + EUR + USD)
 - **Statut**: DEPLOYE ET VERIFIE EN PRODUCTION
 - **Probleme**: UEMOA indRef coverage a 22% (8/111 fonds, 7577/33830 VL)
@@ -1585,11 +1597,19 @@ LOT T15c — Execution complete chaine UEMOA en production
 - Zero erreur, zero regression
 - 7 fonds TUNISIE (ids 2869-2875) toujours sans indRef (recemment importes CMF, pas dans index data)
 
+### Dernier lot termine
+LOT T17 (#32) — Fix routes_vl.js multiplication→division (10 lignes, 2 routes)
+- Fichier modifie: `api_opcv/src/routes/routes_vl.js`
+- Routes corrigees:
+  - `POST /api/updateValues/:id` (lignes 3027-3039): value_EUR/USD
+  - `POST /api/uploadsfilevl/:id` (lignes 6334-6347): value_EUR/USD, actif_net_EUR/USD, dividende_EUR/USD
+- Changement: `* exchangeRates.value` → `/ exchangeRates.value` (regle OPCVM: DIVISION)
+- Preuve interne: indRef (lignes 6352-6353 du meme fichier) utilisait deja la division correcte
+- Note: les conversions EUR↔USD portefeuille (lignes 2383-2392, 2518-2527) sont un cross rate different — non modifiees
+- Zero regression sur les routes existantes
+
 ### Prochaine action recommandee
-**T17 (#32) : Fix routes_vl.js:3027-3039 multiplication→division**
-- Tache sensible (route API production utilisee pour la saisie/upload VL)
-- Diagnostic d'abord : lire le code, identifier l'impact exact, verifier si le bug affecte les donnees en base ou seulement le retour API
-- Ne pas toucher tant que le diagnostic n'est pas termine
+**Deployer T17 sur VPS** puis executer `recalc_eur_usd_daily_rate.js` pour corriger les donnees historiques affectees par le bug multiplication.
 
 **En attente :**
 - TUNISIE EUR/USD gap (24%) : utilisateur fournira fichier VL corrigees avec dividendes
@@ -1597,14 +1617,13 @@ LOT T15c — Execution complete chaine UEMOA en production
 - T18 (#28) : factoriser duplication panel/investor vs panel/portfolio
 
 ### Risques connus
-- routes_vl.js:3027-3039 utilise multiplication au lieu de division pour conversion indRef EUR/USD (bug latent, n'affecte que les retours API, pas les donnees en base qui sont peuplees par les scripts)
 - 7 fonds TUNISIE (2869-2875) sans indRef (importes recemment CMF, pas dans index data historique)
 - CEMAC 0% indRef (pas d'indice BVMAC dans indice_references)
 - sync_production.sh cron push peut creer des conflits git (toujours `git pull --rebase` avant push)
+- Donnees value_EUR/USD inserees via upload CSV ou saisie manuelle AVANT ce fix pourraient etre fausses (multipliees au lieu de divisees) — recalc_eur_usd_daily_rate.js corrige lors de son execution quotidienne
 
 ### A ne pas faire a la reprise
 - Ne PAS modifier les donnees TUNISIE — attendre le fichier utilisateur
-- Ne PAS modifier routes_vl.js sans diagnostic complet prealable
 - Ne PAS supposer que la couverture indRef est complete (CEMAC toujours a 0%)
 
 ### Etat Git (2026-06-04 - LOT T15c)
