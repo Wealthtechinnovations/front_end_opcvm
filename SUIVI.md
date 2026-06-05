@@ -467,6 +467,39 @@
 - **Commits Frontend**: `55b1442`, `bf5a8b9`
 - **Risque regression**: NUL (ajout de guards, aucune logique modifiee)
 
+### 2026-06-05 - T24: Tests unitaires additifs API (6 fichiers, 71 nouveaux tests)
+- **Statut**: COMMITE ET POUSSE
+- **Objectif**: Augmenter la couverture de tests des fonctions utilitaires pures
+- **Fichiers crees**:
+  - `tests/slug.test.js`: 12 tests (generateSlug, generateFundSlug, extractIdFromSlug)
+  - `tests/dates.test.js`: 12 tests (date finding + grouping functions)
+  - `tests/performances.test.js`: 17 tests (calculatePerformance, annualized variants)
+  - `tests/newratios2.test.js`: 11 tests (calculateMaxDrawdown, calculateCovariance, calculateVariance)
+  - `tests/utils.test.js`: 12 tests (rendements, groupers, grouperTauxParSemaine)
+  - `tests/delai_Beta.test.js`: 7 tests (recouvrement, beta, betaHaussier, betaBaissier)
+- **Suite complete**: 125 tests, 9 suites, 100% pass (etait 54 tests / 3 suites avant T24)
+- **Commits API**: `ff81ae6`, `f91d53d`, `771434e`, `a516ee2`
+- **Risque regression**: NUL (ajout de tests uniquement)
+
+### 2026-06-05 - CODE_REVIEW.md mise a jour complete
+- **Statut**: COMMITE ET POUSSE
+- **Entree #35**: Routes API sans try/catch — CORRIGE (T22)
+- **Entree #36**: Null-safety frontend + response.ok — CORRIGE (T23)
+- **Entree #4 MAJ**: Tests automatises partiellement corrige (125 tests API)
+- **Entree #28 MAJ**: Audit duplication panels (10,000-14,000 lignes, admin/management/country-panel)
+- **Entree #37**: newratios2.js inconsistance format input portfolio vs benchmark
+- **Entree #38**: ratioInfo.js code incomplet non fonctionnel
+- **Entree #39**: Cron monitoring sans alerting (email/Slack)
+- **Entree #40**: fix-brvm-nginx.py script fantome dans crontab
+- **Commits Frontend**: `5fdcf39`, `063b2d6`
+
+### 2026-06-05 - Diagnostics et audits
+- **B6 (244 VL Nigeria extremes)**: NON ACTIF — ces VL ont ete rejetees a l'import, jamais inserees en base
+- **TUNISIE EUR/USD gap 24%**: BLOQUE — en attente fichier VL corrigees avec dividendes (utilisateur)
+- **UEMOA donnees stales 233j**: BLOQUE — pas de scraper BRVM automatise, import manual uniquement (import_vl_uemoa.js). En attente fichiers Excel et script Python d'Eric
+- **fix-brvm-nginx.py**: FANTOME — script documente dans crontab mais fichier inexistant
+- **Cron health check audit**: Script check_cron_health.js fonctionne (data freshness, classements, forex, performances, logs) mais MANQUE: email/Slack alerting, API health checks HTTP, PM2 monitoring, disk space, log rotation
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
@@ -1636,56 +1669,72 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-05 : **T19+T20 DEPLOYES + T21+T22+T23 commites et pousses.**
+Session 2026-06-05 : **T21+T22+T23+T24 commites et pousses. T19/T20 deployes.**
 
-**T23 — Null-safety frontend + response.ok guards : COMMITE, A DEPLOYER**
-- 13 fichiers frontend corriges (null-safety + fetch guards)
-- Commits Frontend: `55b1442`, `bf5a8b9`
+**T24 — Tests unitaires API : COMMITE (6 fichiers, 71 tests, suite 125 total)**
+- Commits API: `ff81ae6`, `f91d53d`, `771434e`, `a516ee2`
 
-**T22 — Try/catch sur 20 routes API + 2 helpers : COMMITE, A DEPLOYER**
-- 7 fichiers API corriges, 20 routes + 2 helpers wrappees
-- Commits API: `d386ec6`, `5c3b26b`, `6966852`
+**T23 — Null-safety frontend + response.ok : A DEPLOYER**
+- 13 fichiers frontend, Commits: `55b1442`, `bf5a8b9`
 
-**T21 — Fix ratiosnewdev + null-safety frontend : COMMITE, A DEPLOYER**
+**T22 — Try/catch 20 routes + 2 helpers : A DEPLOYER**
+- 7 fichiers API, Commits: `d386ec6`, `5c3b26b`, `6966852`
+
+**T21 — Fix ratiosnewdev + null-safety : A DEPLOYER**
 - Commit API: `b63e355`, Commit Frontend: `5f5c63a`
 
-**T19/T20 — DEPLOYES**
+**CODE_REVIEW.md** : mise a jour avec entrees #37-#40 + audit panels. Commits: `5fdcf39`, `063b2d6`
 
 ### Dernier lot termine
-LOT T23 — Null-safety frontend + response.ok guards
-- Fichiers modifies: 13 fichiers frontend, 5 fichiers API
-- Tests: syntax check OK API, build frontend OK (217 pages)
-- Commits: API `6966852`, Frontend `bf5a8b9`, push OK
+LOT T24 complet — Tests unitaires + audit CODE_REVIEW + diagnostics
+- Fichiers crees: 6 fichiers tests (slug, dates, performances, newratios2, utils, delai_Beta)
+- Tests: 125/125 pass (9 suites)
+- Audit panels: 10,000-14,000 lignes dupliquees documentees (CODE_REVIEW #28)
+- CODE_REVIEW: 4 nouvelles entrees (#37-#40)
+- Diagnostics documentes: B6 non-actif, TUNISIE bloque, UEMOA bloque, fix-brvm-nginx fantome, cron monitoring sans alerting
+- Commits: API `a516ee2`, Frontend `063b2d6`
+- Push: OK les deux repos
 
 ### Prochaine action recommandee
-1. **Deployer T21+T22+T23 sur production** :
+1. **Deployer T21+T22+T23+T24 sur production** (validation Eric) :
    ```bash
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
    ```
-2. **Continuer les ameliorations** : UEMOA scraper, cron monitoring, tests
+2. Taches restantes non-sensibles executables :
+   - Ajouter tests frontend (si pertinent avec Next.js App Router)
+   - Nettoyer ratioInfo.js (code mort, CODE_REVIEW #38)
+   - Documenter README_DEV.md (test commands, coverage)
 
-**En attente :**
-- TUNISIE EUR/USD gap (24%) : utilisateur fournira fichier VL corrigees avec dividendes
-- CEMAC 0% : sourcer indice BVMAC (decision metier)
-- T18 (#28) : factoriser duplication panel/investor vs panel/portfolio
-- UEMOA donnees stales 233j : pas de scraper BRVM automatise
-- B6 : nettoyage 244 VL Nigeria extremes
+**En attente (donnees utilisateur) :**
+- TUNISIE EUR/USD gap 24% : attente fichier VL avec dividendes
+- UEMOA donnees stales : attente fichiers Excel + script Python d'Eric
+- CEMAC 0% indRef : decision metier (sourcer indice BVMAC)
+
+**En attente (validation Eric) :**
+- Deploiement T21+T22+T23+T24 sur production
+- Index UNIQUE valorisations(fund_id, date) — SQL production
+- B5: Securisation ttyd — Nginx changes
+- Cron modifications (fix-brvm-nginx.py fantome, alerting email/Slack)
 
 ### Risques connus
-- SEC Nigeria changement format : ~195 fonds n'apparaissent plus dans fichiers recents
-- UEMOA donnees stales 233 jours (derniere VL 2025-10-15)
-- CEMAC donnees stales 539 jours
+- SEC Nigeria changement format : ~195 fonds disparus des fichiers recents
+- UEMOA donnees stales 233+ jours
+- CEMAC donnees stales 539+ jours
 - 7 fonds TUNISIE (2869-2875) sans indRef
-- sync_production.sh cron push peut creer des conflits git
+- fix-brvm-nginx.py : script fantome dans crontab (CODE_REVIEW #40)
+- Cron health check : pas d'alerting email/Slack (CODE_REVIEW #39)
+- newratios2.js : inconsistance format input (CODE_REVIEW #37)
 
 ### A ne pas faire a la reprise
 - Ne PAS modifier les donnees TUNISIE — attendre le fichier utilisateur
-- Ne PAS supposer que tous les fonds Nigeria ont des donnees mai 2026 (seulement ~40 fonds)
+- Ne PAS supposer que tous les fonds Nigeria ont des donnees mai 2026
+- Ne PAS deployer sans validation Eric
+- Ne PAS modifier les calculs financiers sans diagnostic prealable
 
 ### Etat Git (2026-06-05)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `6966852`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `bf5a8b9`, sync origin, SUIVI.md dirty
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `a516ee2`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `063b2d6`, SUIVI.md dirty
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 
