@@ -109,12 +109,15 @@ export default function Comparaison() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
     })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
       .then(data => {
         Swal.close();
         if (data && data.code === 200) {
           setFunds(data);
-          const totalItems = data?.data.societes?.length || data?.data.fonds?.length || 0;
+          const totalItems = data?.data?.societes?.length || data?.data?.fonds?.length || 0;
           settotalPages(Math.ceil(totalItems / itemsPerPage));
         } else {
           setError("Aucun résultat trouvé. Réessayez avec d'autres critères.");
@@ -140,19 +143,20 @@ export default function Comparaison() {
         setOptionsPays(data?.data.paysOptions.map((f: any) => ({ value: f.value, label: f.label })));
 
         const data3 = await getallsociete();
-        setOptionsSociete(data3?.data?.societes.map((f: any) => ({ value: f.nom, label: f.nom })));
+        setOptionsSociete((data3?.data?.societes || []).map((f: any) => ({ value: f.nom, label: f.nom })));
 
         const data2 = await getfonds();
-        setFundsOptions(data2?.data?.funds.map((f: any) => ({ value: f.value, label: f.label })));
+        setFundsOptions((data2?.data?.funds || []).map((f: any) => ({ value: f.value, label: f.label })));
 
         const response = await fetch(`${urlconstant}/api/listeopcvm`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const responseData = await response.json();
         if (responseData && responseData.code === 200) {
           Swal.close();
-          const totalItems = responseData?.data.fonds.length || 0;
+          const totalItems = responseData?.data?.fonds?.length || 0;
           settotalPages(Math.ceil(totalItems / itemsPerPage));
           setFunds(responseData);
         } else {

@@ -37,22 +37,19 @@ interface Funds {
   };
 }
 async function getsociete() {
-  const data = (
-    await fetch(`${urlconstant}/api/getSocietes`)
-  ).json();
-  return data;
+  const res = await fetch(`${urlconstant}/api/getSocietes`);
+  if (!res.ok) return { code: 500, data: { societes: [] } };
+  return res.json();
 }
 async function getdevise() {
-  const data = (
-    await fetch(`${urlconstant}/api/getDevises`)
-  ).json();
-  return data;
+  const res = await fetch(`${urlconstant}/api/getDevises`);
+  if (!res.ok) return { code: 500, data: { devises: [] } };
+  return res.json();
 }
 async function getcategories() {
-  const data = (
-    await fetch(`${urlconstant}/api/getCategories`)
-  ).json();
-  return data;
+  const res = await fetch(`${urlconstant}/api/getCategories`);
+  if (!res.ok) return { code: 500, data: { categories: [] } };
+  return res.json();
 }
 const optionsCategorie: any[] = [];
 
@@ -216,10 +213,9 @@ interface FormData {
 };
 
 async function getlastvl1() {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFunds`)
-  ).json();
-  return data;
+  const res = await fetch(`${urlconstant}/api/searchFunds`);
+  if (!res.ok) return { code: 500, data: { funds: [] } };
+  return res.json();
 }
 export default function Recherche() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
