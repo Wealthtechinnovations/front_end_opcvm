@@ -730,7 +730,7 @@ export default function Fonds() {
                     <div className="box mb-15 pull-up  col-3">
                       <div className="box-header"><strong>Statistiques</strong></div>
                       <div className="box-body">
-                        <p> Nombre de VL manquante : <strong> {dates.length}</strong></p>
+                        <p> Nombre de VL manquante : <strong> {dates?.length || 0}</strong></p>
                         <p> Date de derniere VL : <strong>{funds?.data?.lastDate}</strong></p>
                         <p> Date de creation du fonds : <strong>{funds?.data?.date_creationfund}</strong></p>
                         <p> Performance veille : <strong className={`text-right ${parseFloat(funds?.data?.performances?.data?.perfVeille) < 0 ? 'text-danger' : 'text-success'}`}>{isNaN(parseFloat(funds?.data?.performances?.data?.perfVeille)) ? '-' : parseFloat(funds?.data?.performances?.data?.perfVeille).toFixed(2)} %</strong></p>

@@ -651,7 +651,7 @@ export default function Fonds() {
               Statistiques
             </div>
             <div className="card-body">
-              <p>Nombre de VL manquantes : <strong>{dates.length}</strong></p>
+              <p>Nombre de VL manquantes : <strong>{dates?.length || 0}</strong></p>
               <p>Date de dernière VL : <strong>{funds?.data?.lastDate}</strong></p>
               <p>Date de création du fonds : <strong>{funds?.data?.date_creationfund}</strong></p>
               <p>Performance veille : <strong className={`text-right ${parseFloat(funds?.data?.performances?.data?.perfVeille) < 0 ? 'text-danger' : 'text-success'}`}>

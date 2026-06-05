@@ -501,13 +501,13 @@ export default function Fond() {
                 }
                 const data1 = await getlastvl1();
 
-                const mappedOptions = data1?.data?.funds.map((funds: any) => ({
+                const mappedOptions = (data1?.data?.funds || []).map((funds: any) => ({
 
                     value: funds.value,
                     label: funds.label, // Replace with the actual property name
                     // Replace with the actual property name
                 }));
-                const datasgraph = data?.data?.graphs.map((item: { dates: any; values: any; valuesInd: any; }) => ({
+                const datasgraph = (data?.data?.graphs || []).map((item: { dates: any; values: any; valuesInd: any; }) => ({
                     name: item.dates,
                     y: item.values,
                     InRef: item.valuesInd
@@ -830,6 +830,7 @@ export default function Fond() {
             if (response.ok) {
                 // Handle the exported data (e.g., download a file)
                 const excelData = await response.json();
+                if (!excelData || excelData.length === 0) return;
 
                 // Create headers and data for CSV
                 const headers = Object.keys(excelData[0]);
@@ -897,7 +898,7 @@ export default function Fond() {
     };
 
 
-    const postYears = post?.data?.performances?.data?.adaptValues1.map((item: any) => item[0]);
+    const postYears = (post?.data?.performances?.data?.adaptValues1 || []).map((item: any) => item[0]);
 
     const slicedPostc = postc?.data?.multipliedValues;
 
@@ -3087,7 +3088,7 @@ export default function Fond() {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {post?.data?.meilleursFonds.map((fond: { nom_fond: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined; volatility3an: any; performance_annualisee: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined; performance_1_an: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined; performance_3_ans: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined; performance_ytd: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined; }, index: React.Key | null | undefined) => (
+                                                        {(post?.data?.meilleursFonds || []).map((fond: { nom_fond: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined; volatility3an: any; performance_annualisee: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined; performance_1_an: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined; performance_3_ans: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined; performance_ytd: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | React.PromiseLikeOfReactNode | null | undefined; }, index: React.Key | null | undefined) => (
                                                             <tr key={index}>
                                                                 <td>{fond.nom_fond}</td>
                                                                 <td style={{ color: typeof fond.performance_annualisee === 'number' && fond.performance_annualisee >= 0 ? 'green' : 'red' }}>{typeof fond.performance_annualisee === 'number' ? fond.performance_annualisee.toFixed(2) + '%' : '-'}</td>

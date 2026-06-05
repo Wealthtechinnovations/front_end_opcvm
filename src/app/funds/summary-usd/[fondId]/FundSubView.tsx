@@ -679,6 +679,7 @@ export default function Fond() {
       if (response.ok) {
         // Handle the exported data (e.g., download a file)
         const excelData = await response.json();
+        if (!excelData || excelData.length === 0) return;
 
         // Create headers and data for CSV
         const headers = Object.keys(excelData[0]);
