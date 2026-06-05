@@ -493,6 +493,15 @@
 - **Entree #40**: fix-brvm-nginx.py script fantome dans crontab
 - **Commits Frontend**: `5fdcf39`, `063b2d6`
 
+### 2026-06-05 - T25: Fix securite middleware — panels portfolio/portefeuille non proteges
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER
+- **Probleme**: `/panel/portfolio/*` et `/panel/portefeuille/*` n'etaient pas dans le panelConfig du middleware Next.js → acces sans authentification aux pages dashboard, favorites, selected-funds, reconstruction
+- **Fix**: Ajout des 2 paths dans panelConfig avec allowedTypes: [1] (investor)
+- **Fichier**: `src/middleware.ts`
+- **Build**: OK
+- **Commit Frontend**: `71b791b`
+- **Risque regression**: FAIBLE (additive, n'affecte pas les autres panels)
+
 ### 2026-06-05 - Diagnostics et audits
 - **B6 (244 VL Nigeria extremes)**: NON ACTIF — ces VL ont ete rejetees a l'import, jamais inserees en base
 - **TUNISIE EUR/USD gap 24%**: BLOQUE — en attente fichier VL corrigees avec dividendes (utilisateur)
@@ -1669,7 +1678,10 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-05 : **T21+T22+T23+T24 commites et pousses. T19/T20 deployes.**
+Session 2026-06-05 : **T21+T22+T23+T24+T25 commites et pousses. T19/T20 deployes.**
+
+**T25 — Fix securite middleware portfolio/portefeuille : A DEPLOYER**
+- Commit Frontend: `71b791b`
 
 **T24 — Tests unitaires API : COMMITE (6 fichiers, 71 tests, suite 125 total)**
 - Commits API: `ff81ae6`, `f91d53d`, `771434e`, `a516ee2`
@@ -1686,6 +1698,11 @@ Session 2026-06-05 : **T21+T22+T23+T24 commites et pousses. T19/T20 deployes.**
 **CODE_REVIEW.md** : mise a jour avec entrees #37-#40 + audit panels. Commits: `5fdcf39`, `063b2d6`
 
 ### Dernier lot termine
+LOT T25 — Fix securite middleware portfolio/portefeuille
+- Fichier: src/middleware.ts
+- Build: OK
+- Commit: `71b791b`, push OK
+
 LOT T24 complet — Tests unitaires + audit CODE_REVIEW + diagnostics
 - Fichiers crees: 6 fichiers tests (slug, dates, performances, newratios2, utils, delai_Beta)
 - Tests: 125/125 pass (9 suites)
@@ -1696,7 +1713,7 @@ LOT T24 complet — Tests unitaires + audit CODE_REVIEW + diagnostics
 - Push: OK les deux repos
 
 ### Prochaine action recommandee
-1. **Deployer T21+T22+T23+T24 sur production** (validation Eric) :
+1. **Deployer T21+T22+T23+T24+T25 sur production** (validation Eric) :
    ```bash
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
@@ -1712,7 +1729,7 @@ LOT T24 complet — Tests unitaires + audit CODE_REVIEW + diagnostics
 - CEMAC 0% indRef : decision metier (sourcer indice BVMAC)
 
 **En attente (validation Eric) :**
-- Deploiement T21+T22+T23+T24 sur production
+- Deploiement T21+T22+T23+T24+T25 sur production
 - Index UNIQUE valorisations(fund_id, date) — SQL production
 - B5: Securisation ttyd — Nginx changes
 - Cron modifications (fix-brvm-nginx.py fantome, alerting email/Slack)
@@ -1734,7 +1751,7 @@ LOT T24 complet — Tests unitaires + audit CODE_REVIEW + diagnostics
 
 ### Etat Git (2026-06-05)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `a516ee2`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `063b2d6`, SUIVI.md dirty
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `71b791b`, SUIVI.md + CODE_REVIEW.md dirty
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 

@@ -270,3 +270,10 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Le script n'existe pas sur le filesystem
 - Impact: Erreur silencieuse dans cron toutes les 5 minutes (stderr redirige nulle part)
 - Recommandation: Supprimer l'entree crontab ou creer le script si necessaire
+
+### 41. ~~Panels portfolio/portefeuille sans authentification middleware~~ — CORRIGE (T25, 2026-06-05)
+- Fichier: src/middleware.ts
+- Probleme: `/panel/portfolio/*` et `/panel/portefeuille/*` n'etaient pas dans panelConfig → acces sans JWT
+- Impact: Pages dashboard, favorites, selected-funds, reconstruction accessibles sans authentification
+- Correction: Ajout des 2 paths avec allowedTypes: [1] (investor)
+- Commit Frontend: `71b791b`
