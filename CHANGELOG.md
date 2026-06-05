@@ -1,13 +1,21 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
-## [2026-06-04] UEMOA indRef 100% + Fix conversion + Fix crash pages EUR/USD
+## [2026-06-05] T19 deploye + T20 Nigeria mise a jour
 
-### Pret a deployer (T19)
+### Deploye en production (T20)
+- **Nigeria donnees mises a jour**: cron_nigeria_weekly.sh execute manuellement
+  - 21 fichiers SEC Nigeria 2026 extraits, 82 VL inserees, 1 fonds cree
+  - Recalc EUR/USD (926 897 VL) + VL ajuste (926 917 VL) + performances + classements
+  - **Constat**: SEC Nigeria a change format fin avril — fichiers recents ne contiennent que ~40 fonds au lieu de ~220
+  - Nigeria derniere VL : 22 mai 2026 (40 fonds) / 24 avril 2026 (195 fonds)
+
+### Deploye en production (T19)
 - **Fix CRITIQUE**: pages fonds EUR/USD crashaient ("Cannot read properties of undefined (reading '1')")
   - Cause: className perf annuelles dereferencait slicedPostc[n][2] sans guard (premier rendu, postc=null)
   - Fix: guard optional chaining sur summary-eur + summary-usd FundSubView.tsx
-  - Donnees backend saines (valLiqdev/performancesdev/classementquartiledev = 200) — bug 100% frontend
-  - Build OK. Commit `0dc046b`
+  - Build OK (217/217 pages), PM2 restart OK. Commit `0dc046b`
+
+## [2026-06-04] UEMOA indRef 100% + Fix conversion
 
 ### Deploye en production (T17)
 - **Fix CRITIQUE**: routes_vl.js 10 lignes multiplication→division pour conversion local→EUR/USD

@@ -1461,8 +1461,22 @@ Corrections deployees (commits pushes, a deployer sur production):
 **Build frontend**: OK (0 erreur)
 **Statut**: Pushes, a deployer
 
+### 2026-06-05 - LOT T20: Nigeria donnees mises a jour
+- **Statut**: DEPLOYE EN PRODUCTION (2026-06-04 22:02 UTC)
+- **Diagnostic**: Nigeria derniere VL = 2026-05-08 (~27 jours de retard). Cron `cron_nigeria_weekly.sh` ne s'executait pas automatiquement.
+- **SEC Nigeria site web**: 21 fichiers 2026 disponibles, donnees jusqu'au 22 mai 2026
+- **Constat important**: fichiers SEC Nigeria depuis ~30 avril ne contiennent que 38-41 lignes (au lieu de 214-222 en jan-mars). ~195 fonds ne sont plus inclus dans les fichiers recents. Changement cote SEC Nigeria, pas un bug de notre scraper.
+- **Execution manuelle sur VPS**: `bash scripts/cron/cron_nigeria_weekly.sh`
+  - Extraction: 21 fichiers Excel, 3852 lignes, 235 fonds
+  - Import: 82 VL inserees, 1 fonds cree, 3718 deja existantes, 52 rejetees (hors bornes)
+  - Recalc EUR/USD: 926 897 VL, 0 erreur
+  - Recalc VL ajuste: 926 917 VL, 0 erreur
+  - Perf locale: 611 fonds, 0 erreur
+  - Perf EUR/USD: 611 fonds, 0 erreur
+- **A verifier**: `crontab -l | grep nigeria` — le cron pourrait ne plus etre dans le crontab
+
 ### 2026-06-04 - LOT T19: Fix crash pages fonds EUR/USD "reading '1'"
-- **Statut**: COMMITE + BUILD OK, A DEPLOYER (frontend)
+- **Statut**: DEPLOYE EN PRODUCTION (2026-06-04 ~22:40 UTC)
 - **Symptome**: `/funds/summary-eur/1130` et `/funds/summary-usd/1130` (et tous les fonds) affichaient "Une erreur est survenue — Cannot read properties of undefined (reading '1')"
 - **Diagnostic live** (API testee en production):
   - valLiqdev/1130/EUR → 200 OK, performancesdev → 200 OK, classementquartiledev/1130/EUR → 200 OK
@@ -1572,81 +1586,70 @@ Corrections deployees (commits pushes, a deployer sur production):
 
 ## POINT DE REPRISE COURANT
 
-### COUVERTURE indRef PRODUCTION (2026-06-04, APRES T15c)
-| Pays | VL total | indRef local | indRef EUR | indRef USD | Statut |
-|------|----------|--------------|------------|------------|--------|
-| MAROC | 533 809 | 529 823 (99.3%) | 99.3% | 99.3% | OK |
-| NIGERIA | 53 718 | 53 718 (100%) | 99.9% | 99.9% | OK |
-| TUNISIE | 302 906 | 302 906 (100%) | 73 523 (24%) | 73 523 (24%) | GAP CONVERSION (attente fichier utilisateur) |
-| **UEMOA** | **33 830** | **33 830 (100%)** | **33 830 (100%)** | **33 830 (100%)** | **RESOLU T15c** |
-| CEMAC | 2 134 | 0 (0%) | 0% | 0% | Aucun indice BVMAC (decision metier) |
-
-**UEMOA avant/apres T15c :**
-- AVANT : 8/111 fonds (7.2%), 7 577/33 830 VL (22.4%) local/EUR/USD
-- APRES : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local/EUR/USD
-- Sanity check division : UEMOA XOF local=198.58 eur=0.29 → DIVISION (OK)
-- Performances EUR/USD recalculees : 108 fonds UEMOA
-- Classements EUR/USD recalcules
-
 ### Dernier etat stable
-Session 2026-06-04 : **T15c DEPLOYE ET VERIFIE EN PRODUCTION — UEMOA 100%.**
-- T15 (`f6d7cb2`): UEMOA mapping + step 4 multiplication→division
-- T15b (`ac1cf98`, `2990351`): DB fallback + case-insensitive matching + diagnostic script
-- T15c (deploye sur VPS): execution complete chaine UEMOA en production :
-  - Step 2 : 33 829 VL indRef local peuples, 111 liens fonds-indice crees
-  - Step 4 : 26 253 VL convertis EUR/USD (7 577 deja ok)
-  - Performances EUR/USD : 108 fonds UEMOA recalcules
-  - Classements EUR/USD : recalcules
-  - Diagnostic APRES : 111/111 fonds, 33 830/33 830 VL, 100% sur les 3 devises
-- T8-T16 DEPLOYES et VERIFIES en production
-- 7 crons actifs dans crontab production
+Session 2026-06-05 : **T19 DEPLOYE + T20 Nigeria mis a jour en production.**
+
+**T19 — Fix crash pages fonds EUR/USD : DEPLOYE**
+- Frontend build OK (217/217 pages, 0 erreur), PM2 restart OK
+- Commit `0dc046b` deploye sur VPS le 2026-06-04 ~22:40 UTC
+- API endpoints EUR/USD verifies : valLiqdev, performancesdev retournent des donnees valides
+
+**T20 — Nigeria mise a jour donnees : DEPLOYE**
+- `cron_nigeria_weekly.sh` execute manuellement sur VPS le 2026-06-04 21:35 UTC
+- 21 fichiers SEC Nigeria 2026 extraits (sec_ng_nav_extractor_v6.py)
+- 82 VL inserees, 1 nouveau fonds cree, 3718 VL deja existantes
+- recalc EUR/USD : 926 897 VL, 0 erreur
+- recalc VL ajuste : 926 917 VL, 0 erreur
+- Performances local+EUR+USD recalculees (611 fonds, 0 erreur)
+- **Constat important** : fichiers SEC Nigeria recents (30 avril, 8/15/22 mai) contiennent seulement 38-41 lignes au lieu de 214-222 (jan-mars). Format change cote SEC Nigeria — la majorite des fonds (~195) n'apparaissent plus dans les fichiers recents. Derniere VL pour ces fonds : 24 avril 2026.
+
+**T17 — API routes_vl.js multiplication→division : DEPLOYE**
+- 10 lignes corrigees, recalc 926 377 VL execute, 0 erreur
+- Commit API `3e04cdf`
 
 ### Dernier lot termine
-LOT T15c — Execution complete chaine UEMOA en production
-- Scripts executes sur VPS :
-  1. `node scripts/import/import_indices_excel.js --execute --step 2 --pays UEMOA` → 33 829 VL mis a jour
-  2. `node scripts/import/import_indices_excel.js --execute --step 4 --pays UEMOA` → 26 253 VL convertis
-  3. `node scripts/fix/fix_populate_performances_eur_usd.js --pays UEMOA` → 108 fonds EUR+USD
-  4. `curl http://localhost:3005/api/classementeur` → OK
-  5. `curl http://localhost:3005/api/classementusd` → OK
-  6. `node scripts/diag/check_indref_coverage.js --pays UEMOA` → 100% confirme
-- Aucun code modifie dans ce lot (execution uniquement)
+LOT T20 — Diagnostic + mise a jour Nigeria
+- Commandes executees sur VPS :
+  1. `bash scripts/cron/cron_nigeria_weekly.sh` (21:35 UTC) → 82 VL inserees, 1 fonds cree
+  2. `bash scripts/cron/cron_nigeria_weekly.sh` (22:09 UTC) → 0 VL (idempotent, confirme)
+  3. `npm run build && pm2 restart fundafrique-frontend` → build OK, restart OK
 - Zero erreur, zero regression
-- 7 fonds TUNISIE (ids 2869-2875) toujours sans indRef (recemment importes CMF, pas dans index data)
-
-### Dernier lot termine
-LOT T19 — Fix crash pages fonds EUR/USD "Cannot read properties of undefined (reading '1')"
-- Fichiers: `summary-eur/[fondId]/FundSubView.tsx`, `summary-usd/[fondId]/FundSubView.tsx`
-- className des perf annuelles: branche else non protegee `parseFloat(slicedPostc[n][2])` → crash quand `slicedPostc` undefined (premier rendu, postc=null)
-- Fix: guard `slicedPostc?.[n] && !isNaN(...)` avant la logique couleur + `classementType1?.rank5Ans`
-- T17 (API) DEJA DEPLOYE en production (recalc 926377 VL execute, 0 erreur, division confirmee)
-- Build frontend OK. Commit frontend: `0dc046b`
+- Nigeria derniere VL en base : 22 mai 2026 (pour ~40 fonds) / 24 avril 2026 (pour ~195 fonds)
 
 ### Prochaine action recommandee
-**Deployer T19 (frontend)** pour reparer les pages fonds EUR/USD:
-```bash
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
-```
-Puis verifier: `https://africafunds.chainsolutions.fr/funds/summary-eur/1130` et `/summary-usd/1130` (ne doivent plus afficher "Une erreur est survenue").
+1. **Verifier visuellement** les pages en production :
+   - `https://africafunds.chainsolutions.fr/funds/summary-eur/1130`
+   - `https://africafunds.chainsolutions.fr/funds/summary-usd/1130`
+2. **Verifier le crontab Nigeria** (le cron ne semblait pas s'executer automatiquement) :
+   ```bash
+   crontab -l | grep nigeria
+   ```
+   Si absent, re-ajouter :
+   ```bash
+   (crontab -l; echo "0 10 * * 1 /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api/scripts/cron/cron_nigeria_weekly.sh >> /var/log/africafunds_nigeria.log 2>&1") | crontab -
+   ```
+3. **Surveiller le format SEC Nigeria** : les fichiers recents (mai 2026) ne contiennent que ~40 fonds au lieu de ~220. Possiblement un changement temporaire ou permanent de la SEC Nigeria. Si c'est permanent, il faudra scraper les annees precedentes pour avoir les VL des fonds manquants.
 
 **En attente :**
 - TUNISIE EUR/USD gap (24%) : utilisateur fournira fichier VL corrigees avec dividendes
 - CEMAC 0% : sourcer indice BVMAC (decision metier)
 - T18 (#28) : factoriser duplication panel/investor vs panel/portfolio
+- ratiosnewdev 504 timeout : a investiguer
 
 ### Risques connus
-- 7 fonds TUNISIE (2869-2875) sans indRef (importes recemment CMF, pas dans index data historique)
-- CEMAC 0% indRef (pas d'indice BVMAC dans indice_references)
-- sync_production.sh cron push peut creer des conflits git (toujours `git pull --rebase` avant push)
-- Donnees value_EUR/USD inserees via upload CSV ou saisie manuelle AVANT ce fix pourraient etre fausses (multipliees au lieu de divisees) — recalc_eur_usd_daily_rate.js corrige lors de son execution quotidienne
+- SEC Nigeria changement format : ~195 fonds n'apparaissent plus dans les fichiers recents (depuis ~30 avril 2026)
+- 7 fonds TUNISIE (2869-2875) sans indRef
+- CEMAC 0% indRef (pas d'indice BVMAC)
+- sync_production.sh cron push peut creer des conflits git
+- crontab Nigeria a verifier (possible desactivation)
 
 ### A ne pas faire a la reprise
 - Ne PAS modifier les donnees TUNISIE — attendre le fichier utilisateur
-- Ne PAS supposer que la couverture indRef est complete (CEMAC toujours a 0%)
+- Ne PAS supposer que tous les fonds Nigeria ont des donnees mai 2026 (seulement ~40 fonds)
 
-### Etat Git (2026-06-04 - LOT T15c)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `2990351`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `c8af9a7`, sync origin, clean
+### Etat Git (2026-06-05)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `3e04cdf`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `af43b7c`, sync origin, clean
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 
