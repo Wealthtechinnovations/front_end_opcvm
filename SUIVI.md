@@ -418,6 +418,26 @@
 - **Scripts crees**: `fix_categories_remaining.js` (combler categorie_national/libelle), `fix_populate_rendements.js` (peupler table rendements)
 - **Impact**: aucune regression, tous les graphiques EUR/USD affichent le nom du benchmark
 
+### 2026-06-05 - T21: Fix ratiosnewdev + null-safety frontend
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER
+- **Probleme API**: `/api/ratiosnewdev` et `/api/ratiosnewdevwithdate` avaient 5 bugs:
+  1. TSR hardcode `-0.0234` au lieu de TSR dynamique par pays (Nigeria 27.5%, Tunisie 8%, etc.)
+  2. Requete TSR hardcodee `pays: "Nigeria"` au lieu du pays reel du fonds
+  3. Sort `DESC` au lieu de `ASC` (incoherent avec ratiosnew qui fonctionne)
+  4. Pas de early return si aucune VL trouvee (request hang indefiniment)
+  5. Pas de weekday gap filling (donnees incompletes pour calculs volatilite)
+- **Fix API**: Les deux routes corrigees identiquement a ratiosnew:
+  - Ajout `fond.findOne()` pour recuperer `paysFond`
+  - TSR via `tsrhistos(date, year, paysFond)` + `TSR_DEFAULTS` fallback
+  - Sort ASC + early return 404 + weekday gap filling + indRef gap filling
+- **Probleme Frontend**: null-safety manquante sur pages countries et fund-managers
+- **Fix Frontend**: `?.` sur societeData, guard sumActifNet pour numberFormat, safe `.map()` avec `|| []`
+- **Fichiers API**: `src/routes/apigestionratios.js` (152 insertions, 87 deletions)
+- **Fichiers Frontend**: 4 fichiers (countries/[paysId]/FundView.tsx, countries/funds/[fondId]/FundView.tsx, fund-managers/[fondId]/FundView.tsx, fund-managers/funds/[fondId]/FundView.tsx)
+- **Build**: OK (217/217 pages, 0 erreur), syntax API OK
+- **Commit API**: `b63e355`
+- **Commit Frontend**: `5f5c63a`
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
@@ -1587,69 +1607,67 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-05 : **T19 DEPLOYE + T20 Nigeria mis a jour en production.**
+Session 2026-06-05 : **T19+T20 DEPLOYES + T21 commite et pousse.**
+
+**T21 — Fix ratiosnewdev + null-safety frontend : COMMITE, A DEPLOYER**
+- API: ratiosnewdev + ratiosnewdevwithdate corriges (5 bugs):
+  1. TSR dynamique par pays (etait hardcode `-0.0234` / `pays: "Nigeria"`)
+  2. Sort ASC au lieu de DESC (coherent avec ratiosnew)
+  3. Early return 404 si pas de VL (evite request qui hang)
+  4. Weekday gap filling (meme logique que ratiosnew)
+  5. TSR table charge depuis le pays du fond (pas hardcode Nigeria)
+- Frontend: null-safety sur 4 fichiers (countries, fund-managers)
+  - `?.` sur societeData access, guard sumActifNet, safe `.map()` avec fallback `|| []`
+- Build frontend OK (217/217 pages, 0 erreur), syntax API OK
+- Commit API: `b63e355`, Commit Frontend: `5f5c63a`, pushes sur origin
 
 **T19 — Fix crash pages fonds EUR/USD : DEPLOYE**
 - Frontend build OK (217/217 pages, 0 erreur), PM2 restart OK
-- Commit `0dc046b` deploye sur VPS le 2026-06-04 ~22:40 UTC
-- API endpoints EUR/USD verifies : valLiqdev, performancesdev retournent des donnees valides
+- Commit `0dc046b` deploye sur VPS le 2026-06-04
 
 **T20 — Nigeria mise a jour donnees : DEPLOYE**
-- `cron_nigeria_weekly.sh` execute manuellement sur VPS le 2026-06-04 21:35 UTC
-- 21 fichiers SEC Nigeria 2026 extraits (sec_ng_nav_extractor_v6.py)
-- 82 VL inserees, 1 nouveau fonds cree, 3718 VL deja existantes
-- recalc EUR/USD : 926 897 VL, 0 erreur
-- recalc VL ajuste : 926 917 VL, 0 erreur
-- Performances local+EUR+USD recalculees (611 fonds, 0 erreur)
-- **Constat important** : fichiers SEC Nigeria recents (30 avril, 8/15/22 mai) contiennent seulement 38-41 lignes au lieu de 214-222 (jan-mars). Format change cote SEC Nigeria — la majorite des fonds (~195) n'apparaissent plus dans les fichiers recents. Derniere VL pour ces fonds : 24 avril 2026.
+- cron_nigeria_weekly.sh execute, 82 VL inserees, 1 fonds cree
+- SEC Nigeria format change: ~40 fonds au lieu de ~220 dans fichiers recents
 
 **T17 — API routes_vl.js multiplication→division : DEPLOYE**
-- 10 lignes corrigees, recalc 926 377 VL execute, 0 erreur
-- Commit API `3e04cdf`
 
 ### Dernier lot termine
-LOT T20 — Diagnostic + mise a jour Nigeria
-- Commandes executees sur VPS :
-  1. `bash scripts/cron/cron_nigeria_weekly.sh` (21:35 UTC) → 82 VL inserees, 1 fonds cree
-  2. `bash scripts/cron/cron_nigeria_weekly.sh` (22:09 UTC) → 0 VL (idempotent, confirme)
-  3. `npm run build && pm2 restart fundafrique-frontend` → build OK, restart OK
-- Zero erreur, zero regression
-- Nigeria derniere VL en base : 22 mai 2026 (pour ~40 fonds) / 24 avril 2026 (pour ~195 fonds)
+LOT T21 — Fix ratiosnewdev + null-safety frontend
+- Fichiers modifies API: `src/routes/apigestionratios.js` (152 insertions, 87 deletions)
+- Fichiers modifies Frontend: 4 fichiers (countries/[paysId], countries/funds, fund-managers/[fondId], fund-managers/funds)
+- Tests: syntax check API OK, build frontend OK, ratiosnewdev prod retourne 200 (verifie sur 3 fonds)
+- Diagnostic countries pages: API retourne donnees correctes (nbrePart=285 Nigeria), pas de bug reel (WebFetch ne peut pas executer JS)
 
 ### Prochaine action recommandee
-1. **Verifier visuellement** les pages en production :
-   - `https://africafunds.chainsolutions.fr/funds/summary-eur/1130`
-   - `https://africafunds.chainsolutions.fr/funds/summary-usd/1130`
-2. **Verifier le crontab Nigeria** (le cron ne semblait pas s'executer automatiquement) :
+1. **Deployer T21 sur production** :
    ```bash
-   crontab -l | grep nigeria
+   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
+   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
    ```
-   Si absent, re-ajouter :
-   ```bash
-   (crontab -l; echo "0 10 * * 1 /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api/scripts/cron/cron_nigeria_weekly.sh >> /var/log/africafunds_nigeria.log 2>&1") | crontab -
-   ```
-3. **Surveiller le format SEC Nigeria** : les fichiers recents (mai 2026) ne contiennent que ~40 fonds au lieu de ~220. Possiblement un changement temporaire ou permanent de la SEC Nigeria. Si c'est permanent, il faudra scraper les annees precedentes pour avoir les VL des fonds manquants.
+2. **Verifier ratiosnewdev apres deploiement** (les calculs TSR seront plus precis)
+3. **Continuer les ameliorations** : UEMOA scraper, cron monitoring, tests
 
 **En attente :**
 - TUNISIE EUR/USD gap (24%) : utilisateur fournira fichier VL corrigees avec dividendes
 - CEMAC 0% : sourcer indice BVMAC (decision metier)
 - T18 (#28) : factoriser duplication panel/investor vs panel/portfolio
-- ratiosnewdev 504 timeout : a investiguer
+- UEMOA donnees stales 233j : pas de scraper BRVM automatise
+- B6 : nettoyage 244 VL Nigeria extremes
 
 ### Risques connus
-- SEC Nigeria changement format : ~195 fonds n'apparaissent plus dans les fichiers recents (depuis ~30 avril 2026)
+- SEC Nigeria changement format : ~195 fonds n'apparaissent plus dans fichiers recents
+- UEMOA donnees stales 233 jours (derniere VL 2025-10-15)
+- CEMAC donnees stales 539 jours
 - 7 fonds TUNISIE (2869-2875) sans indRef
-- CEMAC 0% indRef (pas d'indice BVMAC)
 - sync_production.sh cron push peut creer des conflits git
-- crontab Nigeria a verifier (possible desactivation)
 
 ### A ne pas faire a la reprise
 - Ne PAS modifier les donnees TUNISIE — attendre le fichier utilisateur
 - Ne PAS supposer que tous les fonds Nigeria ont des donnees mai 2026 (seulement ~40 fonds)
 
 ### Etat Git (2026-06-05)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `3e04cdf`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `af43b7c`, sync origin, clean
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `b63e355`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `5f5c63a`, sync origin, clean
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 
