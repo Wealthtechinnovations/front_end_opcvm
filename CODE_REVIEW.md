@@ -23,10 +23,10 @@
 
 ## Dette technique
 
-### 4. ~~Aucun test automatise~~ — PARTIELLEMENT CORRIGE (T24, 2026-06-05)
-- API: 118 tests unitaires (8 suites) couvrant slug, dates, performances, newratios2, utils
+### 4. ~~Aucun test automatise~~ — PARTIELLEMENT CORRIGE (T24+T29, 2026-06-05)
+- API: 199 tests unitaires (12 suites) couvrant slug, dates, performances, newratios2, utils, delai_Beta, ratios, beta, delai_Beta_capture
 - Frontend: 0 tests (Next.js App Router — a evaluer)
-- Commits API: `ff81ae6`, `f91d53d`, `771434e`
+- Commits API: `ff81ae6`, `f91d53d`, `771434e`, `c6812ed`
 
 ### 5. apigestionsavequotidien.js — fichier monolithique
 - Taille: ~1800 lignes

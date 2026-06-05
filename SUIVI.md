@@ -1686,22 +1686,24 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-05 : **T21 a T26 DEPLOYES EN PRODUCTION. T27+T28 commites et pousses.**
+Session 2026-06-05 : **T21 a T26 DEPLOYES EN PRODUCTION. T27+T28+T29 commites et pousses.**
+
+**T29 — Tests unitaires ratios.js, beta.js, delai_Beta_capture.js : A DEPLOYER**
+- Commit API: `c6812ed`
+- 3 fichiers tests crees, +74 tests (199 total, 12 suites, 100% pass)
+- Couverture: 24 fonctions financieres (covariance, variance, volatilite, DSR, VaR, MaxDrawdown, Sharpe, Sortino, Omega, Calmar, tracking error, IR, beta, capture ratios, skewness, CAGR)
 
 **T27+T28 — /api/health endpoints + suppression ratioInfo.js : A DEPLOYER**
 - Commit API: `c0304ab`
-- /api/health et /api/health/detailed aliases ajoutes
-- ratioInfo.js supprime (code mort confirme, 0 imports, fonctions cassees)
-- Tests: 125/125 pass
 
 **T21 a T26 — DEPLOYES EN PRODUCTION (2026-06-05)**
 - Confirmation Eric: API restart OK, Frontend build OK, HTTP 200, 4 PM2 processes online
 
 ### Dernier lot termine
-LOT T27+T28 — Health endpoint + cleanup ratioInfo.js
-- Fichiers modifies: app.js (2 lignes), src/functions/ratioInfo.js (supprime)
-- Tests: 125/125 pass
-- Commit API: `c0304ab`, push OK
+LOT T29 — Tests unitaires ratios + beta + delai_Beta_capture
+- Fichiers crees: tests/ratios.test.js (54 tests), tests/beta.test.js (3 tests), tests/delai_Beta_capture.test.js (12 tests)
+- Tests: 199/199 pass (12 suites)
+- Commit API: `c6812ed`, push OK
 
 ### Prochaine action recommandee
 1. **Deployer T27+T28 sur production** :
@@ -1743,8 +1745,8 @@ LOT T27+T28 — Health endpoint + cleanup ratioInfo.js
 - Ne PAS modifier la base de donnees sans validation Eric
 
 ### Etat Git (2026-06-05)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `c0304ab`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `a51bd34`, SUIVI.md dirty
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `c6812ed`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `6ba2f0b`, SUIVI.md+CODE_REVIEW dirty
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 
