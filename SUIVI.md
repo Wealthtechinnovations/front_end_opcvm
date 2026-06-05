@@ -502,6 +502,14 @@
 - **Commit Frontend**: `71b791b`
 - **Risque regression**: FAIBLE (additive, n'affecte pas les autres panels)
 
+### 2026-06-05 - T26: Security headers frontend
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER
+- **Ajout**: Headers securite dans next.config.js (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy)
+- **Fichier**: `next.config.js`
+- **Build**: OK
+- **Commit Frontend**: `9e0d4b8`
+- **Risque regression**: NUL (headers HTTP additifs uniquement)
+
 ### 2026-06-05 - Diagnostics et audits
 - **B6 (244 VL Nigeria extremes)**: NON ACTIF — ces VL ont ete rejetees a l'import, jamais inserees en base
 - **TUNISIE EUR/USD gap 24%**: BLOQUE — en attente fichier VL corrigees avec dividendes (utilisateur)
@@ -1678,7 +1686,10 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-05 : **T21+T22+T23+T24+T25 commites et pousses. T19/T20 deployes.**
+Session 2026-06-05 : **T21 a T26 commites et pousses. T19/T20 deployes.**
+
+**T26 — Security headers frontend : A DEPLOYER**
+- Commit Frontend: `9e0d4b8`
 
 **T25 — Fix securite middleware portfolio/portefeuille : A DEPLOYER**
 - Commit Frontend: `71b791b`
@@ -1698,12 +1709,16 @@ Session 2026-06-05 : **T21+T22+T23+T24+T25 commites et pousses. T19/T20 deployes
 **CODE_REVIEW.md** : mise a jour avec entrees #37-#40 + audit panels. Commits: `5fdcf39`, `063b2d6`
 
 ### Dernier lot termine
+LOT T26 — Security headers frontend
+- Fichier: next.config.js
+- Build: OK
+- Commit: `9e0d4b8`, push OK
+
 LOT T25 — Fix securite middleware portfolio/portefeuille
 - Fichier: src/middleware.ts
-- Build: OK
 - Commit: `71b791b`, push OK
 
-LOT T24 complet — Tests unitaires + audit CODE_REVIEW + diagnostics
+LOT T24 — Tests unitaires + audit CODE_REVIEW + diagnostics
 - Fichiers crees: 6 fichiers tests (slug, dates, performances, newratios2, utils, delai_Beta)
 - Tests: 125/125 pass (9 suites)
 - Audit panels: 10,000-14,000 lignes dupliquees documentees (CODE_REVIEW #28)
@@ -1713,7 +1728,7 @@ LOT T24 complet — Tests unitaires + audit CODE_REVIEW + diagnostics
 - Push: OK les deux repos
 
 ### Prochaine action recommandee
-1. **Deployer T21+T22+T23+T24+T25 sur production** (validation Eric) :
+1. **Deployer T21 a T26 sur production** (validation Eric) :
    ```bash
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
@@ -1729,7 +1744,7 @@ LOT T24 complet — Tests unitaires + audit CODE_REVIEW + diagnostics
 - CEMAC 0% indRef : decision metier (sourcer indice BVMAC)
 
 **En attente (validation Eric) :**
-- Deploiement T21+T22+T23+T24+T25 sur production
+- Deploiement T21 a T26 sur production
 - Index UNIQUE valorisations(fund_id, date) — SQL production
 - B5: Securisation ttyd — Nginx changes
 - Cron modifications (fix-brvm-nginx.py fantome, alerting email/Slack)
@@ -1750,8 +1765,8 @@ LOT T24 complet — Tests unitaires + audit CODE_REVIEW + diagnostics
 - Ne PAS modifier les calculs financiers sans diagnostic prealable
 
 ### Etat Git (2026-06-05)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `a516ee2`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `71b791b`, SUIVI.md + CODE_REVIEW.md dirty
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `e7a76e3`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `9e0d4b8`, SUIVI.md dirty
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 
