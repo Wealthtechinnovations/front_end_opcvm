@@ -92,6 +92,19 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - UEMOA: donnees stales 233 jours (derniere VL 2025-10-15), pas de scraper BRVM automatise
 - CEMAC: donnees stales 539 jours (derniere VL 2024-12-12), aucune source COSUMAF identifiee
 
+### 35. ~~Routes API sans try/catch (hanging requests)~~ — CORRIGE (T22, 2026-06-05)
+- 20 routes async avec `await` sans try/catch dans 5 fichiers (apigestionpays, apigestionsociete, apigestionfonds, apigestionsavequotidien, routes_vl)
+- 2 helpers `findCategoryByFundId` avec `sequelize.query()` sans error handling
+- Fix special: `/api/tsr/:year` n'envoyait aucune reponse et faisait `throw` direct
+- Commits API: `d386ec6`, `5c3b26b`, `6966852`
+
+### 36. ~~Null-safety frontend + response.ok search/comparison~~ — CORRIGE (T23, 2026-06-05)
+- 4 `.map()` sans `?.` dans FundView.tsx (funds, graphs, adaptValues1, meilleursFonds)
+- 5 `excelData[0]` sans guard dans download CSV (5 fichiers)
+- 5 `dates.length` sans `?.` dans pages detail panel/country-panel
+- 7 fetch sans `response.ok` dans tools/search, tools/comparison, funds/search
+- Commits Frontend: `55b1442`, `bf5a8b9`
+
 ### 9. Gateway microservices non active
 - Fichier: services/gateway/index.js + serviceRegistry.js
 - Probleme: Architecture microservices preparee mais non utilisee en production (monolithe actif)
