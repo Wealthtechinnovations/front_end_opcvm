@@ -542,7 +542,7 @@ borderColor:'grey',
                                   <p><strong>Nombre d employés</strong>:</p>
                                   <p><strong>Nombre de part réferencées</strong>: {managementCompany?.nbreFond}</p>
                                   <p><strong>Encours global</strong>: </p>
-                                  <p><strong>Encours des parts réferencées</strong>: {numberFormat(Math.round(managementCompany?.sumActifNet), 0, '.', ' ')}  du {managementCompany?.latestDate}</p>
+                                  <p><strong>Encours des parts réferencées</strong>: {managementCompany?.sumActifNet ? numberFormat(Math.round(managementCompany.sumActifNet), 0, '.', ' ') : '-'}  du {managementCompany?.latestDate}</p>
                                   <p><strong>Commercialisation</strong>: Global</p>
                                   <p><strong>Commercialisation du groupe</strong>:</p>
                                   <p><strong>Site Internet</strong>: {managementCompany?.site_web}</p>

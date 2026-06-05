@@ -213,11 +213,10 @@ export default function Fond() {
         });
         const data1 = await getFonds(id);
 
-        const mappedOptions = data1?.data.funds.map((funds: any) => ({
+        const mappedOptions = (data1?.data?.funds || []).map((funds: any) => ({
 
           value: funds.id,
-          label: funds.test, // Replace with the actual property name
-          // Replace with the actual property name
+          label: funds.test,
         }));
         setFundsOptions(mappedOptions);
 

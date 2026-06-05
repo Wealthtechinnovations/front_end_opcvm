@@ -709,11 +709,11 @@ borderColor:'grey',
                           <br />
                           <p><strong>Nombre de part réferencées</strong>: {managementCompany?.nbreFond}</p>
                           <p><strong>Encours global</strong>: </p>
-                          <p><strong>Encours des parts réferencées</strong>:{numberFormat(Math.round(managementCompany?.sumActifNet), 0, '.', ' ')} du  {managementCompany?.latestDate}</p>
+                          <p><strong>Encours des parts réferencées</strong>:{managementCompany?.sumActifNet ? numberFormat(Math.round(managementCompany.sumActifNet), 0, '.', ' ') : '-'} du  {managementCompany?.latestDate}</p>
                           <p><strong>Place Financière</strong>: {managementCompany?.societeData?.placeFinanciere}</p>
                           <p><strong>Devise</strong>: {managementCompany?.societeData?.devise}</p>
-                          <p><strong>Taux sans risque</strong>:{managementCompany?.societeData.tauxSansRisque}</p>
-                          <p><strong>Taux des obligations 10 ans</strong>:{managementCompany?.societeData.tauxObligations10Ans}</p>
+                          <p><strong>Taux sans risque</strong>:{managementCompany?.societeData?.tauxSansRisque}</p>
+                          <p><strong>Taux des obligations 10 ans</strong>:{managementCompany?.societeData?.tauxObligations10Ans}</p>
                           <p><strong>Nombre de sociétés de gestion</strong>: {managementCompany?.nbresocietes}</p>
                           <br />
 
