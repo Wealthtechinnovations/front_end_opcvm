@@ -251,11 +251,11 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Priorite: FAIBLE (les appelants actuels dans apigestionratios.js semblent passer le bon format)
 - Recommandation: Uniformiser en passant portfolio ET benchmark a travers `calculateRendementsForPeriod`, ou documenter l'asymetrie
 
-### 38. ratioInfo.js — code incomplet non fonctionnel
-- Fichier: src/functions/ratioInfo.js
-- Probleme: `calculateInformationRatio()` utilise `moyExces` et `volatility` qui ne sont jamais definis
-- Impact: NUL en production (newratios2.js est utilise a la place)
-- Recommandation: Supprimer le fichier ou le marquer comme obsolete
+### 38. ~~ratioInfo.js — code incomplet non fonctionnel~~ — SUPPRIME (T28, 2026-06-05)
+- Fichier: src/functions/ratioInfo.js (supprime)
+- Probleme: `calculateInformationRatio()` utilisait `moyExces` et `volatility` jamais definis
+- Zero imports dans tout le codebase (confirme par grep)
+- Commit API: `c0304ab`
 
 ### 39. Cron monitoring sans alerting
 - Fichier: scripts/monitoring/check_cron_health.js

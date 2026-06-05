@@ -1686,67 +1686,45 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-05 : **T21 a T26 commites et pousses. T19/T20 deployes.**
+Session 2026-06-05 : **T21 a T26 DEPLOYES EN PRODUCTION. T27+T28 commites et pousses.**
 
-**T26 — Security headers frontend : A DEPLOYER**
-- Commit Frontend: `9e0d4b8`
+**T27+T28 — /api/health endpoints + suppression ratioInfo.js : A DEPLOYER**
+- Commit API: `c0304ab`
+- /api/health et /api/health/detailed aliases ajoutes
+- ratioInfo.js supprime (code mort confirme, 0 imports, fonctions cassees)
+- Tests: 125/125 pass
 
-**T25 — Fix securite middleware portfolio/portefeuille : A DEPLOYER**
-- Commit Frontend: `71b791b`
-
-**T24 — Tests unitaires API : COMMITE (6 fichiers, 71 tests, suite 125 total)**
-- Commits API: `ff81ae6`, `f91d53d`, `771434e`, `a516ee2`
-
-**T23 — Null-safety frontend + response.ok : A DEPLOYER**
-- 13 fichiers frontend, Commits: `55b1442`, `bf5a8b9`
-
-**T22 — Try/catch 20 routes + 2 helpers : A DEPLOYER**
-- 7 fichiers API, Commits: `d386ec6`, `5c3b26b`, `6966852`
-
-**T21 — Fix ratiosnewdev + null-safety : A DEPLOYER**
-- Commit API: `b63e355`, Commit Frontend: `5f5c63a`
-
-**CODE_REVIEW.md** : mise a jour avec entrees #37-#40 + audit panels. Commits: `5fdcf39`, `063b2d6`
+**T21 a T26 — DEPLOYES EN PRODUCTION (2026-06-05)**
+- Confirmation Eric: API restart OK, Frontend build OK, HTTP 200, 4 PM2 processes online
 
 ### Dernier lot termine
-LOT T26 — Security headers frontend
-- Fichier: next.config.js
-- Build: OK
-- Commit: `9e0d4b8`, push OK
-
-LOT T25 — Fix securite middleware portfolio/portefeuille
-- Fichier: src/middleware.ts
-- Commit: `71b791b`, push OK
-
-LOT T24 — Tests unitaires + audit CODE_REVIEW + diagnostics
-- Fichiers crees: 6 fichiers tests (slug, dates, performances, newratios2, utils, delai_Beta)
-- Tests: 125/125 pass (9 suites)
-- Audit panels: 10,000-14,000 lignes dupliquees documentees (CODE_REVIEW #28)
-- CODE_REVIEW: 4 nouvelles entrees (#37-#40)
-- Diagnostics documentes: B6 non-actif, TUNISIE bloque, UEMOA bloque, fix-brvm-nginx fantome, cron monitoring sans alerting
-- Commits: API `a516ee2`, Frontend `063b2d6`
-- Push: OK les deux repos
+LOT T27+T28 — Health endpoint + cleanup ratioInfo.js
+- Fichiers modifies: app.js (2 lignes), src/functions/ratioInfo.js (supprime)
+- Tests: 125/125 pass
+- Commit API: `c0304ab`, push OK
 
 ### Prochaine action recommandee
-1. **Deployer T21 a T26 sur production** (validation Eric) :
+1. **Deployer T27+T28 sur production** :
    ```bash
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
-   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
    ```
-2. Taches restantes non-sensibles executables :
-   - Ajouter tests frontend (si pertinent avec Next.js App Router)
-   - Nettoyer ratioInfo.js (code mort, CODE_REVIEW #38)
-   - Documenter README_DEV.md (test commands, coverage)
+2. Taches restantes executables sans risque :
+   - T29: Tests services (forex, ranking, performance)
+   - T30: Uniformiser format input newratios2.js (CODE_REVIEW #37)
+   - T31: Refactoring panels dupliques (CODE_REVIEW #28, 10K-14K lignes)
+   - T32: Backfill ClickHouse performance_historique
+   - T33: Extraction apigestionsavequotidien.js
+   - T34: Frontend tests
 
 **En attente (donnees utilisateur) :**
 - TUNISIE EUR/USD gap 24% : attente fichier VL avec dividendes
-- UEMOA donnees stales : attente fichiers Excel + script Python d'Eric
+- UEMOA donnees stales 233+ jours : attente fichiers Excel + script Python d'Eric
 - CEMAC 0% indRef : decision metier (sourcer indice BVMAC)
 
 **En attente (validation Eric) :**
-- Deploiement T21 a T26 sur production
 - Index UNIQUE valorisations(fund_id, date) — SQL production
 - B5: Securisation ttyd — Nginx changes
+- B6: Nettoyage 244 VL Nigeria extremes
 - Cron modifications (fix-brvm-nginx.py fantome, alerting email/Slack)
 
 ### Risques connus
@@ -1761,12 +1739,12 @@ LOT T24 — Tests unitaires + audit CODE_REVIEW + diagnostics
 ### A ne pas faire a la reprise
 - Ne PAS modifier les donnees TUNISIE — attendre le fichier utilisateur
 - Ne PAS supposer que tous les fonds Nigeria ont des donnees mai 2026
-- Ne PAS deployer sans validation Eric
 - Ne PAS modifier les calculs financiers sans diagnostic prealable
+- Ne PAS modifier la base de donnees sans validation Eric
 
 ### Etat Git (2026-06-05)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `e7a76e3`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `9e0d4b8`, SUIVI.md dirty
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `c0304ab`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `a51bd34`, SUIVI.md dirty
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 
