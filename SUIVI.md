@@ -438,19 +438,34 @@
 - **Commit API**: `b63e355`
 - **Commit Frontend**: `5f5c63a`
 
-### 2026-06-05 - T22: Try/catch error handling sur 4 routes API
+### 2026-06-05 - T22: Try/catch error handling sur 20 routes API + 2 helpers
 - **Statut**: COMMITE ET POUSSE, A DEPLOYER
-- **Probleme**: 4 routes API sans try/catch pouvaient faire hanging request en production
+- **Probleme**: 20 routes API + 2 fonctions helper sans try/catch pouvaient crash ou hang en production
 - **Fix**: Wrapping try/catch avec console.error + res.status(500).json()
-- **apigestionpays.js** (3 routes):
-  - `POST /api/listesociete` (ligne 572)
-  - `POST /api/listeproduitpayssociete/:id` (ligne 653)
-  - `POST /api/listesocietepays/:id` (ligne 718)
-- **apigestionsociete.js** (1 route — seule veritablement vulnerable, les 4 autres ont `.then().catch()`):
-  - `POST /api/listeproduitsociete/:id` (ligne 601) — utilisait `await` sans try/catch
-- **Syntax check**: OK (node -c) sur les deux fichiers
-- **Commit API**: `d386ec6`
+- **apigestionpays.js**: 3 routes + helper `findCategoryByFundId`
+- **apigestionsociete.js**: 1 route + helper `findCategoryByFundId`
+- **apigestionfonds.js**: 1 route (`POST /api/listeopcvm`)
+- **apigestionsavequotidien.js**: 1 route (`GET /api/savevlmanquante`)
+- **routes_vl.js**: 12 routes (tsr, doc, getportefeuille, assignportefeuille, valLiqportefeuillewithindice, performancesportefeuillewithindice, calculatePerformance, searchFundsreconstitution, ratiosportefeuille, ratiosportefeuilledev)
+- **Fix special**: `/api/tsr/:year` n'envoyait aucune reponse et faisait `throw` → corrige avec `res.json()` et `res.status(404)`
+- **Syntax check**: OK sur tous les fichiers modifies
+- **Commits API**: `d386ec6`, `5c3b26b`, `6966852`
 - **Risque regression**: NUL (ajout de catch uniquement, aucune logique modifiee)
+
+### 2026-06-05 - T23: Null-safety frontend + response.ok guards
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER
+- **Probleme**: Crash potentiels sur .map(), .length, excelData[0], et fetch sans response.ok
+- **Fix 1 — Null-safety** (10 fichiers):
+  - `funds/[fondId]/FundView.tsx`: guard .map() sur funds, graphs, adaptValues1, meilleursFonds + guard excelData[0]
+  - `funds/summary-eur/summary-usd/portfolio/download-nav FundSubView.tsx`: guard excelData[0]
+  - `country-panel + panel detail pages`: guard dates.length
+- **Fix 2 — Response.ok** (3 fichiers):
+  - `tools/comparison/page.tsx`: 3 fetch guards
+  - `tools/search/page.tsx`: 4 fetch guards
+  - `funds/search/FundView.tsx`: fetch guard + safe .map()
+- **Build**: OK (217 pages, 0 erreurs)
+- **Commits Frontend**: `55b1442`, `bf5a8b9`
+- **Risque regression**: NUL (ajout de guards, aucune logique modifiee)
 
 ## Points en cours / a faire
 
@@ -1621,34 +1636,34 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-05 : **T19+T20 DEPLOYES + T21+T22 commites et pousses.**
+Session 2026-06-05 : **T19+T20 DEPLOYES + T21+T22+T23 commites et pousses.**
 
-**T22 — Try/catch sur 4 routes API : COMMITE, A DEPLOYER**
-- 4 routes wrappees try/catch (3 dans apigestionpays.js, 1 dans apigestionsociete.js)
-- Commit API: `d386ec6`
+**T23 — Null-safety frontend + response.ok guards : COMMITE, A DEPLOYER**
+- 13 fichiers frontend corriges (null-safety + fetch guards)
+- Commits Frontend: `55b1442`, `bf5a8b9`
+
+**T22 — Try/catch sur 20 routes API + 2 helpers : COMMITE, A DEPLOYER**
+- 7 fichiers API corriges, 20 routes + 2 helpers wrappees
+- Commits API: `d386ec6`, `5c3b26b`, `6966852`
 
 **T21 — Fix ratiosnewdev + null-safety frontend : COMMITE, A DEPLOYER**
-- API: ratiosnewdev + ratiosnewdevwithdate corriges (5 bugs)
-- Frontend: null-safety sur 4 fichiers (countries, fund-managers)
 - Commit API: `b63e355`, Commit Frontend: `5f5c63a`
 
-**T19 — Fix crash pages fonds EUR/USD : DEPLOYE**
-**T20 — Nigeria mise a jour donnees : DEPLOYE**
-**T17 — API routes_vl.js multiplication→division : DEPLOYE**
+**T19/T20 — DEPLOYES**
 
 ### Dernier lot termine
-LOT T22 — Try/catch error handling sur 4 routes API
-- Fichiers modifies API: `src/routes/apigestionpays.js`, `src/routes/apigestionsociete.js`
-- Tests: syntax check OK (node -c) sur les deux fichiers
-- Commit: `d386ec6`, push OK
+LOT T23 — Null-safety frontend + response.ok guards
+- Fichiers modifies: 13 fichiers frontend, 5 fichiers API
+- Tests: syntax check OK API, build frontend OK (217 pages)
+- Commits: API `6966852`, Frontend `bf5a8b9`, push OK
 
 ### Prochaine action recommandee
-1. **Deployer T21+T22 sur production** :
+1. **Deployer T21+T22+T23 sur production** :
    ```bash
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
    ```
-2. **Continuer les ameliorations** : scanner d'autres routes API sans error handling, UEMOA scraper, cron monitoring
+2. **Continuer les ameliorations** : UEMOA scraper, cron monitoring, tests
 
 **En attente :**
 - TUNISIE EUR/USD gap (24%) : utilisateur fournira fichier VL corrigees avec dividendes
@@ -1669,8 +1684,8 @@ LOT T22 — Try/catch error handling sur 4 routes API
 - Ne PAS supposer que tous les fonds Nigeria ont des donnees mai 2026 (seulement ~40 fonds)
 
 ### Etat Git (2026-06-05)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `d386ec6`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `5f5c63a`, sync origin, SUIVI.md dirty
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `6966852`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `bf5a8b9`, sync origin, SUIVI.md dirty
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 
