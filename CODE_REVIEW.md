@@ -23,9 +23,10 @@
 
 ## Dette technique
 
-### 4. Aucun test automatise
-- Impact: Regressions non detectees
-- Recommandation: Ajouter tests unitaires sur les calculs financiers critiques
+### 4. ~~Aucun test automatise~~ — PARTIELLEMENT CORRIGE (T24, 2026-06-05)
+- API: 118 tests unitaires (8 suites) couvrant slug, dates, performances, newratios2, utils
+- Frontend: 0 tests (Next.js App Router — a evaluer)
+- Commits API: `ff81ae6`, `f91d53d`, `771434e`
 
 ### 5. apigestionsavequotidien.js — fichier monolithique
 - Taille: ~1800 lignes
@@ -234,8 +235,38 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Aucune route API ne lit cette table
 - Priorite: FAIBLE (a creer quand ClickHouse sera installe en production)
 
-### 28. Duplication panel/investor vs panel/portfolio (100 pages)
-- 50 pages identiques dans chaque repertoire
-- Plus panel/portefeuille (3 pages supplementaires)
-- Impact: Triple maintenance, corrections inconsistantes
+### 28. Duplication massive panels (10,000-14,000 lignes)
+- **admin/pending-funds vs management/pending-funds**: 99% identique (~6,500 lignes). Difference: AdminSidebar vs Sidebar, API getfondbyadmin vs getfondbyuser/{id}
+- **management/pending-funds vs country-panel/fonds**: 85-92% similaire (~2,800 lignes). Differences: layout, hooks, form fields (souscription vs dividende)
+- **country-panel/fonds vs country-panel/validated-funds**: 97% identique (~2,100 lignes). Seule difference: API endpoint (getfondbyuser vs getfondbyuservalide)
+- **panel/investor vs panel/portfolio**: 50 pages identiques dans chaque repertoire
+- Impact: Maintenance x3-4, corrections inconsistantes, risque de divergence
+- Priorite: MOYENNE (fonctionnel mais dette technique lourde)
+- Recommandation: Extraire composants partages parametres par role (sidebar, API endpoint, user context)
+
+### 37. newratios2.js — inconsistance format input portfolio vs benchmark
+- Fichier: src/functions/newratios2.js
+- Probleme: Les fonctions haut-niveau (calculateBetanew, calculateTrackingError, calculateInformationRatio, calculateUpCaptureRatio, calculateDownCaptureRatio, calculateDownsideBeta) traitent le portfolio via `calculateRendementsForPeriod()` (attend objects `{vl}`, retourne numbers) mais le benchmark via `selectDataForPeriod()` (juste slice, garde le format original)
+- Impact: Si benchmark est passe en objects `{vl}`, `calculateCovariance()` recoit des objects au lieu de numbers → crash `math.mean()`. Si benchmark est passe en numbers, `selectDataForPeriod` retourne des numbers → fonctionne, mais l'API appelante doit connaitre cette asymetrie
+- Priorite: FAIBLE (les appelants actuels dans apigestionratios.js semblent passer le bon format)
+- Recommandation: Uniformiser en passant portfolio ET benchmark a travers `calculateRendementsForPeriod`, ou documenter l'asymetrie
+
+### 38. ratioInfo.js — code incomplet non fonctionnel
+- Fichier: src/functions/ratioInfo.js
+- Probleme: `calculateInformationRatio()` utilise `moyExces` et `volatility` qui ne sont jamais definis
+- Impact: NUL en production (newratios2.js est utilise a la place)
+- Recommandation: Supprimer le fichier ou le marquer comme obsolete
+
+### 39. Cron monitoring sans alerting
+- Fichier: scripts/monitoring/check_cron_health.js
+- Probleme: Le script verifie correctement la fraicheur des donnees (VL, classements, forex, performances, logs) mais les resultats ne sont ecrits que dans les logs — aucun mecanisme d'alerte email/Slack
+- Manquent egalement: API health checks HTTP, monitoring PM2, disk space, log rotation
+- Impact: Les pannes de cron ne sont detectees que par inspection manuelle des logs
 - Priorite: MOYENNE
+- Recommandation: Ajouter email alert wrapper ou webhook Slack sur exit code non-zero
+
+### 40. fix-brvm-nginx.py — script fantome dans crontab
+- Crontab reference: `*/5 * * * * fix-brvm-nginx.py`
+- Le script n'existe pas sur le filesystem
+- Impact: Erreur silencieuse dans cron toutes les 5 minutes (stderr redirige nulle part)
+- Recommandation: Supprimer l'entree crontab ou creer le script si necessaire
