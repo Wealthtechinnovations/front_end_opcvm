@@ -35,6 +35,14 @@ const panelConfig: Record<string, PanelConfig> = {
     loginPath: '/panel/distributor/login',
     allowedTypes: [6],
   },
+  '/panel/portfolio': {
+    loginPath: '/panel/portfolio/login',
+    allowedTypes: [1],
+  },
+  '/panel/portefeuille': {
+    loginPath: '/panel/portefeuille/login',
+    allowedTypes: [1],
+  },
 };
 
 function decodeJwtPayload(token: string): Record<string, any> | null {
