@@ -438,6 +438,20 @@
 - **Commit API**: `b63e355`
 - **Commit Frontend**: `5f5c63a`
 
+### 2026-06-05 - T22: Try/catch error handling sur 4 routes API
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER
+- **Probleme**: 4 routes API sans try/catch pouvaient faire hanging request en production
+- **Fix**: Wrapping try/catch avec console.error + res.status(500).json()
+- **apigestionpays.js** (3 routes):
+  - `POST /api/listesociete` (ligne 572)
+  - `POST /api/listeproduitpayssociete/:id` (ligne 653)
+  - `POST /api/listesocietepays/:id` (ligne 718)
+- **apigestionsociete.js** (1 route — seule veritablement vulnerable, les 4 autres ont `.then().catch()`):
+  - `POST /api/listeproduitsociete/:id` (ligne 601) — utilisait `await` sans try/catch
+- **Syntax check**: OK (node -c) sur les deux fichiers
+- **Commit API**: `d386ec6`
+- **Risque regression**: NUL (ajout de catch uniquement, aucune logique modifiee)
+
 ## Points en cours / a faire
 
 ### PHASE 2 - Base de donnees: Nettoyage avance + calculs
@@ -1607,45 +1621,34 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-05 : **T19+T20 DEPLOYES + T21 commite et pousse.**
+Session 2026-06-05 : **T19+T20 DEPLOYES + T21+T22 commites et pousses.**
+
+**T22 — Try/catch sur 4 routes API : COMMITE, A DEPLOYER**
+- 4 routes wrappees try/catch (3 dans apigestionpays.js, 1 dans apigestionsociete.js)
+- Commit API: `d386ec6`
 
 **T21 — Fix ratiosnewdev + null-safety frontend : COMMITE, A DEPLOYER**
-- API: ratiosnewdev + ratiosnewdevwithdate corriges (5 bugs):
-  1. TSR dynamique par pays (etait hardcode `-0.0234` / `pays: "Nigeria"`)
-  2. Sort ASC au lieu de DESC (coherent avec ratiosnew)
-  3. Early return 404 si pas de VL (evite request qui hang)
-  4. Weekday gap filling (meme logique que ratiosnew)
-  5. TSR table charge depuis le pays du fond (pas hardcode Nigeria)
+- API: ratiosnewdev + ratiosnewdevwithdate corriges (5 bugs)
 - Frontend: null-safety sur 4 fichiers (countries, fund-managers)
-  - `?.` sur societeData access, guard sumActifNet, safe `.map()` avec fallback `|| []`
-- Build frontend OK (217/217 pages, 0 erreur), syntax API OK
-- Commit API: `b63e355`, Commit Frontend: `5f5c63a`, pushes sur origin
+- Commit API: `b63e355`, Commit Frontend: `5f5c63a`
 
 **T19 — Fix crash pages fonds EUR/USD : DEPLOYE**
-- Frontend build OK (217/217 pages, 0 erreur), PM2 restart OK
-- Commit `0dc046b` deploye sur VPS le 2026-06-04
-
 **T20 — Nigeria mise a jour donnees : DEPLOYE**
-- cron_nigeria_weekly.sh execute, 82 VL inserees, 1 fonds cree
-- SEC Nigeria format change: ~40 fonds au lieu de ~220 dans fichiers recents
-
 **T17 — API routes_vl.js multiplication→division : DEPLOYE**
 
 ### Dernier lot termine
-LOT T21 — Fix ratiosnewdev + null-safety frontend
-- Fichiers modifies API: `src/routes/apigestionratios.js` (152 insertions, 87 deletions)
-- Fichiers modifies Frontend: 4 fichiers (countries/[paysId], countries/funds, fund-managers/[fondId], fund-managers/funds)
-- Tests: syntax check API OK, build frontend OK, ratiosnewdev prod retourne 200 (verifie sur 3 fonds)
-- Diagnostic countries pages: API retourne donnees correctes (nbrePart=285 Nigeria), pas de bug reel (WebFetch ne peut pas executer JS)
+LOT T22 — Try/catch error handling sur 4 routes API
+- Fichiers modifies API: `src/routes/apigestionpays.js`, `src/routes/apigestionsociete.js`
+- Tests: syntax check OK (node -c) sur les deux fichiers
+- Commit: `d386ec6`, push OK
 
 ### Prochaine action recommandee
-1. **Deployer T21 sur production** :
+1. **Deployer T21+T22 sur production** :
    ```bash
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
    ```
-2. **Verifier ratiosnewdev apres deploiement** (les calculs TSR seront plus precis)
-3. **Continuer les ameliorations** : UEMOA scraper, cron monitoring, tests
+2. **Continuer les ameliorations** : scanner d'autres routes API sans error handling, UEMOA scraper, cron monitoring
 
 **En attente :**
 - TUNISIE EUR/USD gap (24%) : utilisateur fournira fichier VL corrigees avec dividendes
@@ -1666,8 +1669,8 @@ LOT T21 — Fix ratiosnewdev + null-safety frontend
 - Ne PAS supposer que tous les fonds Nigeria ont des donnees mai 2026 (seulement ~40 fonds)
 
 ### Etat Git (2026-06-05)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `b63e355`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `5f5c63a`, sync origin, clean
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `d386ec6`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `5f5c63a`, sync origin, SUIVI.md dirty
 
 ### Deploiement production 2026-05-21 (21:20 UTC)
 
