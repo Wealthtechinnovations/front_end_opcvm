@@ -148,7 +148,7 @@ export default function Comparaison() {
       },
       body: JSON.stringify({ formData }), // Convertissez formData en format JSON
     })
-      .then(response => response.json())
+      .then(response => { if (!response.ok) throw new Error('API error'); return response.json(); })
       .then(data => {
         if (data && data.code === 200) {
           Swal.close(); // Close the loading popup

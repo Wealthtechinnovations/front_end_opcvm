@@ -242,6 +242,7 @@ export default function Fond() {
           //body: JSON.stringify(requestBody),
         });
 
+        if (!response.ok) { Swal.close(); return; }
         const responseData = await response.json();
         if (responseData && responseData.code === 200 && responseData.data.funds.length > 0) {
           Swal.close(); // Close the loading popup
@@ -492,7 +493,7 @@ export default function Fond() {
       },
       body: JSON.stringify({ formData }), // Convertissez formData en format JSON
     })
-      .then(response => response.json())
+      .then(response => { if (!response.ok) throw new Error('API error'); return response.json(); })
       .then(data => {
         Swal.close(); // Close the loading popup
         if (data && data.code === 200 && data.data.funds.length > 0) {
@@ -1227,8 +1228,8 @@ borderColor:'grey',
 }
 
 async function searchFunds(searchTerm: any) {
-  // const response = await fetch(`/api/searchFunds?query=${searchTerm}`);
   const response = await fetch(`/api/searchFunds`);
+  if (!response.ok) return [];
   const data = await response.json();
   return data;
 }

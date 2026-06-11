@@ -83,6 +83,7 @@ export default function Comparaison() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         });
+        if (!response.ok) { Swal.close(); setError("Erreur serveur."); return; }
         const responseData = await response.json();
         if (responseData && responseData.code === 200) {
           Swal.close();
@@ -118,7 +119,7 @@ export default function Comparaison() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
     })
-      .then(response => response.json())
+      .then(response => { if (!response.ok) throw new Error('API error'); return response.json(); })
       .then(data => {
         Swal.close();
         if (data && data.code === 200) {

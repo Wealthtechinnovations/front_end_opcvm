@@ -29,21 +29,18 @@ interface FondType {
   value: number;
 }
 async function getlastvl1() {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFunds`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/searchFunds`);
+  if (!response.ok) return [];
+  return response.json();
 }
 
 
 async function getFonds(selectedValues: any) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/comparaison?query=${selectedValues}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/comparaison?query=${selectedValues}`, {
+    method: 'GET',
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 interface PageProps {
   searchParams: {

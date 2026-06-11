@@ -801,8 +801,8 @@ borderColor:'grey'
 }
 
 async function searchFunds(searchTerm: any) {
-  // const response = await fetch(`/api/searchFunds?query=${searchTerm}`);
   const response = await fetch(`/api/searchFunds`);
+  if (!response.ok) return [];
   const data = await response.json();
   return data;
 }
