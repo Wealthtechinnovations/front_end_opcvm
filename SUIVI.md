@@ -510,6 +510,20 @@
 - **Commit Frontend**: `9e0d4b8`
 - **Risque regression**: NUL (headers HTTP additifs uniquement)
 
+### 2026-06-11 - T30: Fix newratios2.js + response.ok guards (15 pages publiques)
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER
+- **T30 API**: Fix asymmetrie format input dans newratios2.js (CODE_REVIEW #37)
+  - 6 fonctions (Beta, TrackingError, IR, UpCapture, DownCapture, DownsideBeta) utilisaient `selectDataForPeriod()` pour benchmark au lieu de `calculateRendementsForPeriod()`
+  - Note: newratios2.js est du code mort (pas importe en production, newratios.js est utilise)
+  - Commit API: `eed7d88`
+- **T30b Frontend**: Ajout response.ok guards sur 15 pages publiques (CODE_REVIEW #26 partiel)
+  - searchFunds(): 12 fichiers (countries, fund-managers, funds/*)
+  - Fetch POST listeproduitpayssociete/listeproduitsociete: 3 fichiers
+  - Fetch GET comparaison: 1 fichier
+  - Commit Frontend: `7616fce`
+- **Tests**: 199/199 pass (API), Build frontend OK (0 erreurs)
+- **Risque regression**: NUL (ajout de guards uniquement, aucune logique modifiee)
+
 ### 2026-06-05 - Diagnostics et audits
 - **B6 (244 VL Nigeria extremes)**: NON ACTIF — ces VL ont ete rejetees a l'import, jamais inserees en base
 - **TUNISIE EUR/USD gap 24%**: BLOQUE — en attente fichier VL corrigees avec dividendes (utilisateur)
@@ -1686,37 +1700,37 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-05 : **T21 a T26 DEPLOYES EN PRODUCTION. T27+T28+T29 commites et pousses.**
-
-**T29 — Tests unitaires ratios.js, beta.js, delai_Beta_capture.js : A DEPLOYER**
-- Commit API: `c6812ed`
-- 3 fichiers tests crees, +74 tests (199 total, 12 suites, 100% pass)
-- Couverture: 24 fonctions financieres (covariance, variance, volatilite, DSR, VaR, MaxDrawdown, Sharpe, Sortino, Omega, Calmar, tracking error, IR, beta, capture ratios, skewness, CAGR)
-
-**T27+T28 — /api/health endpoints + suppression ratioInfo.js : A DEPLOYER**
-- Commit API: `c0304ab`
-
-**T21 a T26 — DEPLOYES EN PRODUCTION (2026-06-05)**
-- Confirmation Eric: API restart OK, Frontend build OK, HTTP 200, 4 PM2 processes online
+Session 2026-06-11 : T21-T29 deployes. T30+T30b commites et pousses. Health/detailed fix deploye.
 
 ### Dernier lot termine
-LOT T29 — Tests unitaires ratios + beta + delai_Beta_capture
-- Fichiers crees: tests/ratios.test.js (54 tests), tests/beta.test.js (3 tests), tests/delai_Beta_capture.test.js (12 tests)
-- Tests: 199/199 pass (12 suites)
-- Commit API: `c6812ed`, push OK
+**LOT T30+T30b (2026-06-11)**
+- T30: Fix asymmetrie newratios2.js (6 fonctions, CODE_REVIEW #37) — commit API `eed7d88`
+- T30b: Ajout response.ok guards sur 15 pages publiques (CODE_REVIEW #26) — commit Frontend `7616fce`
+- Health/detailed fix (commits `7420b67`, `9c0141f`) deploye en production, confirmation en attente
+- Tests: 199/199 pass (API), Build frontend OK (0 erreurs)
+
+### Fichiers modifies dans le dernier lot
+**API**: src/functions/newratios2.js
+**Frontend**: 15 fichiers (countries/[paysId]/FundView.tsx, countries/fund-managers/[fondId]/FundView.tsx, countries/funds/[fondId]/FundView.tsx, countries/statistique/[fondId]/FundView.tsx, fund-managers/[fondId]/FundView.tsx, fund-managers/funds/[fondId]/FundView.tsx, fund-managers/search/FundView.tsx, fund-managers/statistique/[fondId]/FundView.tsx, funds/documents/FundSubView.tsx, funds/download-nav/FundSubView.tsx, funds/history/FundSubView.tsx, funds/portfolio/FundSubView.tsx, funds/summary-eur/FundSubView.tsx, funds/summary-usd/FundSubView.tsx, tools/comparison/comparison-view/page.tsx)
 
 ### Prochaine action recommandee
-1. **Deployer T27+T28 sur production** :
+1. **Deployer API + Frontend en production** :
    ```bash
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
    ```
-2. Taches restantes executables sans risque :
-   - T29: Tests services (forex, ranking, performance)
-   - T30: Uniformiser format input newratios2.js (CODE_REVIEW #37)
-   - T31: Refactoring panels dupliques (CODE_REVIEW #28, 10K-14K lignes)
-   - T32: Backfill ClickHouse performance_historique
-   - T33: Extraction apigestionsavequotidien.js
+   ```bash
+   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
+   ```
+2. **Verifier /api/health/detailed** :
+   ```bash
+   curl -s https://africafunds.chainsolutions.fr/api/health/detailed | python3 -m json.tool
+   ```
+3. Taches restantes executables sans risque :
+   - T31: Refactoring panels dupliques (CODE_REVIEW #28, 10K-14K lignes) — large effort
+   - T32: Backfill ClickHouse performance_historique — needs production access
+   - T33: Extraction apigestionsavequotidien.js — large effort
    - T34: Frontend tests
+   - Response.ok guards sur panels (auth) — ~120 locations restantes
 
 **En attente (donnees utilisateur) :**
 - TUNISIE EUR/USD gap 24% : attente fichier VL avec dividendes
@@ -1736,13 +1750,16 @@ LOT T29 — Tests unitaires ratios + beta + delai_Beta_capture
 - 7 fonds TUNISIE (2869-2875) sans indRef
 - fix-brvm-nginx.py : script fantome dans crontab (CODE_REVIEW #40)
 - Cron health check : pas d'alerting email/Slack (CODE_REVIEW #39)
-- newratios2.js : inconsistance format input (CODE_REVIEW #37)
 
 ### A ne pas faire a la reprise
 - Ne PAS modifier les donnees TUNISIE — attendre le fichier utilisateur
 - Ne PAS supposer que tous les fonds Nigeria ont des donnees mai 2026
 - Ne PAS modifier les calculs financiers sans diagnostic prealable
 - Ne PAS modifier la base de donnees sans validation Eric
+
+### Etat Git (2026-06-11)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `eed7d88`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `7616fce` + SUIVI/CODE_REVIEW dirty
 
 ### Etat Git (2026-06-05)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `c6812ed`, sync origin, clean

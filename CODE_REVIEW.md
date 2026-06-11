@@ -187,7 +187,7 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Bonus: authorize() accepte maintenant typeusers_id=0 comme admin fallback
 - Commit API: `5540d95`
 
-### 23. Routes valLiq/valLiqdev retournaient 500 au lieu de 404
+### 23. ~~Routes valLiq/valLiqdev retournaient 500 au lieu de 404~~ — CORRIGE
 - Fichier: src/routes/apigestionfonds.js
 - Probleme: /api/valLiq/:id et /api/valLiqdev/:id/:devise retournaient HTTP 500 pour des fonds inexistants
 - Correction: Ajout validation fundId (400) + changement empty results 500→404
@@ -225,10 +225,11 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Solution: Ajout .catch() avec log + res.status(500).json
 - Commit API: `5b70838`
 
-### 26. 87% des fetch() frontend sans response.ok check
-- 638 appels fetch(), seulement 81 avec response.ok check (12.7%)
-- Impact: Erreurs API silencieuses, donnees corrompues affichees
-- Priorite: MOYENNE
+### 26. 87% des fetch() frontend sans response.ok check — PARTIELLEMENT CORRIGE (T23+T30b)
+- T23: 7 fichiers corriges (tools/search, tools/comparison, funds/search, country-panel)
+- T30b: 15 fichiers publics corriges (countries, fund-managers, funds pages, comparison-view)
+- Restant: ~120 locations dans panels (admin, investor, management, portfolio, distributor, data-requester)
+- Priorite: BASSE (panels derriere auth, impact utilisateur limite)
 
 ### 27. ClickHouse performance_historique jamais peuple
 - Table creee mais aucun script de backfill n'existe
@@ -244,12 +245,12 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Priorite: MOYENNE (fonctionnel mais dette technique lourde)
 - Recommandation: Extraire composants partages parametres par role (sidebar, API endpoint, user context)
 
-### 37. newratios2.js — inconsistance format input portfolio vs benchmark
+### 37. ~~newratios2.js — inconsistance format input portfolio vs benchmark~~ — CORRIGE (T30, 2026-06-11)
 - Fichier: src/functions/newratios2.js
-- Probleme: Les fonctions haut-niveau (calculateBetanew, calculateTrackingError, calculateInformationRatio, calculateUpCaptureRatio, calculateDownCaptureRatio, calculateDownsideBeta) traitent le portfolio via `calculateRendementsForPeriod()` (attend objects `{vl}`, retourne numbers) mais le benchmark via `selectDataForPeriod()` (juste slice, garde le format original)
-- Impact: Si benchmark est passe en objects `{vl}`, `calculateCovariance()` recoit des objects au lieu de numbers → crash `math.mean()`. Si benchmark est passe en numbers, `selectDataForPeriod` retourne des numbers → fonctionne, mais l'API appelante doit connaitre cette asymetrie
-- Priorite: FAIBLE (les appelants actuels dans apigestionratios.js semblent passer le bon format)
-- Recommandation: Uniformiser en passant portfolio ET benchmark a travers `calculateRendementsForPeriod`, ou documenter l'asymetrie
+- Probleme: 6 fonctions dual-input (Beta, TrackingError, IR, UpCapture, DownCapture, DownsideBeta) traitaient le benchmark via `selectDataForPeriod()` (juste slice) au lieu de `calculateRendementsForPeriod()` (conversion objets→rendements)
+- Correction: Les 6 fonctions utilisent maintenant `calculateRendementsForPeriod()` pour les deux inputs
+- Note: newratios2.js n'est pas importe par les routes de production (newratios.js est utilise a la place)
+- Commit API: `eed7d88`
 
 ### 38. ~~ratioInfo.js — code incomplet non fonctionnel~~ — SUPPRIME (T28, 2026-06-05)
 - Fichier: src/functions/ratioInfo.js (supprime)
