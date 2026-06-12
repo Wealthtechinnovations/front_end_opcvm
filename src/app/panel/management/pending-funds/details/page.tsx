@@ -260,7 +260,10 @@ export default function Fonds() {
     method: 'POST',
     body: formData,
   })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) throw new Error('Upload failed');
+      return response.json();
+    })
     .then(data => {
       // Handle the response as needed
     })

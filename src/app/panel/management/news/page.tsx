@@ -20,10 +20,11 @@ interface Actualite {
 }
 
 async function getactualite() {
-  const data = await fetch(`${urlconstant}/api/getactualite`, {
+  const response = await fetch(`${urlconstant}/api/getactualite`, {
     method: 'GET',
-  }).then((res) => res.json());
-  return data;
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 
 export default function Pagehome() {

@@ -11,10 +11,9 @@ interface Res {
 }
 
 async function emailexist(email: string) {
-  const data = (
-    await fetch(`${urlconstant}/api/userexist?email=${email}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/userexist?email=${email}`);
+  if (!response.ok) return null;
+  return response.json();
 }
 
 async function login(email: string, password: string) {
@@ -23,6 +22,7 @@ async function login(email: string, password: string) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
+  if (!response.ok) return { code: response.status, message: 'Erreur serveur' };
   return response.json();
 }
 

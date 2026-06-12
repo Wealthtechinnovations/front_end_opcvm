@@ -165,7 +165,10 @@ export default function Ajoutportefeuille() {
       },
       body: JSON.stringify({}),
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('API error');
+        return res.json();
+      })
       .then((data) => {
         const fonds = data?.data || data || [];
         setFundsOptions(

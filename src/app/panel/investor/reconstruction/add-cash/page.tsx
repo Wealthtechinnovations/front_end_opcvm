@@ -45,10 +45,9 @@ interface Portefeuillepropose {
   };
 }
 async function getlastvl1() {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFunds`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/searchFunds`);
+  if (!response.ok) return [];
+  return response.json();
 }
 interface Option {
   value: number;
@@ -70,13 +69,11 @@ interface Transaction {
 
 }
 async function getPortefeuille(selectedValues: any) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getportefeuille/${selectedValues}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getportefeuille/${selectedValues}`, {
+    method: 'GET',
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 export default function Ajoutcash() {
   const searchParams = useSearchParams();
@@ -210,7 +207,10 @@ export default function Ajoutcash() {
         },
         body: JSON.stringify(entries), // Convertir l'objet en JSON
       })
-        .then((response) => response.json()) // Convertir la réponse en JSON
+        .then((response) => {
+          if (!response.ok) throw new Error('API error');
+          return response.json();
+        })
         .then((data) => {
 
           if (data.code === 200) {

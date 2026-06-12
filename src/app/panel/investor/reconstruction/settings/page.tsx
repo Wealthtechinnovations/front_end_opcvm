@@ -16,25 +16,21 @@ import Headermenu from '@/components/layout/HeaderMenu';
 import Sidebar from '@/components/layout/InvestorSidebar';
 
 async function getperfcategorieannuel(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/performancescategorie/fond/${id}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/performancescategorie/fond/${id}`);
+  if (!response.ok) return null;
+  return response.json();
 }
 async function getPortefeuille(selectedValues: any) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getportefeuille/${selectedValues}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getportefeuille/${selectedValues}`, {
+    method: 'GET',
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 async function getlastvl1() {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFunds`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/searchFunds`);
+  if (!response.ok) return [];
+  return response.json();
 }
 
 const options = [

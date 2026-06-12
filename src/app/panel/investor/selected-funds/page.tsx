@@ -457,7 +457,10 @@ export default function Fondselected() {
 
       // Remplacez par votre méthode pour récupérer les fonds par pays et/ou région
       fetch(`${urlconstant}/api/searchFundsreconstitution?categorie=${categories}&univers=${univers}&universsous=${universsous}&${query}`)
-        .then((response) => response.json())
+        .then((response) => {
+          if (!response.ok) throw new Error('API error');
+          return response.json();
+        })
         .then((data) => {
           const mappedOptions = data?.data?.fundsByCategorie?.map((fund: { value: any; label: any; }) => ({
             value: fund.value,

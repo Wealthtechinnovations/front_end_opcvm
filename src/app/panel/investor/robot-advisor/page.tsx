@@ -19,13 +19,11 @@ interface Funds {
 }
 
 async function getPortefeuille(id: any) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getsimulationbyuser/${id}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getsimulationbyuser/${id}`, {
+    method: 'GET',
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 export default function RobotAdvisor() {
 

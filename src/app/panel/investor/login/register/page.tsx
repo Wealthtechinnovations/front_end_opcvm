@@ -20,10 +20,9 @@ interface Societe {
 }
 
 async function getpays() {
-  const data = (
-    await fetch(`${urlconstant}/api/getPays`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getPays`);
+  if (!response.ok) return null;
+  return response.json();
 }
 
 interface PageProps {
@@ -33,10 +32,9 @@ interface PageProps {
   };
 }
 async function getsociete() {
-  const data = (
-    await fetch(`${urlconstant}/api/getSocietes`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getSocietes`);
+  if (!response.ok) return null;
+  return response.json();
 }
 export default function Register() {
   const searchParams = useSearchParams();

@@ -267,7 +267,10 @@ export default function Profile(): JSX.Element {
                         Authorization: `Bearer ${token}`,
                     },
                 })
-                    .then((resKyc) => resKyc.json())
+                    .then((resKyc) => {
+                        if (!resKyc.ok) throw new Error('API error');
+                        return resKyc.json();
+                    })
                     .then((data) => {
                         setKycForParticular(data)
                     })

@@ -87,7 +87,10 @@ export default function Profile() {
       },
       body: JSON.stringify(formData),
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) throw new Error('API error');
+        return response.json();
+      })
       .then((data) => {
         // You can show a success message or handle the response as needed
       })

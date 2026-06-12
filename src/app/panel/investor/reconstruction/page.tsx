@@ -39,40 +39,34 @@ async function getperformancepdev(id: number, dev: string) {
   return data;
 }
 async function getPortefeuille(selectedValues: any) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getportefeuille/${selectedValues}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getportefeuille/${selectedValues}`, {
+    method: 'GET',
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 async function Reconstituergraph(selectedValues: any) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/valoriserportefeuille/${selectedValues}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/valoriserportefeuille/${selectedValues}`, {
+    method: 'GET',
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 
 async function getlastvl1() {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFunds`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/searchFunds`);
+  if (!response.ok) return [];
+  return response.json();
 }
 async function getPost(id: number) {
-  const data = (
-    await fetch(`${urlconstant}/api/valLiq/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json', // Indiquer que vous envoyez du JSON
-      },
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/valLiq/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 const options = [
   { value: 1, label: 'Option 1' },

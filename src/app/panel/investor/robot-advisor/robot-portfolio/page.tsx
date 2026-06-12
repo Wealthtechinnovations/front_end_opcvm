@@ -16,19 +16,16 @@ import Header from '@/components/layout/Header';
 import Swal from 'sweetalert2';
 
 async function getPortefeuille(selectedValues: any) {
-  const data = (
-
-    await fetch(`${urlconstant}/api/getsimulationportefeuillebyuser/${selectedValues}`, {
-      method: 'GET', // Assurez-vous que la méthode HTTP correspond à votre API
-    })
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/getsimulationportefeuillebyuser/${selectedValues}`, {
+    method: 'GET',
+  });
+  if (!response.ok) return null;
+  return response.json();
 }
 async function getlastvl1() {
-  const data = (
-    await fetch(`${urlconstant}/api/searchFunds`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/searchFunds`);
+  if (!response.ok) return [];
+  return response.json();
 }
 
 const options = [

@@ -214,7 +214,10 @@ export default function Profile(): JSX.Element {
                         Authorization: `Bearer ${token}`,
                     },
                 })
-                    .then((resOperator) => resOperator.json())
+                    .then((resOperator) => {
+                        if (!resOperator.ok) throw new Error('API error');
+                        return resOperator.json();
+                    })
                     .then((data) => {
                         setAllOperators(data)
                     })
@@ -239,7 +242,10 @@ export default function Profile(): JSX.Element {
                         'x-api-key': `${API_KEY_STABLECOIN}`,
                     },
                 })
-                    .then((resBank) => resBank.json())
+                    .then((resBank) => {
+                        if (!resBank.ok) throw new Error('API error');
+                        return resBank.json();
+                    })
                     .then((data) => {
                         setAllBank(data)
 
@@ -288,7 +294,10 @@ export default function Profile(): JSX.Element {
                         Authorization: `Bearer ${token}`,
                     },
                 })
-                    .then((resKyc) => resKyc.json())
+                    .then((resKyc) => {
+                        if (!resKyc.ok) throw new Error('API error');
+                        return resKyc.json();
+                    })
                     .then((data) => {
                         setKycForParticular(data)
                     })
@@ -358,7 +367,10 @@ export default function Profile(): JSX.Element {
                         'x-api-key': `${API_KEY_STABLECOIN}`,
                     },
                 })
-                    .then((resCountry) => resCountry.json())
+                    .then((resCountry) => {
+                        if (!resCountry.ok) throw new Error('API error');
+                        return resCountry.json();
+                    })
                     .then((allCountry) => {
                         setAllCountry(allCountry)
                     })

@@ -75,7 +75,10 @@ export default function Profile(): JSX.Element {
 
                     },
                 })
-                    .then((result) => result.json())
+                    .then((result) => {
+                        if (!result.ok) throw new Error('API error');
+                        return result.json();
+                    })
                     .then((user) => {
                         setCurrentUser(user)
 
@@ -95,7 +98,10 @@ export default function Profile(): JSX.Element {
                         },
                     })
 
-                        .then((resultCountry) => resultCountry.json())
+                        .then((resultCountry) => {
+                            if (!resultCountry.ok) throw new Error('API error');
+                            return resultCountry.json();
+                        })
                         .then((userCountry) => {
                             setCurrentUserCountry(userCountry)
                         })
@@ -272,7 +278,10 @@ export default function Profile(): JSX.Element {
                         Authorization: `Bearer ${token}`,
                     },
                 })
-                    .then((resKyc) => resKyc.json())
+                    .then((resKyc) => {
+                        if (!resKyc.ok) throw new Error('API error');
+                        return resKyc.json();
+                    })
                     .then((data) => {
                         setKycForParticular(data)
                     })
