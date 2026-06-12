@@ -1778,18 +1778,49 @@ Aucun fichier code (execution production uniquement). SUIVI.md mis a jour.
 - Aucune erreur d'execution
 - Note VPS : fichier parasite `0` (untracked) dans le repo prod — supprimable (`rm /var/www/.../api/0`)
 
+### T35-hist — Diagnostic backfill historique BRVM 2022→2025 (2026-06-12 soir)
+- **Archives BOC disponibles en ligne jusqu'en 2020 au moins** (testes 200 OK : 2020-01-08, 2021-01-06, 2022-01-05, 2023-01-04, 2024-01-03, 2025-01-08)
+- **Parseur valide en dry-run sandbox sur les anciens formats** :
+  - BOC 2022-01-05 : 95 lignes, 0 echec — noms + VL coherents (FCP EXPANSIO 9047.88 XOF)
+  - BOC 2023-01-04 : 100 lignes, 1 echec
+  - BOC 2024-01-03 : 105 lignes, 0 echec
+  - BOC 2025-01-08 : 114 lignes, 0 echec ; 2025-06-04 : 113 lignes, 1 echec
+- Aucune modification de code necessaire — le backfill 2022→2025-10-14 peut etre lance tel quel
+- Volume estime : ~950 BOC, ~15-20 s/BOC avec throttle 3 → **~4-5 h** → lancer en nohup
+- Idempotent : BOC deja parses ignores, promotion uniquement si (fund_id, date) absent
+- Cache PDF : ~950 PDF dans data/brvm_boc/pdf/ (~2-5 Go) — supprimables apres import si besoin
+
+### Etat fraicheur VL par pays (snapshot 16h00, avant backfill UEMOA)
+| Pays | Fonds | Derniere VL | Statut |
+|------|-------|-------------|--------|
+| MAROC | 640 | 2026-06-10 | OK (cron ASFIM 20h, J-2 normal) |
+| TUNISIE | 131 | 2026-06-11 | OK (cron CMF 19h) |
+| NIGERIA | 284 | 2026-05-29 | Retard 2 sem. (hebdo SEC, ~195 fonds disparus des fichiers — connu) |
+| UEMOA | 111 | 2025-10-15 → **2026-06-10 apres backfill T35** | OK (cron BRVM 19h30 installe) |
+| CEMAC | 34 | 2024-12-12 | Stale 18 mois — aucune source automatisee (decision metier en attente) |
+
 ### Prochaine action recommandee
-1. **Laisser les crons de ce soir recalculer** perf + classements sur les nouvelles VL UEMOA :
-   - 20h00 `cron_daily_update.sh` (perf locales + classements)
-   - 21h30 `cron_daily_eur_usd.sh` (perf + classements EUR/USD)
-2. **Verifier demain matin** quelques fiches fonds UEMOA en production :
+1. **Lancer le backfill historique 2022→2025 en arriere-plan sur le VPS** (~4-5 h) :
    ```bash
-   curl -s "https://africafunds.chainsolutions.fr/api/valLiq/2539" | head -c 500   # FCP AAM EPARGNE ACTION
-   curl -s "https://africafunds.chainsolutions.fr/api/brvm/boc/status" | python3 -m json.tool
+   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+   nohup bash -c 'for Y in 2022 2023 2024; do python3 scripts/scraper/brvm_boc_daily.py --start-date ${Y}-01-01 --end-date ${Y}-12-31 --production --throttle 3; done; python3 scripts/scraper/brvm_boc_daily.py --start-date 2025-01-01 --end-date 2025-10-14 --production --throttle 3; python3 scripts/scraper/brvm_boc_daily.py --repair-missing --apply --production' >> /var/log/brvm_backfill_hist.log 2>&1 &
+   tail -f /var/log/brvm_backfill_hist.log   # suivre (Ctrl+C pour quitter le suivi sans arreter le job)
    ```
-3. **Lundi 19h35** : verifier le premier passage du cron BRVM (`tail -50 /var/log/cron_brvm.log`)
-4. T35-suite : page admin frontend supervision BRVM BOC + validation des 652 AMBIGUOUS / 1791 UNMATCHED
-5. Taches restantes : T31 (refactoring panels), T32 (backfill ClickHouse), T33 (extraction apigestionsavequotidien), T34 (tests frontend)
+2. **Verifier tous les crons** :
+   ```bash
+   crontab -l
+   tail -20 /var/log/cron_tunisie.log /var/log/cron_eur_usd.log /var/log/cron_brvm.log 2>/dev/null
+   ls -la /var/log/africafunds_daily_*.log 2>/dev/null | tail -3
+   ```
+3. **Apres le backfill (ou demain matin)** — controle global fraicheur :
+   ```bash
+   curl -s "https://africafunds.chainsolutions.fr/api/brvm/boc/status" | python3 -m json.tool | head -40
+   mysql -u fund_opcvm -p fund_opcvm -e "SELECT f.pays, COUNT(DISTINCT f.id) fonds, MAX(v.date) derniere, COUNT(*) nb_vl FROM valorisations v JOIN fond_investissements f ON f.id=v.fund_id GROUP BY f.pays;"
+   ```
+4. Crons 20h00/21h30 de ce soir recalculent perf + classements sur les nouvelles VL UEMOA
+5. Lundi 19h35 : verifier premier passage autonome du cron BRVM (`tail -50 /var/log/cron_brvm.log`)
+6. T35-suite : page admin supervision BRVM BOC + validation 652 AMBIGUOUS / 1791 UNMATCHED
+7. Taches restantes : T31 (refactoring panels), T32 (backfill ClickHouse), T33 (extraction apigestionsavequotidien), T34 (tests frontend)
 9. Taches restantes executables sans risque :
    - T31: Refactoring panels dupliques (CODE_REVIEW #28) — large effort
    - T32: Backfill ClickHouse performance_historique
