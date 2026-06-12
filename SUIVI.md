@@ -1742,59 +1742,54 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-12 : T30-T30d deployes OK. T35 BRVM BOC deploye, selftest+dry-run OK, mais promote_row() crashait en production (column count 27→28). **Fix commite `8a3a707` et pousse**, a redeployer.
+Session 2026-06-12 : T35 BRVM BOC **DEPLOYE ET OPERATIONNEL EN PRODUCTION**. Fix promote_row (`8a3a707`) deploye, backfill complet 2025-10-15 → 2026-06-11 execute avec succes : 163 BOC parses (0 echec), 4406 VL promues dans valorisations, statut SUCCESS. Cron 19h30 installe.
 
 ### Dernier lot termine
-**LOT T35-fix (2026-06-12) — Correction column count promote_row()**
-- Bug : INSERT INTO valorisations avait 28 colonnes mais 27 VALUES (manquait `0` pour `indice_comparaison`)
-- Fix : `%s,0,'',0,%s` → `0,%s,0,'',0,%s` (ligne 718 de brvm_boc_daily.py)
-- Commit `8a3a707`, pousse sur origin
-- Lot precedent : T35 initial (7b0bd19 + 13f28af), deploye mais BROKEN en production
+**LOT T35-backfill (2026-06-12) — Execution production complete**
+- Redeploiement API : OK (pm2 api-monolith online)
+- `--latest --production --force` : BOC 2026-06-11, 70 VL promues
+- Backfill 2025-10-15 → 2026-06-12 : 173 sources verifiees, 163 parsees, 18993 lignes extraites, 18843 inserees en staging, **4334 VL promues**, 6056 deja presentes, 142 conflits conserves en staging, 0 erreur, SUCCESS
+- `--repair-missing --apply` : 57 fonds analyses, 2 VL promues supplementaires
+- **Total VL promues : 4406**
+- Verification `/api/brvm/boc/status` : initialized true, 163 sources, last_boc_date 2026-06-11
+
+### Bilan donnees UEMOA apres backfill
+- Majorite des fonds UEMOA quotidiens a jour au 2026-06-10 (vs stale 2025-10-15 avant)
+- Restent en retard (ND officiels dans les BOC, non recuperables sans inventer) :
+  FCP ATLANTIQUE* (derniere VL 2024-11-07, 163 ND), FCP TRESO MONEA (2023-10-23),
+  SICAV WAFI CAPITAL (2025-10-15), FCP CAPITAL CROISSANCE (aucune VL, 163 ND)
+- File de validation : 1791 UNMATCHED + 652 AMBIGUOUS (`/api/brvm/boc/unmatched`)
+- 142 conflits (VL existante differente de la VL BOC) conserves en staging, aucun overwrite
 
 ### Fichiers modifies dans le dernier lot
-**API**: scripts/scraper/brvm_boc_daily.py (1 ligne modifiee — VALUES clause)
+Aucun fichier code (execution production uniquement). SUIVI.md mis a jour.
 
 ### Commandes executees
-- Verification colonne/valeurs : 28 colonnes, 28 VALUES, 10 %s = 10 params ✓
-- `git commit` + `git push` : OK
+- Deploiement + pip install + selftest + dry-run + `--latest --production --force` + backfill `--start-date 2025-10-15 --end-date 2026-06-12 --production --throttle 3 --force` + `--repair-missing --apply --production` (executees par l'utilisateur sur le VPS)
 
 ### Tests realises
-- Comptage manuel colonnes/valeurs : 28/28 ✓
-- Comparaison avec pattern import_vl_uemoa.js : identique ✓
-- Tests non re-executes (pas de changement de logique, juste un 0 manquant)
+- `/api/brvm/boc/status` : 163 sources parsed, 4406 promoted, 0 failed
+- Rapports JSON dans data/brvm_boc/reports/
 
 ### Resultat des tests
-- Fix syntaxiquement correct, pattern aligne sur la reference import_vl_uemoa.js
+- SUCCESS — module BRVM BOC pleinement operationnel, gap UEMOA comble
 
 ### Erreurs restantes
-- Aucune erreur restante dans le code
-- Production : les rows du premier `--latest` et du backfill partiel ont ete inserees dans staging (brvm_boc_navs_raw) mais PAS promues. Apres redeploiement, il faut forcer la re-promotion.
+- Aucune erreur d'execution
+- Note VPS : fichier parasite `0` (untracked) dans le repo prod — supprimable (`rm /var/www/.../api/0`)
 
 ### Prochaine action recommandee
-1. **Redeployer l'API** :
+1. **Laisser les crons de ce soir recalculer** perf + classements sur les nouvelles VL UEMOA :
+   - 20h00 `cron_daily_update.sh` (perf locales + classements)
+   - 21h30 `cron_daily_eur_usd.sh` (perf + classements EUR/USD)
+2. **Verifier demain matin** quelques fiches fonds UEMOA en production :
    ```bash
-   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
+   curl -s "https://africafunds.chainsolutions.fr/api/valLiq/2539" | head -c 500   # FCP AAM EPARGNE ACTION
+   curl -s "https://africafunds.chainsolutions.fr/api/brvm/boc/status" | python3 -m json.tool
    ```
-2. **Re-executer avec --force (les rows staging existent, il faut les re-promouvoir)** :
-   ```bash
-   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
-   python3 scripts/scraper/brvm_boc_daily.py --latest --production --force
-   curl -s https://africafunds.chainsolutions.fr/api/brvm/boc/status | python3 -m json.tool
-   ```
-3. **Backfill complet (les BOC deja parses seront ignores, seule la promotion reprend si --force)** :
-   ```bash
-   python3 scripts/scraper/brvm_boc_daily.py --start-date 2025-10-15 --end-date 2026-06-12 --production --throttle 3 --force
-   ```
-4. **Diagnostic + comblement des manquants** :
-   ```bash
-   python3 scripts/scraper/brvm_boc_daily.py --repair-missing --production
-   python3 scripts/scraper/brvm_boc_daily.py --repair-missing --apply --production
-   ```
-5. **Controles SQL** :
-   ```bash
-   mysql -u fund_opcvm -p fund_opcvm -e "SELECT COUNT(*) FROM brvm_boc_sources; SELECT match_status, COUNT(*) FROM brvm_boc_navs_raw GROUP BY match_status; SELECT promote_status, COUNT(*) FROM brvm_boc_navs_raw GROUP BY promote_status;"
-   mysql -u fund_opcvm -p fund_opcvm -e "SELECT f.nom_fond, MAX(v.date) derniere_vl FROM valorisations v JOIN fond_investissements f ON f.id=v.fund_id WHERE f.pays='UEMOA' GROUP BY f.id ORDER BY derniere_vl DESC LIMIT 20;"
-   ```
+3. **Lundi 19h35** : verifier le premier passage du cron BRVM (`tail -50 /var/log/cron_brvm.log`)
+4. T35-suite : page admin frontend supervision BRVM BOC + validation des 652 AMBIGUOUS / 1791 UNMATCHED
+5. Taches restantes : T31 (refactoring panels), T32 (backfill ClickHouse), T33 (extraction apigestionsavequotidien), T34 (tests frontend)
 9. Taches restantes executables sans risque :
    - T31: Refactoring panels dupliques (CODE_REVIEW #28) — large effort
    - T32: Backfill ClickHouse performance_historique
@@ -1820,7 +1815,7 @@ Session 2026-06-12 : T30-T30d deployes OK. T35 BRVM BOC deploye, selftest+dry-ru
 
 ### Risques connus
 - SEC Nigeria changement format : ~195 fonds disparus des fichiers recents
-- UEMOA donnees stales 233+ jours
+- UEMOA : gap comble par T35 (4406 VL) sauf fonds en ND officiel (Atlantique, Treso Monea, Wafi Capital) ; classements/perf a recalculer (crons ce soir)
 - CEMAC donnees stales 539+ jours
 - 7 fonds TUNISIE (2869-2875) sans indRef
 - fix-brvm-nginx.py : script fantome dans crontab (CODE_REVIEW #40)
@@ -1832,9 +1827,9 @@ Session 2026-06-12 : T30-T30d deployes OK. T35 BRVM BOC deploye, selftest+dry-ru
 - Ne PAS modifier les calculs financiers sans diagnostic prealable
 - Ne PAS modifier la base de donnees sans validation Eric
 
-### Etat Git (2026-06-12, T35-fix)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `8a3a707` (fix promote_row), pousse
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, SUIVI.md dirty (mise a jour T35-fix)
+### Etat Git (2026-06-12, T35-backfill)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `8a3a707` deploye en prod, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, SUIVI.md T35-backfill commite/pousse
 
 ### Etat Git (2026-06-11)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `eed7d88`, sync origin, clean
