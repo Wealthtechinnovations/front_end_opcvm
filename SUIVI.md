@@ -1742,61 +1742,55 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-12 : T30-T30d deployes et verifies en production (health OK). T35 module BRVM BOC commite et pousse, a deployer + initialiser.
+Session 2026-06-12 : T30-T30d deployes OK. T35 BRVM BOC deploye, selftest+dry-run OK, mais promote_row() crashait en production (column count 27→28). **Fix commite `8a3a707` et pousse**, a redeployer.
 
 ### Dernier lot termine
-**LOT T35 (2026-06-12) — Module BRVM BOC VL OPCVM UEMOA**
-- Diagnostic complet (Lot 1) : sources BRVM testees, base inspectee via PRODUCTION_STATE.json, UEMOA stale 2025-10-15
-- Scraper/parseur/importeur `brvm_boc_daily.py` : extraction 98,3% sur 2 BOC reels, selftest OK
-- Tables additives staging + tracabilite PDF→ligne→base, promotion sans overwrite vers valorisations
-- 4 routes GET supervision lecture seule, jest 199/199
-- Lots precedents : T30d Frontend (87977a9), T30c API (3f408bc)
+**LOT T35-fix (2026-06-12) — Correction column count promote_row()**
+- Bug : INSERT INTO valorisations avait 28 colonnes mais 27 VALUES (manquait `0` pour `indice_comparaison`)
+- Fix : `%s,0,'',0,%s` → `0,%s,0,'',0,%s` (ligne 718 de brvm_boc_daily.py)
+- Commit `8a3a707`, pousse sur origin
+- Lot precedent : T35 initial (7b0bd19 + 13f28af), deploye mais BROKEN en production
 
 ### Fichiers modifies dans le dernier lot
-**API**: scripts/scraper/brvm_boc_daily.py (nouveau), scripts/scraper/requirements_brvm.txt (nouveau), scripts/cron/cron_brvm_daily.sh (nouveau), src/routes/apibrvmboc.js (nouveau), app.js (+2 lignes), .gitignore (+4 lignes), README_DEV.md (doc module)
+**API**: scripts/scraper/brvm_boc_daily.py (1 ligne modifiee — VALUES clause)
 
 ### Commandes executees
-- Tests sources : curl boc_jour.aspx (200), 2 PDF BOC (200, valides)
-- `python3 scripts/scraper/brvm_boc_daily.py --selftest` : OK
-- Dry-run BOC 2026-06-10 + 2026-06-04 : 115 lignes chacun, 2 echecs residuels
-- `npx jest --forceExit` : 199/199
-- `node -c` app.js + apibrvmboc.js : OK
+- Verification colonne/valeurs : 28 colonnes, 28 VALUES, 10 %s = 10 params ✓
+- `git commit` + `git push` : OK
+
+### Tests realises
+- Comptage manuel colonnes/valeurs : 28/28 ✓
+- Comparaison avec pattern import_vl_uemoa.js : identique ✓
+- Tests non re-executes (pas de changement de logique, juste un 0 manquant)
+
+### Resultat des tests
+- Fix syntaxiquement correct, pattern aligne sur la reference import_vl_uemoa.js
+
+### Erreurs restantes
+- Aucune erreur restante dans le code
+- Production : les rows du premier `--latest` et du backfill partiel ont ete inserees dans staging (brvm_boc_navs_raw) mais PAS promues. Apres redeploiement, il faut forcer la re-promotion.
 
 ### Prochaine action recommandee
-1. **Deployer l'API** :
+1. **Redeployer l'API** :
    ```bash
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
    ```
-2. **Installer les dependances Python du module BRVM** :
+2. **Re-executer avec --force (les rows staging existent, il faut les re-promouvoir)** :
    ```bash
-   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && pip3 install -r scripts/scraper/requirements_brvm.txt
-   ```
-3. **Valider en dry-run (aucune ecriture)** :
-   ```bash
-   python3 scripts/scraper/brvm_boc_daily.py --selftest
-   python3 scripts/scraper/brvm_boc_daily.py --latest --dry-run
-   ```
-4. **Premier import reel (cree les tables brvm_*)** :
-   ```bash
-   python3 scripts/scraper/brvm_boc_daily.py --latest --production
+   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+   python3 scripts/scraper/brvm_boc_daily.py --latest --production --force
    curl -s https://africafunds.chainsolutions.fr/api/brvm/boc/status | python3 -m json.tool
    ```
-5. **Backfill du trou UEMOA (2025-10-15 → aujourd'hui), par tranches** :
+3. **Backfill complet (les BOC deja parses seront ignores, seule la promotion reprend si --force)** :
    ```bash
-   python3 scripts/scraper/brvm_boc_daily.py --start-date 2025-10-15 --end-date 2026-06-12 --production --throttle 3 --limit 60
-   # relancer la meme commande : reprise automatique (BOC deja parses ignores)
+   python3 scripts/scraper/brvm_boc_daily.py --start-date 2025-10-15 --end-date 2026-06-12 --production --throttle 3 --force
    ```
-6. **Diagnostic + comblement des manquants** :
+4. **Diagnostic + comblement des manquants** :
    ```bash
-   python3 scripts/scraper/brvm_boc_daily.py --repair-missing --production            # rapport seul
-   python3 scripts/scraper/brvm_boc_daily.py --repair-missing --apply --production    # insertion VL officielles
+   python3 scripts/scraper/brvm_boc_daily.py --repair-missing --production
+   python3 scripts/scraper/brvm_boc_daily.py --repair-missing --apply --production
    ```
-7. **Installer le cron (apres validation des etapes 3-4)** :
-   ```bash
-   (crontab -l; echo "30 19 * * 1-5 /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api/scripts/cron/cron_brvm_daily.sh >> /var/log/cron_brvm.log 2>&1") | crontab -
-   crontab -l
-   ```
-8. **Controles SQL** :
+5. **Controles SQL** :
    ```bash
    mysql -u fund_opcvm -p fund_opcvm -e "SELECT COUNT(*) FROM brvm_boc_sources; SELECT match_status, COUNT(*) FROM brvm_boc_navs_raw GROUP BY match_status; SELECT promote_status, COUNT(*) FROM brvm_boc_navs_raw GROUP BY promote_status;"
    mysql -u fund_opcvm -p fund_opcvm -e "SELECT f.nom_fond, MAX(v.date) derniere_vl FROM valorisations v JOIN fond_investissements f ON f.id=v.fund_id WHERE f.pays='UEMOA' GROUP BY f.id ORDER BY derniere_vl DESC LIMIT 20;"
@@ -1838,9 +1832,9 @@ Session 2026-06-12 : T30-T30d deployes et verifies en production (health OK). T3
 - Ne PAS modifier les calculs financiers sans diagnostic prealable
 - Ne PAS modifier la base de donnees sans validation Eric
 
-### Etat Git (2026-06-12, T35)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, T35 module BRVM BOC commite/pousse
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, SUIVI.md T35 commite/pousse
+### Etat Git (2026-06-12, T35-fix)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `8a3a707` (fix promote_row), pousse
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, SUIVI.md dirty (mise a jour T35-fix)
 
 ### Etat Git (2026-06-11)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `eed7d88`, sync origin, clean
