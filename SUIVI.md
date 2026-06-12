@@ -534,6 +534,15 @@
 - **Tests**: 199/199 pass, syntaxe OK
 - **Risque regression**: FAIBLE (les routes produisent maintenant des resultats corrects au lieu de donnees obsoletes/ignorees)
 
+### 2026-06-12 - T30d: Ajout response.ok guards sur 26 pages panel
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER
+- **Fichiers**: 26 fichiers panel (investor/reconstruction/*, investor/robot-advisor/*, investor/kyc/*, investor/login/*, investor/create, investor/selected-funds, management/chat, management/news, management/pending-funds/details, management/validated-funds/details, admin/pending-funds/details, data-requester/login/*)
+- Pattern: toutes les appels `fetch().json()` verifient maintenant `response.ok` avant parsing
+- Commit Frontend: `87977a9`
+- **Build**: 0 erreurs
+- **Risque regression**: NUL (ajout de guards uniquement, aucune logique modifiee)
+- **CODE_REVIEW #26**: progression significative (15 pages publiques T30b + 26 pages panel T30d = 41 pages total)
+
 ### 2026-06-05 - Diagnostics et audits
 - **B6 (244 VL Nigeria extremes)**: NON ACTIF — ces VL ont ete rejetees a l'import, jamais inserees en base
 - **TUNISIE EUR/USD gap 24%**: BLOQUE — en attente fichier VL corrigees avec dividendes (utilisateur)
@@ -1710,24 +1719,24 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-12 : T21-T29 deployes. T30+T30b+T30c commites et pousses. Health/detailed fix deploye.
+Session 2026-06-12 : T21-T29 deployes. T30+T30b+T30c+T30d commites et pousses. A deployer.
 
 ### Dernier lot termine
-**LOT T30c (2026-06-12)**
-- T30c: Fix dates hardcodees dans 3 fichiers API — commit `3f408bc`
-  - apigestionrendement.js: calculatejourReturns utilisait [Op.between]: ['2023-01-01','2023-12-31'] → fenetre dynamique 2 ans
-  - routes_vl.js:4811: performancesportefeuillewithindice ignorait :date URL param, utilisait "2024-03-22" → req.params.date
-  - apigestionsavequotidien.js:1452: processFund utilisait [Op.gt]: '2023-12-31' → fenetre dynamique 2 ans
-- Tests: 199/199 pass (API), syntaxe OK 3 fichiers
-- Lots precedents: T30 (eed7d88), T30b (7616fce), SUIVI/CODE_REVIEW (c34d7b9)
+**LOT T30d (2026-06-12)**
+- T30d: Ajout response.ok guards sur 26 pages panel — commit Frontend `87977a9`
+  - investor: reconstruction (8 pages), robot-advisor (3 pages), KYC (4 pages), login (2 pages), create, selected-funds
+  - management: chat, news, pending-funds/details, validated-funds/details
+  - admin: pending-funds/details
+  - data-requester: login (2 pages)
+- Build: 0 erreurs
+- Lots precedents: T30c API (3f408bc), T30b Frontend (7616fce), T30 API (eed7d88)
 
 ### Fichiers modifies dans le dernier lot
-**API**: src/routes/apigestionrendement.js, src/routes/routes_vl.js, src/routes/apigestionsavequotidien.js
+**Frontend**: 26 fichiers panel (voir detail dans T30d ci-dessus)
 
 ### Commandes executees
-- `node -c` sur 3 fichiers : OK
-- `npx jest --forceExit` : 199/199 pass
-- `git commit` : 3f408bc
+- `npx next build` : 0 erreurs
+- `git commit` : 87977a9
 - `git push -u origin claude/code-review-improvements-ikvuj` : OK
 
 ### Prochaine action recommandee
@@ -1776,7 +1785,7 @@ Session 2026-06-12 : T21-T29 deployes. T30+T30b+T30c commites et pousses. Health
 
 ### Etat Git (2026-06-12)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `3f408bc`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, SUIVI.md dirty (mise a jour T30c)
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `87977a9`, SUIVI.md dirty
 
 ### Etat Git (2026-06-11)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `eed7d88`, sync origin, clean
