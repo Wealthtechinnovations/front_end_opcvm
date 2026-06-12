@@ -543,6 +543,29 @@
 - **Risque regression**: NUL (ajout de guards uniquement, aucune logique modifiee)
 - **CODE_REVIEW #26**: progression significative (15 pages publiques T30b + 26 pages panel T30d = 41 pages total)
 
+### 2026-06-12 - T35: Module BRVM BOC — VL OPCVM UEMOA (nouveau, additif)
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER + INITIALISER EN PRODUCTION
+- **Contexte**: UEMOA stale depuis 2025-10-15 (111 fonds actifs, 33 830 VL). Le BOC BRVM quotidien publie les VL officielles (sections QUOTIDIENNES/HEBDOMADAIRES/MENSUELLES).
+- **Sources testees**: `bfin.brvm.org/boc/boc_jour.aspx` 200 OK (18 BOC listes), PDF `BOC_YYYYMMDD.pdf` 200 OK. `brvm.org` page VL = 503 anti-bot (source secondaire, non bloquante).
+- **Fichiers crees (API)**:
+  - `scripts/scraper/brvm_boc_daily.py` — scraper/parseur/importeur (~900 lignes, pdfplumber)
+  - `scripts/scraper/requirements_brvm.txt` — requests, pdfplumber, pymysql, rapidfuzz
+  - `scripts/cron/cron_brvm_daily.sh` — wrapper cron (meme pattern que Tunisie), NON installe dans crontab
+  - `src/routes/apibrvmboc.js` — 4 routes GET lecture seule (/api/brvm/boc/status|imports|unmatched|missing)
+- **Fichiers modifies (API)**: `app.js` (+1 ligne enregistrement route), `.gitignore` (+3 lignes data/brvm_boc), `README_DEV.md` (doc module + cron)
+- **Tables additives** (CREATE TABLE IF NOT EXISTS par le script, rien d'existant touche): brvm_boc_sources, brvm_boc_navs_raw, brvm_fund_aliases, brvm_import_logs, brvm_missing_navs
+- **Garanties zero regression**:
+  - Promotion vers `valorisations` UNIQUEMENT si aucune VL existante (fund_id, date) — jamais d'overwrite
+  - Conflit VL existante differente → statut CONFLICT en staging, base intacte
+  - ND officiels jamais inseres comme valeur (is_nd=1, quality ND_OFFICIAL)
+  - Fonds non rapproches → UNMATCHED/AMBIGUOUS, jamais de creation/fusion auto
+  - Rapprochement: alias → exact normalise → fuzzy rapidfuzz (>=93 auto, 85-93 ambigu)
+  - VL date future, negative, variation >50% → rejetees/signalees, pas promues
+  - Date VL reelle conservee (nav_date ≠ boc_date), traçabilite PDF→ligne brute→base
+- **Tests**: selftest OK; dry-run sur BOC 2026-06-10 et 2026-06-04: 115 lignes extraites chacun, 2 echecs residuels (artefacts PDF auditables), 98,3% exploitees; jest 199/199; node -c OK
+- **Modes**: --latest, --date, --start-date/--end-date (backfill avec reprise+throttle+limit), --repair-missing [--apply], --dry-run (defaut)/--production, --no-promote, --force, --selftest
+- **A faire en production**: installer deps Python, dry-run latest, production latest, backfill 2025-10→2026-06, puis installer cron 19h30 (commandes dans POINT DE REPRISE)
+
 ### 2026-06-05 - Diagnostics et audits
 - **B6 (244 VL Nigeria extremes)**: NON ACTIF — ces VL ont ete rejetees a l'import, jamais inserees en base
 - **TUNISIE EUR/USD gap 24%**: BLOQUE — en attente fichier VL corrigees avec dividendes (utilisateur)
@@ -1719,44 +1742,76 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-12 : T21-T29 deployes. T30+T30b+T30c+T30d commites et pousses. A deployer.
+Session 2026-06-12 : T30-T30d deployes et verifies en production (health OK). T35 module BRVM BOC commite et pousse, a deployer + initialiser.
 
 ### Dernier lot termine
-**LOT T30d (2026-06-12)**
-- T30d: Ajout response.ok guards sur 26 pages panel — commit Frontend `87977a9`
-  - investor: reconstruction (8 pages), robot-advisor (3 pages), KYC (4 pages), login (2 pages), create, selected-funds
-  - management: chat, news, pending-funds/details, validated-funds/details
-  - admin: pending-funds/details
-  - data-requester: login (2 pages)
-- Build: 0 erreurs
-- Lots precedents: T30c API (3f408bc), T30b Frontend (7616fce), T30 API (eed7d88)
+**LOT T35 (2026-06-12) — Module BRVM BOC VL OPCVM UEMOA**
+- Diagnostic complet (Lot 1) : sources BRVM testees, base inspectee via PRODUCTION_STATE.json, UEMOA stale 2025-10-15
+- Scraper/parseur/importeur `brvm_boc_daily.py` : extraction 98,3% sur 2 BOC reels, selftest OK
+- Tables additives staging + tracabilite PDF→ligne→base, promotion sans overwrite vers valorisations
+- 4 routes GET supervision lecture seule, jest 199/199
+- Lots precedents : T30d Frontend (87977a9), T30c API (3f408bc)
 
 ### Fichiers modifies dans le dernier lot
-**Frontend**: 26 fichiers panel (voir detail dans T30d ci-dessus)
+**API**: scripts/scraper/brvm_boc_daily.py (nouveau), scripts/scraper/requirements_brvm.txt (nouveau), scripts/cron/cron_brvm_daily.sh (nouveau), src/routes/apibrvmboc.js (nouveau), app.js (+2 lignes), .gitignore (+4 lignes), README_DEV.md (doc module)
 
 ### Commandes executees
-- `npx next build` : 0 erreurs
-- `git commit` : 87977a9
-- `git push -u origin claude/code-review-improvements-ikvuj` : OK
+- Tests sources : curl boc_jour.aspx (200), 2 PDF BOC (200, valides)
+- `python3 scripts/scraper/brvm_boc_daily.py --selftest` : OK
+- Dry-run BOC 2026-06-10 + 2026-06-04 : 115 lignes chacun, 2 echecs residuels
+- `npx jest --forceExit` : 199/199
+- `node -c` app.js + apibrvmboc.js : OK
 
 ### Prochaine action recommandee
-1. **Deployer API + Frontend en production** :
+1. **Deployer l'API** :
    ```bash
    cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
    ```
+2. **Installer les dependances Python du module BRVM** :
    ```bash
-   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
+   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && pip3 install -r scripts/scraper/requirements_brvm.txt
    ```
-2. **Verifier /api/health/detailed** :
+3. **Valider en dry-run (aucune ecriture)** :
    ```bash
-   curl -s https://africafunds.chainsolutions.fr/api/health/detailed | python3 -m json.tool
+   python3 scripts/scraper/brvm_boc_daily.py --selftest
+   python3 scripts/scraper/brvm_boc_daily.py --latest --dry-run
    ```
-3. Taches restantes executables sans risque :
-   - T31: Refactoring panels dupliques (CODE_REVIEW #28, 10K-14K lignes) — large effort
-   - T32: Backfill ClickHouse performance_historique — needs production access
+4. **Premier import reel (cree les tables brvm_*)** :
+   ```bash
+   python3 scripts/scraper/brvm_boc_daily.py --latest --production
+   curl -s https://africafunds.chainsolutions.fr/api/brvm/boc/status | python3 -m json.tool
+   ```
+5. **Backfill du trou UEMOA (2025-10-15 → aujourd'hui), par tranches** :
+   ```bash
+   python3 scripts/scraper/brvm_boc_daily.py --start-date 2025-10-15 --end-date 2026-06-12 --production --throttle 3 --limit 60
+   # relancer la meme commande : reprise automatique (BOC deja parses ignores)
+   ```
+6. **Diagnostic + comblement des manquants** :
+   ```bash
+   python3 scripts/scraper/brvm_boc_daily.py --repair-missing --production            # rapport seul
+   python3 scripts/scraper/brvm_boc_daily.py --repair-missing --apply --production    # insertion VL officielles
+   ```
+7. **Installer le cron (apres validation des etapes 3-4)** :
+   ```bash
+   (crontab -l; echo "30 19 * * 1-5 /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api/scripts/cron/cron_brvm_daily.sh >> /var/log/cron_brvm.log 2>&1") | crontab -
+   crontab -l
+   ```
+8. **Controles SQL** :
+   ```bash
+   mysql -u fund_opcvm -p fund_opcvm -e "SELECT COUNT(*) FROM brvm_boc_sources; SELECT match_status, COUNT(*) FROM brvm_boc_navs_raw GROUP BY match_status; SELECT promote_status, COUNT(*) FROM brvm_boc_navs_raw GROUP BY promote_status;"
+   mysql -u fund_opcvm -p fund_opcvm -e "SELECT f.nom_fond, MAX(v.date) derniere_vl FROM valorisations v JOIN fond_investissements f ON f.id=v.fund_id WHERE f.pays='UEMOA' GROUP BY f.id ORDER BY derniere_vl DESC LIMIT 20;"
+   ```
+9. Taches restantes executables sans risque :
+   - T31: Refactoring panels dupliques (CODE_REVIEW #28) — large effort
+   - T32: Backfill ClickHouse performance_historique
    - T33: Extraction apigestionsavequotidien.js — large effort
    - T34: Frontend tests
-   - Response.ok guards sur panels (auth) — ~120 locations restantes
+   - T35-suite: page admin BRVM BOC frontend (supervision visuelle), validation des UNMATCHED
+
+### Rollback T35 (si besoin)
+- Le module est entierement additif : `git revert` du commit T35 + `pm2 restart api-monolith` suffit
+- Les tables brvm_* peuvent rester (aucun impact sur l'existant) ou etre supprimees : `DROP TABLE brvm_boc_sources, brvm_boc_navs_raw, brvm_fund_aliases, brvm_import_logs, brvm_missing_navs;`
+- Les VL promues sont identifiables : `SELECT * FROM brvm_boc_navs_raw WHERE promote_status='PROMOTED'` (couples fund_id+nav_date supprimables cibles si necessaire)
 
 **En attente (donnees utilisateur) :**
 - TUNISIE EUR/USD gap 24% : attente fichier VL avec dividendes
@@ -1783,9 +1838,9 @@ Session 2026-06-12 : T21-T29 deployes. T30+T30b+T30c+T30d commites et pousses. A
 - Ne PAS modifier les calculs financiers sans diagnostic prealable
 - Ne PAS modifier la base de donnees sans validation Eric
 
-### Etat Git (2026-06-12)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `3f408bc`, sync origin, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `87977a9`, SUIVI.md dirty
+### Etat Git (2026-06-12, T35)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, T35 module BRVM BOC commite/pousse
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, SUIVI.md T35 commite/pousse
 
 ### Etat Git (2026-06-11)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `eed7d88`, sync origin, clean
