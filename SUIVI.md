@@ -524,6 +524,16 @@
 - **Tests**: 199/199 pass (API), Build frontend OK (0 erreurs)
 - **Risque regression**: NUL (ajout de guards uniquement, aucune logique modifiee)
 
+### 2026-06-12 - T30c: Fix dates hardcodees dans 3 fichiers API
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER
+- **Fichiers**: apigestionrendement.js, routes_vl.js, apigestionsavequotidien.js
+- apigestionrendement.js: `calculatejourReturns` utilisait plage fixe ['2023-01-01','2023-12-31'] → fenetre dynamique 2 ans + suppression limit:500
+- routes_vl.js:4811: route `/api/performancesportefeuillewithindice/fond/:id/:categorie/:date` ignorait param `:date`, utilisait "2024-03-22" → `req.params.date`
+- apigestionsavequotidien.js:1452: `processFund` utilisait `[Op.gt]: '2023-12-31'` → fenetre dynamique 2 ans
+- Commit API: `3f408bc`
+- **Tests**: 199/199 pass, syntaxe OK
+- **Risque regression**: FAIBLE (les routes produisent maintenant des resultats corrects au lieu de donnees obsoletes/ignorees)
+
 ### 2026-06-05 - Diagnostics et audits
 - **B6 (244 VL Nigeria extremes)**: NON ACTIF — ces VL ont ete rejetees a l'import, jamais inserees en base
 - **TUNISIE EUR/USD gap 24%**: BLOQUE — en attente fichier VL corrigees avec dividendes (utilisateur)
@@ -1700,18 +1710,25 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-11 : T21-T29 deployes. T30+T30b commites et pousses. Health/detailed fix deploye.
+Session 2026-06-12 : T21-T29 deployes. T30+T30b+T30c commites et pousses. Health/detailed fix deploye.
 
 ### Dernier lot termine
-**LOT T30+T30b (2026-06-11)**
-- T30: Fix asymmetrie newratios2.js (6 fonctions, CODE_REVIEW #37) — commit API `eed7d88`
-- T30b: Ajout response.ok guards sur 15 pages publiques (CODE_REVIEW #26) — commit Frontend `7616fce`
-- Health/detailed fix (commits `7420b67`, `9c0141f`) deploye en production, confirmation en attente
-- Tests: 199/199 pass (API), Build frontend OK (0 erreurs)
+**LOT T30c (2026-06-12)**
+- T30c: Fix dates hardcodees dans 3 fichiers API — commit `3f408bc`
+  - apigestionrendement.js: calculatejourReturns utilisait [Op.between]: ['2023-01-01','2023-12-31'] → fenetre dynamique 2 ans
+  - routes_vl.js:4811: performancesportefeuillewithindice ignorait :date URL param, utilisait "2024-03-22" → req.params.date
+  - apigestionsavequotidien.js:1452: processFund utilisait [Op.gt]: '2023-12-31' → fenetre dynamique 2 ans
+- Tests: 199/199 pass (API), syntaxe OK 3 fichiers
+- Lots precedents: T30 (eed7d88), T30b (7616fce), SUIVI/CODE_REVIEW (c34d7b9)
 
 ### Fichiers modifies dans le dernier lot
-**API**: src/functions/newratios2.js
-**Frontend**: 15 fichiers (countries/[paysId]/FundView.tsx, countries/fund-managers/[fondId]/FundView.tsx, countries/funds/[fondId]/FundView.tsx, countries/statistique/[fondId]/FundView.tsx, fund-managers/[fondId]/FundView.tsx, fund-managers/funds/[fondId]/FundView.tsx, fund-managers/search/FundView.tsx, fund-managers/statistique/[fondId]/FundView.tsx, funds/documents/FundSubView.tsx, funds/download-nav/FundSubView.tsx, funds/history/FundSubView.tsx, funds/portfolio/FundSubView.tsx, funds/summary-eur/FundSubView.tsx, funds/summary-usd/FundSubView.tsx, tools/comparison/comparison-view/page.tsx)
+**API**: src/routes/apigestionrendement.js, src/routes/routes_vl.js, src/routes/apigestionsavequotidien.js
+
+### Commandes executees
+- `node -c` sur 3 fichiers : OK
+- `npx jest --forceExit` : 199/199 pass
+- `git commit` : 3f408bc
+- `git push -u origin claude/code-review-improvements-ikvuj` : OK
 
 ### Prochaine action recommandee
 1. **Deployer API + Frontend en production** :
@@ -1756,6 +1773,10 @@ Session 2026-06-11 : T21-T29 deployes. T30+T30b commites et pousses. Health/deta
 - Ne PAS supposer que tous les fonds Nigeria ont des donnees mai 2026
 - Ne PAS modifier les calculs financiers sans diagnostic prealable
 - Ne PAS modifier la base de donnees sans validation Eric
+
+### Etat Git (2026-06-12)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `3f408bc`, sync origin, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, SUIVI.md dirty (mise a jour T30c)
 
 ### Etat Git (2026-06-11)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `eed7d88`, sync origin, clean
