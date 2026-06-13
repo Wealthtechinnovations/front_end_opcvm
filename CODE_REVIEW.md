@@ -300,12 +300,12 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Priorite: HAUTE — a corriger apres validation Eric (risque de casser les imports cron si auth requise)
 - Note: Les routes admin (`routes_recalc_admin.js`, `routes_vl_admin.js`) utilisent correctement `authenticate`
 
-### 45. Absence de validation CSV (formula injection)
-- Fichier: api_opcv/src/routes/routes_vl.js (l.6294-6487)
-- Probleme: Les cellules CSV importees ne sont pas sanitisees contre l'injection de formules (`=CMD(...)`, `+cmd`, etc.)
-- Impact: Si les donnees sont re-exportees en Excel, execution de code possible cote utilisateur
-- Priorite: MOYENNE
-- Recommandation: Sanitiser les champs texte avec prefixe `'` si commence par `=`, `+`, `@`, `-`
+### 45. ~~Absence de validation CSV (formula injection)~~ — CORRIGE (2026-06-13)
+- Fichiers: api_opcv/src/routes/routes_vl.js (uploadsfilevl, uploadsfileindice, uploadsocietefilenew)
+- Probleme: Cellules CSV/Excel importees sans sanitisation contre injection de formules (`=CMD(...)`, `@SUM`, etc.)
+- Correction: `sanitizeCellValue()` + `sanitizeRow()` ajoutees — strip `\t\r\n` prefix + prepend `'` devant `=` et `@`
+- Commit: `277ae47` (api_opcv)
+- Priorite: MOYENNE — CORRIGE
 
 ### 46. ~~Promise chains sans .catch() dans apigestionperformance.js~~ — CORRIGE (2026-06-13)
 - Fichier: api_opcv/src/routes/apigestionperformance.js

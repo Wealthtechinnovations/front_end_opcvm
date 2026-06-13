@@ -1762,9 +1762,14 @@ Frontend AUDIT-D commit `8a60083` pousse mais pas encore deploye sur VPS (quarti
 - apigestionperformance.js : 11 `.catch()` ajoutes sur routes performances
 - Guard `!res.headersSent` pour eviter double-reponse
 
+**#45 — CSV formula injection** (commit `277ae47`) :
+- routes_vl.js : `sanitizeCellValue()` + `sanitizeRow()` ajoutees
+- Applique a 3 routes upload : uploadsfilevl, uploadsfileindice, uploadsocietefilenew
+- Strip `\t\r\n` + prepend `'` devant `=` et `@`
+
 **LOT DOC-UPDATE** (commit `6cf1cba` frontend, `77577ff` API) :
 - CHANGELOG, ROADMAP, TODO, TASKS mis a jour dans les deux repos
-- CODE_REVIEW.md : items #46, #49, #50 marques CORRIGE
+- CODE_REVIEW.md : items #45, #46, #49, #50 marques CORRIGE
 
 **LOT AUDIT-A (2026-06-13) — DEPLOYE — Audit global + 2 corrections**
 1. `check_cron_health.js` (`23c040f`) : fix `MAX(updatedAt)` (colonne inexistante).
@@ -1884,7 +1889,14 @@ Aucun fichier code (execution production uniquement). SUIVI.md mis a jour.
 - `front_end_opcvm/CODE_REVIEW.md` — items #47 a #51
 
 ### Prochaine action recommandee
-LOTs AUDIT-A a D + CRON-FIX + CATCH-FIX deployes/pousses. 8 items CODE_REVIEW resolus (#42,#43,#46,#47,#48,#49,#50 + classement local).
+LOTs AUDIT-A a D + CRON-FIX + CATCH-FIX + CSV-FIX deployes/pousses. 9 items CODE_REVIEW resolus (#42,#43,#45,#46,#47,#48,#49,#50 + classement local).
+
+**Prochaines actions (par priorite)** :
+1. Deployer sur VPS : frontend AUDIT-D (quartile EUR/USD) + API crons/catch/CSV fixes
+2. #40 : supprimer ghost cron fix-brvm-nginx.py de crontab (validation Eric)
+3. #44 : authenticate middleware POST routes (validation Eric)
+4. T35-suite : page admin supervision BRVM BOC
+5. T31 : refactoring panels dupliques
 
 **PRIORITE 1 — Recuperer les 10 VL EVOLUTIS (LOT B deploye, etape 3 corrigee)** :
 LOT B deploye OK. Etape 1 a identifie 10 boc_date (2022-11-07 a 2022-11-21). Etape 2 (delete staging < 1998) executee. Etape 3 a ete lancee avec le litteral `YYYY-MM-DD` au lieu des vraies dates → 404. **Commande corrigee :**
@@ -1968,9 +1980,13 @@ dans `/api/classementmysql` (apigestionsavequotidien.js). Sinon = comportement a
 - Ne PAS modifier les calculs financiers sans diagnostic prealable
 - Ne PAS modifier la base de donnees sans validation Eric
 
+### Etat Git (2026-06-13, CSV-FIX)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `277ae47` (CSV sanitize), pousse
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, SUIVI+CODE_REVIEW dirty (a commiter)
+
 ### Etat Git (2026-06-13, CRON-FIX + CATCH-FIX)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commits `26d1f93` (crons) + `89cabd4` (.catch), pousses
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `6cf1cba` (docs), SUIVI+CODE_REVIEW dirty
+- **api_opcv**: commits `26d1f93` (crons) + `89cabd4` (.catch), pousses
+- **front_end_opcvm**: commit `6cf1cba` (docs) pousse
 
 ### Etat Git (2026-06-13, LOT DOC-UPDATE)
 - **api_opcv**: commit `77577ff` (docs), pousse
