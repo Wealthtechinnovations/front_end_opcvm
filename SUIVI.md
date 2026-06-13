@@ -1742,15 +1742,15 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-13 : T35 BRVM BOC **BACKFILL HISTORIQUE COMPLET 2022→2026-06-11**. Tous les segments executes avec succes (0 erreur). Crons quotidiens actifs. Repair-missing : 0 VL supplementaire (tout est comble).
+Session 2026-06-13 : T35 backfill historique 2022→2026 termine (1102 BOC, 0 echec, 12 586 VL promues, cron BRVM autonome confirme le 12/06 19h30). **1 anomalie detectee** : VL UEMOA datee 1022-11-04 (artefact PDF). Fix code commite `9d0429d` (pousse), **nettoyage SQL en attente d'execution sur le VPS**.
 
 ### Dernier lot termine
-**LOT T35-hist-exec (2026-06-12 soir → 2026-06-13 00h) — Backfill historique BRVM**
-- 4 segments executes : 2022, 2023, 2024, 2025-01-01→2025-10-14
-- Dernier segment (affiche) : 205 sources, 194 parsees, 19402 lignes, 3441 VL promues, 7359 deja presentes, 71 conflits, SUCCESS
-- Repair-missing final : 69 fonds avec ecarts, 0 VL promues (tout ce qui est promotable l'a ete)
-- Cumul estime tous backfills : **~10 000+ VL UEMOA promues** (2022→2026-06-11)
-- Verification exacte : `curl -s .../api/brvm/boc/status | python3 -m json.tool`
+**LOT T35-date-fix (2026-06-13) — Garde-fou dates aberrantes**
+- Anomalie : `MIN(date)` UEMOA = 1022-11-04 — artefact PDF ("04/11/1022", chiffre corrompu dans un bulletin), passe car quality_check ne bornait que les dates futures
+- Fix : nouveau statut `REJECT_IMPLAUSIBLE_DATE` pour nav_date < 1998-01-01 (creation BRVM) + cas selftest
+- Selftest : OK. Promotion gated sur quality_status='OK' → rejet automatique
+- Commit `9d0429d` pousse (rebase sur snapshots sync_production)
+- Bilan backfill historique : 1102 sources parsees (0 echec), 113 985 lignes staging, 12 586 VL promues, 892 conflits, 4470 UNMATCHED, 1066 AMBIGUOUS
 
 ### Bilan donnees UEMOA apres backfill complet (2022→2026)
 - Couverture 4 ans (2022-01-01 → 2026-06-11), ~10 000+ VL promues
@@ -1800,8 +1800,30 @@ Aucun fichier code (execution production uniquement). SUIVI.md mis a jour.
 | CEMAC | 34 | 2024-12-12 | Stale 18 mois — aucune source automatisee (decision metier en attente) |
 
 ### Prochaine action recommandee
-1. ~~Backfill historique 2022→2025~~ **FAIT (2026-06-12 soir, SUCCESS)**
-2. **Verifier tous les crons** :
+1. **Nettoyer la VL aberrante 1022-11-04 sur le VPS** (diagnostic puis suppression ciblee) :
+   ```bash
+   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+   # Redeployer le fix
+   git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop
+   # Diagnostic : lignes concernees (staging + valorisations)
+   mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
+     SELECT id, boc_date, fund_name_raw, matched_fund_id, nav_date, current_nav, promote_status
+       FROM brvm_boc_navs_raw WHERE nav_date < '1998-01-01';
+     SELECT id, fund_id, fund_name, date, value FROM valorisations WHERE date < '1998-01-01';"
+   # Nettoyage (uniquement les couples promus par le module, tracables)
+   mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
+     DELETE v FROM valorisations v
+       JOIN brvm_boc_navs_raw r ON r.matched_fund_id = v.fund_id AND r.nav_date = v.date
+      WHERE r.promote_status='PROMOTED' AND r.nav_date < '1998-01-01';
+     UPDATE brvm_boc_navs_raw SET promote_status='REJECTED', quality_status='REJECT_IMPLAUSIBLE_DATE'
+      WHERE nav_date < '1998-01-01';"
+   # Verification : MIN(date) UEMOA doit revenir a une valeur plausible (2006+)
+   mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
+     SELECT f.pays, MIN(v.date) premiere, MAX(v.date) derniere FROM valorisations v
+       JOIN fond_investissements f ON f.id=v.fund_id GROUP BY f.pays;"
+   ```
+2. ~~Backfill historique 2022→2025~~ **FAIT (2026-06-12 soir, SUCCESS)**
+3. **Verifier tous les crons** :
    ```bash
    crontab -l
    tail -20 /var/log/cron_tunisie.log /var/log/cron_eur_usd.log /var/log/cron_brvm.log 2>/dev/null
