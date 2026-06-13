@@ -17,12 +17,22 @@
 | T13 | 2026-06-03 | Diagnostic liaison indices↔fonds (couverture indRef EUR/USD) | Diagnostic pret | `e06798b` |
 | T14 | 2026-06-03 | #26 response.ok : 9 pages fonds critiques (672 fetch audites) | Deploye, 9 pages 200 | `4c49a44` |
 | T16 | 2026-06-03 | #26 response.ok : 26 pages secondaires (countries, country-panel, fund-managers) | Deploye, pages 200 | `2814e9a` |
-| T15 | 2026-06-04 | Fix indRef: UEMOA mapping + step4 mul→div | Commite, a deployer+executer | `f6d7cb2` |
+| T15 | 2026-06-04 | Fix indRef: UEMOA mapping + step4 mul→div | Deploye | `f6d7cb2` |
+| T17 | 2026-06-04 | Fix routes_vl.js mul→div (10 lignes, conversion devise) | Deploye | — |
+| T19 | 2026-06-05 | Fix crash EUR/USD className slicedPostc | Deploye | `0dc046b` |
+| T20 | 2026-06-05 | Nigeria mise a jour (82 VL, SEC 2026) | Deploye | — |
+| T35 | 2026-06-12 | Module BRVM BOC + 4406 VL UEMOA + cron | Deploye | `8a3a707` |
+| AUDIT-A | 2026-06-13 | Health check + diagnostic classement local | Diagnostic | — |
+| AUDIT-B | 2026-06-13 | EVOLUTIS VL recovery (salvage_implausible_year) | Deploye | — |
+| AUDIT-C | 2026-06-13 | Securite API (#42 ClickHouse, #43 multer) | Deploye | `e5dddb6` |
+| AUDIT-D | 2026-06-13 | Quartile EUR/USD + worker SQL injection | Deploye (API), a deployer (frontend) | `8a60083` |
 
 ## Prochain lot envisage
 
-- LOT T15 suite : Deployer API commit `f6d7cb2`, executer import_indices step 2+4 UEMOA, recalc TUNISIE, diagnostics SQL
-- LOT T17 : Fix incohérence routes_vl.js:3027-3039 multiplication vs division (#32) — route prod sensible
-- LOT T18 : #28 factoriser duplication panel/investor vs panel/portfolio
+- **Frontend AUDIT-D deploiement** : `npm run build` + `pm2 restart fundafrique-frontend` sur VPS
+- **#49** : cron_daily_update.sh `set -e` → gardes par etape
+- **#46** : .catch() promise chains apigestionperformance.js
+- **T31** : #28 factoriser duplication panel/investor vs panel/portfolio
+- **T35-suite** : page admin supervision BRVM BOC + validation UNMATCHED/AMBIGUOUS
 
 > Pour reprendre : lire SUIVI.md > POINT DE REPRISE COURANT, puis CODE_REVIEW.md.

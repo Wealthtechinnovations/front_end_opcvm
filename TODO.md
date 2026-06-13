@@ -3,33 +3,53 @@
 > Source de verite operationnelle : **SUIVI.md** (ce depot). Dette technique detaillee : **CODE_REVIEW.md**. Vision moyen/long terme : **ROADMAP.md**.
 > Ce fichier est une vue synthetique des actions a court terme. Ne pas dupliquer les details ici.
 
-## Deploye le 2026-06-03
+## Deploye (confirme en production)
 
-- [x] **Deployer API** (commits T8-T11) : `git pull --rebase` + `pm2 restart api-monolith` — FAIT
-- [x] **Recalculer les classements** : `classementmysql` + `classementeur` + `classementusd` — FAIT (type1 OK)
-- [x] **Deployer Frontend** (commits T8-T12) : `git pull --rebase` + `npm run build` + `pm2 restart` — FAIT
-- [x] **Ajouter 2 crons** : `cron_tunisie_daily.sh` (19h L-V) + `cron_health_check.sh` (22h) — FAIT
-- [x] **Classement national type1 confirme OK** en production apres recalcul
+- [x] T8-T12 : classements, securite admin, .catch routes, response.ok critical — 2026-06-03
+- [x] T14 : response.ok 9 pages critiques — 2026-06-03
+- [x] T16 : response.ok 26 pages secondaires — 2026-06-05
+- [x] T15 : indRef UEMOA 100% (111/111 fonds) — 2026-06-04
+- [x] T17 : routes_vl.js multiplication→division (10 lignes) — 2026-06-04
+- [x] T19 : fix crash EUR/USD className — 2026-06-05
+- [x] T20 : Nigeria mise a jour (82 VL) — 2026-06-05
+- [x] T35 : module BRVM BOC + 4406 VL UEMOA + cron_brvm_daily.sh — 2026-06-12
+- [x] AUDIT-C : ClickHouse dead route 410 + path traversal multer fix — 2026-06-13
+- [x] AUDIT-D : quartile EUR/USD null guard + worker SQL injection fix — 2026-06-13 (API deploye, frontend a deployer)
 
-## A deployer (pret, commite, non encore en prod)
+## A deployer sur VPS
 
-- [x] **T14 #26** : 9 pages fonds critiques durci (commit `4c49a44`) — DEPLOYE, 9 pages 200
-- [x] **T16 #26 suite** : 26 pages secondaires durci (commit `2814e9a`). DEPLOYE, pages 200.
-- [ ] **T15 (suite T13)** : corrections indRef EUR/USD — Code commite (`f6d7cb2`), a deployer + executer sur VPS
+- [ ] **Frontend AUDIT-D** : quartile EUR/USD fix (FundSubView.tsx summary-eur + summary-usd) — commit `8a60083`, `npm run build` + `pm2 restart fundafrique-frontend`
 
-## Dette technique a traiter (cf CODE_REVIEW.md)
+## Actions cron (sans risque de regression)
 
-- [ ] #32 — Fix routes_vl.js multiplication→division (route prod sensible, T17)
-- [ ] #28 — Factoriser la duplication panel/investor vs panel/portfolio (~100 pages)
-- [ ] #27 — Script de backfill ClickHouse `performance_historique` (quand ClickHouse en prod)
-- [ ] #2 — Index UNIQUE sur valorisations(fund_id, date) apres nettoyage doublons
-- [ ] #15 — Parametrer les INSERT ClickHouse batch (apigestionsavequotidien.js)
+- [ ] **#49** cron_daily_update.sh : remplacer `set -e` par gardes par etape (risque : pipeline coupe si un curl echoue)
+- [ ] **#50** Ajouter validation HTTP status aux curl dans les crons
+- [ ] **#40** Supprimer ghost cron fix-brvm-nginx.py de la crontab (script absent du VPS)
 
-## Donnees a rafraichir (cf SUIVI.md ETAT PRODUCTION)
+## Dette technique (cf CODE_REVIEW.md)
 
-- [ ] UEMOA : derniere VL 2025-10-15 (scraper BRVM automatise a creer)
-- [ ] CEMAC : derniere VL 2024-12-12 (source COSUMAF a identifier)
+- [ ] #46 — Ajouter .catch() aux promise chains dans apigestionperformance.js
+- [ ] #45 — CSV formula injection sanitisation dans routes upload
+- [ ] #51 — findValueAtDate() fallback silencieux vers premiere VL
+- [ ] #28 — Factoriser duplication panel/investor vs panel/portfolio (~100 pages)
+- [ ] #27 — Backfill ClickHouse `performance_historique`
+- [ ] #15 — Parametrer INSERT ClickHouse batch
+
+## En attente (validation Eric)
+
+- [ ] #44 — authenticate middleware sur routes POST (ajoutVL, uploadsfilevl, postfond, updatefond)
+- [ ] #2 — Index UNIQUE sur valorisations(fund_id, date)
+- [ ] B5 — Securisation ttyd
+- [ ] B6 — Nettoyage 244 VL Nigeria extremes
+
+## Donnees
+
+- [x] UEMOA : **comble** — derniere VL 2026-06-12 (cron BRVM BOC operationnel)
+- [ ] CEMAC : derniere VL 2024-12-12 (source COSUMAF a identifier, 539+ jours stale)
+- [ ] TUNISIE EUR/USD gap 24% : attente fichier VL avec dividendes
+- [ ] Nigeria : SEC a change format, ~195 fonds absents des fichiers recents
 
 ## Surveillance
 
-- [ ] OOM MariaDB 2026-06-02 — surveiller memoire VPS (ClickHouse ~922MB)
+- [ ] OOM MariaDB — surveiller memoire VPS
+- [ ] Crons 4 et 5 (eur_usd 21h30, health 22h) : verifier logs

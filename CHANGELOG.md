@@ -1,5 +1,38 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
+## [2026-06-13] LOT AUDIT-C/D — Audit securite + correctness + crons
+
+### Deploye API (LOT AUDIT-C)
+- **#42** Route ClickHouse `/api/classementquartile/:id` : variable `clickhouse` jamais importee, crash ReferenceError → remplacee par stub 410 Gone (dead code)
+- **#43** Path traversal multer filename (routes_vl.js:332) → ajout `path.basename(file.originalname)`
+- Commit API: `e5dddb6`
+
+### Deploye Frontend (LOT AUDIT-D)
+- **#47** Quartile EUR/USD division par undefined (NaN) → null guard sur FundSubView.tsx (summary-eur + summary-usd)
+- Build frontend : 0 erreurs apres fix. Commit Frontend: `8a60083`
+
+### Deploye API (LOT AUDIT-D)
+- **#48** SQL injection dans worker-recalculation.js : `fund_id` parametrise (etait interpole dans la query)
+- Commit API: `e5dddb6`
+
+### Audit complete documente (CODE_REVIEW #42-#51)
+- #44 Routes POST sans authenticate middleware — a valider avec Eric
+- #45 CSV formula injection — sanitisation a ajouter
+- #46 Promise chains sans .catch() (apigestionperformance.js)
+- #49 cron_daily_update.sh `set -e` stoppe pipeline entier sur moindre erreur
+- #50 Crons curl sans validation HTTP status
+- #51 findValueAtDate() fallback silencieux vers premiere VL
+
+## [2026-06-12] T35 — Module BRVM BOC + backfill UEMOA
+
+### Deploye en production
+- **Module BRVM BOC complet** : scraper PDF BOC BRVM, parseur multi-format, promotion VL, page admin /api/brvm/boc/status
+- **4406 VL promues** pour 111 fonds UEMOA (gap comble depuis 2022)
+- **cron_brvm_daily.sh installe** (lun-ven 19h30) — scraping quotidien automatise
+- EVOLUTIS (fund_id 2594) : 4 VL nov 2022 recuperees via salvage_implausible_year()
+- Commits API: `8a3a707` + precedents T35
+- Tables BRVM ajoutees : brvm_boc_sources, brvm_boc_navs_raw, brvm_fund_aliases, brvm_import_logs, brvm_missing_navs
+
 ## [2026-06-05] T19 deploye + T20 Nigeria mise a jour
 
 ### Deploye en production (T20)

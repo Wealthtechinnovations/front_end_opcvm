@@ -1742,25 +1742,23 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-13 (audit global LOT A + B) : LOT A DEPLOYE en prod et verifie
-(health check sans erreur, frontend build 217 pages, PM2 online). LOT B (sauvetage
-annee BOC) pousse, A DEPLOYER. valorisations PROPRE (0 VL date<1998 confirme prod).
-Crons tous actifs. Tests calculs API 113/113 OK.
-Restant : recuperer 10 VL EVOLUTIS (re-run BOC apres deploy LOT B) ;
-diagnostiquer 22 fonds sans classement local (SENSIBLE).
+Session 2026-06-13 : LOTs AUDIT-A a D tous deployes/pousses. Production stable
+(4 PM2 processes online, 1208 fonds, 981909 VL). EVOLUTIS recovery FAIT (4 VL nov 2022).
+22 fonds classement local RESOLU (17 OK par crons, 5 Nigeria USD attendus).
+Tous fichiers .md mis a jour dans LOT DOC-UPDATE (CHANGELOG, ROADMAP, TODO, TASKS x2).
+Frontend AUDIT-D commit `8a60083` pousse mais pas encore deploye sur VPS (quartile fix).
 
 ### Dernier lot termine
-**LOT AUDIT-B (2026-06-13) — Sauvetage annee nav_date BOC**
-- `api_opcv/scripts/scraper/brvm_boc_daily.py` (commit `4c64432`) :
-  `salvage_implausible_year()` — repare une annee corrompue (<1998, ex 1022→2021)
-  via l'annee du bulletin BOC quand la date corrigee est plausible (≤ date BOC).
-  Applique avant quality_check, trace log, selftest etendu (PASS).
-- Diagnostic prod (sorties utilisateur) :
-  - valorisations : 0 ligne date<1998 → table PROPRE (1022-11-04 du snapshot 00:00
-    etait pre-nettoyage, disparaitra au prochain snapshot)
-  - staging brvm_boc_navs_raw : 10 lignes EVOLUTIS (fund_id 2594) nav_date
-    1022-11-04 / 1022-11-11, toutes REJECTED — recuperables via re-run apres LOT B
-  - User confirme : annee reelle = 2021
+**LOT DOC-UPDATE (2026-06-13) — Mise a jour globale fichiers .md**
+- Fichiers mis a jour :
+  - `front_end_opcvm/CHANGELOG.md` : ajout T35, AUDIT-C, AUDIT-D
+  - `front_end_opcvm/ROADMAP.md` : donnees 981909 VL, crons 8, UEMOA automatise, audit documente
+  - `front_end_opcvm/TODO.md` : items resolus marques, audit items ajoutes, UEMOA comble
+  - `front_end_opcvm/TASKS.md` : lots T17-T35, AUDIT-A a D ajoutes
+  - `api_opcv/CHANGELOG.md` : T35, AUDIT-C/D, T17/T20 ajoutes
+  - `api_opcv/TODO.md` : items resolus marques, crons/dette ajoutes
+  - `api_opcv/TASKS.md` : lots recents mis a jour
+  - `front_end_opcvm/SUIVI.md` : POINT DE REPRISE mis a jour
 
 **LOT AUDIT-A (2026-06-13) — DEPLOYE — Audit global + 2 corrections**
 1. `check_cron_health.js` (`23c040f`) : fix `MAX(updatedAt)` (colonne inexistante).
@@ -1964,9 +1962,13 @@ dans `/api/classementmysql` (apigestionsavequotidien.js). Sinon = comportement a
 - Ne PAS modifier les calculs financiers sans diagnostic prealable
 - Ne PAS modifier la base de donnees sans validation Eric
 
+### Etat Git (2026-06-13, LOT DOC-UPDATE)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, CHANGELOG+TODO+TASKS modifies (a commiter)
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, CHANGELOG+ROADMAP+TODO+TASKS+SUIVI modifies (a commiter)
+
 ### Etat Git (2026-06-13, AUDIT-D)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `e5dddb6`, pousse, clean
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `8a60083`, SUIVI.md + CODE_REVIEW.md dirty (a commiter)
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `8a60083`, SUIVI.md + CODE_REVIEW.md dirty
 
 ### Etat Git (2026-06-12, T35-backfill)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `8a3a707` deploye en prod, clean
