@@ -1797,51 +1797,33 @@ Aucun fichier code (execution production uniquement). SUIVI.md mis a jour.
 | UEMOA | 111 | **2026-06-10** (comble depuis 2022 par backfill T35) | OK (cron BRVM 19h30 installe) |
 | CEMAC | 34 | 2024-12-12 | Stale 18 mois — aucune source automatisee (decision metier en attente) |
 
+### Audit crons (2026-06-13, crontab -l verifie)
+
+| # | Schedule | Script | Statut | Log |
+|---|----------|--------|--------|-----|
+| 1 | `0 19 * * 1-5` | cron_tunisie_daily.sh | OK — execute quotidien | /var/log/cron_tunisie.log |
+| 2 | `30 19 * * 1-5` | cron_brvm_daily.sh | OK — installe session T35 | /var/log/cron_brvm.log |
+| 3 | `0 20 * * 1-5` | cron_daily_update.sh | OK — derniere execution 2026-06-12 20h56 | africafunds_daily_*.log |
+| 4 | `30 21 * * *` | cron_daily_eur_usd.sh | INSTALLE — log vide (a verifier ce soir 21h30) | /var/log/cron_eur_usd.log |
+| 5 | `0 22 * * *` | cron_health_check.sh | INSTALLE — log absent (a verifier ce soir 22h) | /var/log/africafunds_health.log |
+| 6 | `0 10 * * 1` | cron_nigeria_weekly.sh | OK — hebdomadaire lundi 10h | tail -20 du log pour confirmer |
+| 7 | `0 * * * *` | sync_production.sh | OK — horaire, PRODUCTION_STATE.json frais | PRODUCTION_STATE.json |
+| 8 | `*/5 * * * *` | fix-brvm-nginx.py | GHOST — fichier absent sur le VPS (CODE_REVIEW #40) | n/a |
+
+**Actions a verifier :**
+- Demain matin : `tail -20 /var/log/cron_eur_usd.log` (doit montrer execution 21h30)
+- Demain matin : `tail -20 /var/log/africafunds_health.log` (doit montrer execution 22h)
+- Si logs toujours vides : verifier stderr redirect (`2>&1`) dans crontab et que les scripts sont `chmod +x`
+
 ### Prochaine action recommandee
-1. **Nettoyer la VL aberrante 1022-11-04 sur le VPS** (diagnostic puis suppression ciblee) :
-   ```bash
-   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
-   # Redeployer le fix
-   git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop
-   # Diagnostic : lignes concernees (staging + valorisations)
-   mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
-     SELECT id, boc_date, fund_name_raw, matched_fund_id, nav_date, current_nav, promote_status
-       FROM brvm_boc_navs_raw WHERE nav_date < '1998-01-01';
-     SELECT id, fund_id, fund_name, date, value FROM valorisations WHERE date < '1998-01-01';"
-   # Nettoyage (uniquement les couples promus par le module, tracables)
-   mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
-     DELETE v FROM valorisations v
-       JOIN brvm_boc_navs_raw r ON r.matched_fund_id = v.fund_id AND r.nav_date = v.date
-      WHERE r.promote_status='PROMOTED' AND r.nav_date < '1998-01-01';
-     UPDATE brvm_boc_navs_raw SET promote_status='REJECTED', quality_status='REJECT_IMPLAUSIBLE_DATE'
-      WHERE nav_date < '1998-01-01';"
-   # Verification : MIN(date) UEMOA doit revenir a une valeur plausible (2006+)
-   mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
-     SELECT f.pays, MIN(v.date) premiere, MAX(v.date) derniere FROM valorisations v
-       JOIN fond_investissements f ON f.id=v.fund_id GROUP BY f.pays;"
-   ```
-2. ~~Backfill historique 2022→2025~~ **FAIT (2026-06-12 soir, SUCCESS)**
-3. **Verifier tous les crons** :
-   ```bash
-   crontab -l
-   tail -20 /var/log/cron_tunisie.log /var/log/cron_eur_usd.log /var/log/cron_brvm.log 2>/dev/null
-   ls -la /var/log/africafunds_daily_*.log 2>/dev/null | tail -3
-   ```
-3. **Apres le backfill (ou demain matin)** — controle global fraicheur :
-   ```bash
-   curl -s "https://africafunds.chainsolutions.fr/api/brvm/boc/status" | python3 -m json.tool | head -40
-   mysql -u fund_opcvm -p fund_opcvm -e "SELECT f.pays, COUNT(DISTINCT f.id) fonds, MAX(v.date) derniere, COUNT(*) nb_vl FROM valorisations v JOIN fond_investissements f ON f.id=v.fund_id GROUP BY f.pays;"
-   ```
-4. Crons 20h00/21h30 de ce soir recalculent perf + classements sur les nouvelles VL UEMOA
-5. Lundi 19h35 : verifier premier passage autonome du cron BRVM (`tail -50 /var/log/cron_brvm.log`)
-6. T35-suite : page admin supervision BRVM BOC + validation 652 AMBIGUOUS / 1791 UNMATCHED
-7. Taches restantes : T31 (refactoring panels), T32 (backfill ClickHouse), T33 (extraction apigestionsavequotidien), T34 (tests frontend)
-9. Taches restantes executables sans risque :
+1. **Verifier demain matin** les logs cron_eur_usd et cron_health_check (voir commandes ci-dessus)
+2. **Supprimer ghost cron** fix-brvm-nginx.py de la crontab (fichier absent, execution inutile toutes les 5min)
+3. **T35-suite** : page admin supervision BRVM BOC + validation 4470 UNMATCHED + 1066 AMBIGUOUS
+4. Taches restantes executables sans risque :
    - T31: Refactoring panels dupliques (CODE_REVIEW #28) — large effort
    - T32: Backfill ClickHouse performance_historique
    - T33: Extraction apigestionsavequotidien.js — large effort
    - T34: Frontend tests
-   - T35-suite: page admin BRVM BOC frontend (supervision visuelle), validation des UNMATCHED
 
 ### Rollback T35 (si besoin)
 - Le module est entierement additif : `git revert` du commit T35 + `pm2 restart api-monolith` suffit
@@ -1850,7 +1832,7 @@ Aucun fichier code (execution production uniquement). SUIVI.md mis a jour.
 
 **En attente (donnees utilisateur) :**
 - TUNISIE EUR/USD gap 24% : attente fichier VL avec dividendes
-- UEMOA donnees stales 233+ jours : attente fichiers Excel + script Python d'Eric
+- UEMOA Excel : attente fichiers Excel + script Python d'Eric (module BRVM BOC est independant)
 - CEMAC 0% indRef : decision metier (sourcer indice BVMAC)
 
 **En attente (validation Eric) :**
