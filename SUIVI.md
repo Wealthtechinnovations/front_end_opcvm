@@ -1742,37 +1742,38 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-13 (audit global LOT A) : 2 bugs confirmes corriges et pousses
-(health check `updatedAt` + robustesse classement local frontend). Crons tous
-actifs et verifies via logs prod. Build frontend OK. Tests calculs API 113/113 OK.
-2 issues confirmees restantes a traiter en production (UEMOA 1022-11-04 reapparu,
-ecart classement local 3545 vs EUR/USD 3579).
+Session 2026-06-13 (audit global LOT A + B) : LOT A DEPLOYE en prod et verifie
+(health check sans erreur, frontend build 217 pages, PM2 online). LOT B (sauvetage
+annee BOC) pousse, A DEPLOYER. valorisations PROPRE (0 VL date<1998 confirme prod).
+Crons tous actifs. Tests calculs API 113/113 OK.
+Restant : recuperer 10 VL EVOLUTIS (re-run BOC apres deploy LOT B) ;
+diagnostiquer 22 fonds sans classement local (SENSIBLE).
 
 ### Dernier lot termine
-**LOT AUDIT-A (2026-06-13) — Audit global + 2 corrections confirmees**
+**LOT AUDIT-B (2026-06-13) — Sauvetage annee nav_date BOC**
+- `api_opcv/scripts/scraper/brvm_boc_daily.py` (commit `4c64432`) :
+  `salvage_implausible_year()` — repare une annee corrompue (<1998, ex 1022→2021)
+  via l'annee du bulletin BOC quand la date corrigee est plausible (≤ date BOC).
+  Applique avant quality_check, trace log, selftest etendu (PASS).
+- Diagnostic prod (sorties utilisateur) :
+  - valorisations : 0 ligne date<1998 → table PROPRE (1022-11-04 du snapshot 00:00
+    etait pre-nettoyage, disparaitra au prochain snapshot)
+  - staging brvm_boc_navs_raw : 10 lignes EVOLUTIS (fund_id 2594) nav_date
+    1022-11-04 / 1022-11-11, toutes REJECTED — recuperables via re-run apres LOT B
+  - User confirme : annee reelle = 2021
 
-Corrige + pousse :
-1. `api_opcv/scripts/monitoring/check_cron_health.js` (commit `23c040f`) :
-   `SELECT MAX(updatedAt) FROM classementfonds` echouait (table sans colonne
-   temporelle, timestamps:false) → ERREUR a chaque run du health check.
-   Remplace par comptage peuplement + fraicheur derivee de performences.date.
-2. `front_end_opcvm/src/app/funds/[fondId]/FundView.tsx` (commit `878bf16`) :
-   page fonds devise locale — `getclassement()` retournait undefined dans le catch
-   (vs null EUR/USD) + calcul quartile sans optional chaining sur classementType1.
-   Alignement sur le pattern EUR/USD. Build Next.js OK.
-
-Verifications crons prod (logs reels fournis par l'utilisateur) :
-- cron_tunisie (19h), cron_brvm (19h30), cron_daily (20h), cron_eur_usd (21h30,
-  perf+classements EUR/USD finishrank OK), health_check (22h), sync (horaire) : tous OK
-- Ghost cron fix-brvm-nginx.py : fichier absent (log 0 octet) — a retirer de crontab
-
-Investigation classement local (2 agents) — root cause confirmee :
-- Page locale appelle `/api/classementquartilemysql/:id` (MySQL, fonctionne)
-- Route morte `/api/classementquartile/:id` (ligne 81 apigestionquartile.js) :
-  interroge ClickHouse (non installe) + param `?` non lie → retourne {} —
-  NON utilisee par le frontend (dead code, a documenter, ne pas activer)
-- Ecart 3545 (local) vs 3579 (EUR/USD) : ~34 fonds sans ligne classement local.
-  Cause exacte a VERIFIER en prod avant tout fix (SENSIBLE: calcul classements).
+**LOT AUDIT-A (2026-06-13) — DEPLOYE — Audit global + 2 corrections**
+1. `check_cron_health.js` (`23c040f`) : fix `MAX(updatedAt)` (colonne inexistante).
+   Verifie en prod : health check finit SANS erreur ("Classements local 3545/1193").
+2. `FundView.tsx` local (`878bf16`) : `return null` catch + optional chaining quartile.
+   Build prod OK, PM2 fundafrique-frontend restart OK.
+- Crons verifies via logs reels : tunisie/brvm/daily/eur_usd/health/sync tous OK.
+- Ghost cron fix-brvm-nginx.py : fichier absent — a retirer de crontab.
+- Route morte `/api/classementquartile/:id` (ClickHouse, param non lie) : dead code,
+  non utilisee par le frontend (local utilise `classementquartilemysql`).
+- Ecart classement local : 22 fonds presents en EUR mais absents en local
+  (648,727,731,842,1074,1210,1554,1564,2860,2862,2869-2880). A diagnostiquer
+  (perf locale ? categorie ?) AVANT tout fix — SENSIBLE (calcul classements).
 
 ### Bilan donnees UEMOA apres backfill complet (2022→2026)
 - Couverture 4 ans (2022-01-01 → 2026-06-11), ~10 000+ VL promues
@@ -1840,47 +1841,51 @@ Aucun fichier code (execution production uniquement). SUIVI.md mis a jour.
 - Si logs toujours vides : verifier stderr redirect (`2>&1`) dans crontab et que les scripts sont `chmod +x`
 
 ### Prochaine action recommandee
-**PRIORITE 1 — Deployer LOT AUDIT-A (health check + classement local)** :
+LOT A DEPLOYE OK. LOT B (sauvetage annee BOC) pousse, a deployer + recuperer EVOLUTIS.
+
+**PRIORITE 1 — Deployer LOT B + recuperer les 10 VL EVOLUTIS** :
 ```bash
-# API
 cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
 git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop
 pm2 restart api-monolith
-node scripts/monitoring/check_cron_health.js   # doit finir SANS "ERREUR: Unknown column"
-# Frontend
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend
-git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop
-npm run build && pm2 restart fundafrique-frontend
-```
-
-**PRIORITE 2 — Diagnostic UEMOA 1022-11-04 (REAPPARU dans snapshot 00:00)** :
-Le nettoyage precedent n'a pas persiste OU d'autres lignes aberrantes existent.
-```bash
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+python3 scripts/scraper/brvm_boc_daily.py --selftest   # doit afficher SELFTEST OK
+# 1) recuperer les boc_date des 10 lignes parasites
 mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
-  SELECT v.id, v.fund_id, v.fund_name, v.date, v.value
-    FROM valorisations v WHERE v.date < '1998-01-01' ORDER BY v.date;
-  SELECT id, fund_name_raw, matched_fund_id, nav_date, promote_status, quality_status
-    FROM brvm_boc_navs_raw WHERE nav_date < '1998-01-01';"
+  SELECT DISTINCT boc_date FROM brvm_boc_navs_raw WHERE nav_date < '1998-01-01';"
+# 2) supprimer les 10 lignes parasites (deja REJECTED, aucune VL en valorisations)
+mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
+  DELETE FROM brvm_boc_navs_raw WHERE nav_date < '1998-01-01';"
+# 3) re-parser chaque boc_date trouvee en (1) : le salvage corrige 1022->2021 et promeut
+#    Remplacer YYYY-MM-DD par chaque date de l'etape (1)
+python3 scripts/scraper/brvm_boc_daily.py --date YYYY-MM-DD --production --force
+# 4) verifier la recuperation (EVOLUTIS = fund_id 2594)
+mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
+  SELECT date, value FROM valorisations WHERE fund_id=2594 AND date BETWEEN '2021-11-01' AND '2021-11-30';"
 ```
-A renvoyer pour decider du nettoyage cible (NE PAS supprimer a l'aveugle).
+A renvoyer : sortie etape (1) + (4).
 
-**PRIORITE 3 — Diagnostic ecart classement local (3545 vs 3579)** :
-Identifier les ~34 fonds sans ligne classementfonds mais presents en EUR/USD.
+**PRIORITE 2 — Diagnostic ecart classement local (22 fonds sans classement local)** :
+Caracteriser les 22 fonds (ont-ils perf locale + categorie ?) AVANT tout fix.
 ```bash
 mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
-  SELECT e.fond_id FROM classementfonds_eurs e
-   LEFT JOIN classementfonds l ON l.fond_id=e.fond_id AND l.type_classement=e.type_classement
-   WHERE l.fond_id IS NULL GROUP BY e.fond_id;
-  SELECT 'local' t, COUNT(*) FROM classementfonds
-   UNION SELECT 'eur', COUNT(*) FROM classementfonds_eurs
-   UNION SELECT 'usd', COUNT(*) FROM classementfonds_usds;"
+  SELECT f.id, f.pays, f.dev_libelle,
+         (SELECT COUNT(*) FROM performences p WHERE p.fond_id=f.id) AS perf_local,
+         (SELECT categorie_nationale FROM performences p WHERE p.fond_id=f.id ORDER BY date DESC LIMIT 1) AS cat_nat,
+         (SELECT COUNT(*) FROM performences_eurs pe WHERE pe.fond_id=f.id) AS perf_eur
+    FROM fond_investissements f
+   WHERE f.id IN (648,727,731,842,1074,1210,1554,1564,2860,2862,2869,2870,2871,2872,2873,2874,2875,2876,2877,2878,2879,2880);"
 ```
-A renvoyer avant tout fix (SENSIBLE : logique de calcul des classements).
+A renvoyer. Si perf_local>0 + cat_nat non NULL mais pas de classement → bug a corriger
+dans `/api/classementmysql` (apigestionsavequotidien.js). Sinon = comportement attendu.
 
-**PRIORITE 4 — Nettoyages bas risque** :
+**PRIORITE 3 — Nettoyages bas risque** :
 - Supprimer ghost cron fix-brvm-nginx.py de la crontab (fichier absent)
 - Documenter route morte `/api/classementquartile/:id` (ClickHouse, non utilisee)
+
+**A investiguer (signale par le health check)** :
+- "1 fonds avec perf recente (7j)" : performences.date majoritairement ancienne
+  (MAX=2026-06-11 mais 1 seul fonds <7j). Probablement semantique de la colonne date
+  (date VL de reference, pas date de calcul) — pre-existant, a confirmer, non bloquant.
 
 **Taches de fond restantes** :
 - T35-suite: page admin supervision BRVM BOC + validation 4470 UNMATCHED / 1066 AMBIGUOUS
