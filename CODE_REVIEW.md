@@ -278,3 +278,37 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Impact: Pages dashboard, favorites, selected-funds, reconstruction accessibles sans authentification
 - Correction: Ajout des 2 paths avec allowedTypes: [1] (investor)
 - Commit Frontend: `71b791b`
+
+### 42. ~~Route ClickHouse /api/classementquartile/:id — crash systematique~~ — CORRIGE (audit 2026-06-13)
+- Fichier: api_opcv/src/routes/apigestionquartile.js (ligne 81-141)
+- Probleme: `clickhouse` jamais importe ni initialise — tout appel crashait avec ReferenceError. Parametres `?` non lies (SQL injection potentielle si ClickHouse etait connecte).
+- Impact: Route morte, non utilisee par le frontend (qui utilise `/api/classementquartilemysql/:id`), mais crash serveur si appelee directement
+- Correction: Remplacement par un handler 410 Gone renvoyant vers la route MySQL
+- Priorite: BASSE (dead code)
+
+### 43. ~~Path traversal dans multer filename~~ — CORRIGE (audit 2026-06-13)
+- Fichier: api_opcv/src/routes/routes_vl.js (ligne 332)
+- Probleme: `file.originalname` utilise tel quel dans le nom de fichier — un attaquant peut injecter `../../etc/cron.d/malicious`
+- Correction: Ajout `path.basename(file.originalname)` pour ne garder que le nom de fichier
+- Priorite: HAUTE
+
+### 44. Routes d'ecriture sans middleware authenticate
+- Fichiers: api_opcv/src/routes/routes_vl.js
+- Routes concernees: `/api/ajoutVL/:id` (l.6055), `/api/uploadsfilevl/:id` (l.6294), `/api/uploadsfileindice/:id` (l.6487), `/api/postfond` (l.5767), `/api/updatefond/:id` (l.5685)
+- Probleme: Le middleware `authenticate` est importe mais pas applique sur ces routes POST sensibles
+- Impact: Toute requete non authentifiee peut modifier les donnees fonds/VL
+- Priorite: HAUTE — a corriger apres validation Eric (risque de casser les imports cron si auth requise)
+- Note: Les routes admin (`routes_recalc_admin.js`, `routes_vl_admin.js`) utilisent correctement `authenticate`
+
+### 45. Absence de validation CSV (formula injection)
+- Fichier: api_opcv/src/routes/routes_vl.js (l.6294-6487)
+- Probleme: Les cellules CSV importees ne sont pas sanitisees contre l'injection de formules (`=CMD(...)`, `+cmd`, etc.)
+- Impact: Si les donnees sont re-exportees en Excel, execution de code possible cote utilisateur
+- Priorite: MOYENNE
+- Recommandation: Sanitiser les champs texte avec prefixe `'` si commence par `=`, `+`, `@`, `-`
+
+### 46. Promise chains sans .catch() dans apigestionperformance.js
+- Fichier: api_opcv/src/routes/apigestionperformance.js
+- Probleme: Plusieurs routes utilisent `.then()` sans `.catch()` — unhandled promise rejection
+- Impact: Crash serveur sur erreur DB
+- Priorite: MOYENNE

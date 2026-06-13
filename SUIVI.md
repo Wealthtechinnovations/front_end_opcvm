@@ -1840,29 +1840,34 @@ Aucun fichier code (execution production uniquement). SUIVI.md mis a jour.
 - Demain matin : `tail -20 /var/log/africafunds_health.log` (doit montrer execution 22h)
 - Si logs toujours vides : verifier stderr redirect (`2>&1`) dans crontab et que les scripts sont `chmod +x`
 
-### Prochaine action recommandee
-LOT A DEPLOYE OK. LOT B (sauvetage annee BOC) pousse, a deployer + recuperer EVOLUTIS.
+### LOT AUDIT-C — Audit securite API + corrections (2026-06-13)
+- **Audit securite/correctness des routes API** : 5 issues identifies, 2 corriges
+- ~~#42~~ Route ClickHouse `/api/classementquartile/:id` : `clickhouse` jamais importe, crash ReferenceError → remplacee par 410 Gone (dead code)
+- ~~#43~~ Path traversal multer filename (routes_vl.js:332) → ajout `path.basename()`
+- #44 Routes POST sans `authenticate` middleware (ajoutVL, uploadsfilevl, postfond, updatefond) — a valider avec Eric
+- #45 CSV formula injection — sanitisation a ajouter
+- #46 Promise chains sans .catch() (apigestionperformance.js)
+- **Fichiers modifies** : `api_opcv/src/routes/apigestionquartile.js`, `api_opcv/src/routes/routes_vl.js`
+- **Audit logique classement local** : analyse du code population classementfonds (apigestionsavequotidien.js + ranking.service.js)
+  - Fund doit avoir VL + performance avec categorie non NULL → diagnostic SQL a executer
+- **CODE_REVIEW.md** mis a jour (items #42 a #46)
 
-**PRIORITE 1 — Deployer LOT B + recuperer les 10 VL EVOLUTIS** :
+### Prochaine action recommandee
+LOT A+B DEPLOYES. LOT C (audit securite) pret a deployer.
+
+**PRIORITE 1 — Recuperer les 10 VL EVOLUTIS (LOT B deploye, etape 3 corrigee)** :
+LOT B deploye OK. Etape 1 a identifie 10 boc_date (2022-11-07 a 2022-11-21). Etape 2 (delete staging < 1998) executee. Etape 3 a ete lancee avec le litteral `YYYY-MM-DD` au lieu des vraies dates → 404. **Commande corrigee :**
 ```bash
 cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
-git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop
-pm2 restart api-monolith
-python3 scripts/scraper/brvm_boc_daily.py --selftest   # doit afficher SELFTEST OK
-# 1) recuperer les boc_date des 10 lignes parasites
+for d in 2022-11-07 2022-11-08 2022-11-09 2022-11-10 2022-11-11 2022-11-14 2022-11-16 2022-11-17 2022-11-18 2022-11-21; do
+  echo "=== Parsing BOC $d ==="
+  python3 scripts/scraper/brvm_boc_daily.py --date $d --production --force
+done
+# Verifier la recuperation (EVOLUTIS = fund_id 2594)
 mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
-  SELECT DISTINCT boc_date FROM brvm_boc_navs_raw WHERE nav_date < '1998-01-01';"
-# 2) supprimer les 10 lignes parasites (deja REJECTED, aucune VL en valorisations)
-mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
-  DELETE FROM brvm_boc_navs_raw WHERE nav_date < '1998-01-01';"
-# 3) re-parser chaque boc_date trouvee en (1) : le salvage corrige 1022->2021 et promeut
-#    Remplacer YYYY-MM-DD par chaque date de l'etape (1)
-python3 scripts/scraper/brvm_boc_daily.py --date YYYY-MM-DD --production --force
-# 4) verifier la recuperation (EVOLUTIS = fund_id 2594)
-mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
-  SELECT date, value FROM valorisations WHERE fund_id=2594 AND date BETWEEN '2021-11-01' AND '2021-11-30';"
+  SELECT date, value, fund_name FROM valorisations WHERE fund_id=2594 AND date BETWEEN '2022-11-01' AND '2022-11-30' ORDER BY date;"
 ```
-A renvoyer : sortie etape (1) + (4).
+A renvoyer : sortie de la boucle + resultat verification.
 
 **PRIORITE 2 — Diagnostic ecart classement local (22 fonds sans classement local)** :
 Caracteriser les 22 fonds (ont-ils perf locale + categorie ?) AVANT tout fix.
@@ -1921,6 +1926,10 @@ dans `/api/classementmysql` (apigestionsavequotidien.js). Sinon = comportement a
 - Ne PAS supposer que tous les fonds Nigeria ont des donnees mai 2026
 - Ne PAS modifier les calculs financiers sans diagnostic prealable
 - Ne PAS modifier la base de donnees sans validation Eric
+
+### Etat Git (2026-06-13, AUDIT-C)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, 2 fichiers modifies (apigestionquartile.js, routes_vl.js) — a commiter/pousser
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, SUIVI.md + CODE_REVIEW.md modifies — a commiter/pousser
 
 ### Etat Git (2026-06-12, T35-backfill)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `8a3a707` deploye en prod, clean
