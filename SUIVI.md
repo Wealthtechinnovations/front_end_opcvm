@@ -1742,15 +1742,13 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-13 : T35 backfill historique 2022→2026 termine (1102 BOC, 0 echec, 12 586 VL promues, cron BRVM autonome confirme le 12/06 19h30). **1 anomalie detectee** : VL UEMOA datee 1022-11-04 (artefact PDF). Fix code commite `9d0429d` (pousse), **nettoyage SQL en attente d'execution sur le VPS**.
+Session 2026-06-13 : T35 BRVM BOC complet et sain. Backfill 2022→2026 execute, anomalie 1022-11-04 nettoyee (2 VL EVOLUTIS supprimees, 10 lignes staging rejetees). Guard-fou code deploye (`9d0429d`). MIN(date) UEMOA = 2006-04-01 (correct). Tous les crons actifs.
 
 ### Dernier lot termine
-**LOT T35-date-fix (2026-06-13) — Garde-fou dates aberrantes**
-- Anomalie : `MIN(date)` UEMOA = 1022-11-04 — artefact PDF ("04/11/1022", chiffre corrompu dans un bulletin), passe car quality_check ne bornait que les dates futures
-- Fix : nouveau statut `REJECT_IMPLAUSIBLE_DATE` pour nav_date < 1998-01-01 (creation BRVM) + cas selftest
-- Selftest : OK. Promotion gated sur quality_status='OK' → rejet automatique
-- Commit `9d0429d` pousse (rebase sur snapshots sync_production)
-- Bilan backfill historique : 1102 sources parsees (0 echec), 113 985 lignes staging, 12 586 VL promues, 892 conflits, 4470 UNMATCHED, 1066 AMBIGUOUS
+**LOT T35-date-cleanup (2026-06-13) — Nettoyage VL aberrantes + verification**
+- Diagnostic : 10 lignes staging EVOLUTIS (fund_id 2594) avec nav_date 1022-xx-xx, 2 promues en valorisations
+- Nettoyage : DELETE 2 VL valorisations + UPDATE 10 lignes staging (promote_status=REJECTED, quality_status=REJECT_IMPLAUSIBLE_DATE)
+- Verification : MIN(date) UEMOA = 2006-04-01 ✓, tous les autres pays inchanges
 
 ### Bilan donnees UEMOA apres backfill complet (2022→2026)
 - Couverture 4 ans (2022-01-01 → 2026-06-11), ~10 000+ VL promues
