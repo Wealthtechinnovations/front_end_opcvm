@@ -1852,8 +1852,35 @@ Aucun fichier code (execution production uniquement). SUIVI.md mis a jour.
   - Fund doit avoir VL + performance avec categorie non NULL → diagnostic SQL a executer
 - **CODE_REVIEW.md** mis a jour (items #42 a #46)
 
+### LOT AUDIT-D — Audit complet (performances, frontend, workers, crons) + corrections (2026-06-13)
+
+**Audit performances** :
+- Formules correctes : `(current - previous) / previous * 100`
+- Conversion EUR/USD : **DIVISION** confirmee (correct)
+- findValueAtDate() : fallback silencieux vers premiere VL si date cible absente (CODE_REVIEW #51)
+- EUR/USD ne calcule pas 8A/10A (inconsistance mineure avec local)
+
+**Audit frontend** :
+- ~~#47~~ CORRIGE : Quartile EUR/USD division par undefined (meme bug que local)
+- Patterns `.then()` sans `.catch()` dans plusieurs composants
+- SweetAlert loading jamais ferme si API echoue
+- Build frontend : 0 erreurs apres fix
+
+**Audit workers/crons** :
+- ~~#48~~ CORRIGE : SQL injection dans worker-recalculation.js (fond_id parametrise)
+- #49 : cron_daily_update.sh `set -e` stoppe le pipeline entier sur moindre erreur
+- #50 : crons curl sans validation HTTP status
+- worker-scheduler.js : desactive (crons via crontab), scheduling naif (pas de persistence)
+- executeRendements() : stub non implemente (job complete sans action)
+
+**Fichiers modifies** :
+- `front_end_opcvm/src/app/funds/summary-eur/[fondId]/FundSubView.tsx` — quartile guard
+- `front_end_opcvm/src/app/funds/summary-usd/[fondId]/FundSubView.tsx` — quartile guard
+- `api_opcv/src/workers/worker-recalculation.js` — SQL parametrise
+- `front_end_opcvm/CODE_REVIEW.md` — items #47 a #51
+
 ### Prochaine action recommandee
-EVOLUTIS RECUPERE (4 VL nov 2022 promues via salvage). LOT C deploye en prod.
+LOT A-D DEPLOYES/POUSSES. Audit complet TERMINE.
 
 **PRIORITE 1 — Recuperer les 10 VL EVOLUTIS (LOT B deploye, etape 3 corrigee)** :
 LOT B deploye OK. Etape 1 a identifie 10 boc_date (2022-11-07 a 2022-11-21). Etape 2 (delete staging < 1998) executee. Etape 3 a ete lancee avec le litteral `YYYY-MM-DD` au lieu des vraies dates → 404. **Commande corrigee :**
@@ -1937,9 +1964,9 @@ dans `/api/classementmysql` (apigestionsavequotidien.js). Sinon = comportement a
 - Ne PAS modifier les calculs financiers sans diagnostic prealable
 - Ne PAS modifier la base de donnees sans validation Eric
 
-### Etat Git (2026-06-13, AUDIT-C)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, 2 fichiers modifies (apigestionquartile.js, routes_vl.js) — a commiter/pousser
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, SUIVI.md + CODE_REVIEW.md modifies — a commiter/pousser
+### Etat Git (2026-06-13, AUDIT-D)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `e5dddb6`, pousse, clean
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `8a60083`, SUIVI.md + CODE_REVIEW.md dirty (a commiter)
 
 ### Etat Git (2026-06-12, T35-backfill)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `8a3a707` deploye en prod, clean

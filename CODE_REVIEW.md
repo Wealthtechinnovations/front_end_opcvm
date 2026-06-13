@@ -312,3 +312,37 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Probleme: Plusieurs routes utilisent `.then()` sans `.catch()` — unhandled promise rejection
 - Impact: Crash serveur sur erreur DB
 - Priorite: MOYENNE
+
+### 47. ~~Quartile EUR/USD division par undefined~~ — CORRIGE (audit 2026-06-13)
+- Fichiers: front_end_opcvm/src/app/funds/summary-eur/[fondId]/FundSubView.tsx (l.631)
+            front_end_opcvm/src/app/funds/summary-usd/[fondId]/FundSubView.tsx (l.633)
+- Probleme: Meme bug que #41 (FundView.tsx local) — Math.ceil(undefined/undefined*4) → NaN
+- Correction: Guard ternaire avec null fallback
+- Priorite: CRITIQUE — CORRIGE
+
+### 48. ~~SQL injection worker-recalculation.js~~ — CORRIGE (audit 2026-06-13)
+- Fichier: api_opcv/src/workers/worker-recalculation.js (l.233)
+- Probleme: `fund_id = ${parseInt(job.fond_id)}` — interpolation directe dans SQL
+- Correction: Requete parametree avec ? placeholder
+- Priorite: HAUTE — CORRIGE
+
+### 49. Cron set -e stoppe le pipeline entier
+- Fichier: api_opcv/scripts/cron/cron_daily_update.sh (l.2)
+- Probleme: `set -e` fait que la moindre erreur stoppe les 9 etapes
+- Impact: Si scrape ASFIM echoue, forex+perf+classements ne tournent pas
+- Priorite: HAUTE
+- Recommandation: Remplacer par guards `|| true` par etape avec log d'erreur
+
+### 50. Crons curl sans validation HTTP status
+- Fichier: api_opcv/scripts/cron/cron_daily_update.sh (l.62-84)
+- Probleme: `curl -s localhost:3005/api/...` sans verifier le code retour HTTP
+- Impact: Echecs silencieux, pas de log d'erreur
+- Priorite: HAUTE
+- Recommandation: Utiliser `curl -f -w "%{http_code}"` et verifier le code retour
+
+### 51. Performance fallback silencieux (findValueAtDate)
+- Fichier: api_opcv/scripts/fix/fix_populate_performances.js (l.48-66)
+- Probleme: Si aucune VL n'existe a/avant la date cible, retourne la premiere VL de la serie au lieu de null
+- Impact: Perf 3A/5A calculee contre une baseline trop ancienne sans avertissement
+- Priorite: MOYENNE
+- Note: Comportement existant depuis longtemps, changement = risque de regression sur les calculs
