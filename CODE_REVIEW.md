@@ -307,11 +307,12 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Priorite: MOYENNE
 - Recommandation: Sanitiser les champs texte avec prefixe `'` si commence par `=`, `+`, `@`, `-`
 
-### 46. Promise chains sans .catch() dans apigestionperformance.js
+### 46. ~~Promise chains sans .catch() dans apigestionperformance.js~~ — CORRIGE (2026-06-13)
 - Fichier: api_opcv/src/routes/apigestionperformance.js
-- Probleme: Plusieurs routes utilisent `.then()` sans `.catch()` — unhandled promise rejection
-- Impact: Crash serveur sur erreur DB
-- Priorite: MOYENNE
+- Probleme: 11 routes utilisent `.then()` sans `.catch()` — unhandled promise rejection, requetes qui hangent
+- Correction: `.catch()` ajoute a chaque chaine avec guard `!res.headersSent`
+- Commit: `89cabd4` (api_opcv)
+- Priorite: MOYENNE — CORRIGE
 
 ### 47. ~~Quartile EUR/USD division par undefined~~ — CORRIGE (audit 2026-06-13)
 - Fichiers: front_end_opcvm/src/app/funds/summary-eur/[fondId]/FundSubView.tsx (l.631)
@@ -326,19 +327,19 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Correction: Requete parametree avec ? placeholder
 - Priorite: HAUTE — CORRIGE
 
-### 49. Cron set -e stoppe le pipeline entier
-- Fichier: api_opcv/scripts/cron/cron_daily_update.sh (l.2)
+### 49. ~~Cron set -e stoppe le pipeline entier~~ — CORRIGE (2026-06-13)
+- Fichiers: 6 scripts dans api_opcv/scripts/cron/ (daily_update, eur_usd, nigeria, tunisie, brvm, health_check)
 - Probleme: `set -e` fait que la moindre erreur stoppe les 9 etapes
-- Impact: Si scrape ASFIM echoue, forex+perf+classements ne tournent pas
-- Priorite: HAUTE
-- Recommandation: Remplacer par guards `|| true` par etape avec log d'erreur
+- Correction: `set -e` supprime, fonctions `run_step()` et `run_curl()` avec compteur d'erreurs et log par etape
+- Commit: `26d1f93` (api_opcv)
+- Priorite: HAUTE — CORRIGE
 
-### 50. Crons curl sans validation HTTP status
-- Fichier: api_opcv/scripts/cron/cron_daily_update.sh (l.62-84)
+### 50. ~~Crons curl sans validation HTTP status~~ — CORRIGE (2026-06-13)
+- Fichiers: cron_daily_update.sh, cron_daily_eur_usd.sh, cron_nigeria_weekly.sh
 - Probleme: `curl -s localhost:3005/api/...` sans verifier le code retour HTTP
-- Impact: Echecs silencieux, pas de log d'erreur
-- Priorite: HAUTE
-- Recommandation: Utiliser `curl -f -w "%{http_code}"` et verifier le code retour
+- Correction: `run_curl()` verifie HTTP 2xx, log erreur si non, compteur d'erreurs en fin de script
+- Commit: `26d1f93` (api_opcv)
+- Priorite: HAUTE — CORRIGE
 
 ### 51. Performance fallback silencieux (findValueAtDate)
 - Fichier: api_opcv/scripts/fix/fix_populate_performances.js (l.48-66)

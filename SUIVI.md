@@ -1749,16 +1749,22 @@ Tous fichiers .md mis a jour dans LOT DOC-UPDATE (CHANGELOG, ROADMAP, TODO, TASK
 Frontend AUDIT-D commit `8a60083` pousse mais pas encore deploye sur VPS (quartile fix).
 
 ### Dernier lot termine
-**LOT DOC-UPDATE (2026-06-13) — Mise a jour globale fichiers .md**
-- Fichiers mis a jour :
-  - `front_end_opcvm/CHANGELOG.md` : ajout T35, AUDIT-C, AUDIT-D
-  - `front_end_opcvm/ROADMAP.md` : donnees 981909 VL, crons 8, UEMOA automatise, audit documente
-  - `front_end_opcvm/TODO.md` : items resolus marques, audit items ajoutes, UEMOA comble
-  - `front_end_opcvm/TASKS.md` : lots T17-T35, AUDIT-A a D ajoutes
-  - `api_opcv/CHANGELOG.md` : T35, AUDIT-C/D, T17/T20 ajoutes
-  - `api_opcv/TODO.md` : items resolus marques, crons/dette ajoutes
-  - `api_opcv/TASKS.md` : lots recents mis a jour
-  - `front_end_opcvm/SUIVI.md` : POINT DE REPRISE mis a jour
+**LOT CRON-FIX + CATCH-FIX (2026-06-13) — Corrections crons + promise chains**
+
+**#49 + #50 — Crons resilients** (commit `26d1f93`) :
+- 6 scripts cron : `set -e` supprime
+- cron_daily_update.sh : refactoring complet avec `run_step()` + `run_curl()` + compteur erreurs + validation HTTP
+- cron_daily_eur_usd.sh : curl HTTP status, compteur erreurs
+- cron_nigeria_weekly.sh : meme pattern, CSV absent → skip import, continue recalculs
+- cron_tunisie_daily.sh, cron_brvm_daily.sh, cron_health_check.sh : `set -e` supprime
+
+**#46 — Promise .catch()** (commit `89cabd4`) :
+- apigestionperformance.js : 11 `.catch()` ajoutes sur routes performances
+- Guard `!res.headersSent` pour eviter double-reponse
+
+**LOT DOC-UPDATE** (commit `6cf1cba` frontend, `77577ff` API) :
+- CHANGELOG, ROADMAP, TODO, TASKS mis a jour dans les deux repos
+- CODE_REVIEW.md : items #46, #49, #50 marques CORRIGE
 
 **LOT AUDIT-A (2026-06-13) — DEPLOYE — Audit global + 2 corrections**
 1. `check_cron_health.js` (`23c040f`) : fix `MAX(updatedAt)` (colonne inexistante).
@@ -1878,7 +1884,7 @@ Aucun fichier code (execution production uniquement). SUIVI.md mis a jour.
 - `front_end_opcvm/CODE_REVIEW.md` — items #47 a #51
 
 ### Prochaine action recommandee
-LOT A-D DEPLOYES/POUSSES. Audit complet TERMINE.
+LOTs AUDIT-A a D + CRON-FIX + CATCH-FIX deployes/pousses. 8 items CODE_REVIEW resolus (#42,#43,#46,#47,#48,#49,#50 + classement local).
 
 **PRIORITE 1 — Recuperer les 10 VL EVOLUTIS (LOT B deploye, etape 3 corrigee)** :
 LOT B deploye OK. Etape 1 a identifie 10 boc_date (2022-11-07 a 2022-11-21). Etape 2 (delete staging < 1998) executee. Etape 3 a ete lancee avec le litteral `YYYY-MM-DD` au lieu des vraies dates → 404. **Commande corrigee :**
@@ -1962,9 +1968,13 @@ dans `/api/classementmysql` (apigestionsavequotidien.js). Sinon = comportement a
 - Ne PAS modifier les calculs financiers sans diagnostic prealable
 - Ne PAS modifier la base de donnees sans validation Eric
 
+### Etat Git (2026-06-13, CRON-FIX + CATCH-FIX)
+- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commits `26d1f93` (crons) + `89cabd4` (.catch), pousses
+- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, commit `6cf1cba` (docs), SUIVI+CODE_REVIEW dirty
+
 ### Etat Git (2026-06-13, LOT DOC-UPDATE)
-- **api_opcv**: branche `claude/code-review-improvements-ikvuj`, CHANGELOG+TODO+TASKS modifies (a commiter)
-- **front_end_opcvm**: branche `claude/code-review-improvements-ikvuj`, CHANGELOG+ROADMAP+TODO+TASKS+SUIVI modifies (a commiter)
+- **api_opcv**: commit `77577ff` (docs), pousse
+- **front_end_opcvm**: commit `6cf1cba` (docs), pousse
 
 ### Etat Git (2026-06-13, AUDIT-D)
 - **api_opcv**: branche `claude/code-review-improvements-ikvuj`, commit `e5dddb6`, pousse, clean
