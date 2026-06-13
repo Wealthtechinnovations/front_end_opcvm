@@ -1853,7 +1853,7 @@ Aucun fichier code (execution production uniquement). SUIVI.md mis a jour.
 - **CODE_REVIEW.md** mis a jour (items #42 a #46)
 
 ### Prochaine action recommandee
-LOT A+B DEPLOYES. LOT C (audit securite) pret a deployer.
+EVOLUTIS RECUPERE (4 VL nov 2022 promues via salvage). LOT C deploye en prod.
 
 **PRIORITE 1 — Recuperer les 10 VL EVOLUTIS (LOT B deploye, etape 3 corrigee)** :
 LOT B deploye OK. Etape 1 a identifie 10 boc_date (2022-11-07 a 2022-11-21). Etape 2 (delete staging < 1998) executee. Etape 3 a ete lancee avec le litteral `YYYY-MM-DD` au lieu des vraies dates → 404. **Commande corrigee :**
@@ -1868,6 +1868,21 @@ mysql -u fund_opcvm -p"$(grep -oP '^DB_PASSWORD=\K.*' .env)" fund_opcvm -e "
   SELECT date, value, fund_name FROM valorisations WHERE fund_id=2594 AND date BETWEEN '2022-11-01' AND '2022-11-30' ORDER BY date;"
 ```
 A renvoyer : sortie de la boucle + resultat verification.
+
+**FAIT (2026-06-13)** : salvage a corrige 1022-11-04→2022-11-04 et 1022-11-11→2022-11-11.
+EVOLUTIS (fund_id 2594) a desormais 4 VL nov 2022 : 04(4060.68) 11(4117.65) 18(3977.62) 25(3994.45).
+LOT C (securite) deploye + pm2 restart api-monolith OK.
+
+**PRIORITE 2 — Diagnostic 22 fonds sans classement local (analyse code FAITE)** :
+Root cause identifie dans le code : `apigestionsavequotidien.js:638` utilise `fund.categorie_national`
+(table fond_investissements) comme filtre, mais `ranking.service.js:81` filtre `performences`
+sur `categorie_nationale`. Si ces 2 champs different (mismatch), le fond n'est pas trouve dans
+sa propre liste de classement → `error` (pas code 200) → aucune ligne classement creee.
+- Groupe A (2876-2880, Nigeria USD) : perf_local=0, cat_nat NULL → EXCLUSION ATTENDUE (pas un bug)
+- Groupe B (1210,2860,2862,2870-2875) : perf_local=1 → a confirmer
+- Groupe C (648,727,731,842,1074,1554,1564 MAROC) : perf_local 64-218 → DEVRAIENT etre classes
+SQL de confirmation prepare (compare cat_fond vs cat_perf + match_dernier + cl_local).
+Si match_dernier=0 pour groupe C → bug mismatch confirme.
 
 **PRIORITE 2 — Diagnostic ecart classement local (22 fonds sans classement local)** :
 Caracteriser les 22 fonds (ont-ils perf locale + categorie ?) AVANT tout fix.
