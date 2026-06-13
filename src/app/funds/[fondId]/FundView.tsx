@@ -65,7 +65,8 @@ async function getclassement(id: number) {
         return data;
     } catch (error) {
         console.error('Erreur lors de la récupération des données de classement:', error);
-        // Affichez un message d'erreur à l'utilisateur si nécessaire
+        // Retourner null (parite avec les pages EUR/USD) pour eviter un state undefined
+        return null;
     }
 }
 // ... code existant ...
@@ -754,7 +755,7 @@ export default function Fond() {
         setSelectedFund(selectedOption);
     };
 
-    const quartile = Math.ceil(classementlocal?.data?.classementType1.rank5Ans / classementlocal?.data?.classementType1.rank5Anstotal * 4);
+    const quartile = Math.ceil(classementlocal?.data?.classementType1?.rank5Ans / classementlocal?.data?.classementType1?.rank5Anstotal * 4);
     // Define quartile colors
     const quartileColors: {
         [key: number]: string;
