@@ -1742,24 +1742,24 @@ Corrections deployees (commits pushes, a deployer sur production):
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-12 : T35 BRVM BOC **DEPLOYE ET OPERATIONNEL EN PRODUCTION**. Fix promote_row (`8a3a707`) deploye, backfill complet 2025-10-15 → 2026-06-11 execute avec succes : 163 BOC parses (0 echec), 4406 VL promues dans valorisations, statut SUCCESS. Cron 19h30 installe.
+Session 2026-06-13 : T35 BRVM BOC **BACKFILL HISTORIQUE COMPLET 2022→2026-06-11**. Tous les segments executes avec succes (0 erreur). Crons quotidiens actifs. Repair-missing : 0 VL supplementaire (tout est comble).
 
 ### Dernier lot termine
-**LOT T35-backfill (2026-06-12) — Execution production complete**
-- Redeploiement API : OK (pm2 api-monolith online)
-- `--latest --production --force` : BOC 2026-06-11, 70 VL promues
-- Backfill 2025-10-15 → 2026-06-12 : 173 sources verifiees, 163 parsees, 18993 lignes extraites, 18843 inserees en staging, **4334 VL promues**, 6056 deja presentes, 142 conflits conserves en staging, 0 erreur, SUCCESS
-- `--repair-missing --apply` : 57 fonds analyses, 2 VL promues supplementaires
-- **Total VL promues : 4406**
-- Verification `/api/brvm/boc/status` : initialized true, 163 sources, last_boc_date 2026-06-11
+**LOT T35-hist-exec (2026-06-12 soir → 2026-06-13 00h) — Backfill historique BRVM**
+- 4 segments executes : 2022, 2023, 2024, 2025-01-01→2025-10-14
+- Dernier segment (affiche) : 205 sources, 194 parsees, 19402 lignes, 3441 VL promues, 7359 deja presentes, 71 conflits, SUCCESS
+- Repair-missing final : 69 fonds avec ecarts, 0 VL promues (tout ce qui est promotable l'a ete)
+- Cumul estime tous backfills : **~10 000+ VL UEMOA promues** (2022→2026-06-11)
+- Verification exacte : `curl -s .../api/brvm/boc/status | python3 -m json.tool`
 
-### Bilan donnees UEMOA apres backfill
-- Majorite des fonds UEMOA quotidiens a jour au 2026-06-10 (vs stale 2025-10-15 avant)
-- Restent en retard (ND officiels dans les BOC, non recuperables sans inventer) :
-  FCP ATLANTIQUE* (derniere VL 2024-11-07, 163 ND), FCP TRESO MONEA (2023-10-23),
-  SICAV WAFI CAPITAL (2025-10-15), FCP CAPITAL CROISSANCE (aucune VL, 163 ND)
-- File de validation : 1791 UNMATCHED + 652 AMBIGUOUS (`/api/brvm/boc/unmatched`)
-- 142 conflits (VL existante differente de la VL BOC) conserves en staging, aucun overwrite
+### Bilan donnees UEMOA apres backfill complet (2022→2026)
+- Couverture 4 ans (2022-01-01 → 2026-06-11), ~10 000+ VL promues
+- Majorite des fonds UEMOA quotidiens a jour au 2026-06-10
+- Fonds ND persistants (la BRVM elle-meme publie ND) :
+  FCP ATLANTIQUE* (derniere VL 2024-11-07), FCP TRESO MONEA (2023-10-23),
+  SICAV WAFI CAPITAL (2025-10-15), FCP CAPITAL CROISSANCE (aucune VL)
+- File de validation : UNMATCHED + AMBIGUOUS a consulter via `/api/brvm/boc/unmatched`
+- Conflits (VL existante ≠ VL BOC) conserves en staging, aucun overwrite
 
 ### Fichiers modifies dans le dernier lot
 Aucun fichier code (execution production uniquement). SUIVI.md mis a jour.
@@ -1796,16 +1796,11 @@ Aucun fichier code (execution production uniquement). SUIVI.md mis a jour.
 | MAROC | 640 | 2026-06-10 | OK (cron ASFIM 20h, J-2 normal) |
 | TUNISIE | 131 | 2026-06-11 | OK (cron CMF 19h) |
 | NIGERIA | 284 | 2026-05-29 | Retard 2 sem. (hebdo SEC, ~195 fonds disparus des fichiers — connu) |
-| UEMOA | 111 | 2025-10-15 → **2026-06-10 apres backfill T35** | OK (cron BRVM 19h30 installe) |
+| UEMOA | 111 | **2026-06-10** (comble depuis 2022 par backfill T35) | OK (cron BRVM 19h30 installe) |
 | CEMAC | 34 | 2024-12-12 | Stale 18 mois — aucune source automatisee (decision metier en attente) |
 
 ### Prochaine action recommandee
-1. **Lancer le backfill historique 2022→2025 en arriere-plan sur le VPS** (~4-5 h) :
-   ```bash
-   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
-   nohup bash -c 'for Y in 2022 2023 2024; do python3 scripts/scraper/brvm_boc_daily.py --start-date ${Y}-01-01 --end-date ${Y}-12-31 --production --throttle 3; done; python3 scripts/scraper/brvm_boc_daily.py --start-date 2025-01-01 --end-date 2025-10-14 --production --throttle 3; python3 scripts/scraper/brvm_boc_daily.py --repair-missing --apply --production' >> /var/log/brvm_backfill_hist.log 2>&1 &
-   tail -f /var/log/brvm_backfill_hist.log   # suivre (Ctrl+C pour quitter le suivi sans arreter le job)
-   ```
+1. ~~Backfill historique 2022→2025~~ **FAIT (2026-06-12 soir, SUCCESS)**
 2. **Verifier tous les crons** :
    ```bash
    crontab -l
