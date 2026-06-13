@@ -1873,16 +1873,11 @@ A renvoyer : sortie de la boucle + resultat verification.
 EVOLUTIS (fund_id 2594) a desormais 4 VL nov 2022 : 04(4060.68) 11(4117.65) 18(3977.62) 25(3994.45).
 LOT C (securite) deploye + pm2 restart api-monolith OK.
 
-**PRIORITE 2 — Diagnostic 22 fonds sans classement local (analyse code FAITE)** :
-Root cause identifie dans le code : `apigestionsavequotidien.js:638` utilise `fund.categorie_national`
-(table fond_investissements) comme filtre, mais `ranking.service.js:81` filtre `performences`
-sur `categorie_nationale`. Si ces 2 champs different (mismatch), le fond n'est pas trouve dans
-sa propre liste de classement → `error` (pas code 200) → aucune ligne classement creee.
-- Groupe A (2876-2880, Nigeria USD) : perf_local=0, cat_nat NULL → EXCLUSION ATTENDUE (pas un bug)
-- Groupe B (1210,2860,2862,2870-2875) : perf_local=1 → a confirmer
-- Groupe C (648,727,731,842,1074,1554,1564 MAROC) : perf_local 64-218 → DEVRAIENT etre classes
-SQL de confirmation prepare (compare cat_fond vs cat_perf + match_dernier + cl_local).
-Si match_dernier=0 pour groupe C → bug mismatch confirme.
+**PRIORITE 2 — Diagnostic 22 fonds sans classement local — RESOLU (2026-06-13)** :
+SQL de confirmation execute : les 22 fonds initialement signales sont desormais 17 avec `cl_local=1` (classement present).
+Les 5 restants (2876-2880, Nigeria USD) ont `perf_local=0` et `cat_perf=NULL` → exclusion attendue (pas un bug).
+Aucun mismatch categorie detecte (`match_dernier=1` pour tous les fonds avec perf).
+Les crons quotidiens ont comble le gap depuis les premiers deploiements. Pas de correction necessaire.
 
 **PRIORITE 2 — Diagnostic ecart classement local (22 fonds sans classement local)** :
 Caracteriser les 22 fonds (ont-ils perf locale + categorie ?) AVANT tout fix.

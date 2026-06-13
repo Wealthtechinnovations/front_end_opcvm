@@ -630,7 +630,9 @@ export default function Fond() {
     setSelectedFund(selectedOption);
   };
 
-  const quartile = Math.ceil(classementlocal?.data?.classementType1?.rank5Ans / classementlocal?.data?.classementType1?.rank5Anstotal * 4);
+  const quartile = classementlocal?.data?.classementType1?.rank5Anstotal
+    ? Math.ceil(classementlocal.data.classementType1.rank5Ans / classementlocal.data.classementType1.rank5Anstotal * 4)
+    : null;
   // Define quartile colors
   const quartileColors: {
     [key: number]: string;
