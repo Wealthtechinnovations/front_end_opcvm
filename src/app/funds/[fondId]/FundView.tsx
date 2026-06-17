@@ -755,8 +755,13 @@ export default function Fond() {
         setSelectedFund(selectedOption);
     };
 
-    const quartile = Math.ceil(classementlocal?.data?.classementType1?.rank5Ans / classementlocal?.data?.classementType1?.rank5Anstotal * 4);
-    // Define quartile colors
+    const safeQuartile = (rank: any, total: any): number => {
+        if (rank == null || total == null || total === 0 || rank === 0) return 0;
+        const q = Math.ceil((Number(rank) / Number(total)) * 4);
+        return isFinite(q) ? Math.min(q, 4) : 0;
+    };
+
+    const quartile = safeQuartile(classementlocal?.data?.classementType1?.rank5Ans, classementlocal?.data?.classementType1?.rank5Anstotal);
     const quartileColors: {
         [key: number]: string;
     } = {
@@ -765,15 +770,15 @@ export default function Fond() {
         3: 'orange',
         4: 'red',
     };
-    const [error, setError] = useState(""); // État pour stocker le message d'erreur
-    //Notation ration
+    const [error, setError] = useState("");
     const getNotationClasses = (rank: number, total: number) => {
+        if (!rank || !total || total === 0) return Array(5).fill("conseil-default");
         const selectedCount = Math.ceil((rank / total) * 5);
+        const safeCount = isFinite(selectedCount) ? Math.min(selectedCount, 5) : 0;
         const classes = Array(5).fill("conseil-default");
-        for (let i = 0; i < selectedCount; i++) {
+        for (let i = 0; i < safeCount; i++) {
             classes[i] = "conseil-default conseil-selected";
         }
-
         return classes;
     };
 
@@ -1675,12 +1680,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>3 mois</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType1?.rank3Mois === undefined || classementlocal?.data?.classementType1?.rank3Mois == 0
+                                                            {classementlocal?.data?.classementType1?.rank3Mois == null || classementlocal?.data?.classementType1?.rank3Mois == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType1?.rank3Mois} / ${classementlocal?.data?.classementType1?.rank3Moistotal}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType1?.rank3Mois === undefined || classementlocal?.data?.classementType1?.rank3Moistotal === undefined || classementlocal?.data?.classementType1?.rank3Mois == 0
+                                                            {classementlocal?.data?.classementType1?.rank3Mois == null || classementlocal?.data?.classementType1?.rank3Moistotal == null || classementlocal?.data?.classementType1?.rank3Mois == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType1?.rank3Mois /
@@ -1714,12 +1719,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>6 mois</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType1?.rank6Mois === undefined || classementlocal?.data?.classementType1?.rank6Mois == 0
+                                                            {classementlocal?.data?.classementType1?.rank6Mois == null || classementlocal?.data?.classementType1?.rank6Mois == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType1?.rank6Mois} / ${classementlocal?.data?.classementType1?.rank6Moistotal}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType1?.rank6Mois === undefined || classementlocal?.data?.classementType1?.rank6Moistotal === undefined || classementlocal?.data?.classementType1?.rank6Mois == 0
+                                                            {classementlocal?.data?.classementType1?.rank6Mois == null || classementlocal?.data?.classementType1?.rank6Moistotal == null || classementlocal?.data?.classementType1?.rank6Mois == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType1?.rank6Mois /
@@ -1753,12 +1758,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>YTD</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType1?.rank1erJanvier === undefined || classementlocal?.data?.classementType1?.rank1erJanvier == 0
+                                                            {classementlocal?.data?.classementType1?.rank1erJanvier == null || classementlocal?.data?.classementType1?.rank1erJanvier == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType1?.rank1erJanvier} / ${classementlocal?.data?.classementType1?.rank1erJanviertotal}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType1?.rank1erJanvier === undefined || classementlocal?.data?.classementType1?.rank1erJanviertotal === undefined || classementlocal?.data?.classementType1?.rank1erJanvier == 0
+                                                            {classementlocal?.data?.classementType1?.rank1erJanvier == null || classementlocal?.data?.classementType1?.rank1erJanviertotal == null || classementlocal?.data?.classementType1?.rank1erJanvier == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType1?.rank1erJanvier /
@@ -1792,12 +1797,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>1 an</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType1?.rank1An === undefined || classementlocal?.data?.classementType1?.rank1An == 0
+                                                            {classementlocal?.data?.classementType1?.rank1An == null || classementlocal?.data?.classementType1?.rank1An == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType1?.rank1An} / ${classementlocal?.data?.classementType1?.rank1Antotal}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType1?.rank1An === undefined || classementlocal?.data?.classementType1?.rank1Antotal === undefined || classementlocal?.data?.classementType1?.rank1An == 0
+                                                            {classementlocal?.data?.classementType1?.rank1An == null || classementlocal?.data?.classementType1?.rank1Antotal == null || classementlocal?.data?.classementType1?.rank1An == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType1?.rank1An /
@@ -1831,12 +1836,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>3 ans</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType1?.rank3Ans === undefined || classementlocal?.data?.classementType1?.rank3Ans == 0
+                                                            {classementlocal?.data?.classementType1?.rank3Ans == null || classementlocal?.data?.classementType1?.rank3Ans == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType1?.rank3Ans} / ${classementlocal?.data?.classementType1?.rank3Anstotal}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType1?.rank3Ans === undefined || classementlocal?.data?.classementType1?.rank3Anstotal === undefined || classementlocal?.data?.classementType1?.rank3Ans == 0
+                                                            {classementlocal?.data?.classementType1?.rank3Ans == null || classementlocal?.data?.classementType1?.rank3Anstotal == null || classementlocal?.data?.classementType1?.rank3Ans == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType1?.rank3Ans /
@@ -1870,12 +1875,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>5 ans</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType1?.rank5Ans === undefined || classementlocal?.data?.classementType1?.rank5Ans == 0
+                                                            {classementlocal?.data?.classementType1?.rank5Ans == null || classementlocal?.data?.classementType1?.rank5Ans == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType1?.rank5Ans} / ${classementlocal?.data?.classementType1?.rank5Anstotal}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType1?.rank5Ans === undefined || classementlocal?.data?.classementType1?.rank5Anstotal === undefined || classementlocal?.data?.classementType1?.rank5Ans == 0
+                                                            {classementlocal?.data?.classementType1?.rank5Ans == null || classementlocal?.data?.classementType1?.rank5Anstotal == null || classementlocal?.data?.classementType1?.rank5Ans == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType1?.rank5Ans /
@@ -1941,12 +1946,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>3 mois</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType1?.rank3Moism === undefined || classementlocal?.data?.classementType1?.rank3Moism == 0
+                                                            {classementlocal?.data?.classementType1?.rank3Moism == null || classementlocal?.data?.classementType1?.rank3Moism == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType1?.rank3Moism} / ${classementlocal?.data?.classementType1?.rank3Moistotalm}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType1?.rank3Moism === undefined || classementlocal?.data?.classementType1?.rank3Moistotalm === undefined || classementlocal?.data?.classementType1?.rank3Moism == 0
+                                                            {classementlocal?.data?.classementType1?.rank3Moism == null || classementlocal?.data?.classementType1?.rank3Moistotalm == null || classementlocal?.data?.classementType1?.rank3Moism == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType1?.rank3Moism /
@@ -1980,12 +1985,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>6 mois</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType1?.rank6Moism === undefined || classementlocal?.data?.classementType1?.rank6Mois == 0
+                                                            {classementlocal?.data?.classementType1?.rank6Moism == null || classementlocal?.data?.classementType1?.rank6Moism == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType1?.rank6Moism} / ${classementlocal?.data?.classementType1?.rank6Moistotalm}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType1?.rank6Moism === undefined || classementlocal?.data?.classementType1?.rank6Moistotalm === undefined || classementlocal?.data?.classementType1?.rank6Moism == 0
+                                                            {classementlocal?.data?.classementType1?.rank6Moism == null || classementlocal?.data?.classementType1?.rank6Moistotalm == null || classementlocal?.data?.classementType1?.rank6Moism == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType1?.rank6Moism /
@@ -2019,12 +2024,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>YTD</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType1?.rank1erJanvierm === undefined || classementlocal?.data?.classementType1?.rank1erJanvierm == 0
+                                                            {classementlocal?.data?.classementType1?.rank1erJanvierm == null || classementlocal?.data?.classementType1?.rank1erJanvierm == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType1?.rank1erJanvierm} / ${classementlocal?.data?.classementType1?.rank1erJanviertotalm}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType1?.rank1erJanvierm === undefined || classementlocal?.data?.classementType1?.rank1erJanviertotalm === undefined || classementlocal?.data?.classementType1?.rank1erJanvierm == 0
+                                                            {classementlocal?.data?.classementType1?.rank1erJanvierm == null || classementlocal?.data?.classementType1?.rank1erJanviertotalm == null || classementlocal?.data?.classementType1?.rank1erJanvierm == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType1?.rank1erJanvierm /
@@ -2058,12 +2063,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>1 an</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType1?.rank1Anm === undefined || classementlocal?.data?.classementType1?.rank1Anm == 0
+                                                            {classementlocal?.data?.classementType1?.rank1Anm == null || classementlocal?.data?.classementType1?.rank1Anm == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType1?.rank1Anm} / ${classementlocal?.data?.classementType1?.rank1Antotalm}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType1?.rank1Anm === undefined || classementlocal?.data?.classementType1?.rank1Antotalm === undefined || classementlocal?.data?.classementType1?.rank1Anm == 0
+                                                            {classementlocal?.data?.classementType1?.rank1Anm == null || classementlocal?.data?.classementType1?.rank1Antotalm == null || classementlocal?.data?.classementType1?.rank1Anm == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType1?.rank1Anm /
@@ -2097,12 +2102,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>3 ans</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType1?.rank3Ansm === undefined || classementlocal?.data?.classementType1?.rank3Ansm == 0
+                                                            {classementlocal?.data?.classementType1?.rank3Ansm == null || classementlocal?.data?.classementType1?.rank3Ansm == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType1?.rank3Ansm} / ${classementlocal?.data?.classementType1?.rank3Anstotalm}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType1?.rank3Ansm === undefined || classementlocal?.data?.classementType1?.rank3Anstotalm === undefined || classementlocal?.data?.classementType1?.rank3Ansm == 0
+                                                            {classementlocal?.data?.classementType1?.rank3Ansm == null || classementlocal?.data?.classementType1?.rank3Anstotalm == null || classementlocal?.data?.classementType1?.rank3Ansm == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType1?.rank3Ansm /
@@ -2136,12 +2141,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>5 ans</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType1?.rank5Ansm === undefined || classementlocal?.data?.classementType1?.rank5Ansm == 0
+                                                            {classementlocal?.data?.classementType1?.rank5Ansm == null || classementlocal?.data?.classementType1?.rank5Ansm == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType1?.rank5Ansm} / ${classementlocal?.data?.classementType1?.rank5Anstotalm}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType1?.rank5Ansm === undefined || classementlocal?.data?.classementType1?.rank5Anstotal === undefined || classementlocal?.data?.classementType1?.rank5Ansm == 0
+                                                            {classementlocal?.data?.classementType1?.rank5Ansm == null || classementlocal?.data?.classementType1?.rank5Anstotalm == null || classementlocal?.data?.classementType1?.rank5Ansm == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType1?.rank5Ansm /
@@ -2207,12 +2212,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>3 mois</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType3?.rank3Mois === undefined || classementlocal?.data?.classementType3?.rank3Mois == 0
+                                                            {classementlocal?.data?.classementType3?.rank3Mois == null || classementlocal?.data?.classementType3?.rank3Mois == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType3?.rank3Mois} / ${classementlocal?.data?.classementType3?.rank3Moistotal}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType3?.rank3Mois === undefined || classementlocal?.data?.classementType3?.rank3Moistotal === undefined || classementlocal?.data?.classementType3?.rank3Mois == 0
+                                                            {classementlocal?.data?.classementType3?.rank3Mois == null || classementlocal?.data?.classementType3?.rank3Moistotal == null || classementlocal?.data?.classementType3?.rank3Mois == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType3?.rank3Mois /
@@ -2246,12 +2251,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>6 mois</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType3?.rank6Mois === undefined || classementlocal?.data?.classementType3?.rank6Mois == 0
+                                                            {classementlocal?.data?.classementType3?.rank6Mois == null || classementlocal?.data?.classementType3?.rank6Mois == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType3?.rank6Mois} / ${classementlocal?.data?.classementType3?.rank6Moistotal}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType3?.rank6Mois === undefined || classementlocal?.data?.classementType3?.rank6Moistotal === undefined || classementlocal?.data?.classementType3?.rank6Mois == 0
+                                                            {classementlocal?.data?.classementType3?.rank6Mois == null || classementlocal?.data?.classementType3?.rank6Moistotal == null || classementlocal?.data?.classementType3?.rank6Mois == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType3?.rank6Mois /
@@ -2285,12 +2290,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>YTD</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType3?.rank1erJanvier === undefined || classementlocal?.data?.classementType3?.rank1erJanvier == 0
+                                                            {classementlocal?.data?.classementType3?.rank1erJanvier == null || classementlocal?.data?.classementType3?.rank1erJanvier == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType3?.rank1erJanvier} / ${classementlocal?.data?.classementType3?.rank1erJanviertotal}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType3?.rank1erJanvier === undefined || classementlocal?.data?.classementType3?.rank1erJanviertotal === undefined || classementlocal?.data?.classementType3?.rank1erJanvier == 0
+                                                            {classementlocal?.data?.classementType3?.rank1erJanvier == null || classementlocal?.data?.classementType3?.rank1erJanviertotal == null || classementlocal?.data?.classementType3?.rank1erJanvier == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType3?.rank1erJanvier /
@@ -2324,12 +2329,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>1 an</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType3?.rank1An === undefined || classementlocal?.data?.classementType3?.rank1An == 0
+                                                            {classementlocal?.data?.classementType3?.rank1An == null || classementlocal?.data?.classementType3?.rank1An == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType3?.rank1An} / ${classementlocal?.data?.classementType3?.rank1Antotal}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType3?.rank1An === undefined || classementlocal?.data?.classementType3?.rank1Antotal === undefined || classementlocal?.data?.classementType3?.rank1An == 0
+                                                            {classementlocal?.data?.classementType3?.rank1An == null || classementlocal?.data?.classementType3?.rank1Antotal == null || classementlocal?.data?.classementType3?.rank1An == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType3?.rank1An /
@@ -2363,12 +2368,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>3 ans</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType3?.rank3Ans === undefined || classementlocal?.data?.classementType3?.rank3Ans == 0
+                                                            {classementlocal?.data?.classementType3?.rank3Ans == null || classementlocal?.data?.classementType3?.rank3Ans == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType3?.rank3Ans} / ${classementlocal?.data?.classementType3?.rank3Anstotal}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType3?.rank3Ans === undefined || classementlocal?.data?.classementType3?.rank3Anstotal === undefined || classementlocal?.data?.classementType3?.rank3Ans == 0
+                                                            {classementlocal?.data?.classementType3?.rank3Ans == null || classementlocal?.data?.classementType3?.rank3Anstotal == null || classementlocal?.data?.classementType3?.rank3Ans == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType3?.rank3Ans /
@@ -2402,12 +2407,12 @@ export default function Fond() {
                                                     <tr>
                                                         <td>5 ans</td>
                                                         <td style={{ textAlign: 'center' }}>
-                                                            {classementlocal?.data?.classementType3?.rank5Ans === undefined || classementlocal?.data?.classementType3?.rank5Ans == 0
+                                                            {classementlocal?.data?.classementType3?.rank5Ans == null || classementlocal?.data?.classementType3?.rank5Ans == 0
                                                                 ? "-"
                                                                 : `${classementlocal?.data?.classementType3?.rank5Ans} / ${classementlocal?.data?.classementType3?.rank5Anstotal}`}
                                                         </td>
                                                         <td className="text-right">
-                                                            {classementlocal?.data?.classementType3?.rank5Ans === undefined || classementlocal?.data?.classementType3?.rank5Anstotal === undefined || classementlocal?.data?.classementType3?.rank5Ans == 0
+                                                            {classementlocal?.data?.classementType3?.rank5Ans == null || classementlocal?.data?.classementType3?.rank5Anstotal == null || classementlocal?.data?.classementType3?.rank5Ans == 0
                                                                 ? "-"
                                                                 : Math.ceil(
                                                                     (classementlocal?.data?.classementType3?.rank5Ans /
