@@ -1763,6 +1763,43 @@ Corrections deployees (commits pushes, a deployer sur production):
 
 **Verdict : deploiement 100% reussi, zero regression.**
 
+### 2026-06-17 - ClickHouse : service systemd arrete + desactive
+- **Statut**: EXECUTE EN PRODUCTION
+- ClickHouse consommait 2.1G RAM, 7.6G disque, CPU 5h42min (process zombie — l'app ne l'utilisait plus)
+- `systemctl stop clickhouse-server && systemctl disable clickhouse-server` : OK
+- Logs tronques, disque passe de 83% a 82% (28G libres)
+- Donnees `/var/lib/clickhouse` (7.6G) conservees pour reactivation future si besoin
+- Zero regression : MySQL seule source de verite, app ne communique plus avec ClickHouse
+
+### 2026-06-17 - LOT 1 (#54): Fix rankings null/Infinity — DEPLOYE
+- **Statut**: DEPLOYE EN PRODUCTION
+- **Probleme**: Classements affichaient null pour les totaux mensuels et Infinity pour les quartiles
+- **Cause racine API**: `buildRankResult()` generait `rank3Moismtotal` mais la DB attendait `rank3Moistotalm`
+- **Fix API**: Mapping `totalNames` explicite dans `ranking.service.js` pour les 6 periodes *m
+- **Fix Frontend**: `safeQuartile()` helper + 30 guards `=== undefined` → `== null` + bugs copy-paste corriges
+- **Commits**: `714b977` (API), `b8700c3` (Frontend)
+- **Build**: 0 erreurs
+
+### 2026-06-17 - LOT 2 (#55): Fix moyennes categorie "- %" — COMMITE, A DEPLOYER
+- **Statut**: COMMITE ET POUSSE, A DEPLOYER
+- **Probleme**: Tableau performances affichait "- %" dans colonne Categorie, barres de ratio invisibles
+- **Cause racine**: `getPerformancesByCategorynow()` utilisait `AND date = :datedebut` (match exact), excluant les peers dont la derniere VL tombe a une date differente
+- **Fix**: Sous-requete `MAX(date) per fond_id` (meme pattern que `getPerformancesByCategory()` et `ranking.service.js`)
+- **Impact**: Corrige moyennes categorie + barres de ratio "Par rapport a la Cat"
+- **Fichier**: `api_opcv/src/routes/apigestionperformance.js` (L2234)
+- **Commit**: `f5fc73a`
+- **Syntax check**: OK
+- **Deploiement SSH**:
+  ```bash
+  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
+  ```
+- **Verification post-deploiement**:
+  ```bash
+  sleep 5
+  curl -s "http://localhost:3005/api/performances/fond/866?date=2026-06-15" | python3 -m json.tool | grep moyenne
+  curl -s "http://localhost:3005/api/performances/fond/2860" | python3 -m json.tool | grep moyenne
+  ```
+
 ---
 
 ## CHECKLIST DE DEPLOIEMENT REUTILISABLE
@@ -1964,90 +2001,73 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-17 : Incident ClickHouse RESOLU — DEPLOYE en production.**
-- Durcissement code deploye (`b815153` + `471cb42`)
-- `CLICKHOUSE_ENABLED=false` actif dans .env production
-- PM2 api-monolith redémarre, logs confirment ClickHouse desactive
-- Toutes les verifications production OK (perf 200, valLiq 200, home 200, summary-eur 200)
-- Health endpoint OK
-- **Zero regression** : performances, classements (local/EUR/USD), VL, ratios — tout intact (MySQL only)
+**2026-06-17 : LOT 2 moyennes categorie (#55) — COMMITE et POUSSE, A DEPLOYER.**
+- Incident ClickHouse entierement resolu : code desactive + service systemd arrete et disable
+- LOT 1 rankings null/Infinity (#54) : DEPLOYE en production (commits `714b977` API + `b8700c3` frontend)
+- LOT 2 moyennes categorie (#55) : COMMITE (`f5fc73a` API), A DEPLOYER sur VPS
+- Toutes les verifications production prealables OK (perf 200, valLiq 200, home 200, summary-eur 200)
 
 ### Dernier lot termine
-**LOT CLICKHOUSE-DEPLOY (2026-06-17) — Deploiement + desactivation + verification**
+**LOT 2 — Fix moyennes categorie "- %" (#55, 2026-06-17)**
 
-- Deploiement code durcissement ClickHouse sur VPS (git pull fast-forward OK)
-- `CLICKHOUSE_ENABLED=false` ajoute a .env production
-- `pm2 restart api-monolith` (restart #31, status online, 197.6mb)
-- Logs PM2 : "ClickHouse desactive via CLICKHOUSE_ENABLED=false"
-- Curls verification : /api/performanceswithdate/fond/866/2026-06-05 (200), /api/valLiq/866 (200), home (200), summary-eur (200)
-- Disque VPS : 83% (26G libres, etait sature)
-- ClickHouse service systemd : toujours actif (pour autres apps potentielles), mais Node.js ne l'utilise plus
+- `getPerformancesByCategorynow()` dans `apigestionperformance.js:2234` utilisait `AND date = :datedebut` (match exact)
+- Les fonds d'une meme categorie ayant des dates de derniere VL differentes, le filtre excluait quasi tous les peers
+- Resultat : moyennes de categorie vides ("- %") dans le tableau de performances, et barres de ratio "Par rapport a la Cat" invisibles
+- **Fix** : remplacement par sous-requete `MAX(date) per fond_id` (pattern identique a `getPerformancesByCategory()` L2151 et `ranking.service.js`)
+- Parametre `datedebut` conserve pour compatibilite de signature mais non utilise
+- **Impact** : corrige BUG 2 (moyennes "- %") + BUG 3 (barres ratio "Par rapport a la Cat")
+- Commit API : `f5fc73a`
 
-**LOT DEPLOY-VPS (2026-06-15) — Deploiement + verification + checklist**
-- Deploiement VPS des commits AUDIT-C/D, CRON-FIX, CATCH-FIX, CSV-FIX, DOC-UPDATE
-- 6 etapes executees, verifications API/Frontend/Crons toutes OK
-- Checklist de deploiement reutilisable ajoutee dans SUIVI.md
+**LOT CLICKHOUSE-SERVICE (2026-06-17) — Arret service systemd ClickHouse**
+- `systemctl stop clickhouse-server` + `systemctl disable clickhouse-server` : OK
+- 2.1G RAM + 7.6G donnees disque liberes (donnees conservees dans /var/lib/clickhouse pour reactivation future)
+- `truncate -s 0 /var/log/clickhouse-server/*.log` : OK
+- Disque : 82% (28G libres, ameliore depuis 83%)
 
-**LOT AUDIT-A (2026-06-13) — DEPLOYE — Audit global + 2 corrections**
-1. `check_cron_health.js` (`23c040f`) : fix `MAX(updatedAt)` (colonne inexistante).
-   Verifie en prod : health check finit SANS erreur ("Classements local 3545/1193").
-2. `FundView.tsx` local (`878bf16`) : `return null` catch + optional chaining quartile.
-   Build prod OK, PM2 fundafrique-frontend restart OK.
-- Crons verifies via logs reels : tunisie/brvm/daily/eur_usd/health/sync tous OK.
-- Ghost cron fix-brvm-nginx.py : fichier absent — a retirer de crontab.
-- Route morte `/api/classementquartile/:id` (ClickHouse, param non lie) : dead code,
-  non utilisee par le frontend (local utilise `classementquartilemysql`).
-- Ecart classement local : 22 fonds presents en EUR mais absents en local
-  (648,727,731,842,1074,1210,1554,1564,2860,2862,2869-2880). A diagnostiquer
-  (perf locale ? categorie ?) AVANT tout fix — SENSIBLE (calcul classements).
-
-### Bilan donnees UEMOA apres backfill complet (2022→2026)
-- Couverture 4 ans (2022-01-01 → 2026-06-11), ~10 000+ VL promues
-- Majorite des fonds UEMOA quotidiens a jour au 2026-06-10
-- Fonds ND persistants (la BRVM elle-meme publie ND) :
-  FCP ATLANTIQUE* (derniere VL 2024-11-07), FCP TRESO MONEA (2023-10-23),
-  SICAV WAFI CAPITAL (2025-10-15), FCP CAPITAL CROISSANCE (aucune VL)
-- File de validation : UNMATCHED + AMBIGUOUS a consulter via `/api/brvm/boc/unmatched`
-- Conflits (VL existante ≠ VL BOC) conserves en staging, aucun overwrite
+**LOT 1 — Fix rankings null/Infinity (#54, 2026-06-17) — DEPLOYE**
+- `buildRankResult()` generait `rank3Moismtotal` mais DB attend `rank3Moistotalm` → mapping `totalNames` ajoute
+- Frontend : `safeQuartile()` helper + 30 occurrences `=== undefined` → `== null` + copy-paste bugs corriges
+- Commits : `714b977` (API) + `b8700c3` (frontend)
 
 ### Fichiers modifies dans le dernier lot
-- `.env` production : ajout `CLICKHOUSE_ENABLED=false`
-- Aucun fichier code modifie (deploiement du code existant `b815153` + `471cb42`)
+- `api_opcv/src/routes/apigestionperformance.js` : fix SQL `getPerformancesByCategorynow()` (L2234)
 
-### Commandes executees (VPS)
-- `df -h` : 83% disque (26G libres)
-- `systemctl is-enabled/is-active clickhouse-server` : enabled, active
-- `du -sh /var/log/clickhouse-server/` : 763M (apres truncate des 41Go)
-- `git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop` : fast-forward OK
-- `echo 'CLICKHOUSE_ENABLED=false' >> .env`
-- `pm2 restart api-monolith` : restart #31, online
-- Curls verification : 4/4 retournent 200
+### Commandes executees
+- `node --check src/routes/apigestionperformance.js` : SYNTAX OK
+- `git add + commit + push` : `f5fc73a` pousse sur remote
+
+### Commandes executees (VPS — ClickHouse service)
+- `systemctl stop clickhouse-server` : OK
+- `systemctl disable clickhouse-server` : OK (removed symlink multi-user.target.wants)
+- `truncate -s 0 /var/log/clickhouse-server/*.log` : OK
+- `df -h /` : 82% (28G libres)
 
 ### Tests realises
-- curl /api/performanceswithdate/fond/866/2026-06-05 : 200 OK
-- curl /api/valLiq/866 : 200 OK
-- curl home page : 200 OK
-- curl summary-eur page : 200 OK
-- curl /api/health : {"status":"ok"}
-- PM2 logs : "ClickHouse desactive via CLICKHOUSE_ENABLED=false" confirme
+- Syntax check `node --check` : OK
+- Verification que `getPerformancesByCategory()` (L2092) utilise deja le meme pattern MAX(date) : confirme
+- Verification route callers (L294, L1465) : meme fonction, fix s'applique partout
+- Verification copie dans `services/performance/routes.js` : code mort (non importe), ignore
 
 ### Resultat des tests
-- **SUCCESS** — deploiement complet, ClickHouse desactive, zero regression, toutes pages OK
+- **Syntax OK** — a deployer sur VPS pour verification complete en production
 
 ### Erreurs restantes
 - Aucune erreur bloquante
-- ClickHouse service systemd toujours actif (pour autres apps potentiellement) — si aucune autre app ne l'utilise, equipe serveur pourra le masquer
-- Rotation de log ClickHouse a configurer cote serveur (config.d) si ClickHouse reste actif
+- LOT 2 pas encore deploye sur VPS (a faire maintenant)
+
+### Tache en cours
+- Deploiement LOT 2 sur VPS + regeneration classements
 
 ### Prochaine action recommandee
-- Incident ClickHouse clos cote Africafunds
-- Reprendre les taches courantes (T35-suite supervision BRVM, T31, T33, T34)
-- Si equipe serveur veut reactiver ClickHouse pour Africafunds : d'abord configurer la rotation de log, puis passer `CLICKHOUSE_ENABLED=true` dans .env et `pm2 restart`
+1. Deployer LOT 2 sur VPS : `cd api && git pull --rebase origin claude/code-review-improvements-ikvuj && pm2 restart api-monolith`
+2. Verifier en production : `curl /api/performances/fond/866?date=2026-06-15` → doit contenir `moyenne_ytd`, `moyenne_perf3m`, etc.
+3. Regenerer classements : `curl /api/classementmysql` sur le VPS pour recalculer avec les bons `rank*totalm`
+4. Verifier page fonds : moyennes categorie affichees + barres ratio visibles
 
 ### Risques connus
-- Reactiver ClickHouse SANS rotation de log = risque de re-saturation disque
-- Ne PAS passer CLICKHOUSE_ENABLED=true tant que la rotation de log n'est pas configuree
-- Dette technique #53 : vieux code mort ClickHouse dans apigestionsavequotidien.js (inerte, non urgent)
+- Ne PAS reactiver ClickHouse sans configurer la rotation de log
+- Dette technique #53 : code mort ClickHouse dans apigestionsavequotidien.js (inerte, non urgent)
+- Copie buggee dans `services/performance/routes.js:179` : code mort non importe, a nettoyer plus tard
 
 ### T35-hist — Diagnostic backfill historique BRVM 2022→2025 (2026-06-12 soir)
 - **Archives BOC disponibles en ligne jusqu'en 2020 au moins** (testes 200 OK : 2020-01-08, 2021-01-06, 2022-01-05, 2023-01-04, 2024-01-03, 2025-01-08)
