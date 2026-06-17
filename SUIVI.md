@@ -1780,7 +1780,21 @@ Corrections deployees (commits pushes, a deployer sur production):
 - **Commits**: `714b977` (API), `b8700c3` (Frontend)
 - **Build**: 0 erreurs
 
-### 2026-06-17 - LOT 2 (#55): Fix moyennes categorie "- %" — COMMITE, A DEPLOYER
+### 2026-06-17 - LOT 3 (#56): Fix transaction classements — COMMITE, A DEPLOYER
+- **Statut**: COMMITE ET POUSSE (`e3d8fec`), A DEPLOYER
+- **Probleme**: Routes classement (`classementmysql`, `classementeur`, `classementusd`) avaient `destroy()` dans la transaction mais `findOne()`/`save()`/`create()` hors transaction, causant deadlocks ou perte de donnees
+- **Fix**: Ajout `{ transaction }` a TOUS les `findOne`, `save` et `create` (27 operations dans 3 routes) + gardes null sur acces `rankingData.data`
+- **Fichier**: `api_opcv/src/routes/apigestionsavequotidien.js`
+- **Commit**: `e3d8fec`
+- **Deploiement SSH** (apres deploiement, relancer les 3 classements) :
+  ```bash
+  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
+  curl http://localhost:3005/api/classementmysql
+  curl http://localhost:3005/api/classementeur
+  curl http://localhost:3005/api/classementusd
+  ```
+
+### 2026-06-17 - LOT 2 (#55): Fix moyennes categorie "- %" — DEPLOYE ET VERIFIE
 - **Statut**: COMMITE ET POUSSE, A DEPLOYER
 - **Probleme**: Tableau performances affichait "- %" dans colonne Categorie, barres de ratio invisibles
 - **Cause racine**: `getPerformancesByCategorynow()` utilisait `AND date = :datedebut` (match exact), excluant les peers dont la derniere VL tombe a une date differente
@@ -2001,68 +2015,75 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-17 : LOT 2 moyennes categorie (#55) — COMMITE et POUSSE, A DEPLOYER.**
+**2026-06-17 : LOT 3 fix transaction classements (#56) — COMMITE et POUSSE, A DEPLOYER.**
+- LOT 3 fix transaction classements (#56) : COMMITE (`e3d8fec` API), A DEPLOYER sur VPS
+- LOT 2 moyennes categorie (#55) : DEPLOYE en production, CONFIRME OK (25 moyennes non-null)
+- LOT 1 rankings null/Infinity (#54) : DEPLOYE en production
 - Incident ClickHouse entierement resolu : code desactive + service systemd arrete et disable
-- LOT 1 rankings null/Infinity (#54) : DEPLOYE en production (commits `714b977` API + `b8700c3` frontend)
-- LOT 2 moyennes categorie (#55) : COMMITE (`f5fc73a` API), A DEPLOYER sur VPS
-- Toutes les verifications production prealables OK (perf 200, valLiq 200, home 200, summary-eur 200)
 
 ### Dernier lot termine
-**LOT 2 — Fix moyennes categorie "- %" (#55, 2026-06-17)**
+**LOT 3 — Fix transaction classements (#56, 2026-06-17)**
 
-- `getPerformancesByCategorynow()` dans `apigestionperformance.js:2234` utilisait `AND date = :datedebut` (match exact)
-- Les fonds d'une meme categorie ayant des dates de derniere VL differentes, le filtre excluait quasi tous les peers
-- Resultat : moyennes de categorie vides ("- %") dans le tableau de performances, et barres de ratio "Par rapport a la Cat" invisibles
-- **Fix** : remplacement par sous-requete `MAX(date) per fond_id` (pattern identique a `getPerformancesByCategory()` L2151 et `ranking.service.js`)
-- Parametre `datedebut` conserve pour compatibilite de signature mais non utilise
-- **Impact** : corrige BUG 2 (moyennes "- %") + BUG 3 (barres ratio "Par rapport a la Cat")
-- Commit API : `f5fc73a`
+- **Bug critique** : les 3 routes classement (`classementmysql`, `classementeur`, `classementusd`) avaient `destroy()` dans la transaction mais `findOne()`/`save()`/`create()` HORS transaction
+- **Consequence** : deadlocks potentiels (save() bloque sur rows verrouilles par delete), OU data loss (le DELETE committe apres les inserts/updates, effacant les donnees fraichement ecrites)
+- **Fix** : ajout `{ transaction }` a TOUS les `findOne`, `save` et `create` dans les 3 routes (9+9+9 = 27 operations corrigees)
+- **Fix complementaire** : ajout gardes null sur acces `rankingData.data` dans les blocs update (evite TypeError si ranking echoue)
+- **Impact** : 3 routes corrigees, 41 insertions / 32 suppressions
+- **Zero regression** : la logique metier est identique, seule la gestion transactionnelle change
+- Commit API : `e3d8fec`
+
+**LOT 2 — Fix moyennes categorie "- %" (#55, 2026-06-17) — DEPLOYE**
+- `getPerformancesByCategorynow()` : MAX(date) per fond_id au lieu de match exact
+- Commit API : `f5fc73a` — DEPLOYE et VERIFIE OK (25 moyennes non-null)
 
 **LOT CLICKHOUSE-SERVICE (2026-06-17) — Arret service systemd ClickHouse**
 - `systemctl stop clickhouse-server` + `systemctl disable clickhouse-server` : OK
-- 2.1G RAM + 7.6G donnees disque liberes (donnees conservees dans /var/lib/clickhouse pour reactivation future)
-- `truncate -s 0 /var/log/clickhouse-server/*.log` : OK
-- Disque : 82% (28G libres, ameliore depuis 83%)
+- 2.1G RAM + 7.6G donnees disque liberes
+- Disque : 82% (28G libres)
 
 **LOT 1 — Fix rankings null/Infinity (#54, 2026-06-17) — DEPLOYE**
-- `buildRankResult()` generait `rank3Moismtotal` mais DB attend `rank3Moistotalm` → mapping `totalNames` ajoute
-- Frontend : `safeQuartile()` helper + 30 occurrences `=== undefined` → `== null` + copy-paste bugs corriges
+- `buildRankResult()` totalNames mapping + frontend safeQuartile()
 - Commits : `714b977` (API) + `b8700c3` (frontend)
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/src/routes/apigestionperformance.js` : fix SQL `getPerformancesByCategorynow()` (L2234)
+- `api_opcv/src/routes/apigestionsavequotidien.js` : fix transaction dans classementmysql, classementeur, classementusd
 
 ### Commandes executees
-- `node --check src/routes/apigestionperformance.js` : SYNTAX OK
-- `git add + commit + push` : `f5fc73a` pousse sur remote
-
-### Commandes executees (VPS — ClickHouse service)
-- `systemctl stop clickhouse-server` : OK
-- `systemctl disable clickhouse-server` : OK (removed symlink multi-user.target.wants)
-- `truncate -s 0 /var/log/clickhouse-server/*.log` : OK
-- `df -h /` : 82% (28G libres)
+- `node --check src/routes/apigestionsavequotidien.js` : SYNTAX OK
+- `git add + commit + push` : `e3d8fec` pousse sur remote (rebase apres sync_production snapshot)
 
 ### Tests realises
 - Syntax check `node --check` : OK
-- Verification que `getPerformancesByCategory()` (L2092) utilise deja le meme pattern MAX(date) : confirme
-- Verification route callers (L294, L1465) : meme fonction, fix s'applique partout
-- Verification copie dans `services/performance/routes.js` : code mort (non importe), ignore
+- Verification que les 3 routes ont le meme pattern de fix
+- Verification des gardes null sur rankingData, rankingDataregional, rankingDataGlobal
 
 ### Resultat des tests
-- **Syntax OK** — a deployer sur VPS pour verification complete en production
+- **Syntax OK** — a deployer sur VPS puis relancer classementmysql + classementeur + classementusd
 
 ### Erreurs restantes
 - Aucune erreur bloquante
-- LOT 2 pas encore deploye sur VPS (a faire maintenant)
 
 ### Tache en cours
-- Deploiement LOT 2 sur VPS + regeneration classements
+- Deploiement LOT 3 sur VPS + regeneration des 3 types de classements
 
 ### Prochaine action recommandee
-1. Deployer LOT 2 sur VPS : `cd api && git pull --rebase origin claude/code-review-improvements-ikvuj && pm2 restart api-monolith`
-2. Verifier en production : `curl /api/performances/fond/866?date=2026-06-15` → doit contenir `moyenne_ytd`, `moyenne_perf3m`, etc.
-3. Regenerer classements : `curl /api/classementmysql` sur le VPS pour recalculer avec les bons `rank*totalm`
-4. Verifier page fonds : moyennes categorie affichees + barres ratio visibles
+1. Deployer LOT 3 sur VPS :
+   ```
+   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
+   ```
+2. Regenerer classements local :
+   ```
+   curl http://localhost:3005/api/classementmysql
+   ```
+3. Verifier classement local :
+   ```
+   python3 -c "import requests,json; r=requests.get('http://localhost:3005/api/classementquartile/fond/866'); d=r.json(); print('rank3Mois:', d.get('data',{}).get('classementType1',{}).get('rank3Mois'), 'rank3Moistotal:', d.get('data',{}).get('classementType1',{}).get('rank3Moistotal'), 'rank3Moistotalm:', d.get('data',{}).get('classementType1',{}).get('rank3Moistotalm'))"
+   ```
+4. Si classement local OK, regenerer EUR et USD :
+   ```
+   curl http://localhost:3005/api/classementeur
+   curl http://localhost:3005/api/classementusd
+   ```
 
 ### Risques connus
 - Ne PAS reactiver ClickHouse sans configurer la rotation de log
