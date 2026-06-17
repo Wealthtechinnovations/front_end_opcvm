@@ -1865,23 +1865,103 @@ npm run build && pm2 restart fundafrique-frontend
 
 ---
 
+## INCIDENT CLICKHOUSE — SATURATION DISQUE SERVEUR (2026-06-17)
+
+### Contexte
+Le VPS heberge plusieurs applications. Lors d'une mise a jour, ClickHouse (utilise
+par africafunds pour les analytics) a genere un `stderr.log` gigantesque
+(~1,2 Go/min, jusqu'a 41 Go), saturant le disque a 100% et **bloquant toutes les
+applications** du serveur (dont BRVM chainsolutions). L'equipe serveur a fait des
+modifications d'urgence (masquage systemd, kill PID, truncate) — details exacts inconnus.
+
+### Cause racine
+Boucle de crash ClickHouse : disque plein → ClickHouse plante → systemd relance →
+re-plante → chaque crash deverse des Go dans stderr. Aggrave par logging verbeux
+(niveau trace/debug probable) **sans rotation de log**. **C'est le serveur ClickHouse
+lui-meme la source du gros log, pas l'app Node africafunds.**
+
+### Analyse d'impact africafunds (diagnostic code 2026-06-17)
+- `app.js` : `initClickHouse()` NON-bloquant ; si indispo, la sync n'est pas lancee
+- Routes `/api/analytics/*` : protegees par `requireClickHouse` → 503 propre si indispo
+- **Frontend : n'appelle AUCUNE route analytics** → ZERO impact utilisateur si ClickHouse coupe
+- Coeur OPCVM (VL, perf, ratios, classements, graphiques, panels) : 100% MySQL, independant
+- **Conclusion : couper/reparer ClickHouse n'a aucun impact visible sur africafunds.**
+
+### Durcissement code livre (commit `b815153`, pousse, A DEPLOYER)
+1. Flag `CLICKHOUSE_ENABLED` (.env) : desactivation propre sans toucher au code
+2. Coupe-circuit : arret sync periodique apres N echecs (`CLICKHOUSE_MAX_SYNC_FAILURES`=3)
+3. `request_timeout` 30s : evite requetes suspendues
+4. `syncFundPerformance` : lecture MySQL paginee keyset (id>lastId), memoire bornee
+5. `setClickHouseUnavailable()` expose pour le coupe-circuit
+- Fichiers : `api_opcv/src/db/clickhouse.js`, `api_opcv/src/services/clickhouse-sync.js`
+- Syntaxe verifiee (node --check OK x2)
+
+### Etat des lieux a confirmer sur le VPS (snapshot stale, pre-incident)
+PRODUCTION_STATE.json date du 2026-06-13 23:17 (AVANT incident). Etat reel actuel
+INCONNU. **Commandes de diagnostic a executer (voir bloc DIAGNOSTIC CLICKHOUSE VPS).**
+
+### Decision strategique en attente (utilisateur)
+- **Option A — Garder ClickHouse DESACTIVE** (`CLICKHOUSE_ENABLED=false`) : protection
+  maximale, zero risque disque, zero regression (frontend n'utilise pas analytics).
+- **Option B — Reactiver ClickHouse proprement** : ajouter rotation+plafond de log
+  cote serveur (config.d) AVANT de le reactiver. A faire avec l'equipe serveur.
+
+---
+
+## DIAGNOSTIC CLICKHOUSE VPS (commandes a executer et renvoyer)
+
+```bash
+# 1. Espace disque (metrique critique)
+df -h /
+
+# 2. Etat du service ClickHouse (masque ? arrete ? actif ?)
+systemctl status clickhouse-server 2>&1 | head -20
+systemctl is-enabled clickhouse-server 2>&1
+systemctl is-active clickhouse-server 2>&1
+
+# 3. Taille des logs ClickHouse (les coupables)
+du -sh /var/log/clickhouse-server/ 2>/dev/null
+ls -lhS /var/log/clickhouse-server/ 2>/dev/null | head
+du -sh /var/lib/clickhouse/ 2>/dev/null
+# Journal systemd (si stderr part dans journald)
+journalctl --disk-usage 2>/dev/null
+
+# 4. Sante africafunds (API up ? depend-elle de ClickHouse ?)
+pm2 status
+curl -s -o /dev/null -w "API health: %{http_code}\n" http://localhost:3005/api/health
+curl -s http://localhost:3005/api/health
+
+# 5. L'API se connecte-t-elle a ClickHouse actuellement ?
+pm2 logs api-monolith --lines 60 --nostream | grep -i clickhouse
+
+# 6. Config logging ClickHouse existante (pour voir ce qui a ete modifie)
+ls -l /etc/clickhouse-server/config.d/ 2>/dev/null
+grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
+```
+
+---
+
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-15 : Deploiement VPS verifie OK. LOTs AUDIT-A a D + CRON-FIX + CATCH-FIX + CSV-FIX tous deployes en production.
-Production stable (4 PM2 online, 1208 fonds, 981909+ VL). Zero regression confirmee.
-Checklist de deploiement reutilisable ajoutee dans SUIVI.md.
+Session 2026-06-15 : Deploiement VPS verifie OK (AUDIT-A a D + CRON/CATCH/CSV-FIX).
+Production africafunds stable cote code. **2026-06-17 : incident ClickHouse serveur
+(saturation disque) — durcissement code livre et pousse (`b815153`), pas encore deploye.
+Diagnostic VPS en attente pour confirmer etat reel post-incident.**
 
 ### Dernier lot termine
-**LOT DEPLOY-VPS (2026-06-15) — Deploiement + verification + checklist**
+**LOT CLICKHOUSE-RESILIENCE (2026-06-17) — Durcissement anti-saturation**
 
+- Diagnostic complet de l'usage ClickHouse (code + impact regression)
+- Confirme : ClickHouse 100% optionnel, frontend ne l'utilise pas
+- Durcissement : flag CLICKHOUSE_ENABLED, coupe-circuit, timeout, lecture paginee
+- Commit `b815153` pousse (api_opcv)
+- Commandes de diagnostic VPS preparees (a executer par l'utilisateur)
+
+**LOT DEPLOY-VPS (2026-06-15) — Deploiement + verification + checklist**
 - Deploiement VPS des commits AUDIT-C/D, CRON-FIX, CATCH-FIX, CSV-FIX, DOC-UPDATE
-- 6 etapes executees par l'utilisateur sur le VPS
-- Verification API : OK (syntax, pm2, curl)
-- Verification Frontend : OK (build 217/217, pm2, curl home/EUR/USD)
-- Verification Crons : OK (set -e=0, run_step=13, bash -n 3/3)
+- 6 etapes executees, verifications API/Frontend/Crons toutes OK
 - Checklist de deploiement reutilisable ajoutee dans SUIVI.md
-- Analyse du fichier de resultat (2012 lignes) documentee
 
 **LOT AUDIT-A (2026-06-13) — DEPLOYE — Audit global + 2 corrections**
 1. `check_cron_health.js` (`23c040f`) : fix `MAX(updatedAt)` (colonne inexistante).
@@ -1906,25 +1986,42 @@ Checklist de deploiement reutilisable ajoutee dans SUIVI.md.
 - Conflits (VL existante ≠ VL BOC) conserves en staging, aucun overwrite
 
 ### Fichiers modifies dans le dernier lot
-SUIVI.md (checklist deploiement + bilan deploiement VPS). Aucun fichier code modifie.
+- `api_opcv/src/db/clickhouse.js` (flag, timeout, setClickHouseUnavailable)
+- `api_opcv/src/services/clickhouse-sync.js` (coupe-circuit, lecture paginee)
+- `front_end_opcvm/SUIVI.md` (incident + diagnostic + point de reprise)
+- `api_opcv/CODE_REVIEW.md` + `api_opcv/CHANGELOG.md` (documentation)
 
 ### Commandes executees
-- Analyse fichier `df72df2d-Resultatfundafrica.txt` (resultat VPS)
-- Mise a jour SUIVI.md (checklist + point de reprise)
+- Diagnostic code ClickHouse (clickhouse.js, clickhouse-sync.js, analytics.js, app.js)
+- Grep usage frontend analytics (aucun) + cles .env CLICKHOUSE (aucune)
+- node --check x2 (OK), git commit `b815153` + pull --rebase + push
 
 ### Tests realises
-- Verification de chaque etape du deploiement VPS dans le fichier de resultats
-- API : git pull OK, node --check OK, pm2 restart OK, curl 200/404
-- Frontend : git pull OK, build 217/217 OK, pm2 restart OK, curl home/EUR/USD 200
-- Crons : set -e=0, run_step=13, bash -n 3/3 OK
+- node --check src/db/clickhouse.js : OK
+- node --check src/services/clickhouse-sync.js : OK
+- Verification : frontend n'appelle aucune route /api/analytics
+- Verification : .env sans cle CLICKHOUSE (defauts code)
 
 ### Resultat des tests
-- SUCCESS — deploiement 100% reussi, zero regression
+- SUCCESS code — durcissement ClickHouse syntax OK, pousse, pret a deployer
+- EN ATTENTE — diagnostic VPS post-incident (etat reel disque/ClickHouse a confirmer)
 
 ### Erreurs restantes
-- Aucune erreur bloquante
-- Logs PM2 : erreurs fonds 2878-2880 (Nigeria USD, connu/attendu)
-- Note VPS : fichier parasite `0` (untracked) dans le repo prod — supprimable (`rm /var/www/.../api/0`)
+- Etat reel post-incident du VPS inconnu (snapshot stale) — diagnostic a executer
+- Decision strategique en attente : ClickHouse desactive (A) ou reactive avec rotation (B)
+
+### Prochaine action recommandee (ClickHouse)
+1. Executer le bloc DIAGNOSTIC CLICKHOUSE VPS et renvoyer les sorties
+2. Selon resultat, choisir Option A (desactiver) ou B (reactiver avec rotation log)
+3. Deployer le durcissement (`b815153`) : git pull --rebase + pm2 restart api-monolith
+4. Si Option A : ajouter `CLICKHOUSE_ENABLED=false` dans api/.env avant restart
+5. Si Option B : config rotation log cote serveur (avec equipe serveur) AVANT unmask
+
+### Risques connus (ClickHouse)
+- Reactiver ClickHouse SANS rotation de log = risque de re-saturation disque
+- Le durcissement code protege l'app (coupe-circuit) mais NE corrige PAS le logging
+  serveur ClickHouse (config systeme, hors repo) — c'est la 2e couche obligatoire
+- Ne PAS unmask ClickHouse tant que la rotation de log n'est pas en place
 
 ### T35-hist — Diagnostic backfill historique BRVM 2022→2025 (2026-06-12 soir)
 - **Archives BOC disponibles en ligne jusqu'en 2020 au moins** (testes 200 OK : 2020-01-08, 2021-01-06, 2022-01-05, 2023-01-04, 2024-01-03, 2025-01-08)
