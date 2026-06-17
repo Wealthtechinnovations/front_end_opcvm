@@ -1900,11 +1900,31 @@ lui-meme la source du gros log, pas l'app Node africafunds.**
 PRODUCTION_STATE.json date du 2026-06-13 23:17 (AVANT incident). Etat reel actuel
 INCONNU. **Commandes de diagnostic a executer (voir bloc DIAGNOSTIC CLICKHOUSE VPS).**
 
-### Decision strategique en attente (utilisateur)
-- **Option A — Garder ClickHouse DESACTIVE** (`CLICKHOUSE_ENABLED=false`) : protection
-  maximale, zero risque disque, zero regression (frontend n'utilise pas analytics).
-- **Option B — Reactiver ClickHouse proprement** : ajouter rotation+plafond de log
-  cote serveur (config.d) AVANT de le reactiver. A faire avec l'equipe serveur.
+### Decision strategique — TRANCHEE : Option A (desactiver ClickHouse)
+
+**Verification exhaustive de la source de verite des donnees (2026-06-17) :**
+- Crons production appellent UNIQUEMENT les routes MySQL :
+  - `cron_daily_update.sh` : saveperfdatemysql, classementmysql, classementeur, classementusd
+  - `cron_daily_eur_usd.sh` : classementeur, classementusd (+ verif tables MySQL eurs/usds)
+  - `cron_nigeria_weekly.sh` : saveperfdatemysql, saveperfdateeur, saveperfdateusd
+- AUCUN cron n'appelle `/api/classementclickhouse` ni `/api/saveperfdateclickhouse`
+  → ces routes ClickHouse dans apigestionsavequotidien.js sont du CODE MORT (#53)
+- Frontend : aucune route /api/analytics consommee (verifie par grep exhaustif)
+- **Source de verite = MySQL `fund_opcvm` a 100%** (VL, perf local/EUR/USD,
+  classements local/EUR/USD, ratios). ClickHouse = copie derivee non consommee.
+
+**Conclusion : desactiver ClickHouse ne perd AUCUNE donnee et ne cause AUCUNE regression.**
+
+- **Option A RETENUE** : `CLICKHOUSE_ENABLED=false` dans api/.env + deploiement du
+  durcissement code. Protection maximale, zero risque disque.
+- Option B (reactiver avec rotation log) : reportee, possible plus tard si un besoin
+  analytics reel apparait (necessiterait config rotation log serveur AVANT unmask).
+
+### Dette technique identifiee (#53)
+- `apigestionsavequotidien.js` : client ClickHouse inline (ligne 54) + routes mortes
+  `/api/classementclickhouse`, `/api/saveperfdateclickhouse`, fonction `insertIntoClickHouse`
+  → a nettoyer (non urgent, inerte car jamais appele ; createClient est lazy, pas de
+  connexion au chargement du module donc aucun impact au demarrage)
 
 ---
 
@@ -2010,12 +2030,16 @@ Diagnostic VPS en attente pour confirmer etat reel post-incident.**
 - Etat reel post-incident du VPS inconnu (snapshot stale) — diagnostic a executer
 - Decision strategique en attente : ClickHouse desactive (A) ou reactive avec rotation (B)
 
-### Prochaine action recommandee (ClickHouse)
-1. Executer le bloc DIAGNOSTIC CLICKHOUSE VPS et renvoyer les sorties
-2. Selon resultat, choisir Option A (desactiver) ou B (reactiver avec rotation log)
-3. Deployer le durcissement (`b815153`) : git pull --rebase + pm2 restart api-monolith
-4. Si Option A : ajouter `CLICKHOUSE_ENABLED=false` dans api/.env avant restart
-5. Si Option B : config rotation log cote serveur (avec equipe serveur) AVANT unmask
+### Prochaine action recommandee (ClickHouse) — Option A retenue
+1. Executer le bloc DIAGNOSTIC CLICKHOUSE VPS (confirmer disque libere + etat ClickHouse)
+2. Deployer le durcissement : `cd api && git stash && git pull --rebase && git stash pop`
+3. Ajouter `CLICKHOUSE_ENABLED=false` dans api/.env
+4. `pm2 restart api-monolith` (ou avec --update-env pour relire .env)
+5. Verifier : `curl http://localhost:3005/api/health` (clickhouse: unavailable attendu),
+   logs PM2 montrent "ClickHouse desactive via CLICKHOUSE_ENABLED=false",
+   pages fonds local/EUR/USD 200, crons MySQL intacts
+6. (Plus tard / equipe serveur) : si ClickHouse doit rester sur le VPS pour d'autres
+   usages, configurer rotation+plafond log (config.d) pour qu'il ne sature plus jamais
 
 ### Risques connus (ClickHouse)
 - Reactiver ClickHouse SANS rotation de log = risque de re-saturation disque
