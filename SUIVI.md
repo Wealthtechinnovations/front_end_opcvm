@@ -1964,19 +1964,24 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-Session 2026-06-15 : Deploiement VPS verifie OK (AUDIT-A a D + CRON/CATCH/CSV-FIX).
-Production africafunds stable cote code. **2026-06-17 : incident ClickHouse serveur
-(saturation disque) — durcissement code livre et pousse (`b815153`), pas encore deploye.
-Diagnostic VPS en attente pour confirmer etat reel post-incident.**
+**2026-06-17 : Incident ClickHouse RESOLU — DEPLOYE en production.**
+- Durcissement code deploye (`b815153` + `471cb42`)
+- `CLICKHOUSE_ENABLED=false` actif dans .env production
+- PM2 api-monolith redémarre, logs confirment ClickHouse desactive
+- Toutes les verifications production OK (perf 200, valLiq 200, home 200, summary-eur 200)
+- Health endpoint OK
+- **Zero regression** : performances, classements (local/EUR/USD), VL, ratios — tout intact (MySQL only)
 
 ### Dernier lot termine
-**LOT CLICKHOUSE-RESILIENCE (2026-06-17) — Durcissement anti-saturation**
+**LOT CLICKHOUSE-DEPLOY (2026-06-17) — Deploiement + desactivation + verification**
 
-- Diagnostic complet de l'usage ClickHouse (code + impact regression)
-- Confirme : ClickHouse 100% optionnel, frontend ne l'utilise pas
-- Durcissement : flag CLICKHOUSE_ENABLED, coupe-circuit, timeout, lecture paginee
-- Commit `b815153` pousse (api_opcv)
-- Commandes de diagnostic VPS preparees (a executer par l'utilisateur)
+- Deploiement code durcissement ClickHouse sur VPS (git pull fast-forward OK)
+- `CLICKHOUSE_ENABLED=false` ajoute a .env production
+- `pm2 restart api-monolith` (restart #31, status online, 197.6mb)
+- Logs PM2 : "ClickHouse desactive via CLICKHOUSE_ENABLED=false"
+- Curls verification : /api/performanceswithdate/fond/866/2026-06-05 (200), /api/valLiq/866 (200), home (200), summary-eur (200)
+- Disque VPS : 83% (26G libres, etait sature)
+- ClickHouse service systemd : toujours actif (pour autres apps potentielles), mais Node.js ne l'utilise plus
 
 **LOT DEPLOY-VPS (2026-06-15) — Deploiement + verification + checklist**
 - Deploiement VPS des commits AUDIT-C/D, CRON-FIX, CATCH-FIX, CSV-FIX, DOC-UPDATE
@@ -2006,46 +2011,43 @@ Diagnostic VPS en attente pour confirmer etat reel post-incident.**
 - Conflits (VL existante ≠ VL BOC) conserves en staging, aucun overwrite
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/src/db/clickhouse.js` (flag, timeout, setClickHouseUnavailable)
-- `api_opcv/src/services/clickhouse-sync.js` (coupe-circuit, lecture paginee)
-- `front_end_opcvm/SUIVI.md` (incident + diagnostic + point de reprise)
-- `api_opcv/CODE_REVIEW.md` + `api_opcv/CHANGELOG.md` (documentation)
+- `.env` production : ajout `CLICKHOUSE_ENABLED=false`
+- Aucun fichier code modifie (deploiement du code existant `b815153` + `471cb42`)
 
-### Commandes executees
-- Diagnostic code ClickHouse (clickhouse.js, clickhouse-sync.js, analytics.js, app.js)
-- Grep usage frontend analytics (aucun) + cles .env CLICKHOUSE (aucune)
-- node --check x2 (OK), git commit `b815153` + pull --rebase + push
+### Commandes executees (VPS)
+- `df -h` : 83% disque (26G libres)
+- `systemctl is-enabled/is-active clickhouse-server` : enabled, active
+- `du -sh /var/log/clickhouse-server/` : 763M (apres truncate des 41Go)
+- `git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop` : fast-forward OK
+- `echo 'CLICKHOUSE_ENABLED=false' >> .env`
+- `pm2 restart api-monolith` : restart #31, online
+- Curls verification : 4/4 retournent 200
 
 ### Tests realises
-- node --check src/db/clickhouse.js : OK
-- node --check src/services/clickhouse-sync.js : OK
-- Verification : frontend n'appelle aucune route /api/analytics
-- Verification : .env sans cle CLICKHOUSE (defauts code)
+- curl /api/performanceswithdate/fond/866/2026-06-05 : 200 OK
+- curl /api/valLiq/866 : 200 OK
+- curl home page : 200 OK
+- curl summary-eur page : 200 OK
+- curl /api/health : {"status":"ok"}
+- PM2 logs : "ClickHouse desactive via CLICKHOUSE_ENABLED=false" confirme
 
 ### Resultat des tests
-- SUCCESS code — durcissement ClickHouse syntax OK, pousse, pret a deployer
-- EN ATTENTE — diagnostic VPS post-incident (etat reel disque/ClickHouse a confirmer)
+- **SUCCESS** — deploiement complet, ClickHouse desactive, zero regression, toutes pages OK
 
 ### Erreurs restantes
-- Etat reel post-incident du VPS inconnu (snapshot stale) — diagnostic a executer
-- Decision strategique en attente : ClickHouse desactive (A) ou reactive avec rotation (B)
+- Aucune erreur bloquante
+- ClickHouse service systemd toujours actif (pour autres apps potentiellement) — si aucune autre app ne l'utilise, equipe serveur pourra le masquer
+- Rotation de log ClickHouse a configurer cote serveur (config.d) si ClickHouse reste actif
 
-### Prochaine action recommandee (ClickHouse) — Option A retenue
-1. Executer le bloc DIAGNOSTIC CLICKHOUSE VPS (confirmer disque libere + etat ClickHouse)
-2. Deployer le durcissement : `cd api && git stash && git pull --rebase && git stash pop`
-3. Ajouter `CLICKHOUSE_ENABLED=false` dans api/.env
-4. `pm2 restart api-monolith` (ou avec --update-env pour relire .env)
-5. Verifier : `curl http://localhost:3005/api/health` (clickhouse: unavailable attendu),
-   logs PM2 montrent "ClickHouse desactive via CLICKHOUSE_ENABLED=false",
-   pages fonds local/EUR/USD 200, crons MySQL intacts
-6. (Plus tard / equipe serveur) : si ClickHouse doit rester sur le VPS pour d'autres
-   usages, configurer rotation+plafond log (config.d) pour qu'il ne sature plus jamais
+### Prochaine action recommandee
+- Incident ClickHouse clos cote Africafunds
+- Reprendre les taches courantes (T35-suite supervision BRVM, T31, T33, T34)
+- Si equipe serveur veut reactiver ClickHouse pour Africafunds : d'abord configurer la rotation de log, puis passer `CLICKHOUSE_ENABLED=true` dans .env et `pm2 restart`
 
-### Risques connus (ClickHouse)
+### Risques connus
 - Reactiver ClickHouse SANS rotation de log = risque de re-saturation disque
-- Le durcissement code protege l'app (coupe-circuit) mais NE corrige PAS le logging
-  serveur ClickHouse (config systeme, hors repo) — c'est la 2e couche obligatoire
-- Ne PAS unmask ClickHouse tant que la rotation de log n'est pas en place
+- Ne PAS passer CLICKHOUSE_ENABLED=true tant que la rotation de log n'est pas configuree
+- Dette technique #53 : vieux code mort ClickHouse dans apigestionsavequotidien.js (inerte, non urgent)
 
 ### T35-hist — Diagnostic backfill historique BRVM 2022→2025 (2026-06-12 soir)
 - **Archives BOC disponibles en ligne jusqu'en 2020 au moins** (testes 200 OK : 2020-01-08, 2021-01-06, 2022-01-05, 2023-01-04, 2024-01-03, 2025-01-08)
