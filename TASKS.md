@@ -26,10 +26,12 @@
 | AUDIT-B | 2026-06-13 | EVOLUTIS VL recovery (salvage_implausible_year) | Deploye | — |
 | AUDIT-C | 2026-06-13 | Securite API (#42 ClickHouse, #43 multer) | Deploye | `e5dddb6` |
 | AUDIT-D | 2026-06-13 | Quartile EUR/USD + worker SQL injection | Deploye (API), a deployer (frontend) | `8a60083` |
+| LOT 1 (#54) | 2026-06-17 | Rankings null/Infinity fix | Deploye | — |
+| LOT 2 (#55) | 2026-06-17 | Category averages fix (25 moyennes non-null) | Deploye + verifie | — |
+| LOT 3 (#56) | 2026-06-18 | Transaction consistency fix (3545+3579+3579 classements OK) | Deploye + verifie | `e3d8fec` |
 
 ## Prochain lot envisage
 
-- **Frontend AUDIT-D deploiement** : `npm run build` + `pm2 restart fundafrique-frontend` sur VPS
 - **#49** : cron_daily_update.sh `set -e` → gardes par etape
 - **#46** : .catch() promise chains apigestionperformance.js
 - **T31** : #28 factoriser duplication panel/investor vs panel/portfolio

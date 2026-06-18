@@ -1,5 +1,30 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
+## [2026-06-18] LOT 1-3 — Fix classements/rankings (API deploye)
+
+### Deploye API (LOT 1 — #54)
+- **#54** Fix rankings null/Infinity dans `ranking.service.js`
+  - `buildRankResult()` retournait Infinity quand total=0 (division par zero) → corrige
+  - Null handling ajoute dans les calculs de classement
+
+### Deploye API (LOT 2 — #55)
+- **#55** Fix moyennes par categorie dans `apigestionsavequotidien.js`
+  - Calcul des moyennes categorie corrige
+  - 25 moyennes non-null verifiees en production
+
+### Deploye API (LOT 3 — #56) — 2026-06-18
+- **#56** Fix consistance transactionnelle dans `apigestionsavequotidien.js`
+  - 3 routes classement (classementmysql, classementeur, classementusd) : ajout `{ transaction }` aux 27 operations Sequelize findOne/save/create qui etaient hors transaction
+  - Ajout null guards sur l'acces aux donnees de classement
+  - Commit API: `e3d8fec`
+  - Verifie en production : 3545 local + 3579 EUR + 3579 USD classements peuples correctement
+  - Fonds 866 : rank3Mois=86/300, rank3Moistotalm=300 confirme
+
+### Pousse, pas encore deploye (#52)
+- **#52** ClickHouse resilience : flag `CLICKHOUSE_ENABLED`, circuit breaker, timeout 30s, lecture paginee keyset
+  - ClickHouse service arrete et desactive sur VPS (incident saturation disque)
+  - Commit API: `b815153`
+
 ## [2026-06-13] LOT AUDIT-C/D — Audit securite + correctness + crons
 
 ### Deploye API (LOT AUDIT-C)

@@ -15,10 +15,14 @@
 - [x] T35 : module BRVM BOC + 4406 VL UEMOA + cron_brvm_daily.sh — 2026-06-12
 - [x] AUDIT-C : ClickHouse dead route 410 + path traversal multer fix — 2026-06-13
 - [x] AUDIT-D : quartile EUR/USD null guard + worker SQL injection fix — 2026-06-13 (API deploye, frontend a deployer)
+- [x] LOT 1 (#54) : rankings null/Infinity fix — 2026-06-17
+- [x] LOT 2 (#55) : category averages fix (25 moyennes non-null) — 2026-06-17
+- [x] LOT 3 (#56) : transaction consistency fix (3545+3579+3579 classements OK) — 2026-06-18
 
 ## A deployer sur VPS
 
 - [ ] **Frontend AUDIT-D** : quartile EUR/USD fix (FundSubView.tsx summary-eur + summary-usd) — commit `8a60083`, `npm run build` + `pm2 restart fundafrique-frontend`
+- [ ] **#52 ClickHouse resilience** — commit `b815153`, pas encore deploye
 
 ## Actions cron (sans risque de regression)
 

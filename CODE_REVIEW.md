@@ -341,6 +341,45 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Commit: `26d1f93` (api_opcv)
 - Priorite: HAUTE — CORRIGE
 
+### 52. ~~ClickHouse incident saturation disque~~ — CORRIGE (2026-06-17)
+- Incident: ClickHouse crash-loop + logging verbeux sans rotation → stderr.log ~41 Go, saturation disque VPS
+- Correction code: Flag `CLICKHOUSE_ENABLED` (.env), coupe-circuit sync (N echecs), timeout 30s, lecture VL paginee keyset
+- Correction serveur: ClickHouse systemd arrete et desactive (`systemctl stop/disable clickhouse-server`)
+- Commit API: `b815153` (pousse, pas encore deploye sur VPS)
+- Priorite: CRITIQUE — CORRIGE (service desactive, code resilient pret)
+
+### 53. Code mort ClickHouse dans apigestionsavequotidien.js
+- Fichier: api_opcv/src/routes/apigestionsavequotidien.js
+- Probleme: References ClickHouse residuelles dans les routes batch (sync classements, INSERT historique)
+- Impact: Code inerte (CLICKHOUSE_ENABLED=false), aucun risque fonctionnel
+- Recommandation: Nettoyage pour lisibilite et reduction taille fichier monolithique
+- Priorite: BASSE
+
+### 54. ~~Rankings null/Infinity dans buildRankResult~~ — CORRIGE (LOT 1, 2026-06-17)
+- Fichier: api_opcv/src/services/ranking.service.js
+- Probleme: `buildRankResult()` retournait Infinity quand total=0 (division par zero), null handling manquant
+- Impact: Classements avec valeurs Infinity stockees en base
+- Correction: Guard division par zero + null handling
+- Priorite: HAUTE — CORRIGE
+
+### 55. ~~Moyennes par categorie vides~~ — CORRIGE (LOT 2, 2026-06-17)
+- Fichier: api_opcv/src/routes/apigestionsavequotidien.js
+- Probleme: Calcul des moyennes par categorie produisait des valeurs NULL
+- Correction: Fix du calcul (25 moyennes non-null verifiees en production)
+- Priorite: HAUTE — CORRIGE
+
+### 56. ~~Inconsistance transactionnelle routes classement~~ — CORRIGE (LOT 3, 2026-06-18)
+- Fichier: api_opcv/src/routes/apigestionsavequotidien.js
+- Probleme: `destroy()` dans transaction mais `findOne()`/`save()`/`create()` hors transaction
+  - Le DELETE verouillait les lignes, les INSERT/UPDATE hors transaction causaient deadlocks ou perte de donnees
+  - 3 routes affectees: classementmysql, classementeur, classementusd
+  - 27 operations Sequelize hors transaction (9 par route)
+- Correction: Ajout `{ transaction }` aux 27 operations + null guards sur `rankingData`
+- Commit API: `e3d8fec`
+- Verification production: 3545 local + 3579 EUR + 3579 USD classements peuples correctement
+- Fonds 866: rank3Mois=86/300, rank3Moistotalm=300 (type1) confirme
+- Priorite: CRITIQUE — CORRIGE
+
 ### 51. Performance fallback silencieux (findValueAtDate)
 - Fichier: api_opcv/scripts/fix/fix_populate_performances.js (l.48-66)
 - Probleme: Si aucune VL n'existe a/avant la date cible, retourne la premiere VL de la serie au lieu de null
