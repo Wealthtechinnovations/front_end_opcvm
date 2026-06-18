@@ -2012,74 +2012,93 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ---
 
-### Session documentation 2026-06-18 — Mise a jour complete .md files
+### Session documentation + nettoyage #53 + diagnostic fond 1200 — 2026-06-18
 - **DEPLOYMENT_PRODUCTION.md** : cree dans les 2 repos (API 583 lignes, frontend 478 lignes)
 - **CHANGELOG.md** : mis a jour dans les 2 repos avec LOT 1/2/3 (#54/#55/#56)
 - **TASKS.md** : mis a jour dans les 2 repos avec LOT 1/2/3
 - **TODO.md** : mis a jour dans les 2 repos avec LOT 1/2/3 + #52 a deployer
 - **CODE_REVIEW.md** : mis a jour dans les 2 repos avec #52-#56
-- Investigations en cours : code mort ClickHouse (#53), erreurs fond 1200
-- Fichiers modifies : 10 fichiers .md (5 par repo)
+- **#53 ClickHouse dead code** : 482 lignes supprimees de apigestionsavequotidien.js (1808→1326)
+  - Supprime : import @clickhouse/client, client instantiation, calculateRank, calculateRankregional, classementclickhouse, saveperfdateclickhouse, processFund, safeValue, insertIntoClickHouse
+  - Preserve : code ClickHouse resilient (db/clickhouse.js, clickhouse-sync.js, analytics.js), 410 stub
+  - node --check OK, toutes routes actives preservees
+  - Commit API: `3525b9c` (pousse)
+- **Fond ID 1200 (FBN Halal Fund, NIGERIA)** : diagnostic complet
+  - Cause racine : ratios 5 ans avec tableaux vides (VL debut 2021-09-03, < 5 ans)
+  - Guard commente dans apigestionratios.js (lignes 792, 1108) laisse passer NaN/erreurs
+  - 3 vecteurs : (A) ratios vides → NaN/erreurs, (B) self-calling HTTP (240 dates x 2 req), (C) classement skip silencieux
+  - Bug additionnel #57 : ratiosnewithdate hardcode pays="Nigeria" pour taux sans risque (TOUTES les fonds)
+  - Fix recommande : decommenter les guards 3ans/5ans dans apigestionratios.js + else null ratios
+  - Fichiers concernes : apigestionratios.js, apigestionsavequotidien.js
+- Fichiers modifies et commites : 11 fichiers (6 API + 5 frontend) + SUIVI.md
 
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-18 : Documentation complete + LOT 1/2/3 deployes et verifies.**
-- LOT 3 fix transaction classements (#56) : DEPLOYE et VERIFIE (3545+3579+3579 classements OK)
-- LOT 2 moyennes categorie (#55) : DEPLOYE et VERIFIE (25 moyennes non-null)
-- LOT 1 rankings null/Infinity (#54) : DEPLOYE
-- Incident ClickHouse : service systemd arrete et disable
-- Classements EUR + USD : regeneres ("finishrank" OK)
-- Documentation .md : mise a jour complete (CHANGELOG, TASKS, TODO, CODE_REVIEW, DEPLOYMENT_PRODUCTION)
+**2026-06-18 : Documentation + nettoyage #53 + diagnostic fond 1200 — COMMITE ET POUSSE.**
+- LOT 1/2/3 (#54/#55/#56) : DEPLOYES et VERIFIES en production
+- #53 ClickHouse dead code : 482 lignes supprimees, commit `3525b9c` (pousse, pas encore deploye)
+- Documentation .md : 11 fichiers mis a jour/crees dans les 2 repos
+- Fond 1200 : diagnostic complet, fix identifie (apigestionratios.js guards)
+- ClickHouse : service systemd arrete et disable, code resilient preserve
 
 ### Dernier lot termine
-**Session documentation 2026-06-18 — Mise a jour complete fichiers .md**
-- 10 fichiers .md mis a jour/crees (CHANGELOG, TASKS, TODO, CODE_REVIEW, DEPLOYMENT_PRODUCTION)
-- LOT 3 (#56) deploye et verifie en production (session precedente)
-- Investigations en cours : code mort ClickHouse (#53), erreurs fond 1200
+**Nettoyage #53 + documentation complete + diagnostic fond 1200 — 2026-06-18**
+- 482 lignes code mort ClickHouse supprimees (apigestionsavequotidien.js 1808→1326)
+- 11 fichiers .md crees/mis a jour (DEPLOYMENT_PRODUCTION, CHANGELOG, TASKS, TODO, CODE_REVIEW)
+- Diagnostic fond 1200 : cause racine identifiee (ratios vides, guard commente)
+- Commits : API `3525b9c`, frontend `95c9767` (pousses sur branche)
 
 ### Fichiers modifies dans le dernier lot
-- `front_end_opcvm/CHANGELOG.md` : +LOT 1/2/3 + #52
-- `front_end_opcvm/TASKS.md` : +LOT 1/2/3
-- `front_end_opcvm/TODO.md` : +LOT 1/2/3 + #52 a deployer
-- `front_end_opcvm/CODE_REVIEW.md` : +#52-#56
-- `front_end_opcvm/DEPLOYMENT_PRODUCTION.md` : cree (478 lignes)
+- `api_opcv/src/routes/apigestionsavequotidien.js` : suppression code mort ClickHouse (-482 lignes)
 - `api_opcv/CHANGELOG.md` : +LOT 1/2/3
+- `api_opcv/CODE_REVIEW.md` : +LOT 1-3 + #53
 - `api_opcv/TASKS.md` : +LOT 1/2/3
 - `api_opcv/TODO.md` : +LOT 1/2/3 + #53
-- `api_opcv/CODE_REVIEW.md` : +LOT 1-3 + #53
 - `api_opcv/DEPLOYMENT_PRODUCTION.md` : cree (583 lignes)
+- `front_end_opcvm/CHANGELOG.md` : +LOT 1/2/3 + #52
+- `front_end_opcvm/CODE_REVIEW.md` : +#52-#56
+- `front_end_opcvm/TASKS.md` : +LOT 1/2/3
+- `front_end_opcvm/TODO.md` : +LOT 1/2/3 + #52 a deployer
+- `front_end_opcvm/DEPLOYMENT_PRODUCTION.md` : cree (478 lignes)
+- `front_end_opcvm/SUIVI.md` : mise a jour session
 
 ### Commandes executees
-- Aucune commande de deploiement — lot documentation uniquement
+- `node --check apigestionsavequotidien.js` : SYNTAX OK
+- `git commit + push` API : `3525b9c`
+- `git commit + push` frontend : `95c9767`
 
 ### Tests realises
+- Syntax check apigestionsavequotidien.js : OK
+- Verification routes actives preservees : classementmysql, classementeur, classementusd, saveperfdatemysql
+- Verification aucune reference `clickhouse.` residuelle dans le fichier
 - Verification contenu CHANGELOG/TASKS/TODO apres mise a jour
-- Verification DEPLOYMENT_PRODUCTION.md cree dans les 2 repos
 
 ### Resultat des tests
-- **OK** — documentation complete et coherente
+- **OK** — code cleanup propre, documentation coherente, diagnostic fond 1200 complet
 
 ### Erreurs restantes
-- Fond ID 1200 : erreurs repetees dans PM2 logs (investigation en cours)
-- #53 : code mort ClickHouse dans apigestionsavequotidien.js (diagnostic en cours)
-- Note URL : la bonne route de lecture est `/api/classementquartilemysql/:id`
+- Fond ID 1200 : fix a appliquer dans apigestionratios.js (decommenter guards lignes 792, 1108)
+- #57 : ratiosnewithdate hardcode pays="Nigeria" pour taux sans risque (affecte TOUS les fonds)
+- Frontend AUDIT-D (commit `8a60083`) non encore deploye
+- #52 ClickHouse resilience (commit `b815153`) pousse mais non deploye
 
 ### Tache en cours
-- Investigation code mort ClickHouse (#53)
-- Investigation fond ID 1200
+- Aucune tache en cours — lot termine
 
 ### Prochaine action recommandee
-1. Commit/push documentation .md dans les 2 repos
+1. **Fix fond 1200** : decommenter guards ratios 3ans/5ans dans apigestionratios.js (lignes 792, 1108)
 2. Deployer frontend AUDIT-D (commit `8a60083`) — quartile EUR/USD fix
-3. Deployer #52 ClickHouse resilience (commit `b815153`) — quand pret
-4. Nettoyer code mort ClickHouse (#53) apres diagnostic
-5. Audit VL completude par pays (2021-2026)
+3. Deployer API #53 (commit `3525b9c`) — nettoyage ClickHouse
+4. Deployer #52 ClickHouse resilience (commit `b815153`)
+5. Fix #57 : corriger hardcode pays="Nigeria" dans ratiosnewithdate
+6. Audit VL completude par pays (2021-2026)
 
 ### Risques connus
 - Ne PAS reactiver ClickHouse sans configurer la rotation de log
 - Ne PAS deployer #52 sans tester en local d'abord
-- Frontend AUDIT-D (commit `8a60083`) non encore deploye — quartiles EUR/USD
+- Frontend AUDIT-D non encore deploye — quartiles EUR/USD
+- #57 taux sans risque hardcode Nigeria : tous les fonds non-nigerians utilisent le mauvais TSR
 - Copie buggee dans `services/performance/routes.js:179` : code mort non importe
 
 ### A ne pas faire a la reprise
