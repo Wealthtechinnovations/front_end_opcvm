@@ -1780,19 +1780,19 @@ Corrections deployees (commits pushes, a deployer sur production):
 - **Commits**: `714b977` (API), `b8700c3` (Frontend)
 - **Build**: 0 erreurs
 
-### 2026-06-17 - LOT 3 (#56): Fix transaction classements — COMMITE, A DEPLOYER
-- **Statut**: COMMITE ET POUSSE (`e3d8fec`), A DEPLOYER
+### 2026-06-17 - LOT 3 (#56): Fix transaction classements — DEPLOYE ET VERIFIE
+- **Statut**: DEPLOYE EN PRODUCTION ET VERIFIE OK
 - **Probleme**: Routes classement (`classementmysql`, `classementeur`, `classementusd`) avaient `destroy()` dans la transaction mais `findOne()`/`save()`/`create()` hors transaction, causant deadlocks ou perte de donnees
 - **Fix**: Ajout `{ transaction }` a TOUS les `findOne`, `save` et `create` (27 operations dans 3 routes) + gardes null sur acces `rankingData.data`
 - **Fichier**: `api_opcv/src/routes/apigestionsavequotidien.js`
 - **Commit**: `e3d8fec`
-- **Deploiement SSH** (apres deploiement, relancer les 3 classements) :
-  ```bash
-  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
-  curl http://localhost:3005/api/classementmysql
-  curl http://localhost:3005/api/classementeur
-  curl http://localhost:3005/api/classementusd
-  ```
+- **Verification production** (2026-06-18) :
+  - Type 1 (national) : rank3Mois=86/300, rank3Moistotalm=300 OK
+  - Type 2 (regional) : rank3Mois=124/344 OK (pas de totalm par design)
+  - Type 3 (global) : rank3Mois=220/477 OK (pas de totalm par design)
+  - Base : 1193 type1 + 1176 type2 + 1176 type3 = 3545 entrees
+  - EUR + USD : "finishrank" OK
+- **Note verification URL** : la bonne route est `/api/classementquartilemysql/:id` (PAS `/api/classementquartile/fond/:id` qui retourne 410 deprecated)
 
 ### 2026-06-17 - LOT 2 (#55): Fix moyennes categorie "- %" — DEPLOYE ET VERIFIE
 - **Statut**: COMMITE ET POUSSE, A DEPLOYER
@@ -2015,80 +2015,59 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-17 : LOT 3 fix transaction classements (#56) — COMMITE et POUSSE, A DEPLOYER.**
-- LOT 3 fix transaction classements (#56) : COMMITE (`e3d8fec` API), A DEPLOYER sur VPS
-- LOT 2 moyennes categorie (#55) : DEPLOYE en production, CONFIRME OK (25 moyennes non-null)
-- LOT 1 rankings null/Infinity (#54) : DEPLOYE en production
-- Incident ClickHouse entierement resolu : code desactive + service systemd arrete et disable
+**2026-06-18 : LOT 3 fix transaction classements (#56) — DEPLOYE ET VERIFIE EN PRODUCTION.**
+- LOT 3 fix transaction classements (#56) : DEPLOYE et VERIFIE (1193+1176+1176 = 3545 classements, type1 rank3Moistotalm=300 OK)
+- LOT 2 moyennes categorie (#55) : DEPLOYE et VERIFIE (25 moyennes non-null)
+- LOT 1 rankings null/Infinity (#54) : DEPLOYE
+- Incident ClickHouse : service systemd arrete et disable
+- Classements EUR + USD : regeneres ("finishrank" OK)
 
 ### Dernier lot termine
-**LOT 3 — Fix transaction classements (#56, 2026-06-17)**
-
-- **Bug critique** : les 3 routes classement (`classementmysql`, `classementeur`, `classementusd`) avaient `destroy()` dans la transaction mais `findOne()`/`save()`/`create()` HORS transaction
-- **Consequence** : deadlocks potentiels (save() bloque sur rows verrouilles par delete), OU data loss (le DELETE committe apres les inserts/updates, effacant les donnees fraichement ecrites)
-- **Fix** : ajout `{ transaction }` a TOUS les `findOne`, `save` et `create` dans les 3 routes (9+9+9 = 27 operations corrigees)
-- **Fix complementaire** : ajout gardes null sur acces `rankingData.data` dans les blocs update (evite TypeError si ranking echoue)
-- **Impact** : 3 routes corrigees, 41 insertions / 32 suppressions
-- **Zero regression** : la logique metier est identique, seule la gestion transactionnelle change
-- Commit API : `e3d8fec`
-
-**LOT 2 — Fix moyennes categorie "- %" (#55, 2026-06-17) — DEPLOYE**
-- `getPerformancesByCategorynow()` : MAX(date) per fond_id au lieu de match exact
-- Commit API : `f5fc73a` — DEPLOYE et VERIFIE OK (25 moyennes non-null)
-
-**LOT CLICKHOUSE-SERVICE (2026-06-17) — Arret service systemd ClickHouse**
-- `systemctl stop clickhouse-server` + `systemctl disable clickhouse-server` : OK
-- 2.1G RAM + 7.6G donnees disque liberes
-- Disque : 82% (28G libres)
-
-**LOT 1 — Fix rankings null/Infinity (#54, 2026-06-17) — DEPLOYE**
-- `buildRankResult()` totalNames mapping + frontend safeQuartile()
-- Commits : `714b977` (API) + `b8700c3` (frontend)
+**LOT 3 — Fix transaction classements (#56) — DEPLOYE 2026-06-18**
+- Fix deploye sur VPS, PM2 restart OK
+- classementmysql relance : 1193 type1 + 1176 type2 + 1176 type3
+- classementeur + classementusd relances : "finishrank" OK
+- Verification fond 866 : rank3Mois=86/300, rank3Moistotalm=300 (type1) OK
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/src/routes/apigestionsavequotidien.js` : fix transaction dans classementmysql, classementeur, classementusd
+- `api_opcv/src/routes/apigestionsavequotidien.js` : fix transaction (commit `e3d8fec`)
 
 ### Commandes executees
-- `node --check src/routes/apigestionsavequotidien.js` : SYNTAX OK
-- `git add + commit + push` : `e3d8fec` pousse sur remote (rebase apres sync_production snapshot)
+- Deploiement VPS : git pull + pm2 restart OK
+- `curl classementmysql` : "finishrank" OK
+- `curl classementeur` : "finishrank" OK
+- `curl classementusd` : "finishrank" OK
+- Verification MySQL : 1193+1176+1176 classements OK
 
 ### Tests realises
-- Syntax check `node --check` : OK
-- Verification que les 3 routes ont le meme pattern de fix
-- Verification des gardes null sur rankingData, rankingDataregional, rankingDataGlobal
+- Verification fond 866 via API (`/api/classementquartilemysql/866`) : type1 rank3Mois=86/300, rank3Moistotalm=300
+- Verification fond 866 via MySQL direct : meme resultat
+- Verification fond 1131 via MySQL : rank3Mois=109/122, rank3Moistotalm=122
 
 ### Resultat des tests
-- **Syntax OK** — a deployer sur VPS puis relancer classementmysql + classementeur + classementusd
+- **DEPLOYE ET VERIFIE OK** — classements locaux fonctionnent, EUR+USD regeneres
 
 ### Erreurs restantes
-- Aucune erreur bloquante
+- Fond ID 1200 : erreurs repetees dans PM2 logs (connu, basse priorite)
+- Note URL : la bonne route de lecture est `/api/classementquartilemysql/:id` (PAS `/api/classementquartile/fond/:id`)
 
 ### Tache en cours
-- Deploiement LOT 3 sur VPS + regeneration des 3 types de classements
+- Aucune tache en cours — lot termine
 
 ### Prochaine action recommandee
-1. Deployer LOT 3 sur VPS :
-   ```
-   cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
-   ```
-2. Regenerer classements local :
-   ```
-   curl http://localhost:3005/api/classementmysql
-   ```
-3. Verifier classement local :
-   ```
-   python3 -c "import requests,json; r=requests.get('http://localhost:3005/api/classementquartile/fond/866'); d=r.json(); print('rank3Mois:', d.get('data',{}).get('classementType1',{}).get('rank3Mois'), 'rank3Moistotal:', d.get('data',{}).get('classementType1',{}).get('rank3Moistotal'), 'rank3Moistotalm:', d.get('data',{}).get('classementType1',{}).get('rank3Moistotalm'))"
-   ```
-4. Si classement local OK, regenerer EUR et USD :
-   ```
-   curl http://localhost:3005/api/classementeur
-   curl http://localhost:3005/api/classementusd
-   ```
+1. Verifier classements EUR/USD en base : `SELECT type_classement, COUNT(*) FROM classementfonds_eurs GROUP BY type_classement;`
+2. Verifier page fonds en production : `https://africafunds.chainsolutions.fr/funds/summary/866` — quartiles et barres doivent s'afficher
+3. Audit VL completude par pays (2021-2026)
+4. Audit complet des calculs, ratios, rankings, displays
 
 ### Risques connus
 - Ne PAS reactiver ClickHouse sans configurer la rotation de log
 - Dette technique #53 : code mort ClickHouse dans apigestionsavequotidien.js (inerte, non urgent)
-- Copie buggee dans `services/performance/routes.js:179` : code mort non importe, a nettoyer plus tard
+- Copie buggee dans `services/performance/routes.js:179` : code mort non importe
+
+### A ne pas faire a la reprise
+- Ne pas utiliser `/api/classementquartile/fond/:id` pour les tests (route deprecated/inexistante)
+- Ne pas relancer classementmysql sans raison (la table est bien peuplee)
 
 ### T35-hist — Diagnostic backfill historique BRVM 2022→2025 (2026-06-12 soir)
 - **Archives BOC disponibles en ligne jusqu'en 2020 au moins** (testes 200 OK : 2020-01-08, 2021-01-06, 2022-01-05, 2023-01-04, 2024-01-03, 2025-01-08)
