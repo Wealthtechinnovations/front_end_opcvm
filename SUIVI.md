@@ -2032,78 +2032,101 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
   - Fichiers concernes : apigestionratios.js, apigestionsavequotidien.js
 - Fichiers modifies et commites : 11 fichiers (6 API + 5 frontend) + SUIVI.md
 
+### 2026-06-19 - Deploiement #53 + docs — MariaDB crash detecte
+- **Statut**: DEPLOYE mais MariaDB DOWN
+- **Deploiement effectue par l'utilisateur**:
+  - API : `git pull --rebase origin claude/code-review-improvements-ikvuj` OK, `pm2 restart api-monolith` OK
+  - Frontend : `git pull` OK, `npm run build` (217/217 pages, 0 erreur), `pm2 restart fundafrique-frontend` OK
+- **Probleme detecte apres deploiement**: page recherche affiche "Impossible de contacter le serveur"
+- **Diagnostic**: MariaDB/MySQL service DOWN sur le VPS
+  - `pm2 logs api-monolith --err` : `SequelizeConnectionRefusedError: connect ECONNREFUSED 127.0.0.1:3306`
+  - TOUTES les routes API retournent HTTP 500 (searchFunds, getPays, getsocieterecherche, listeopcvm)
+  - Ce n'est PAS une regression du code deploye (#53 ne touche que apigestionsavequotidien.js, les endpoints failing sont dans apigestionfonds.js)
+- **Cause probable**: OOM MariaDB (risque connu, documente dans TODO.md "OOM MariaDB — surveiller memoire VPS")
+- **Fix requis**: redemarrer MariaDB sur le VPS (voir commandes ci-dessous)
+- **Commandes de remediation**:
+  ```bash
+  # 1. Redemarrer MariaDB
+  systemctl start mariadb
+  # (ou: systemctl start mysql)
+  
+  # 2. Attendre que le service soit pret
+  sleep 5
+  
+  # 3. Verifier que MySQL accepte les connexions
+  mysql -u fund_opcvm -p fund_opcvm -e "SELECT 1;"
+  
+  # 4. Redemarrer l'API pour retablir le pool de connexions
+  pm2 restart api-monolith
+  
+  # 5. Attendre et tester
+  sleep 10
+  curl -s -o /dev/null -w "HTTP:%{http_code}\n" http://localhost:3005/api/searchFunds
+  
+  # 6. Verifier la memoire et les logs MariaDB
+  free -h
+  journalctl -u mariadb --no-pager -n 50
+  ```
+
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-18 : Documentation + nettoyage #53 + diagnostic fond 1200 — COMMITE ET POUSSE.**
-- LOT 1/2/3 (#54/#55/#56) : DEPLOYES et VERIFIES en production
-- #53 ClickHouse dead code : 482 lignes supprimees, commit `3525b9c` (pousse, pas encore deploye)
-- Documentation .md : 11 fichiers mis a jour/crees dans les 2 repos
-- Fond 1200 : diagnostic complet, fix identifie (apigestionratios.js guards)
-- ClickHouse : service systemd arrete et disable, code resilient preserve
+**2026-06-19 : Deploiement #53 + docs effectue — MariaDB crash detecte sur VPS.**
+- Deploiement API (#53 nettoyage ClickHouse) et frontend (docs + AUDIT-D) : OK (git pull, build, pm2 restart)
+- **CRITIQUE** : MariaDB/MySQL est DOWN sur le VPS → ECONNREFUSED 127.0.0.1:3306
+- TOUTES les routes API retournent HTTP 500 (searchFunds, getPays, getsocieterecherche, listeopcvm, etc.)
+- Page recherche affiche "Impossible de contacter le serveur"
+- Ce n'est PAS une regression du code : les 4 endpoints en erreur sont dans apigestionfonds.js, pas dans apigestionsavequotidien.js (fichier nettoye)
+- Cause probable : OOM MariaDB (risque connu, documente dans TODO.md)
 
 ### Dernier lot termine
-**Nettoyage #53 + documentation complete + diagnostic fond 1200 — 2026-06-18**
-- 482 lignes code mort ClickHouse supprimees (apigestionsavequotidien.js 1808→1326)
-- 11 fichiers .md crees/mis a jour (DEPLOYMENT_PRODUCTION, CHANGELOG, TASKS, TODO, CODE_REVIEW)
-- Diagnostic fond 1200 : cause racine identifiee (ratios vides, guard commente)
-- Commits : API `3525b9c`, frontend `95c9767` (pousses sur branche)
+**Deploiement + diagnostic MySQL crash — 2026-06-19**
+- Deploiement API : git pull OK, pm2 restart OK
+- Deploiement frontend : git pull OK, npm run build (217/217 pages), pm2 restart OK
+- Diagnostic erreur recherche : ECONNREFUSED 3306 = MariaDB service DOWN
+- Code deploye (#53) verifie innocent (aucun des endpoints failing n'est dans le fichier modifie)
 
 ### Fichiers modifies dans le dernier lot
-- `api_opcv/src/routes/apigestionsavequotidien.js` : suppression code mort ClickHouse (-482 lignes)
-- `api_opcv/CHANGELOG.md` : +LOT 1/2/3
-- `api_opcv/CODE_REVIEW.md` : +LOT 1-3 + #53
-- `api_opcv/TASKS.md` : +LOT 1/2/3
-- `api_opcv/TODO.md` : +LOT 1/2/3 + #53
-- `api_opcv/DEPLOYMENT_PRODUCTION.md` : cree (583 lignes)
-- `front_end_opcvm/CHANGELOG.md` : +LOT 1/2/3 + #52
-- `front_end_opcvm/CODE_REVIEW.md` : +#52-#56
-- `front_end_opcvm/TASKS.md` : +LOT 1/2/3
-- `front_end_opcvm/TODO.md` : +LOT 1/2/3 + #52 a deployer
-- `front_end_opcvm/DEPLOYMENT_PRODUCTION.md` : cree (478 lignes)
-- `front_end_opcvm/SUIVI.md` : mise a jour session
+- Aucun fichier modifie depuis le deploiement
+- Le deploiement a tire les commits `3525b9c` (API) et `1859838` (frontend)
 
 ### Commandes executees
-- `node --check apigestionsavequotidien.js` : SYNTAX OK
-- `git commit + push` API : `3525b9c`
-- `git commit + push` frontend : `95c9767`
+- Deploiement VPS (par l'utilisateur)
+- `curl` diagnostics : searchFunds=500, getPays=500, getsocieterecherche=500, listeopcvm=500
+- `pm2 logs api-monolith --err --lines 20` : ECONNREFUSED 127.0.0.1:3306
 
 ### Tests realises
-- Syntax check apigestionsavequotidien.js : OK
-- Verification routes actives preservees : classementmysql, classementeur, classementusd, saveperfdatemysql
-- Verification aucune reference `clickhouse.` residuelle dans le fichier
-- Verification contenu CHANGELOG/TASKS/TODO apres mise a jour
+- 4 routes API testees avec curl : toutes HTTP 500
+- Logs PM2 examines : SequelizeConnectionRefusedError 127.0.0.1:3306
 
 ### Resultat des tests
-- **OK** — code cleanup propre, documentation coherente, diagnostic fond 1200 complet
+- **ECHOUE** — MySQL/MariaDB est DOWN, aucune route API ne fonctionne
 
 ### Erreurs restantes
+- **URGENT** : MariaDB DOWN sur VPS (ECONNREFUSED 3306) — redemarrer le service
 - Fond ID 1200 : fix a appliquer dans apigestionratios.js (decommenter guards lignes 792, 1108)
 - #57 : ratiosnewithdate hardcode pays="Nigeria" pour taux sans risque (affecte TOUS les fonds)
-- Frontend AUDIT-D (commit `8a60083`) non encore deploye
-- #52 ClickHouse resilience (commit `b815153`) pousse mais non deploye
 
 ### Tache en cours
-- Aucune tache en cours — lot termine
+- Attente redemarrage MariaDB par l'utilisateur sur le VPS
 
 ### Prochaine action recommandee
-1. **Fix fond 1200** : decommenter guards ratios 3ans/5ans dans apigestionratios.js (lignes 792, 1108)
-2. Deployer frontend AUDIT-D (commit `8a60083`) — quartile EUR/USD fix
-3. Deployer API #53 (commit `3525b9c`) — nettoyage ClickHouse
-4. Deployer #52 ClickHouse resilience (commit `b815153`)
+1. **URGENT : Redemarrer MariaDB sur le VPS** (commandes ci-dessous)
+2. Verifier que l'API repond normalement apres restart
+3. Verifier les crons (eur_usd 21h30, health 22h)
+4. Fix fond 1200 : decommenter guards ratios 3ans/5ans
 5. Fix #57 : corriger hardcode pays="Nigeria" dans ratiosnewithdate
-6. Audit VL completude par pays (2021-2026)
 
 ### Risques connus
-- Ne PAS reactiver ClickHouse sans configurer la rotation de log
-- Ne PAS deployer #52 sans tester en local d'abord
-- Frontend AUDIT-D non encore deploye — quartiles EUR/USD
-- #57 taux sans risque hardcode Nigeria : tous les fonds non-nigerians utilisent le mauvais TSR
-- Copie buggee dans `services/performance/routes.js:179` : code mort non importe
+- MariaDB DOWN = TOUTE l'application est HS (pas seulement la recherche)
+- OOM recurrent possible si memoire VPS insuffisante
+- Apres restart MariaDB, verifier que les donnees sont intactes (pas de corruption)
+- Ne PAS relancer les crons batch tant que MySQL n'est pas stable
 
 ### A ne pas faire a la reprise
-- Ne pas utiliser `/api/classementquartile/fond/:id` pour les tests (route deprecated/inexistante)
-- Ne pas relancer classementmysql sans raison (la table est bien peuplee)
+- Ne PAS modifier de code pour contourner le probleme MySQL — c'est un probleme d'infrastructure
+- Ne PAS relancer les classements/performances tant que MariaDB n'est pas stable
+- Ne pas utiliser `/api/classementquartile/fond/:id` pour les tests (route deprecated)
 
 ### T35-hist — Diagnostic backfill historique BRVM 2022→2025 (2026-06-12 soir)
 - **Archives BOC disponibles en ligne jusqu'en 2020 au moins** (testes 200 OK : 2020-01-08, 2021-01-06, 2022-01-05, 2023-01-04, 2024-01-03, 2025-01-08)
