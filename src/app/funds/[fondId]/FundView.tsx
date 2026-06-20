@@ -17,6 +17,7 @@ import 'react-calendar/dist/Calendar.css';
 import { DropdownButton, Dropdown } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import Swal from 'sweetalert2';
+import { getNotationClasses, getEstimationText } from '@/lib/ratioRating';
 
 
 // Fonction pour déterminer la classe SRRI
@@ -771,34 +772,6 @@ export default function Fond() {
         4: 'red',
     };
     const [error, setError] = useState("");
-    const getNotationClasses = (rank: number, total: number) => {
-        if (!rank || !total || total === 0) return Array(5).fill("conseil-default");
-        const selectedCount = Math.ceil((rank / total) * 5);
-        const safeCount = isFinite(selectedCount) ? Math.min(selectedCount, 5) : 0;
-        const classes = Array(5).fill("conseil-default");
-        for (let i = 0; i < safeCount; i++) {
-            classes[i] = "conseil-default conseil-selected";
-        }
-        return classes;
-    };
-
-    const getEstimationText = (rank: number) => {
-        switch (rank) {
-            case 1:
-                return "Très mauvais";
-            case 2:
-                return "Mauvais";
-            case 3:
-                return "Moyen";
-            case 4:
-                return "Bon";
-            case 5:
-                return "Très bon";
-            default:
-                return "";
-        }
-    };
-
     // Dynamically set quartile color
     const handleExport1 = async () => {
         try {

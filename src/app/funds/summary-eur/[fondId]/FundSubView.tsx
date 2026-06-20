@@ -16,6 +16,7 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { DropdownButton, Dropdown } from 'react-bootstrap';
 import Swal from 'sweetalert2';
+import { getNotationClasses, getEstimationFromRankTotal } from '@/lib/ratioRating';
 
 /**
  * Fonction asynchrone pour obtenir les détails d'un fond.
@@ -194,6 +195,26 @@ interface Classement {
       rank3Anstotal: any;
       rank5Ans: any;
       rank5Anstotal: any;
+      rankvolatilite: any;
+      rankvolatilitetotal: any;
+      rankpertemax: any;
+      rankpertemaxtotal: any;
+      rankdsr: any;
+      rankdsrtotal: any;
+      rankbetabaissier: any;
+      rankbetabaissiertotal: any;
+      rankvar95: any;
+      rankvar95total: any;
+      ranksharpe: any;
+      ranksharpetotal: any;
+      rankinfo: any;
+      rankinfototal: any;
+      ranksortino: any;
+      ranksortinototal: any;
+      rankomega: any;
+      rankomegatotal: any;
+      rankcalamar: any;
+      rankcalamartotal: any;
 
 
     };
@@ -2235,19 +2256,19 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.volatility)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.volatility).toFixed(2)} %</td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankvolatilite, classementlocal?.data?.classementType1?.rankvolatilitetotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankvolatilite, classementlocal?.data?.classementType1?.rankvolatilitetotal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
                               Perte max{' '}
                               <span
-                                data-content="Il s'agit de la perte la plus importante encourue par le fonds sur la période, c’est-à-dire ce qui aurait été perdu si le fonds avait été acheté au plus haut et vendu au plus bas possible sur la période."
+                                data-content="Il s'agit de la perte la plus importante encourue par le fonds sur la période, c'est-à-dire ce qui aurait été perdu si le fonds avait été acheté au plus haut et vendu au plus bas possible sur la période."
                                 data-helper-explanation=""
                                 data-trigger="hover"
                                 data-tooltip-isinit="true"
@@ -2255,13 +2276,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.maxDrawdown)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.maxDrawdown).toFixed(2)} %</td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankpertemax, classementlocal?.data?.classementType1?.rankpertemaxtotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankpertemax, classementlocal?.data?.classementType1?.rankpertemaxtotal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
@@ -2275,13 +2296,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.dsr)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.dsr).toFixed(2)} %</td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankdsr, classementlocal?.data?.classementType1?.rankdsrtotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankdsr, classementlocal?.data?.classementType1?.rankdsrtotal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
@@ -2295,13 +2316,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.betaBaiss)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.betaBaiss).toFixed(2)}</td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankbetabaissier, classementlocal?.data?.classementType1?.rankbetabaissiertotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Moyen</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankbetabaissier, classementlocal?.data?.classementType1?.rankbetabaissiertotal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
@@ -2315,13 +2336,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.VAR95)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.VAR95).toFixed(2)} %</td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankvar95, classementlocal?.data?.classementType1?.rankvar95total).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Très mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankvar95, classementlocal?.data?.classementType1?.rankvar95total)}
+                            </td>
                           </tr>
                         </tbody>
                       </table>
@@ -2367,19 +2388,19 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.ratioSharpe)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.ratioSharpe).toFixed(2)} </td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.ranksharpe, classementlocal?.data?.classementType1?.ranksharpetotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.ranksharpe, classementlocal?.data?.classementType1?.ranksharpetotal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
                               Ratio Inf{' '}
                               <span
-                                data-content="Il s'agit de la perte la plus importante encourue par le fonds sur la période, c’est-à-dire ce qui aurait été perdu si le fonds avait été acheté au plus haut et vendu au plus bas possible sur la période."
+                                data-content="Il s'agit de la perte la plus importante encourue par le fonds sur la période, c'est-à-dire ce qui aurait été perdu si le fonds avait été acheté au plus haut et vendu au plus bas possible sur la période."
                                 data-helper-explanation=""
                                 data-trigger="hover"
                                 data-tooltip-isinit="true"
@@ -2387,13 +2408,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.info)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.info).toFixed(2)} </td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankinfo, classementlocal?.data?.classementType1?.rankinfototal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankinfo, classementlocal?.data?.classementType1?.rankinfototal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
@@ -2407,13 +2428,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.sortino)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.sortino).toFixed(2)} </td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.ranksortino, classementlocal?.data?.classementType1?.ranksortinototal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.ranksortino, classementlocal?.data?.classementType1?.ranksortinototal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
@@ -2427,13 +2448,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.omega)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.omega).toFixed(2)} </td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankomega, classementlocal?.data?.classementType1?.rankomegatotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Moyen</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankomega, classementlocal?.data?.classementType1?.rankomegatotal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
@@ -2447,13 +2468,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.calmar)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.calmar).toFixed(2)} %</td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankcalamar, classementlocal?.data?.classementType1?.rankcalamartotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Très mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankcalamar, classementlocal?.data?.classementType1?.rankcalamartotal)}
+                            </td>
                           </tr>
                         </tbody>
                       </table>
@@ -2499,19 +2520,19 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.volatility)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.volatility).toFixed(2)} %</td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankvolatilite, classementlocal?.data?.classementType1?.rankvolatilitetotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankvolatilite, classementlocal?.data?.classementType1?.rankvolatilitetotal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
                               Perte max{' '}
                               <span
-                                data-content="Il s'agit de la perte la plus importante encourue par le fonds sur la période, c’est-à-dire ce qui aurait été perdu si le fonds avait été acheté au plus haut et vendu au plus bas possible sur la période."
+                                data-content="Il s'agit de la perte la plus importante encourue par le fonds sur la période, c'est-à-dire ce qui aurait été perdu si le fonds avait été acheté au plus haut et vendu au plus bas possible sur la période."
                                 data-helper-explanation=""
                                 data-trigger="hover"
                                 data-tooltip-isinit="true"
@@ -2519,13 +2540,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.maxDrawdown)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.maxDrawdown).toFixed(2)} %</td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankpertemax, classementlocal?.data?.classementType1?.rankpertemaxtotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankpertemax, classementlocal?.data?.classementType1?.rankpertemaxtotal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
@@ -2539,13 +2560,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.dsr)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.dsr).toFixed(2)} %</td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankdsr, classementlocal?.data?.classementType1?.rankdsrtotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankdsr, classementlocal?.data?.classementType1?.rankdsrtotal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
@@ -2559,13 +2580,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.betaBaiss)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.betaBaiss).toFixed(2)}</td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankbetabaissier, classementlocal?.data?.classementType1?.rankbetabaissiertotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Moyen</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankbetabaissier, classementlocal?.data?.classementType1?.rankbetabaissiertotal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
@@ -2579,13 +2600,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.VAR95)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.VAR95).toFixed(2)} %</td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankvar95, classementlocal?.data?.classementType1?.rankvar95total).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Très mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankvar95, classementlocal?.data?.classementType1?.rankvar95total)}
+                            </td>
                           </tr>
                         </tbody>
                       </table>
@@ -2631,19 +2652,19 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.ratioSharpe)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.ratioSharpe).toFixed(2)} %</td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.ranksharpe, classementlocal?.data?.classementType1?.ranksharpetotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.ranksharpe, classementlocal?.data?.classementType1?.ranksharpetotal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
                               Ratio Inf{' '}
                               <span
-                                data-content="Il s'agit de la perte la plus importante encourue par le fonds sur la période, c’est-à-dire ce qui aurait été perdu si le fonds avait été acheté au plus haut et vendu au plus bas possible sur la période."
+                                data-content="Il s'agit de la perte la plus importante encourue par le fonds sur la période, c'est-à-dire ce qui aurait été perdu si le fonds avait été acheté au plus haut et vendu au plus bas possible sur la période."
                                 data-helper-explanation=""
                                 data-trigger="hover"
                                 data-tooltip-isinit="true"
@@ -2651,13 +2672,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.info)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.info).toFixed(2)} </td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankinfo, classementlocal?.data?.classementType1?.rankinfototal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankinfo, classementlocal?.data?.classementType1?.rankinfototal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
@@ -2671,13 +2692,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.sortino)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.sortino).toFixed(2)} </td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.ranksortino, classementlocal?.data?.classementType1?.ranksortinototal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.ranksortino, classementlocal?.data?.classementType1?.ranksortinototal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
@@ -2691,13 +2712,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.omega)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.omega).toFixed(2)} </td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankomega, classementlocal?.data?.classementType1?.rankomegatotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Moyen</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankomega, classementlocal?.data?.classementType1?.rankomegatotal)}
+                            </td>
                           </tr>
                           <tr className="row-content">
                             <td className="titre">
@@ -2711,13 +2732,13 @@ borderColor:'grey'
                             </td>
                             <td className="value highlight text-center no-wrap">{isNaN(parseFloat(post?.data?.ratios3a?.data?.calmar)) ? '-' : parseFloat(post?.data?.ratios3a?.data?.calmar).toFixed(2)} </td>
                             <td className="notation">
-                              <div className="conseil-default conseil-selected"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
-                              <div className="conseil-default"></div>
+                              {getNotationClasses(classementlocal?.data?.classementType1?.rankcalamar, classementlocal?.data?.classementType1?.rankcalamartotal).map((cls: string, i: number) => (
+                                <div key={i} className={cls}></div>
+                              ))}
                             </td>
-                            <td className="estimation highlight">Très mauvais</td>
+                            <td className="estimation highlight">
+                              {getEstimationFromRankTotal(classementlocal?.data?.classementType1?.rankcalamar, classementlocal?.data?.classementType1?.rankcalamartotal)}
+                            </td>
                           </tr>
                         </tbody>
                       </table>
@@ -2886,7 +2907,7 @@ borderColor:'grey'
                             </td>
                           </tr>
                           <tr>
-                            <td>Meilleur fonds – niveau de risque équivalent <span data-content="Il s’agit de croiser deux données. La volatilité ainsi que la notation Quantalys. Premièrement, une volatilité presque équivalente au fond visité avec une tolérance de 5% (puis 10% et 20% si pas de résultats) va définir un échantillon équivalent. Dans cet échantillon, le fonds possédant la meilleure notation Quantalys sera sélectionné." data-helper-explanation="" data-trigger="hover" data-tooltip-isinit="true"></span></td>
+                            <td>Meilleur fonds – niveau de risque équivalent <span data-content="Il s'agit de croiser deux données. La volatilité ainsi que la notation Quantalys. Premièrement, une volatilité presque équivalente au fond visité avec une tolérance de 5% (puis 10% et 20% si pas de résultats) va définir un échantillon équivalent. Dans cet échantillon, le fonds possédant la meilleure notation Quantalys sera sélectionné." data-helper-explanation="" data-trigger="hover" data-tooltip-isinit="true"></span></td>
                             <td>
                               <Link target="_blank" href="/produit/732786">Lyxor STOXX Europe 600 Utilities ETF-Acc</Link>
                             </td>
@@ -2907,7 +2928,7 @@ borderColor:'grey'
                             </td>
                           </tr>
                           <tr>
-                            <td>Meilleur fonds ISR – meilleure notation <span data-content="Il s’agit de croiser plusieurs données. La volatilité, la notation Quantalys et l’intensité ESG. Premièrement, une volatilité presque équivalente au fond visité avec une tolérance de 5% (puis 10% et 20% si pas de résultats) va définir un échantillon équivalent. Puis, dans cet échantillon, le fonds possédant la meilleure notation Quantalys ainsi qu’une intensité 3 ESG (2 puis 1 si pas de résultats) sera sélectionné." data-helper-explanation="" data-trigger="hover" data-tooltip-isinit="true"></span></td>
+                            <td>Meilleur fonds ISR – meilleure notation <span data-content="Il s'agit de croiser plusieurs données. La volatilité, la notation Quantalys et l'intensité ESG. Premièrement, une volatilité presque équivalente au fond visité avec une tolérance de 5% (puis 10% et 20% si pas de résultats) va définir un échantillon équivalent. Puis, dans cet échantillon, le fonds possédant la meilleure notation Quantalys ainsi qu'une intensité 3 ESG (2 puis 1 si pas de résultats) sera sélectionné." data-helper-explanation="" data-trigger="hover" data-tooltip-isinit="true"></span></td>
                             <td>
                               <Link target="_blank" href="/produit/759746">L&amp;G Clean Water ETF $</Link>
                             </td>
@@ -2928,7 +2949,7 @@ borderColor:'grey'
                             </td>
                           </tr>
                           <tr>
-                            <td>Meilleur fonds – meilleure notation – le moins cher <span data-content="Il s’agit de croiser plusieurs données. La volatilité et les frais courants. Premièrement, une volatilité presque équivalente au fond visité avec une tolérance de 5% (puis 10% et 20% si pas de résultats) va définir un échantillon équivalent. Puis, dans cet échantillon, le fonds possédant le moins de frais courants sera sélectionné." data-helper-explanation="" data-trigger="hover" data-tooltip-isinit="true"></span></td>
+                            <td>Meilleur fonds – meilleure notation – le moins cher <span data-content="Il s'agit de croiser plusieurs données. La volatilité et les frais courants. Premièrement, une volatilité presque équivalente au fond visité avec une tolérance de 5% (puis 10% et 20% si pas de résultats) va définir un échantillon équivalent. Puis, dans cet échantillon, le fonds possédant le moins de frais courants sera sélectionné." data-helper-explanation="" data-trigger="hover" data-tooltip-isinit="true"></span></td>
                             <td>
                               <Link target="_blank" href="/produit/705659">Covéa Aqua A</Link>
                             </td>

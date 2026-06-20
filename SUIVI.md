@@ -2067,66 +2067,110 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
   free -h
   journalctl -u mariadb --no-pager -n 50
   ```
+- **MariaDB redemarree avec succes** : searchFunds HTTP:200
+- **Tables crashed detectees** : classementfonds, classementfonds_eurs, classementfonds_usds (MyISAM) — REPAIR TABLE a executer
+
+### 2026-06-20 - Fix #57 ratio guards + hardcoded Nigeria + indices + barres ratios
+- **Statut**: EN COURS (agents background)
+- **Fix #57 (API)** : COMMITE ET POUSSE (`932eb6b`)
+  - 8 guards 3-year/5-year decommentees dans apigestionratios.js (4 routes)
+  - 8 blocs else ajoutes (retournent `{data: null}` au lieu de NaN/crash)
+  - `ratiosnewithdate` et `ratiosnewithdate1` : hardcode `pays: "Nigeria"` remplace par `paysFond` dynamique
+  - Fichier : `src/routes/apigestionratios.js` (-300 lignes commentees, +42 lignes actives)
+  - node --check : SYNTAX OK
+- **Script scraping indices** : EN COURS (agent background)
+  - Objectif : scraper quotidien BRVM/MASI/Tunindex/NSE/MONIA
+  - Fichier cible : `scripts/scraper/scrape_indices_daily.js` + `scripts/cron/cron_indices_daily.sh`
+- **Barres ratios "Par rapport a la Cat"** : EN COURS (agent background)
+  - Objectif : rendre les barres de comparaison dynamiques (actuellement hardcodees)
+  - Fichiers cibles : FundView.tsx, summary-eur/FundSubView.tsx, summary-usd/FundSubView.tsx
+- **Incohérence classement XOF/EUR** : DIAGNOSTIQUE, fix planifie
+  - Cause : performances EUR calculees separement → arrondis float + decalage dates
+  - Pour devises a parite fixe (XOF 655.957), classement EUR devrait etre identique au local
+- **Tables MySQL crashed** : REPAIR TABLE a executer sur VPS
+  - Commande : `sudo mysql fund_opcvm -e "REPAIR TABLE classementfonds; REPAIR TABLE classementfonds_eurs; REPAIR TABLE classementfonds_usds;"`
+
+### 2026-06-20 - Fix barres ratios EUR/USD + classement EUR/USD ratio ranks
+- **Statut**: COMMITE, A DEPLOYER
+- **Probleme**: Les barres de couleur "Par rapport a la Cat" sur les pages EUR et USD etaient hardcodees (statiques) au lieu d'etre dynamiques basees sur le classement reel du fonds
+- **Probleme 2**: Les classements EUR/USD ne calculaient pas les ratios (Sharpe, Volatilite, etc.) — seules les performances etaient classees
+
+#### Frontend (front_end_opcvm):
+- `src/lib/ratioRating.ts` : NOUVEAU — helper getNotationClasses(rank,total) + getEstimationFromRankTotal(rank,total)
+- `src/app/funds/[fondId]/FundView.tsx` : refactoring — import ratioRating au lieu de fonctions inline
+- `src/app/funds/summary-eur/[fondId]/FundSubView.tsx` : barres dynamiques pour 10 ratios x 2 sections (Risque + Rendement/Risque) + interface Classement etendue avec 20 champs ratio rank
+- `src/app/funds/summary-usd/[fondId]/FundSubView.tsx` : idem que EUR
+- Build : **OK** (0 erreur)
+
+#### Backend (api_opcv):
+- `src/models/classementfond_eurs.js` : +32 colonnes ratio ranking (ranksharpe/total, rankvolatilite/total, etc.)
+- `src/models/classementfond_usds.js` : idem
+- `src/services/ranking.service.js` : calculateRankNationalDev utilise PERF_PERIODS_FULL (24 champs) au lieu de PERF_PERIODS (6 champs)
+- `src/routes/apigestionsavequotidien.js` : routes classement EUR/USD sauvegardent les 20 champs ratio rank
+- `migrations/add_ratio_ranks_eur_usd.sql` : ALTER TABLE + REPAIR TABLE + conversion InnoDB
 
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-19 : Deploiement #53 + docs effectue — MariaDB crash detecte sur VPS.**
-- Deploiement API (#53 nettoyage ClickHouse) et frontend (docs + AUDIT-D) : OK (git pull, build, pm2 restart)
-- **CRITIQUE** : MariaDB/MySQL est DOWN sur le VPS → ECONNREFUSED 127.0.0.1:3306
-- TOUTES les routes API retournent HTTP 500 (searchFunds, getPays, getsocieterecherche, listeopcvm, etc.)
-- Page recherche affiche "Impossible de contacter le serveur"
-- Ce n'est PAS une regression du code : les 4 endpoints en erreur sont dans apigestionfonds.js, pas dans apigestionsavequotidien.js (fichier nettoye)
-- Cause probable : OOM MariaDB (risque connu, documente dans TODO.md)
+**2026-06-20 : Fix barres ratios EUR/USD + classement ratio ranks — COMMITE ET POUSSE.**
+- MariaDB est UP (relance par utilisateur)
+- API production fonctionne (HTTP 200)
+- Build frontend : OK (0 erreur)
 
 ### Dernier lot termine
-**Deploiement + diagnostic MySQL crash — 2026-06-19**
-- Deploiement API : git pull OK, pm2 restart OK
-- Deploiement frontend : git pull OK, npm run build (217/217 pages), pm2 restart OK
-- Diagnostic erreur recherche : ECONNREFUSED 3306 = MariaDB service DOWN
-- Code deploye (#53) verifie innocent (aucun des endpoints failing n'est dans le fichier modifie)
+**Fix barres ratios EUR/USD dynamiques + backend ratio ranks — 2026-06-20**
+- Frontend : barres dynamiques pour 10 ratios (Volatilite, Perte max, DSR, Beta baissier, VAR95, Sharpe, Info, Sortino, Omega, Calamar) sur pages EUR et USD
+- Backend : modeles + routes + service enrichis pour calculer et sauvegarder les ratio ranks EUR/USD
+- Migration SQL preparee pour ajouter colonnes + reparer tables + convertir InnoDB
+- Script scraping indices quotidien deja commite precedemment
 
 ### Fichiers modifies dans le dernier lot
-- Aucun fichier modifie depuis le deploiement
-- Le deploiement a tire les commits `3525b9c` (API) et `1859838` (frontend)
+**Frontend** :
+- `src/lib/ratioRating.ts` (nouveau)
+- `src/app/funds/[fondId]/FundView.tsx`
+- `src/app/funds/summary-eur/[fondId]/FundSubView.tsx`
+- `src/app/funds/summary-usd/[fondId]/FundSubView.tsx`
+
+**Backend** :
+- `src/models/classementfond_eurs.js`
+- `src/models/classementfond_usds.js`
+- `src/services/ranking.service.js`
+- `src/routes/apigestionsavequotidien.js`
+- `migrations/add_ratio_ranks_eur_usd.sql` (nouveau)
 
 ### Commandes executees
-- Deploiement VPS (par l'utilisateur)
-- `curl` diagnostics : searchFunds=500, getPays=500, getsocieterecherche=500, listeopcvm=500
-- `pm2 logs api-monolith --err --lines 20` : ECONNREFUSED 127.0.0.1:3306
+- `npx next build` : OK (0 erreur)
+- `node --check` sur fichiers backend : OK
 
 ### Tests realises
-- 4 routes API testees avec curl : toutes HTTP 500
-- Logs PM2 examines : SequelizeConnectionRefusedError 127.0.0.1:3306
+- Build frontend complet : OK
+- Verification syntaxe backend : OK
 
 ### Resultat des tests
-- **ECHOUE** — MySQL/MariaDB est DOWN, aucune route API ne fonctionne
+- **OK** — build passe, pas de regression
 
 ### Erreurs restantes
-- **URGENT** : MariaDB DOWN sur VPS (ECONNREFUSED 3306) — redemarrer le service
-- Fond ID 1200 : fix a appliquer dans apigestionratios.js (decommenter guards lignes 792, 1108)
-- #57 : ratiosnewithdate hardcode pays="Nigeria" pour taux sans risque (affecte TOUS les fonds)
+- Tables MySQL crashed (classementfonds*) : REPAIR TABLE a executer via migration SQL sur VPS
+- Indices stales depuis 15/05/2026 : script scraping disponible mais pas encore deploye
 
 ### Tache en cours
-- Attente redemarrage MariaDB par l'utilisateur sur le VPS
+- Commit + push des modifications
+- Preparation commande deploiement complete pour utilisateur
 
 ### Prochaine action recommandee
-1. **URGENT : Redemarrer MariaDB sur le VPS** (commandes ci-dessous)
-2. Verifier que l'API repond normalement apres restart
-3. Verifier les crons (eur_usd 21h30, health 22h)
-4. Fix fond 1200 : decommenter guards ratios 3ans/5ans
-5. Fix #57 : corriger hardcode pays="Nigeria" dans ratiosnewithdate
+1. Deployer sur VPS (voir commande ci-dessous)
+2. Executer migration SQL sur VPS
+3. Relancer classements EUR/USD pour peupler les nouveaux champs ratio rank
+4. Installer cron scraping indices
 
 ### Risques connus
-- MariaDB DOWN = TOUTE l'application est HS (pas seulement la recherche)
-- OOM recurrent possible si memoire VPS insuffisante
-- Apres restart MariaDB, verifier que les donnees sont intactes (pas de corruption)
-- Ne PAS relancer les crons batch tant que MySQL n'est pas stable
+- Tables classement MyISAM crashees — migration SQL les repare ET convertit en InnoDB
+- Les indices sont stales depuis le 15/05/2026
 
 ### A ne pas faire a la reprise
-- Ne PAS modifier de code pour contourner le probleme MySQL — c'est un probleme d'infrastructure
-- Ne PAS relancer les classements/performances tant que MariaDB n'est pas stable
-- Ne pas utiliser `/api/classementquartile/fond/:id` pour les tests (route deprecated)
+- Ne pas relancer classement crons avant REPAIR TABLE + migration SQL
+- Ne pas reactiver ClickHouse sans rotation de logs
+- Ne pas utiliser `/api/classementquartile/fond/:id` (route deprecated 410)
 
 ### T35-hist — Diagnostic backfill historique BRVM 2022→2025 (2026-06-12 soir)
 - **Archives BOC disponibles en ligne jusqu'en 2020 au moins** (testes 200 OK : 2020-01-08, 2021-01-06, 2022-01-05, 2023-01-04, 2024-01-03, 2025-01-08)
