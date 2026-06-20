@@ -2112,17 +2112,17 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-20 : Fix barres ratios EUR/USD + classement ratio ranks — COMMITE ET POUSSE.**
-- MariaDB est UP (relance par utilisateur)
-- API production fonctionne (HTTP 200)
-- Build frontend : OK (0 erreur)
+**2026-06-20 (soir) : Deploiement partiel en production.**
+- **API** : DEPLOYEE (commit `4ce1aae`), api-monolith online
+- **Migration SQL** : EXECUTEE — colonnes ratio rank ajoutees, tables classement converties MyISAM -> InnoDB (le message "doesn't support repair" CONFIRME la conversion InnoDB reussie)
+- **Frontend** : code PULLE (fast-forward `cf6dba2`) mais **PAS BUILDE** — la chaine `&&` s'est cassee car `git stash pop` a echoue (aucun stash a depiler). `npm run build` et `pm2 restart fundafrique-frontend` n'ont PAS tourne.
+- **Classement EUR/USD** : recalcul lance via HTTPS public -> 502 (timeout proxy Nginx ~60s, PAS un bug). A relancer via localhost:3005 (--max-time 300) comme le fait le cron.
 
 ### Dernier lot termine
 **Fix barres ratios EUR/USD dynamiques + backend ratio ranks — 2026-06-20**
 - Frontend : barres dynamiques pour 10 ratios (Volatilite, Perte max, DSR, Beta baissier, VAR95, Sharpe, Info, Sortino, Omega, Calamar) sur pages EUR et USD
 - Backend : modeles + routes + service enrichis pour calculer et sauvegarder les ratio ranks EUR/USD
-- Migration SQL preparee pour ajouter colonnes + reparer tables + convertir InnoDB
-- Script scraping indices quotidien deja commite precedemment
+- Migration SQL executee (colonnes + InnoDB)
 
 ### Fichiers modifies dans le dernier lot
 **Frontend** :
@@ -2139,37 +2139,32 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 - `migrations/add_ratio_ranks_eur_usd.sql` (nouveau)
 
 ### Commandes executees
-- `npx next build` : OK (0 erreur)
-- `node --check` sur fichiers backend : OK
-
-### Tests realises
-- Build frontend complet : OK
-- Verification syntaxe backend : OK
+- `npx next build` (sandbox) : OK (0 erreur)
+- VPS : git pull API+frontend OK, migration SQL OK, pm2 restart api-monolith OK
 
 ### Resultat des tests
-- **OK** — build passe, pas de regression
+- **PARTIEL** — API + migration OK ; frontend a rebuilder ; classement EUR/USD a repeupler via localhost
 
 ### Erreurs restantes
-- Tables MySQL crashed (classementfonds*) : REPAIR TABLE a executer via migration SQL sur VPS
-- Indices stales depuis 15/05/2026 : script scraping disponible mais pas encore deploye
-
-### Tache en cours
-- Commit + push des modifications
-- Preparation commande deploiement complete pour utilisateur
+- **Frontend pas builde** : `cd .../frontend && npm run build && pm2 restart fundafrique-frontend`
+- **Classement EUR/USD vide** (destroy fait mais recalc coupe par timeout Nginx) : relancer via `curl http://localhost:3005/api/classementeur --max-time 600`
+- **Gap indices 15/05 -> 20/06** : le scraper quotidien gere le FUTUR (J+1), pas le backfill historique. Le trou de 5 semaines necessite une source de donnees historiques separee.
 
 ### Prochaine action recommandee
-1. Deployer sur VPS (voir commande ci-dessous)
-2. Executer migration SQL sur VPS
-3. Relancer classements EUR/USD pour peupler les nouveaux champs ratio rank
-4. Installer cron scraping indices
+1. **Frontend** : `cd /var/www/.../frontend && npm run build && pm2 restart fundafrique-frontend`
+2. **Classement** : `curl -s "http://localhost:3005/api/classementeur" --max-time 600 ; curl -s "http://localhost:3005/api/classementusd" --max-time 600`
+3. **Verifier** colonnes + remplissage : `SHOW COLUMNS FROM classementfonds_eurs LIKE 'ranksharpe';` + `SELECT COUNT(*) FROM classementfonds_eurs;`
+4. **Indices** : tester le scraper en dry-run, puis installer le cron Mon-Fri
+5. **Gap indices** : decider de la source historique (import manuel ou API bourse)
 
 ### Risques connus
-- Tables classement MyISAM crashees — migration SQL les repare ET convertit en InnoDB
-- Les indices sont stales depuis le 15/05/2026
+- Si on relance le classement et qu'il echoue a mi-chemin, la table est vidée (destroy en debut de route) -> classement EUR/USD temporairement vide. InnoDB protege via transaction (rollback) donc OK.
+- Le recalcul classement est lourd (~1000 fonds x 3 calculs) : toujours viser localhost, jamais l'URL publique.
 
 ### A ne pas faire a la reprise
-- Ne pas relancer classement crons avant REPAIR TABLE + migration SQL
+- Ne pas relancer le classement via l'URL publique HTTPS (timeout Nginx 502)
 - Ne pas reactiver ClickHouse sans rotation de logs
+- Ne pas committer .env / sec_ng_downloads/ / le fichier "0" parasite presents dans le working tree VPS
 - Ne pas utiliser `/api/classementquartile/fond/:id` (route deprecated 410)
 
 ### T35-hist — Diagnostic backfill historique BRVM 2022→2025 (2026-06-12 soir)

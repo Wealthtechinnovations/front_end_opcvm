@@ -1,5 +1,20 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
+## [2026-06-20] Barres ratios EUR/USD dynamiques + ratio ranks classement
+
+### Frontend (commit `cf6dba2`, pousse — A BUILDER sur VPS)
+- Barres de notation "Par rapport a la Cat" rendues dynamiques sur les pages EUR et USD (10 ratios : Volatilite, Perte max, DSR, Beta baissier, VAR95, Sharpe, Info, Sortino, Omega, Calamar)
+- Nouveau helper `src/lib/ratioRating.ts` (getNotationClasses + getEstimationFromRankTotal), partage avec la page devise locale (FundView refactorise)
+
+### API (commit `4ce1aae`, deploye)
+- Modeles `classementfond_eurs/usds` : +32 colonnes ratio ranking
+- `ranking.service.js` : `calculateRankNationalDev` utilise PERF_PERIODS_FULL (corrige l'incoherence de classement national XOF vs EUR)
+- `apigestionsavequotidien.js` : routes classement EUR/USD sauvegardent les ratio ranks
+- Migration `add_ratio_ranks_eur_usd.sql` : colonnes + conversion tables classement MyISAM -> InnoDB (crash-safe)
+
+### Scraper indices (commit `6c0db08`)
+- `scripts/scraper/scrape_indices_daily.js` + `scripts/cron/cron_indices_daily.sh` (BRVM/MASI/Tunindex/NSE/MONIA, quotidien Mon-Fri) — gere les donnees futures, pas le backfill historique
+
 ## [2026-06-18] LOT 1-3 — Fix classements/rankings (API deploye)
 
 ### Deploye API (LOT 1 — #54)
