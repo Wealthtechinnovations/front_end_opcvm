@@ -2112,49 +2112,54 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-21 : Fix classement EUR/USD — commit `4adcb80` pousse.**
-- **API** : commit `4adcb80` pousse, PAS ENCORE DEPLOYE sur le VPS
-- **Frontend** : DEPLOYE et BUILDE en production (commit `cf6dba2`, build OK 217 pages)
-- **Migration SQL** : EXECUTEE — colonnes ratio rank, InnoDB OK
-- **Classement EUR/USD** : 3581 lignes preservees (InnoDB rollback). Recalcul echouait avec `{"error":"Erreur classement EUR/USD"}` — cause identifiee et corrigee (voir ci-dessous)
-- **Cause erreur classement** : `calculateRankNationalDev` utilisait `PERF_PERIODS_FULL` qui inclut 7 colonnes "m" (perfveillem, perf3mm, perf6mm, perf1anm, perf3ansm, perf5ansm, ytdm) absentes des tables/modeles EUR/USD. MySQL renvoyait "Unknown column". Fix : nouveau constant `PERF_PERIODS_FULL_DEV` sans ces colonnes.
+**2026-06-22 : Fix population ratios EUR/USD — commit `c68d5ef` pousse (api_opcv).**
+- **API** : `c68d5ef` pousse sur la branche. Le fix classement `PERF_PERIODS_FULL_DEV` (`4adcb80`) est DEJA DEPLOYE et fonctionne (recalcul classement EUR/USD renvoie `finishrank`, plus d'erreur).
+- **Frontend** : DEPLOYE et BUILDE (commit `cf6dba2`, barres ratios dynamiques en place).
+- **Classement EUR/USD** : recalcul OK (1198 lignes nationales x 2 devises) MAIS `ranksharpe = NULL` partout (avec_sharpe=0/1198) car les tables `performences_eurs/usds` n'ont jamais contenu les colonnes ratio. C'est ce que corrige `c68d5ef`.
+- **Snapshot prod 2026-06-22 17:00** : indices BRVM/MASI/MONIA/NSE/Tunindex tous arretes au **2026-05-14/15** (gap ~5 semaines). Forex (06-19) et VL (06-18) a jour.
+- **Refactor microservices `b484f3a`** : present sur la branche mais ADDITIF et INACTIF (prod tourne `app.js` monolithe). NE PAS ACTIVER. Audit confirme : aucun fichier monolithe supprime, `node app.js` inchange, fix ranking preserve.
 
 ### Dernier lot termine
-**Fix erreur classement EUR/USD — 2026-06-21**
-- Diagnostic : colonnes "m" absentes des modeles EUR/USD mais demandees par PERF_PERIODS_FULL
-- Fix : creation PERF_PERIODS_FULL_DEV dans ranking.service.js, utilise dans calculateRankNationalDev
-- Commit `4adcb80` pousse sur `claude/code-review-improvements-ikvuj`
+**Fix population ratios 3 ans EUR/USD — 2026-06-22**
+- Diagnostic : `fix_populate_performances_eur_usd.js` ne calculait que les perfs de base ; les 10 colonnes ratio (volatility3an, ratiosharpe3an, pertemax3an, sortino3an, info3an, calamar3an, var953an, betabaissier3an, omega3an, dsr3an) restaient NULL => ranks NULL => barres vides.
+- Fix : le script appelle desormais l'endpoint EUR/USD VALIDE `/api/ratiosnewdevwithdate/3/:id/:devise/:date` (localhost) et stocke les 10 ratios. REUSE des formules validees, AUCUNE reimplementation. Additif et fail-safe (API down => NULL, zero regression).
+- Commit `c68d5ef` pousse sur `claude/code-review-improvements-ikvuj`.
 
 ### Fichiers modifies dans le dernier lot
 **Backend** :
-- `src/services/ranking.service.js` — ajout PERF_PERIODS_FULL_DEV, utilise dans calculateRankNationalDev
+- `scripts/fix/fix_populate_performances_eur_usd.js` — ajout `fetchRatios3ans()` + spread `...ratios3ans` dans perfValues (additif).
+- (lot precedent) `src/services/ranking.service.js` — `PERF_PERIODS_FULL_DEV`.
 
-### Commandes executees
-- `git commit` + `git push` (API repo) : OK
+### Commandes executees (sandbox)
+- `node -c` syntax check : OK
+- `git commit` + `git push` (api_opcv) : OK (`c68d5ef`)
 
 ### Resultat des tests
-- **NON TESTE EN PRODUCTION** — le commit est pousse mais pas deploye
+- **NON TESTE EN PRODUCTION** — `c68d5ef` pousse, pas encore deploye/execute. Il faut deployer + relancer la population EUR/USD avec `--force` + recalculer les classements.
 
-### Erreurs restantes
-- **API pas deployee** : le fix du classement n'est pas encore sur le VPS
-- **Classement EUR/USD** : a recalculer apres deploiement API
-- **Gap indices 15/05 -> 20/06** : le scraper quotidien gere le FUTUR (J+1), pas le backfill historique
+### Erreurs restantes / a finaliser en production
+- **Ratios EUR/USD a repeupler** : deployer `c68d5ef`, puis `node scripts/fix/fix_populate_performances_eur_usd.js --devise BOTH --force`, puis recalculer classements EUR+USD. Verifier `avec_sharpe > 0`.
+- **Indices stale (05-15 -> 22-06)** : pipeline d'import indices arrete (~crash MariaDB). Le scraper `scripts/scraper/scrape_indices_daily.js` est pret (modes --dry-run/--execute, option **--date YYYY-MM-DD** => backfill jour par jour possible, idempotent). A executer en prod (acces reseau aux bourses) + installer cron `cron_indices_daily.sh` Mon-Fri.
 
 ### Prochaine action recommandee
-1. **Deployer API** sur VPS (voir commandes SSH ci-dessous)
-2. **Recalculer classements** EUR + USD via localhost
-3. **Verifier** les barres ratios sur les pages EUR/USD
-4. **Indices** : tester le scraper en dry-run, puis installer le cron Mon-Fri
+1. **Deployer API** (`c68d5ef`) sur VPS + `pm2 restart api-monolith`.
+2. **Repopuler ratios EUR/USD** : `node scripts/fix/fix_populate_performances_eur_usd.js --devise BOTH --force` (long : 1 appel HTTP/fonds/devise).
+3. **Recalculer classements** EUR + USD via localhost (--max-time 600).
+4. **Verifier** `avec_sharpe > 0` + barres ratios sur pages EUR/USD.
+5. **Indices** : dry-run scraper, puis --execute pour aujourd'hui, backfill gap jour par jour (--date), installer le cron.
 
 ### Risques connus
-- Si on relance le classement et qu'il echoue a mi-chemin, InnoDB rollback protege les 3581 lignes existantes
-- Le recalcul classement est lourd (~1000 fonds x 3 calculs) : toujours viser localhost, jamais l'URL publique
+- Population ratios EUR/USD = ~2000 appels HTTP localhost (1000 fonds x 2 devises), chacun calcule des ratios 3 ans => execution longue (10-30 min). Timeout 30s/appel borne les blocages. Lancer en `nohup` si besoin.
+- Recalcul classement lourd : toujours localhost:3005, jamais l'URL publique (timeout Nginx 502).
+- InnoDB protege les classements via rollback transactionnel en cas d'echec a mi-parcours.
+- NE PAS activer le refactor microservices `services/` (prod = monolithe app.js).
 
 ### A ne pas faire a la reprise
-- Ne pas relancer le classement via l'URL publique HTTPS (timeout Nginx 502)
-- Ne pas reactiver ClickHouse sans rotation de logs
-- Ne pas committer .env / sec_ng_downloads/ / le fichier "0" parasite presents dans le working tree VPS
-- Ne pas utiliser `/api/classementquartile/fond/:id` (route deprecated 410)
+- Ne pas relancer le classement via l'URL publique HTTPS (timeout Nginx 502).
+- Ne pas activer les microservices `services/` ni changer la commande PM2 (`node app.js`).
+- Ne pas reactiver ClickHouse sans rotation de logs.
+- Ne pas committer .env / sec_ng_downloads/ / le fichier "0" parasite presents dans le working tree VPS.
+- Ne pas utiliser `/api/classementquartile/fond/:id` (route deprecated 410).
 
 ### T35-hist — Diagnostic backfill historique BRVM 2022→2025 (2026-06-12 soir)
 - **Archives BOC disponibles en ligne jusqu'en 2020 au moins** (testes 200 OK : 2020-01-08, 2021-01-06, 2022-01-05, 2023-01-04, 2024-01-03, 2025-01-08)

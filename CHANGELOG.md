@@ -1,5 +1,19 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
+## [2026-06-22] Fix classement EUR/USD + population ratios 3 ans EUR/USD
+
+### API (commit `4adcb80`, deploye) — Fix erreur classement EUR/USD
+- `ranking.service.js` : nouveau constant `PERF_PERIODS_FULL_DEV` (sans les 7 colonnes "m" perfveillem/perf3mm/perf6mm/perf1anm/perf3ansm/perf5ansm/ytdm absentes des tables EUR/USD). `calculateRankNationalDev` l'utilise a la place de `PERF_PERIODS_FULL`.
+- Corrige l'erreur runtime `{"error":"Erreur classement EUR/USD"}` (MySQL "Unknown column"). Recalcul renvoie desormais `finishrank`.
+
+### API (commit `c68d5ef`, pousse — A DEPLOYER) — Population ratios EUR/USD
+- `scripts/fix/fix_populate_performances_eur_usd.js` : calcule et stocke les 10 ratios 3 ans (volatility3an, ratiosharpe3an, pertemax3an, sortino3an, info3an, calamar3an, var953an, betabaissier3an, omega3an, dsr3an) dans `performences_eurs/usds`.
+- Source : endpoint EUR/USD valide `/api/ratiosnewdevwithdate/3/:id/:devise/:date` (REUSE des formules validees, aucune reimplementation). Additif et fail-safe (API indisponible => NULL, zero regression).
+- Objectif : remplir `ranksharpe`/`rankvolatilite`/... dans `classementfonds_eurs/usds` (etaient NULL) => barres ratios EUR/USD visibles.
+
+### Note indices
+- Indices BRVM/MASI/MONIA/NSE/Tunindex arretes au 2026-05-14/15 (pipeline d'import stoppe). Scraper `scrape_indices_daily.js` pret (option `--date` pour backfill jour par jour). A executer en production + installer cron.
+
 ## [2026-06-20] Barres ratios EUR/USD dynamiques + ratio ranks classement
 
 ### Frontend (commit `cf6dba2`, pousse — A BUILDER sur VPS)
