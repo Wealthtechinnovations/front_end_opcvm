@@ -2112,54 +2112,63 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-22 : Fix population ratios EUR/USD — commit `c68d5ef` pousse (api_opcv).**
-- **API** : `c68d5ef` pousse sur la branche. Le fix classement `PERF_PERIODS_FULL_DEV` (`4adcb80`) est DEJA DEPLOYE et fonctionne (recalcul classement EUR/USD renvoie `finishrank`, plus d'erreur).
-- **Frontend** : DEPLOYE et BUILDE (commit `cf6dba2`, barres ratios dynamiques en place).
-- **Classement EUR/USD** : recalcul OK (1198 lignes nationales x 2 devises) MAIS `ranksharpe = NULL` partout (avec_sharpe=0/1198) car les tables `performences_eurs/usds` n'ont jamais contenu les colonnes ratio. C'est ce que corrige `c68d5ef`.
-- **Snapshot prod 2026-06-22 17:00** : indices BRVM/MASI/MONIA/NSE/Tunindex tous arretes au **2026-05-14/15** (gap ~5 semaines). Forex (06-19) et VL (06-18) a jour.
-- **Refactor microservices `b484f3a`** : present sur la branche mais ADDITIF et INACTIF (prod tourne `app.js` monolithe). NE PAS ACTIVER. Audit confirme : aucun fichier monolithe supprime, `node app.js` inchange, fix ranking preserve.
+**2026-06-24 : Ratios EUR/USD popules + classements recalcules — DEPLOYE ET VALIDE.**
+- **API** : `c68d5ef` deploye. PM2 api-monolith online (uptime 2 jours).
+- **Ratios EUR** : 389 fonds avec ratios 3 ans popules dans `performences_eurs`.
+- **Ratios USD** : 163 fonds avec ratios 3 ans popules dans `performences_usds` (1072 mis a jour, 0 erreur).
+- **Classement EUR** : recalcule, `avec_sharpe = 163` (sur 3581 total) ✅
+- **Classement USD** : recalcule, `avec_sharpe = 163` (sur 3581 total) ✅
+- **Frontend** : DEPLOYE et BUILDE (barres ratios dynamiques en place).
+- **Indices** : TOUS STALE — BRVM/MASI/NSE/Tunindex au 2026-05-15, MONIA au 2026-05-14 (gap ~5.5 semaines).
+- **Refactor microservices** : ADDITIF et INACTIF. NE PAS ACTIVER.
 
 ### Dernier lot termine
-**Fix population ratios 3 ans EUR/USD — 2026-06-22**
-- Diagnostic : `fix_populate_performances_eur_usd.js` ne calculait que les perfs de base ; les 10 colonnes ratio (volatility3an, ratiosharpe3an, pertemax3an, sortino3an, info3an, calamar3an, var953an, betabaissier3an, omega3an, dsr3an) restaient NULL => ranks NULL => barres vides.
-- Fix : le script appelle desormais l'endpoint EUR/USD VALIDE `/api/ratiosnewdevwithdate/3/:id/:devise/:date` (localhost) et stocke les 10 ratios. REUSE des formules validees, AUCUNE reimplementation. Additif et fail-safe (API down => NULL, zero regression).
-- Commit `c68d5ef` pousse sur `claude/code-review-improvements-ikvuj`.
+**Refonte des sources de scraping des 5 indices — 2026-06-25 (sandbox, a deployer)**
+- Diagnostic : le scraper `scrape_indices_daily.js` echouait sur les 5 indices (sources HTML obsoletes : SSL, timeout, 403, 404, SPA JS). 6 agents de recherche ont identifie et teste en direct les vraies sources officielles/fiables.
+- **Nouvelles sources validees end-to-end** (depuis le sandbox, HTTP 200 + parsing correct) :
+  - **BRVM Composite** → BOC PDF quotidien `https://bfin.brvm.org/boc/BOC_JOUR/BOC_YYYYMMDD.pdf` (date dans le nom = backfill). Extraction page 1 via nouveau helper Python `scrape_brvm_index.py` (reutilise pdfplumber). 404 = jour non ouvre.
+  - **MASI** → API medias24 `getMasiHistory` (le site casablanca-bourse.com est WAF Imperva). JSON labels(ts sec)×prix.
+  - **Tunindex** → API REST officielle BVMT `/rest_api/rest/history/TN0009050014` (~60 seances JSON).
+  - **NSE/NGX ASI** → endpoint JSON officiel `https://doclib.ngxgroup.com/REST/api/chartdata/ASI` (historique complet 1996→).
+  - **MONIA** → CSV BKAM via **curl** (Node bloque par empreinte TLS/JA3, 403 ; curl = 200). Historique complet.
+- Backfill 2026-05-16→24 confirme present dans chaque source.
+- **S&P Morocco Sovereign Bond Index** : PAYWALL Akamai → non scrapable, a marquer MANUEL/STATIQUE (pas branche dans le scraper). **INDICE MONETAIRE MAROC** : `RATE_TO_DEFINE`, decision metier requise (niveaux vs taux) avant de brancher.
 
 ### Fichiers modifies dans le dernier lot
-**Backend** :
-- `scripts/fix/fix_populate_performances_eur_usd.js` — ajout `fetchRatios3ans()` + spread `...ratios3ans` dans perfValues (additif).
-- (lot precedent) `src/services/ranking.service.js` — `PERF_PERIODS_FULL_DEV`.
+- `api_opcv/scripts/scraper/scrape_indices_daily.js` — 5 fonctions scrapeX reecrites (date-aware, nouvelles sources) + helpers httpGetJson/execFileText/curlGetText/epochMsToISO/frLongDateToISO/periodeForDate. Structure d'insertion DB et propagateIndRef INCHANGEES (additif).
+- `api_opcv/scripts/scraper/scrape_brvm_index.py` — NOUVEAU helper (extraction BRVM Composite page 1 du BOC, imprime JSON, ne touche pas la DB).
 
 ### Commandes executees (sandbox)
-- `node -c` syntax check : OK
-- `git commit` + `git push` (api_opcv) : OK (`c68d5ef`)
+- `node -c scrape_indices_daily.js` → OK ; `python3 -m py_compile scrape_brvm_index.py` → OK
+- Tests live endpoints : NGX 200 (235074.54), MASI 200 (18101.05), BVMT 200 (19153.71), MONIA curl 200 (2.172%) → parsing correct
+- BRVM non testable en sandbox (pdfplumber absent ; present en prod)
 
 ### Resultat des tests
-- **NON TESTE EN PRODUCTION** — `c68d5ef` pousse, pas encore deploye/execute. Il faut deployer + relancer la population EUR/USD avec `--force` + recalculer les classements.
+- 4/5 sources validees end-to-end depuis le sandbox. BRVM valide par l'agent (BOC reels 442,87/442,11) + a confirmer en prod (dry-run).
 
 ### Erreurs restantes / a finaliser en production
-- **Ratios EUR/USD a repeupler** : deployer `c68d5ef`, puis `node scripts/fix/fix_populate_performances_eur_usd.js --devise BOTH --force`, puis recalculer classements EUR+USD. Verifier `avec_sharpe > 0`.
-- **Indices stale (05-15 -> 22-06)** : pipeline d'import indices arrete (~crash MariaDB). Le scraper `scripts/scraper/scrape_indices_daily.js` est pret (modes --dry-run/--execute, option **--date YYYY-MM-DD** => backfill jour par jour possible, idempotent). A executer en prod (acces reseau aux bourses) + installer cron `cron_indices_daily.sh` Mon-Fri.
+- **DEPLOYER** le scraper corrige (git pull) puis **dry-run** `--date 2026-06-24 --verbose` pour confirmer les 5 indices (BRVM inclus, pdfplumber prod).
+- **VERIFIER LA CONTINUITE** : comparer la 1ere valeur backfillee (2026-05-18) avec la derniere en base (2026-05-15) AVANT backfill massif — surtout NSE (rebase possible).
+- **BACKFILL** indices 2026-05-16→24 puis **installer cron** `cron_indices_daily.sh`.
+- Ratios EUR/USD : DEJA FAIT (389 EUR / 163 USD), classements recalcules (163/163).
 
 ### Prochaine action recommandee
-1. **Deployer API** (`c68d5ef`) sur VPS + `pm2 restart api-monolith`.
-2. **Repopuler ratios EUR/USD** : `node scripts/fix/fix_populate_performances_eur_usd.js --devise BOTH --force` (long : 1 appel HTTP/fonds/devise).
-3. **Recalculer classements** EUR + USD via localhost (--max-time 600).
-4. **Verifier** `avec_sharpe > 0` + barres ratios sur pages EUR/USD.
-5. **Indices** : dry-run scraper, puis --execute pour aujourd'hui, backfill gap jour par jour (--date), installer le cron.
+1. **Deployer** : `cd .../api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith`.
+2. **Dry-run** `node scripts/scraper/scrape_indices_daily.js --dry-run --date 2026-06-24 --verbose` → doit afficher 5 valeurs.
+3. **Controle continuite** (NSE surtout) avant backfill.
+4. **Backfill** jour par jour 05-16→06-24, puis re-verifier la fraicheur.
+5. **Installer cron** `cron_indices_daily.sh` (30 18 * * 1-5).
 
 ### Risques connus
-- Population ratios EUR/USD = ~2000 appels HTTP localhost (1000 fonds x 2 devises), chacun calcule des ratios 3 ans => execution longue (10-30 min). Timeout 30s/appel borne les blocages. Lancer en `nohup` si besoin.
-- Recalcul classement lourd : toujours localhost:3005, jamais l'URL publique (timeout Nginx 502).
-- InnoDB protege les classements via rollback transactionnel en cas d'echec a mi-parcours.
+- Backfill indices = ~28 jours ouvres x 5 indices = ~140 appels reseau vers sites boursiers. Utiliser un delai entre jours. Idempotent (pas de doublon).
 - NE PAS activer le refactor microservices `services/` (prod = monolithe app.js).
 
 ### A ne pas faire a la reprise
-- Ne pas relancer le classement via l'URL publique HTTPS (timeout Nginx 502).
-- Ne pas activer les microservices `services/` ni changer la commande PM2 (`node app.js`).
-- Ne pas reactiver ClickHouse sans rotation de logs.
-- Ne pas committer .env / sec_ng_downloads/ / le fichier "0" parasite presents dans le working tree VPS.
-- Ne pas utiliser `/api/classementquartile/fond/:id` (route deprecated 410).
+- Ne pas relancer la population ratios EUR (deja fait, 389 fonds).
+- Ne pas relancer la population ratios USD (deja fait, 163 fonds).
+- Ne pas relancer le classement sans avoir modifie les donnees de performance.
+- Ne pas activer les microservices ni changer PM2.
+- Ne pas committer .env / sec_ng_downloads/ / fichier "0" parasite.
 
 ### T35-hist — Diagnostic backfill historique BRVM 2022→2025 (2026-06-12 soir)
 - **Archives BOC disponibles en ligne jusqu'en 2020 au moins** (testes 200 OK : 2020-01-08, 2021-01-06, 2022-01-05, 2023-01-04, 2024-01-03, 2025-01-08)
