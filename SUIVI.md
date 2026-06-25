@@ -2112,6 +2112,62 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
+**2026-06-25 : Scraper indices rebranche (5 sources) + fix MONIA + analyse continuite TERMINEE.**
+- **API git** : `5314fe0` (scraper 5 sources) + working tree avec fix MONIA et 2 nouveaux scripts diagnostic/correction (non commites au moment de l'ecriture, commit en cours).
+- **PRODUCTION_STATE.json** : frais (2026-06-25 06:00). PM2 api-monolith ONLINE. Connexion API publique de prod confirmee (listeopcvm = 1203 fonds).
+- **ANALYSE DE CONTINUITE — VERDICT DEFINITIF (4 agents de recherche + verif directe des sources)** :
+  - Les 3 valeurs DB au 2026-05-15 etaient **FAUSSES** (ancien scraper HTML casse → queue gelee/mal parsee) :
+    | Indice | DB 2026-05-15 (faux) | Valeur reelle 2026-05-15 | Scraper neuf 2026-06-24 |
+    |--------|----------------------|--------------------------|--------------------------|
+    | NSE | 103 931,47 | **250 330,92** | 235 074,54 |
+    | Tunindex | 10 480,61 | **17 383,37** | 19 153,71 |
+    | MASI | 20 853,29 | **18 419,21** | 18 101,05 |
+  - NSE 103K ≈ niveau de **dec 2024/jan 2025** ; Tunindex 10,4K ≈ **jan 2025** ; MASI 20,8K = valeur **jamais atteinte** (ATH reel ~20 054). Conclusion : l'ancien scraper a fige la queue il y a ~16-18 mois.
+  - **Aucun rebase** sur NSE ni Tunindex (verifie). Les hausses sont reelles (Nigeria +51% 2025 puis rally 2026 ; Tunindex +35% 2025 +45% YTD 2026).
+  - Le scraper neuf renvoie les **VRAIES** valeurs (confirme par Investing/TradingEconomics/medias24/Boursenews).
+- **CONSEQUENCE** : il NE FAUT PAS juste backfiller 05-16→24 (creerait une marche entre le 05-15 faux et le 05-16 vrai). Il faut d'abord **identifier la date de gel** (script diagnostic) puis **corriger le segment gele** (script correction), AVANT le backfill courant. Le scraper officiel n'ecrase jamais une valeur existante (skip), donc il ne corrigera pas tout seul la queue gelee.
+- **Refactor microservices** : ADDITIF et INACTIF. NE PAS ACTIVER.
+
+### Dernier lot termine (2026-06-25)
+**Fix MONIA + outillage diagnostic/correction continuite des indices.**
+1. **Fix MONIA** dans `scrape_indices_daily.js` : `curlGetText` durci (`-f` echec sur HTTP 4xx/5xx + entetes Sec-Fetch) ; `scrapeMONIA` : double URL (EN+FR) pour retrouver le lien CSV, **validation du contenu CSV** (rejette une page WAF deguisee en 200), log du nb de lignes. Cause racine VPS : WAF bkam.ma bloque l'IP datacenter et curl sans `-f` renvoyait la page de blocage comme si c'etait le CSV (echec silencieux).
+2. **Nouveau** `scripts/scraper/diagnose_index_history.js` — READ-ONLY : compare la serie DB vs source autoritative (NGX/BVMT/medias24), detecte paliers geles + 1ere divergence + verdict. Aucune ecriture.
+3. **Nouveau** `scripts/scraper/fix_index_tail.js` — corrige le segment gele : UPDATE des valeurs fausses + INSERT des seances manquantes avec les vraies valeurs. DRY-RUN par defaut, `--since` obligatoire, idempotent, ne touche que `indice_references` (propagation indRef = etape separee).
+
+### Fichiers modifies / crees dans le dernier lot
+- `api_opcv/scripts/scraper/scrape_indices_daily.js` — fix MONIA (curlGetText + scrapeMONIA).
+- `api_opcv/scripts/scraper/diagnose_index_history.js` — NOUVEAU (read-only).
+- `api_opcv/scripts/scraper/fix_index_tail.js` — NOUVEAU (correction queue gelee).
+
+### Commandes executees (sandbox)
+- `node -c` sur les 3 scripts → OK. Tests live des sources : NGX/BVMT/medias24 200 + extraction May/June 2026 correcte. MONIA curl 200 + CSV valide (en-tete "MONIA index", derniere ref 23/06/2026 = 2.172%).
+- Verif prod : PRODUCTION_STATE.json lu ; API publique `listeopcvm` OK (1203 fonds, Nigeria/Tunisie identifies).
+
+### Resultat des tests
+- Sources autoritatives : 5/5 joignables et correctes depuis le sandbox. Fix MONIA valide cote logique (lien CSV retrouve + CSV valide). A confirmer sur VPS (dry-run).
+
+### Prochaine action recommandee (ORDRE STRICT — voir bloc commandes SSH ci-dessous dans le chat)
+1. **Deployer** l'API (git pull --rebase) + `pm2 restart api-monolith`.
+2. **Dry-run scraper** `--date 2026-06-24 --verbose` → confirmer 5/5 indices (MONIA inclus).
+3. **Diagnostic continuite** `node scripts/scraper/diagnose_index_history.js --verbose` → relever la **date de gel** par indice + verdict.
+4. **Correction queue gelee** `fix_index_tail.js --since <date_gel>` en DRY-RUN, verifier, puis `--execute`.
+5. **Backfill courant** scraper jour par jour 2026-05-16→aujourd'hui (idempotent) puis re-verifier fraicheur.
+6. **Propagation indRef** sur la plage corrigee (via scraper) + **installer cron** `cron_indices_daily.sh` (30 18 * * 1-5).
+
+### Risques connus
+- Correction d'une serie de benchmark = donnee financiere sensible : TOUJOURS dry-run d'abord, verifier le verdict du diagnostic, puis execute. Idempotent.
+- Apres correction de `indice_references`, les pages fonds n'afficheront le bon benchmark qu'apres **re-propagation indRef** (etape 6). Tant que non fait : `indice_references` corrige mais `valorisations.indRef` ancien → coherence a retablir.
+- Backfill = ~140 appels reseau ; throttler. Le scraper ne SKIP que sur date existante (ne corrige pas un palier gele → d'ou fix_index_tail).
+- NE PAS activer le refactor microservices `services/`. NE PAS committer .env / sec_ng_downloads/ / fichier "0".
+
+### A ne pas faire a la reprise
+- Ne pas lancer le backfill 05-16→24 AVANT d'avoir corrige la queue gelee (sinon marche d'escalier dans le benchmark).
+- Ne pas executer fix_index_tail sans avoir lu le verdict du diagnostic (la date `--since` en depend).
+- Ne pas relancer la population ratios EUR/USD (deja fait : 389 EUR / 163 USD) ni les classements sans nouvelle donnee de perf.
+
+---
+
+### [HISTORIQUE] Point de reprise 2026-06-24 (ratios EUR/USD)
 **2026-06-24 : Ratios EUR/USD popules + classements recalcules — DEPLOYE ET VALIDE.**
 - **API** : `c68d5ef` deploye. PM2 api-monolith online (uptime 2 jours).
 - **Ratios EUR** : 389 fonds avec ratios 3 ans popules dans `performences_eurs`.
