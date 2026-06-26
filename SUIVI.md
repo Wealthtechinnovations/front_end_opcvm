@@ -2112,35 +2112,51 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-26 : Lot 5 (#60) DEPLOYE en prod + dry-run correction indices REALISE. Outillage propagation indRef ajoute.**
-- **API VPS** : commit `1e3754f` DEPLOYE (verifie dans resultatOPCV.txt : git pull + pm2 restart api-monolith OK, 4 process online). Contient Tunindex case + hang routes + /api/comparaison.
-- **Frontend VPS** : commit `edd12e7` DEPLOYE (git pull fast-forward cf6dba2..edd12e7, 16 fichiers, build attendu OK).
-- **DRY-RUN fix_index_tail `--since 2000-01-01 --seuil 3` REALISE en prod** : TOTAL 6637 valeurs a corriger, 78 seances a inserer.
-  - NSE : 5585 corrigees, 26 inserees, 945 deja correctes (sur 6556).
-  - TUNINDEX : 34 corrigees, 27 inserees.
-  - MASI : 1018 corrigees, 25 inserees, 200 deja correctes.
-- **Source NGX verifiee en direct** (depuis sandbox) : `currentPrice` 233580.83 au 2026-06-25, 7535 points depuis 1996. La valeur inseree par le dry-run correspond EXACTEMENT. DB figee ~103k = FAUSSE (rallye nigerian reel). **Correction legitime.**
-- **NOUVEAU git API** : commit `d4a237d` (script `propagate_indref_range.js`) — pousse, A DEPLOYER avant la propagation.
+**2026-06-26 : Correction + propagation indices EXECUTEE en prod. 2 correctifs d'affichage/casse pousses (A DEPLOYER).**
+- **Bloc SSH execute** (resultatOPCV 2) : indice_references corrige, propagation indRef OK, recalc EUR/USD OK, cron installe, sauvegarde creee.
+  - Propagation : **1117 fonds | 144163 indRef maj | 15079 deja ok | 59321 sans match**.
+  - Recalc EUR/USD : **942208 VL recalculees, 0 erreur** (MAD 539477, TND 304418, NGN 52483, XOF 42256, XAF 2134, USD 1440).
+  - Sauvegarde rollback : table `valorisations_indref_bak_20260626` creee.
+  - Cron `cron_indices_daily.sh` installe (30 18 * * 1-5).
+- **Etat indice_references apres run** : NSE 2026-06-25 ✓, MASI 2026-06-25 ✓, Tunindex 2026-06-26 ✓, **BRVM 2026-05-15 (FIGE)**, MONIA 2026-05-14 (WAF).
+- **Verif prod (curl valLiq)** : NSE fonds 1142 bench 2026-04-24=225722 ✓ (vs ~103k avant) ; MASI fonds 1021 bench 2026-06-24=18101 ✓ ; Tunindex fonds 2415 bench 2026-06-25=19553 ✓.
 
-### Dernier lot termine (2026-06-26 — lot 6 : analyse impact + outillage propagation)
-**DECOUVERTE CLE (zero regression)** : corriger `indice_references` NE CHANGE PAS les pages fonds.
-Les routes (`/api/valLiq`, `/api/valLiqdev`, perfs, ratios) lisent `valorisations.indRef`/`indRef_EUR`/`indRef_USD`
-(copie par-fond), JAMAIS `indice_references` en direct (verifie par agent + lecture code).
-- La propagation native `propagateIndRef` (scraper) ne couvre que **+/-7j** autour d'une date.
-- `import_indices_excel --step 2` lit le **fichier Excel fige**, PAS la DB → inadapte.
-- **=> Nouveau script `propagate_indref_range.js`** (commit `d4a237d`) : propage `indice_references` (DB corrigee)
-  -> `valorisations.indRef` sur une fenetre `[since,until]` complete. Logique validee (mapping pays->indice,
-  match exact/+-7j), DRY-RUN defaut, idempotent (UPDATE seulement si ecart > 0.01).
+### Dernier lot termine (2026-06-26 — lot 7 : 2 correctifs post-propagation)
+**2 artefacts d'affichage detectes en prod (curl) et corriges (commit API `85b1d1c`, A DEPLOYER) :**
+1. **Benchmark = 0 au dernier point** (Tunisie 2026-06-26, UEMOA recent) : des VL tres recentes sans valeur d'indice (VL du jour inseree apres propagation ; BRVM fige) etaient tracees a 0. **Fix valLiq** : ne sert plus `valuesInd` si `indRef <= 0` (garde deja presente dans valLiqdev EUR/USD). Additif, securite affichage.
+2. **Tunisie : 473 "sans match"/fonds en historique profond** : bug de casse `'TUNINDEX'` (ancien fige) vs `'Tunindex'` (corrige) — le script fusionnait mal les 2 cles. **Fix propagate_indref_range.js** : fusion par casse minuscule en PRIORISANT la casse canonique (valeurs corrigees) pour ne jamais reintroduire une valeur figee.
 
-### Fichiers modifies (lot 6)
-- api_opcv: `scripts/scraper/propagate_indref_range.js` (NOUVEAU, commit `d4a237d`), `CHANGELOG.md`
-- front_end_opcvm: `CODE_REVIEW.md` (item #61), `SUIVI.md`
+### Fichiers modifies (lot 7)
+- api_opcv: `src/routes/apigestionfonds.js` (garde valLiq indRef>0), `scripts/scraper/propagate_indref_range.js` (fusion casse). Commit `85b1d1c`.
 
 ### Resultat des tests
-- `node -c propagate_indref_range.js` : OK. Source NGX live : OK (233580.83). Dry-run fix_index_tail : OK (6637/78).
-- Mapping pays->indice = copie exacte de INDEX_CONFIG (scrape_indices_daily.js). Aucune invention.
+- `node -c` OK sur les 2 fichiers. valLiqdev EUR/USD avait deja la garde `>0` (verifie). Propagation : mapping inchange, ne fait qu'ajouter la robustesse de casse.
+
+### Prochaine action recommandee (apres deploiement lot 7) — voir bloc "FINALISATION" ci-dessous
 
 ### Prochaine action recommandee — BLOC SSH COMPLET UNIQUE (correction indices end-to-end, reversible)
+#### >>> BLOC FINALISATION (lot 7) — A LANCER MAINTENANT <<<
+Deploie les 2 correctifs (garde valLiq + fusion casse) puis re-propage Tunisie/tout
+(la fusion casse comble l'historique profond + capte les VL du jour) et recalcule EUR/USD.
+```bash
+API=/var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+cd "$API"
+# 1. Deployer les correctifs (commit 85b1d1c : garde valLiq indRef>0 + fusion casse propagation)
+git stash; git pull --rebase origin claude/code-review-improvements-ikvuj; git stash pop || true
+pm2 restart api-monolith
+# 2. Re-propager (idempotent ; fusion casse -> comble Tunisie + VL du jour)
+node scripts/scraper/propagate_indref_range.js --since 2024-01-01 --execute
+# 3. Recalculer EUR/USD (indRef Tunisie a change)
+node scripts/recalc/recalc_eur_usd_daily_rate.js
+# 4. Verif
+node scripts/scraper/indref_admin.js state
+echo "Ouvre une fiche Tunisie : le benchmark ne doit plus tomber a 0 au dernier point."
+```
+BRVM reste FIGE au 2026-05-15 (source BOC PDF en echec aujourd'hui) → tache separee (cf Risques).
+
+---
+
+#### [HISTORIQUE] BLOC initial EXECUTE le 2026-06-26 (resultatOPCV 2) — ne pas relancer tel quel
 > Pre-requis : etapes deploiement code DEJA FAITES (API `1e3754f`, front `edd12e7`).
 > Ce bloc : deploie le script propagation, sauvegarde (rollback), corrige `indice_references`,
 > propage vers `valorisations.indRef`, recalcule EUR/USD, rafraichit le jour courant, installe le cron.
