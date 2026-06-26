@@ -386,3 +386,37 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Impact: Perf 3A/5A calculee contre une baseline trop ancienne sans avertissement
 - Priorite: MOYENNE
 - Note: Comportement existant depuis longtemps, changement = risque de regression sur les calculs
+
+## Audit 2026-06-26 (reprise indices + audit hang/crash multi-agents)
+
+### 57. ~~Indices : id_indice Tunindex en majuscules~~ — CORRIGE (2026-06-26)
+- Fichiers: api_opcv/scripts/scraper/{scrape_indices_daily,diagnose_index_history,fix_index_tail}.js
+- Probleme: les scripts utilisaient `id_indice: 'TUNINDEX'` alors que la table `indice_references` stocke `'Tunindex'`. Les lookups JS etant sensibles a la casse, `propagateIndRef` sautait silencieusement TOUS les fonds tunisiens (indexDataByIndice['TUNINDEX'] = undefined). De plus, un run `--execute` aurait insere une serie dedoublee (lignes 'TUNINDEX' majuscule).
+- Correction: `id_indice: 'Tunindex'` + champ `dbId` dans les configs des 3 scripts, utilise dans les requetes SELECT/INSERT.
+- Commit: `8a8520b`
+- Priorite: HAUTE — CORRIGE (deploiement VPS en attente)
+
+### 58. ~~Routes API qui hangent sur erreur (unhandled rejection)~~ — CORRIGE (2026-06-26)
+- Fichiers: api_opcv/src/routes/routes_vl_robotadvisor.js + routes_vl.js
+- Probleme: 5 routes async ne renvoyaient jamais de reponse en cas d'erreur (requete suspendue indefiniment) :
+  - robotadvisor: getsimulationportefeuillebyuser / getsimulationbyuser / getportefeuillebysimulation (`.then()` sans `.catch()`)
+  - routes_vl forgot-password: `await users.findOne()` hors du try
+  - routes_vl dates-manquantes: `await fond.findOne()` hors du try (+ crash si fond null)
+  - routes_vl rechercheravance-fonds: `await fetchFundsByValorisationfirst()` hors du try
+- Correction: `.catch()` avec guard `headersSent` (robotadvisor) ; deplacement des `await` dans le try existant + null guards (routes_vl). Additif, chemin d'erreur uniquement.
+- Commit: `95febbb`
+- Priorite: HAUTE — CORRIGE
+
+### 59. ~~Crashs client render-path dans les panels~~ — CORRIGE (2026-06-26)
+- Fichiers: front_end_opcvm/src/app/panel/** + country-panel/**
+- Probleme: optional chaining incomplet `funds?.data.funds` (s'arrete a `funds`) → si `funds.data.funds` undefined, `.slice`/`.map`/`Math.ceil(.length)` crashent au render (ecran blanc non rattrapable). 6 pages: management/validated-funds, management/reporting, admin/pending-funds, country-panel/fonds, country-panel/validated-funds.
+- Correction: `funds?.data?.funds` + defaut `[]` (`?? []`) sur les chemins slice/map.
+- Aussi corrige: investor/dashboard (response.ok + guards null/div-par-zero sur calcul perf portefeuille) ; country-panel nav-anomalies (response.ok + `?.` sur fundsData) ; admin/api-management (`if (data.code=200)` assignment → `=== 200`, backend renvoie bien `code:200` verifie).
+- Commit: `d3023e6`
+- Priorite: HAUTE — CORRIGE
+
+### 60. Risques residuels identifies (audit 2026-06-26) — A TRAITER PRUDEMMENT
+- **api_opcv routes_vl.js `/api/comparaison` (l.~6688)**: les `Promise.all(promessesAPI2/3/4)` internes ne sont pas `return`es dans la chaine externe et n'ont pas de `.catch()`. Fenetre de hang etroite (fetches individuels deja gardes) mais reelle. Fix: `return` les chaines internes pour qu'elles remontent au `.catch` externe. NON FAIT (nesting complexe, risque de regression sur page comparaison — a traiter isolement).
+- **front_end_opcvm reconstruction/buy (l.176)**: `montant / parseFloat(taux)` ou `taux=""` initial → NaN propage dans le formulaire d'ordre. Fix: `const t = parseFloat(taux) || 0; t ? montant/t : 0`. NON FAIT (zone calcul sensible reconstruction portefeuille — a valider).
+- **robot-advisor advisor/page.tsx (l.509)**: `efficientFrontierData.risks.map(...)` au render sans garde sur `.risks`/`.returns`. Fix: `(risks ?? []).map(... returns?.[index])`. NON FAIT (a confirmer le shape reel de l'API).
+- Priorite: MOYENNE

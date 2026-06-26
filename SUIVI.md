@@ -2112,40 +2112,45 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-25 : Fix Tunindex id_indice case mismatch + outils correction prets.**
-- **API git** : `8a8520b` (fix Tunindex case + tous scripts indices). Pousse sur `claude/code-review-improvements-ikvuj`.
-- **VPS deploye** : commit `9feb550` (fix MONIA + diagnostic/correction scripts). Le commit `8a8520b` (fix Tunindex case) **A DEPLOYER**.
+**2026-06-26 : Fix Tunindex case + audit hang/crash multi-agents (3 lots) — pousses, A DEPLOYER.**
+- **API git** : `95febbb` (fix Tunindex `8a8520b` + fix hang routes `95febbb`). Pousse.
+- **Frontend git** : `d3023e6` (crash panels) + docs. Pousse.
+- **VPS deploye** : commit `9feb550` (fix MONIA + scripts diagnostic/correction). Les commits `8a8520b`+`95febbb` (API) et `d3023e6` (frontend) **A DEPLOYER**.
 - **DIAGNOSTIC VPS CONFIRME** : divergence SYSTEMATIQUE NSE/Tunindex/MASI sur toute la serie (pas juste queue gelee).
   - NSE : -16.68% des 2024-06-03 (DB=82581 vs reel=99119), toute la serie sur echelle differente
   - Tunindex : -32.26% des 2026-03-23 (DB=10492 vs reel=15488), BVMT n'a que ~61 seances
   - MASI : -7.73% des 2024-06-03 (DB=12284 vs reel=13314), puis brievement correct jan 2026, puis +7-18% au-dessus
 - **BUG CORRIGE** : `id_indice: 'TUNINDEX'` dans les 3 scripts alors que la DB a `'Tunindex'`. JS est case-sensitive → `propagateIndRef` sautait silencieusement tous les fonds tunisiens. Fix: `dbId: 'Tunindex'` dans INDICES + `id_indice: 'Tunindex'` dans scraper.
 
-### Dernier lot termine (2026-06-25 — lot 2)
-**Fix Tunindex id_indice case mismatch dans les 3 scripts scraper/indices.**
-1. `scrape_indices_daily.js` : `id_indice: 'TUNINDEX'` → `'Tunindex'`
-2. `diagnose_index_history.js` : ajout `dbId: 'Tunindex'`, utilise `dbId` dans SQL
-3. `fix_index_tail.js` : ajout `dbId` a tous les INDICES, utilise `dbId` dans SELECT/INSERT
+### Dernier lot termine (2026-06-26 — lots 2,3,4)
+**Lot 2 — Fix Tunindex id_indice case mismatch** (commit `8a8520b`) : `'TUNINDEX'` → `'Tunindex'` + champ `dbId` dans les 3 scripts indices.
+**Lot 3 — Audit hang routes backend** (commit `95febbb`) : 5 routes qui hangeaient sur erreur corrigees (robotadvisor x3 `.catch`, routes_vl forgot-password/dates-manquantes/rechercheravance-fonds `await` deplaces dans try + null guards).
+**Lot 4 — Audit crash frontend panels** (commit `d3023e6`) : 8 pages durcies (render-path `funds?.data?.funds` + `?? []`, response.ok guards, `=` → `===` api-management).
+**Doc — reconciliation** (commit `88f430a`) : TODO.md aligne sur le code reel (#45/#46/#49/#50 verifies deja corriges). CODE_REVIEW.md items #57-#60 ajoutes.
 
-### Fichiers modifies
-- `api_opcv/scripts/scraper/scrape_indices_daily.js`
-- `api_opcv/scripts/scraper/diagnose_index_history.js`
-- `api_opcv/scripts/scraper/fix_index_tail.js`
+### Production verifiee (2026-06-26)
+- API publique OK : POST `/api/listeopcvm` → 200 (2.1 Mo). `/api/valLiq/866`, `/api/performanceswithdate` → 200 frais.
+- PRODUCTION_STATE.json (2026-06-25 22:00) : 1209 fonds. VL fraiches MAROC 06-24, TUNISIE/UEMOA 06-25, NIGERIA 06-11 (hebdo, ok), CEMAC 2024-12-12 (stale 18 mois, pas de source — connu). PM2 4 process online.
+- Indices stale 2026-05-15 (BRVM/MASI/NSE/Tunindex), MONIA 05-14 — correction prete (cf commandes SSH ci-dessous).
 
-### Commandes executees
-- `node -c` sur les 3 scripts → OK
-- `git commit` → `8a8520b`
-- `git push` → OK
+### Fichiers modifies (lots 2,3,4)
+- api_opcv: scripts/scraper/{scrape_indices_daily,diagnose_index_history,fix_index_tail}.js, src/routes/{routes_vl_robotadvisor,routes_vl}.js, CHANGELOG.md
+- front_end_opcvm: 8 pages panel/country-panel, TODO.md, CODE_REVIEW.md
 
 ### Resultat des tests
-- Syntaxe OK. Verification logique : `propagateIndRef` utilisait `indexDataByIndice[matchingCfg.id_indice]` qui renvoyait `undefined` pour `TUNINDEX` (DB renvoie `Tunindex`). Fix confirme.
+- `node -c` OK sur tous les fichiers backend modifies. Frontend : changements TS triviaux (optional chaining, ===), build a verifier au deploiement VPS (pas de node_modules en sandbox).
+- Verification logique : `propagateIndRef` renvoyait `undefined` pour `TUNINDEX` (DB=`Tunindex`) → fix confirme. Backend api-management renvoie bien `code:200` → `=== 200` preserve le happy path.
 
 ### Prochaine action recommandee — COMMANDES SSH COMPLETES
 
-**ETAPE 1 : Deployer le fix Tunindex**
+**ETAPE 1 : Deployer API (fix Tunindex + fix hang routes) ET frontend (fix crash panels)**
 ```bash
+# --- API ---
 cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
+# --- Frontend (build obligatoire) ---
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
 ```
+Verifs post-deploiement : ouvrir /panel/admin/pending-funds, /country-panel/fonds, /panel/management/validated-funds (plus d'ecran blanc si data vide) ; tester /api/forgot-password avec email inexistant (404, pas de hang).
 
 **ETAPE 2 : Correction serie historique — DRY-RUN d'abord (READ-ONLY)**
 Le diagnostic a montre que les valeurs DB sont fausses sur TOUTE la serie, pas juste la queue.
