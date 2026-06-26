@@ -420,3 +420,21 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - **60.2 front_end_opcvm reconstruction/buy** : `parseFloat(taux)` utilisait l'etat React perime (`""` au premier appel → NaN). Remplace par `Number(data8)` (valeur fraiche de l'API) + garde division par zero. Investor + portfolio versions. Commit frontend: `76ceefe`.
 - **60.3 robot-advisor advisor/page.tsx** : `efficientFrontierData.risks.map(...)` garde avec `?? []` + `returns?.[index]`. Investor + portfolio versions. Commit frontend: `76ceefe`.
 - Build frontend: OK (0 erreurs)
+
+### 61. Trou de propagation indRef (indice_references -> valorisations) — OUTILLE (2026-06-26)
+- **Constat** : `fix_index_tail.js` corrige la table `indice_references` (valeurs brutes des indices),
+  mais les pages fonds (`/api/valLiq`, `/api/valLiqdev`, perfs, ratios) lisent
+  `valorisations.indRef` / `indRef_EUR` / `indRef_USD` — une copie par-fond alimentee separement.
+- **Verifie (agent Explore + lecture code)** : AUCUNE route ne lit `indice_references` en direct.
+  La propagation native `propagateIndRef` (scrape_indices_daily.js) ne couvre que **+/-7 jours**
+  autour d'une date scrapee. `import_indices_excel.js --step 2` lit le **fichier Excel** (fige),
+  PAS la DB → inadapte pour propager une correction DB.
+- **Consequence** : un indice fige plusieurs mois dans `indice_references` laisse
+  `valorisations.indRef` faux sur toute la periode, meme apres `fix_index_tail`.
+- **Solution (additive, zero regression)** : nouveau script `propagate_indref_range.js`
+  (api_opcv, commit `d4a237d`) — propage `indice_references` -> `valorisations.indRef` sur une
+  fenetre `[since,until]` complete, logique validee (mapping pays->indice, match exact/+-7j),
+  DRY-RUN par defaut, idempotent. EUR/USD recalcule ensuite par `recalc_eur_usd_daily_rate.js`.
+- **Securite operationnelle** : sauvegarde des colonnes indRef dans une table datee AVANT
+  l'UPDATE de masse (rollback possible). Voir SUIVI.md POINT DE REPRISE pour la sequence SSH.
+- Priorite: MOYENNE — OUTILLE, execution prod en attente (donnee financiere sensible).

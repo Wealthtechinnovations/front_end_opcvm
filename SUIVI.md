@@ -2112,75 +2112,101 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-26 : Items #60 (residuels audit) TOUS CORRIGES — pousses, A DEPLOYER.**
-- **API git** : `2d04a86` sur `claude/code-review-improvements-ikvuj`. Pousse. Contient : fix Tunindex case (`8a8520b`), fix hang routes (`95febbb`), fix `/api/comparaison` inner Promise.all (`2d04a86`).
-- **Frontend git** : `76ceefe` sur `claude/code-review-improvements-ikvuj`. Pousse. Build OK (0 erreurs). Contient : crash panels (`d3023e6`), NaN buy + render guard advisor (`76ceefe`).
-- **VPS deploye** : commit `9feb550` (API), ancien (frontend). Tout le lot ci-dessus **A DEPLOYER**.
+**2026-06-26 : Lot 5 (#60) DEPLOYE en prod + dry-run correction indices REALISE. Outillage propagation indRef ajoute.**
+- **API VPS** : commit `1e3754f` DEPLOYE (verifie dans resultatOPCV.txt : git pull + pm2 restart api-monolith OK, 4 process online). Contient Tunindex case + hang routes + /api/comparaison.
+- **Frontend VPS** : commit `edd12e7` DEPLOYE (git pull fast-forward cf6dba2..edd12e7, 16 fichiers, build attendu OK).
+- **DRY-RUN fix_index_tail `--since 2000-01-01 --seuil 3` REALISE en prod** : TOTAL 6637 valeurs a corriger, 78 seances a inserer.
+  - NSE : 5585 corrigees, 26 inserees, 945 deja correctes (sur 6556).
+  - TUNINDEX : 34 corrigees, 27 inserees.
+  - MASI : 1018 corrigees, 25 inserees, 200 deja correctes.
+- **Source NGX verifiee en direct** (depuis sandbox) : `currentPrice` 233580.83 au 2026-06-25, 7535 points depuis 1996. La valeur inseree par le dry-run correspond EXACTEMENT. DB figee ~103k = FAUSSE (rallye nigerian reel). **Correction legitime.**
+- **NOUVEAU git API** : commit `d4a237d` (script `propagate_indref_range.js`) — pousse, A DEPLOYER avant la propagation.
 
-### Dernier lot termine (2026-06-26 — lot 5 items #60)
-**Lot 5 — Items #60 (residuels audit)** :
-- **#60.1** `/api/comparaison` (routes_vl.js) : 3 `return` ajoutes devant `Promise.all(promessesAPI2/3/4)` pour que les rejections remontent au `.catch` externe. Commit API: `2d04a86`.
-- **#60.2** `reconstruction/buy/page.tsx` (investor + portfolio) : `parseFloat(taux)` utilisait l'etat React stale (initial `""` → NaN). Remplace par `Number(data8)` (valeur fraiche) + garde division par zero. Commit frontend: `76ceefe`.
-- **#60.3** `robot-advisor advisor/page.tsx` (investor + portfolio) : `efficientFrontierData.risks.map(...)` protege avec `?? []` + `returns?.[index]`. Commit frontend: `76ceefe`.
-- Build frontend: OK (0 erreurs Next.js 14.2.3).
-- CODE_REVIEW.md: #60 marque CORRIGE.
+### Dernier lot termine (2026-06-26 — lot 6 : analyse impact + outillage propagation)
+**DECOUVERTE CLE (zero regression)** : corriger `indice_references` NE CHANGE PAS les pages fonds.
+Les routes (`/api/valLiq`, `/api/valLiqdev`, perfs, ratios) lisent `valorisations.indRef`/`indRef_EUR`/`indRef_USD`
+(copie par-fond), JAMAIS `indice_references` en direct (verifie par agent + lecture code).
+- La propagation native `propagateIndRef` (scraper) ne couvre que **+/-7j** autour d'une date.
+- `import_indices_excel --step 2` lit le **fichier Excel fige**, PAS la DB → inadapte.
+- **=> Nouveau script `propagate_indref_range.js`** (commit `d4a237d`) : propage `indice_references` (DB corrigee)
+  -> `valorisations.indRef` sur une fenetre `[since,until]` complete. Logique validee (mapping pays->indice,
+  match exact/+-7j), DRY-RUN defaut, idempotent (UPDATE seulement si ecart > 0.01).
 
-### Fichiers modifies (lot 5)
-- api_opcv: `src/routes/routes_vl.js` (3 lignes modifiees, `return` ajoute)
-- front_end_opcvm: `src/app/panel/investor/reconstruction/buy/page.tsx`, `src/app/panel/portfolio/reconstruction/buy/page.tsx`, `src/app/panel/investor/robot-advisor/robot-portfolio/advisor/page.tsx`, `src/app/panel/portfolio/robot-advisor/robot-portfolio/advisor/page.tsx`, `CODE_REVIEW.md`
+### Fichiers modifies (lot 6)
+- api_opcv: `scripts/scraper/propagate_indref_range.js` (NOUVEAU, commit `d4a237d`), `CHANGELOG.md`
+- front_end_opcvm: `CODE_REVIEW.md` (item #61), `SUIVI.md`
 
 ### Resultat des tests
-- Build frontend Next.js 14.2.3: 0 erreurs, toutes les pages compilees.
-- Corrections error-path only (happy path inchange). Zero regression.
+- `node -c propagate_indref_range.js` : OK. Source NGX live : OK (233580.83). Dry-run fix_index_tail : OK (6637/78).
+- Mapping pays->indice = copie exacte de INDEX_CONFIG (scrape_indices_daily.js). Aucune invention.
 
-### Prochaine action recommandee — COMMANDES SSH COMPLETES (TOUT DEPLOYER)
+### Prochaine action recommandee — BLOC SSH COMPLET UNIQUE (correction indices end-to-end, reversible)
+> Pre-requis : etapes deploiement code DEJA FAITES (API `1e3754f`, front `edd12e7`).
+> Ce bloc : deploie le script propagation, sauvegarde (rollback), corrige `indice_references`,
+> propage vers `valorisations.indRef`, recalcule EUR/USD, rafraichit le jour courant, installe le cron.
+> Donnee financiere sensible : la SAUVEGARDE (etape B) rend l'operation reversible.
 
-**ETAPE 1 : Deployer API (Tunindex + hang routes + /api/comparaison) ET frontend (crash panels + NaN buy + advisor guard)**
 ```bash
-# --- API (commit 2d04a86) ---
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
-# --- Frontend (commit 76ceefe, build obligatoire) ---
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
-```
-Verifs post-deploiement : ouvrir /panel/admin/pending-funds, /country-panel/fonds, /panel/management/validated-funds (plus d'ecran blanc si data vide) ; tester /api/forgot-password avec email inexistant (404, pas de hang) ; tester /tools/comparison (compare 2+ fonds, plus de hang en cas d'erreur API interne).
+set -e
+API=/var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
+cd "$API"
 
-**ETAPE 2 : Correction serie historique — DRY-RUN d'abord (READ-ONLY)**
-Le diagnostic a montre que les valeurs DB sont fausses sur TOUTE la serie, pas juste la queue.
-Les sources autoritatives couvrent : NSE depuis 1996 (NGX), MASI depuis ~2016 (medias24 10y), Tunindex ~3 mois (BVMT).
-`--since 2000-01-01` fonctionne pour les 3 : chaque indice ne corrige que les dates couvertes par sa source.
-```bash
-cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
-node scripts/scraper/fix_index_tail.js --since 2000-01-01 --seuil 3
-```
-→ Affiche les corrections sans rien ecrire. Relever le nombre de UPDATE + INSERT par indice.
+# --- A. Recuperer le script de propagation (commit d4a237d) ---
+git stash; git pull --rebase origin claude/code-review-improvements-ikvuj; git stash pop || true
+pm2 restart api-monolith
 
-**ETAPE 3 : Appliquer les corrections (ECRITURE)**
-```bash
+# --- B. SAUVEGARDE indRef (ROLLBACK) : table datee avant tout UPDATE de masse ---
+mysql -h127.0.0.1 -ufund_opcvm -p"$DB_PASSWORD" fund_opcvm -e "
+  CREATE TABLE IF NOT EXISTS valorisations_indref_bak_20260626 AS
+  SELECT id, fund_id, date, indRef, indRef_EUR, indRef_USD FROM valorisations;
+  SELECT COUNT(*) AS lignes_sauvegardees FROM valorisations_indref_bak_20260626;"
+
+# --- C. Corriger indice_references (table brute) — NON propageant, sans impact pages fonds ---
 node scripts/scraper/fix_index_tail.js --since 2000-01-01 --seuil 3 --execute
-```
-→ UPDATE les valeurs fausses, INSERT les seances manquantes. Idempotent.
 
-**ETAPE 4 : Backfill dates recentes (2026-05-16 → aujourd'hui)**
-```bash
-for d in $(seq 0 30); do DATE=$(date -d "2026-05-16 + $d days" +%Y-%m-%d 2>/dev/null); [ "$(date -d "$DATE" +%u)" -le 5 ] && echo "--- $DATE ---" && node scripts/scraper/scrape_indices_daily.js --execute --date "$DATE" && sleep 2; done
-```
+# --- D. Propager indice_references -> valorisations.indRef (DRY-RUN puis EXECUTE) ---
+node scripts/scraper/propagate_indref_range.js --since 2024-01-01           # dry-run : verifier le volume
+node scripts/scraper/propagate_indref_range.js --since 2024-01-01 --execute # ecriture indRef (devise locale)
 
-**ETAPE 5 : Installer le cron indices**
-```bash
-(crontab -l; echo '30 18 * * 1-5 /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api/scripts/cron/cron_indices_daily.sh >> /var/log/cron_indices_daily.log 2>&1') | crontab -
+# --- E. Recalculer indRef_EUR / indRef_USD (DIVISION par taux, logique validee) ---
+node scripts/recalc/recalc_eur_usd_daily_rate.js
+
+# --- F. Rafraichir la valeur du jour (scrape + propagation +-7j native) ---
+node scripts/scraper/scrape_indices_daily.js --execute
+
+# --- G. Installer le cron quotidien indices (si absent) ---
+crontab -l | grep -q cron_indices_daily || (crontab -l 2>/dev/null; echo '30 18 * * 1-5 '"$API"'/scripts/cron/cron_indices_daily.sh >> /var/log/cron_indices_daily.log 2>&1') | crontab -
 crontab -l | grep indices
+
+# --- H. Verifications ---
+curl -s -o /dev/null -w "valLiq/866: %{http_code}\n" https://africafunds.chainsolutions.fr/api/valLiq/866
+mysql -h127.0.0.1 -ufund_opcvm -p"$DB_PASSWORD" fund_opcvm -e "
+  SELECT id_indice, MAX(date) derniere, MAX(valeur) val FROM indice_references
+  WHERE id_indice IN ('NSE','Tunindex','MASI','BRVM') GROUP BY id_indice;"
+echo '=== Termine. Tester une fiche fonds Nigeria/Tunisie/Maroc (graphe benchmark). ==='
+
+# --- ROLLBACK (si regression constatee) ---
+# mysql -h127.0.0.1 -ufund_opcvm -p"$DB_PASSWORD" fund_opcvm -e "
+#   UPDATE valorisations v JOIN valorisations_indref_bak_20260626 b ON v.id=b.id
+#   SET v.indRef=b.indRef, v.indRef_EUR=b.indRef_EUR, v.indRef_USD=b.indRef_USD;"
 ```
+
+**Verifs post-execution** : ouvrir une fiche fonds Nigeria (graphe benchmark NSE doit monter vers ~233k),
+une Tunisie (Tunindex ~19800), une Maroc (MASI ~18000). Comparer base 100 fonds vs benchmark coherent.
 
 ### Risques connus
-- Correction historique = donnee financiere sensible. TOUJOURS dry-run (etape 2) avant execute (etape 3).
-- Apres correction `indice_references`, les `valorisations.indRef` sont ENCORE anciennes → la propagation se fait automatiquement par le backfill (etape 4) pour les dates recentes. Pour l'historique, relancer un recalcul indRef si necessaire.
-- MONIA : toujours bloque sur VPS (WAF bkam.ma). 4/5 indices OK.
-- NE PAS activer le refactor microservices. NE PAS committer .env / sec_ng_downloads/.
+- **Propagation = donnee financiere sensible** : la sauvegarde (etape B) permet le rollback (etape finale commentee).
+- `--since 2024-01-01` couvre la periode de gel (debut ~2024-06). Elargir a `2000-01-01` seulement apres spot-check d'un fonds (l'historique profond changera la forme du graphe benchmark — c'est une CORRECTION vers la vraie valeur officielle, pas une regression).
+- Le script propagation est idempotent : ne touche que les VL dont l'indRef differe > 0.01.
+- MONIA : toujours bloque sur VPS (WAF bkam.ma). 4/5 indices OK. Etape F peut logguer un echec MONIA (sans gravite).
+- Ratios benchmark-dependants (tracking error, beta) : recalcul optionnel ulterieur si besoin (non bloquant ; les crons quotidiens recalculent le recent).
+- NE PAS activer le refactor microservices. NE PAS committer .env / sec_ng_downloads/ / fichier "0".
 
 ### A ne pas faire a la reprise
-- Ne pas lancer le backfill (etape 4) AVANT la correction historique (etape 3).
-- Ne pas relancer population ratios EUR/USD (deja fait : 389 EUR / 163 USD).
-- Ne pas activer les microservices.
+- Ne pas propager (etape D) AVANT la sauvegarde (etape B) et la correction indice_references (etape C).
+- Ne pas utiliser `import_indices_excel --step 2` pour propager une correction DB (il lit l'Excel fige).
+- Ne pas relancer population ratios EUR/USD de zero (deja fait : 389 EUR / 163 USD) ; etape E recalcule les conversions, c'est suffisant.
+- Ne pas activer les microservices. Ne pas utiliser l'URL publique pour les recalculs lourds (timeout Nginx 502) : toujours localhost.
 
 ---
 
