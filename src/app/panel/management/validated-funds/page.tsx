@@ -181,7 +181,7 @@ export default function Fonds() {
                       </tr>
                     </thead>
                     <tbody>
-                      {funds?.data?.funds.slice(offset, offset + itemsPerPage).map((item: any) => (
+                      {(funds?.data?.funds ?? []).slice(offset, offset + itemsPerPage).map((item: any) => (
                         <tr key={item.id}>
                           <td>{item?.nom_fond}</td>
                           <td>{item?.code_ISIN}</td>

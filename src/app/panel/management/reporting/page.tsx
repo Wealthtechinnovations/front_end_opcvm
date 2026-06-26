@@ -98,7 +98,7 @@ export default function Reporting() {
             try {
                 const data1 = await getFonds(societeconneted);
 
-                const mappedOptions = data1?.data?.funds.map((funds: any) => ({
+                const mappedOptions = (data1?.data?.funds ?? []).map((funds: any) => ({
                     value: funds.id,
                     label: funds.test
                 }));

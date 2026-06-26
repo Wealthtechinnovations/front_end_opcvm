@@ -240,9 +240,10 @@ export default function Fondselected() {
       setShowPopup(true);
       setIndexselected(index);
 
-      const response = await fetch(`${urlconstant}/api/vlspresui/${fondid}/${fundsData[index].now}/${fundsData[index].nowdate}`);  // Remplacez 'id' par l'identifiant du fonds
+      const response = await fetch(`${urlconstant}/api/vlspresui/${fondid}/${fundsData?.[index]?.now}/${fundsData?.[index]?.nowdate}`);  // Remplacez 'id' par l'identifiant du fonds
+      if (!response.ok) return;
       const data = await response.json();
-      let { previousValues, nextValues } = data.data;
+      let { previousValues, nextValues } = data?.data ?? {};
       //  const newLine = { id: fondid, date: '', value: '' };
 
 

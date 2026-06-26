@@ -84,7 +84,7 @@ export default function Fonds() {
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10; // Nombre d'éléments par page
 
-  const pageCount = funds?.data.funds ? Math.ceil(funds?.data.funds?.length / itemsPerPage) : 1;
+  const pageCount = funds?.data?.funds ? Math.ceil(funds.data.funds.length / itemsPerPage) : 1;
 
   const handlePageClick = ({ selected }: { selected: number }) => {
     setCurrentPage(selected);

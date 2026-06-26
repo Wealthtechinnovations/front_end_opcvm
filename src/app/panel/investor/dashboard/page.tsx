@@ -95,9 +95,11 @@ export default function Home() {
     try {
       // Use transactionData to filter transactions with the given fundId
       const response6 = await fetch(`${urlconstant}/api/portefeuillebase100/${portefeuilleId}`);
+      if (!response6.ok) return 0;
       const data6 = await response6.json();
-      const totalinvest = data6?.data.investissement;
-      const plusmoinsvalue = data6?.data.plusmoinsvalue
+      const totalinvest = data6?.data?.investissement;
+      const plusmoinsvalue = data6?.data?.plusmoinsvalue;
+      if (totalinvest == null || plusmoinsvalue == null || Number(totalinvest) === 0) return 0;
       return ((plusmoinsvalue.toFixed(2)) / totalinvest.toFixed(2)) * 100;
     } catch (error) {
       console.error('Error fetching performance data:', error);
