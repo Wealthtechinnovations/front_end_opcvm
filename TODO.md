@@ -18,26 +18,30 @@
 - [x] LOT 1 (#54) : rankings null/Infinity fix — 2026-06-17
 - [x] LOT 2 (#55) : category averages fix (25 moyennes non-null) — 2026-06-17
 - [x] LOT 3 (#56) : transaction consistency fix (3545+3579+3579 classements OK) — 2026-06-18
+- [x] **#45** CSV formula injection sanitisation (sanitizeCellValue/Row) — commit `277ae47` (verifie code 2026-06-26)
+- [x] **#46** .catch() + guard headersSent sur 11 routes apigestionperformance.js — commit `89cabd4` (verifie code 2026-06-26)
+- [x] **#49** cron `set -e` supprime + run_step/run_curl (ou ERRORS counter inline pour eur_usd) — commit `26d1f93` (verifie code 2026-06-26)
+- [x] **#50** validation HTTP status dans les crons (HTTP_CODE + ERRORS counter) — commit `26d1f93` (verifie code 2026-06-26)
+- [x] **Indices** : rebranchement 5 sources 2026 + fix MONIA + fix Tunindex case + outils diagnostic/correction — commits `5314fe0`,`9feb550`,`8a8520b` (a deployer + executer correction)
 
 ## A deployer sur VPS
 
+- [ ] **Indices** : deployer `8a8520b` (fix Tunindex) puis executer la correction historique (cf SUIVI.md POINT DE REPRISE — commandes SSH)
 - [ ] **Frontend AUDIT-D** : quartile EUR/USD fix (FundSubView.tsx summary-eur + summary-usd) — commit `8a60083`, `npm run build` + `pm2 restart fundafrique-frontend`
 - [ ] **#52 ClickHouse resilience** — commit `b815153`, pas encore deploye
 
 ## Actions cron (sans risque de regression)
 
-- [ ] **#49** cron_daily_update.sh : remplacer `set -e` par gardes par etape (risque : pipeline coupe si un curl echoue)
-- [ ] **#50** Ajouter validation HTTP status aux curl dans les crons
-- [ ] **#40** Supprimer ghost cron fix-brvm-nginx.py de la crontab (script absent du VPS)
+- [ ] **#40** Supprimer ghost cron fix-brvm-nginx.py de la crontab (script absent du VPS) — operation crontab VPS
+- [ ] **Installer cron** `cron_indices_daily.sh` (30 18 * * 1-5) — apres correction historique indices
 
 ## Dette technique (cf CODE_REVIEW.md)
 
-- [ ] #46 — Ajouter .catch() aux promise chains dans apigestionperformance.js
-- [ ] #45 — CSV formula injection sanitisation dans routes upload
-- [ ] #51 — findValueAtDate() fallback silencieux vers premiere VL
+- [ ] #51 — findValueAtDate() fallback silencieux vers premiere VL (risque regression calcul — prudence)
 - [ ] #28 — Factoriser duplication panel/investor vs panel/portfolio (~100 pages)
-- [ ] #27 — Backfill ClickHouse `performance_historique`
-- [ ] #15 — Parametrer INSERT ClickHouse batch
+- [ ] #39 — Cron monitoring sans alerting (email/webhook sur exit non-zero)
+- [ ] #27 — Backfill ClickHouse `performance_historique` (FAIBLE — ClickHouse desactive)
+- [ ] #15 — Parametrer INSERT ClickHouse batch (FAIBLE — ClickHouse desactive)
 
 ## En attente (validation Eric)
 
