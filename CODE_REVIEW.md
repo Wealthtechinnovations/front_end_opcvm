@@ -415,8 +415,8 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - Commit: `d3023e6`
 - Priorite: HAUTE — CORRIGE
 
-### 60. Risques residuels identifies (audit 2026-06-26) — A TRAITER PRUDEMMENT
-- **api_opcv routes_vl.js `/api/comparaison` (l.~6688)**: les `Promise.all(promessesAPI2/3/4)` internes ne sont pas `return`es dans la chaine externe et n'ont pas de `.catch()`. Fenetre de hang etroite (fetches individuels deja gardes) mais reelle. Fix: `return` les chaines internes pour qu'elles remontent au `.catch` externe. NON FAIT (nesting complexe, risque de regression sur page comparaison — a traiter isolement).
-- **front_end_opcvm reconstruction/buy (l.176)**: `montant / parseFloat(taux)` ou `taux=""` initial → NaN propage dans le formulaire d'ordre. Fix: `const t = parseFloat(taux) || 0; t ? montant/t : 0`. NON FAIT (zone calcul sensible reconstruction portefeuille — a valider).
-- **robot-advisor advisor/page.tsx (l.509)**: `efficientFrontierData.risks.map(...)` au render sans garde sur `.risks`/`.returns`. Fix: `(risks ?? []).map(... returns?.[index])`. NON FAIT (a confirmer le shape reel de l'API).
-- Priorite: MOYENNE
+### ~~60. Risques residuels identifies (audit 2026-06-26)~~ — CORRIGE (2026-06-26)
+- **60.1 api_opcv routes_vl.js `/api/comparaison`** : 3 `return` ajoutes devant les `Promise.all(promessesAPI2/3/4)` internes pour que les rejections remontent au `.catch` externe. Commit API: `2d04a86`.
+- **60.2 front_end_opcvm reconstruction/buy** : `parseFloat(taux)` utilisait l'etat React perime (`""` au premier appel → NaN). Remplace par `Number(data8)` (valeur fraiche de l'API) + garde division par zero. Investor + portfolio versions. Commit frontend: `76ceefe`.
+- **60.3 robot-advisor advisor/page.tsx** : `efficientFrontierData.risks.map(...)` garde avec `?? []` + `returns?.[index]`. Investor + portfolio versions. Commit frontend: `76ceefe`.
+- Build frontend: OK (0 erreurs)

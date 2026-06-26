@@ -2112,45 +2112,37 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-26 : Fix Tunindex case + audit hang/crash multi-agents (3 lots) — pousses, A DEPLOYER.**
-- **API git** : `95febbb` (fix Tunindex `8a8520b` + fix hang routes `95febbb`). Pousse.
-- **Frontend git** : `d3023e6` (crash panels) + docs. Pousse.
-- **VPS deploye** : commit `9feb550` (fix MONIA + scripts diagnostic/correction). Les commits `8a8520b`+`95febbb` (API) et `d3023e6` (frontend) **A DEPLOYER**.
-- **DIAGNOSTIC VPS CONFIRME** : divergence SYSTEMATIQUE NSE/Tunindex/MASI sur toute la serie (pas juste queue gelee).
-  - NSE : -16.68% des 2024-06-03 (DB=82581 vs reel=99119), toute la serie sur echelle differente
-  - Tunindex : -32.26% des 2026-03-23 (DB=10492 vs reel=15488), BVMT n'a que ~61 seances
-  - MASI : -7.73% des 2024-06-03 (DB=12284 vs reel=13314), puis brievement correct jan 2026, puis +7-18% au-dessus
-- **BUG CORRIGE** : `id_indice: 'TUNINDEX'` dans les 3 scripts alors que la DB a `'Tunindex'`. JS est case-sensitive → `propagateIndRef` sautait silencieusement tous les fonds tunisiens. Fix: `dbId: 'Tunindex'` dans INDICES + `id_indice: 'Tunindex'` dans scraper.
+**2026-06-26 : Items #60 (residuels audit) TOUS CORRIGES — pousses, A DEPLOYER.**
+- **API git** : `2d04a86` sur `claude/code-review-improvements-ikvuj`. Pousse. Contient : fix Tunindex case (`8a8520b`), fix hang routes (`95febbb`), fix `/api/comparaison` inner Promise.all (`2d04a86`).
+- **Frontend git** : `76ceefe` sur `claude/code-review-improvements-ikvuj`. Pousse. Build OK (0 erreurs). Contient : crash panels (`d3023e6`), NaN buy + render guard advisor (`76ceefe`).
+- **VPS deploye** : commit `9feb550` (API), ancien (frontend). Tout le lot ci-dessus **A DEPLOYER**.
 
-### Dernier lot termine (2026-06-26 — lots 2,3,4)
-**Lot 2 — Fix Tunindex id_indice case mismatch** (commit `8a8520b`) : `'TUNINDEX'` → `'Tunindex'` + champ `dbId` dans les 3 scripts indices.
-**Lot 3 — Audit hang routes backend** (commit `95febbb`) : 5 routes qui hangeaient sur erreur corrigees (robotadvisor x3 `.catch`, routes_vl forgot-password/dates-manquantes/rechercheravance-fonds `await` deplaces dans try + null guards).
-**Lot 4 — Audit crash frontend panels** (commit `d3023e6`) : 8 pages durcies (render-path `funds?.data?.funds` + `?? []`, response.ok guards, `=` → `===` api-management).
-**Doc — reconciliation** (commit `88f430a`) : TODO.md aligne sur le code reel (#45/#46/#49/#50 verifies deja corriges). CODE_REVIEW.md items #57-#60 ajoutes.
+### Dernier lot termine (2026-06-26 — lot 5 items #60)
+**Lot 5 — Items #60 (residuels audit)** :
+- **#60.1** `/api/comparaison` (routes_vl.js) : 3 `return` ajoutes devant `Promise.all(promessesAPI2/3/4)` pour que les rejections remontent au `.catch` externe. Commit API: `2d04a86`.
+- **#60.2** `reconstruction/buy/page.tsx` (investor + portfolio) : `parseFloat(taux)` utilisait l'etat React stale (initial `""` → NaN). Remplace par `Number(data8)` (valeur fraiche) + garde division par zero. Commit frontend: `76ceefe`.
+- **#60.3** `robot-advisor advisor/page.tsx` (investor + portfolio) : `efficientFrontierData.risks.map(...)` protege avec `?? []` + `returns?.[index]`. Commit frontend: `76ceefe`.
+- Build frontend: OK (0 erreurs Next.js 14.2.3).
+- CODE_REVIEW.md: #60 marque CORRIGE.
 
-### Production verifiee (2026-06-26)
-- API publique OK : POST `/api/listeopcvm` → 200 (2.1 Mo). `/api/valLiq/866`, `/api/performanceswithdate` → 200 frais.
-- PRODUCTION_STATE.json (2026-06-25 22:00) : 1209 fonds. VL fraiches MAROC 06-24, TUNISIE/UEMOA 06-25, NIGERIA 06-11 (hebdo, ok), CEMAC 2024-12-12 (stale 18 mois, pas de source — connu). PM2 4 process online.
-- Indices stale 2026-05-15 (BRVM/MASI/NSE/Tunindex), MONIA 05-14 — correction prete (cf commandes SSH ci-dessous).
-
-### Fichiers modifies (lots 2,3,4)
-- api_opcv: scripts/scraper/{scrape_indices_daily,diagnose_index_history,fix_index_tail}.js, src/routes/{routes_vl_robotadvisor,routes_vl}.js, CHANGELOG.md
-- front_end_opcvm: 8 pages panel/country-panel, TODO.md, CODE_REVIEW.md
+### Fichiers modifies (lot 5)
+- api_opcv: `src/routes/routes_vl.js` (3 lignes modifiees, `return` ajoute)
+- front_end_opcvm: `src/app/panel/investor/reconstruction/buy/page.tsx`, `src/app/panel/portfolio/reconstruction/buy/page.tsx`, `src/app/panel/investor/robot-advisor/robot-portfolio/advisor/page.tsx`, `src/app/panel/portfolio/robot-advisor/robot-portfolio/advisor/page.tsx`, `CODE_REVIEW.md`
 
 ### Resultat des tests
-- `node -c` OK sur tous les fichiers backend modifies. Frontend : changements TS triviaux (optional chaining, ===), build a verifier au deploiement VPS (pas de node_modules en sandbox).
-- Verification logique : `propagateIndRef` renvoyait `undefined` pour `TUNINDEX` (DB=`Tunindex`) → fix confirme. Backend api-management renvoie bien `code:200` → `=== 200` preserve le happy path.
+- Build frontend Next.js 14.2.3: 0 erreurs, toutes les pages compilees.
+- Corrections error-path only (happy path inchange). Zero regression.
 
-### Prochaine action recommandee — COMMANDES SSH COMPLETES
+### Prochaine action recommandee — COMMANDES SSH COMPLETES (TOUT DEPLOYER)
 
-**ETAPE 1 : Deployer API (fix Tunindex + fix hang routes) ET frontend (fix crash panels)**
+**ETAPE 1 : Deployer API (Tunindex + hang routes + /api/comparaison) ET frontend (crash panels + NaN buy + advisor guard)**
 ```bash
-# --- API ---
+# --- API (commit 2d04a86) ---
 cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && pm2 restart api-monolith
-# --- Frontend (build obligatoire) ---
+# --- Frontend (commit 76ceefe, build obligatoire) ---
 cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop && npm run build && pm2 restart fundafrique-frontend
 ```
-Verifs post-deploiement : ouvrir /panel/admin/pending-funds, /country-panel/fonds, /panel/management/validated-funds (plus d'ecran blanc si data vide) ; tester /api/forgot-password avec email inexistant (404, pas de hang).
+Verifs post-deploiement : ouvrir /panel/admin/pending-funds, /country-panel/fonds, /panel/management/validated-funds (plus d'ecran blanc si data vide) ; tester /api/forgot-password avec email inexistant (404, pas de hang) ; tester /tools/comparison (compare 2+ fonds, plus de hang en cas d'erreur API interne).
 
 **ETAPE 2 : Correction serie historique — DRY-RUN d'abord (READ-ONLY)**
 Le diagnostic a montre que les valeurs DB sont fausses sur TOUTE la serie, pas juste la queue.
