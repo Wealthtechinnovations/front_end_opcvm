@@ -2147,48 +2147,40 @@ Les routes (`/api/valLiq`, `/api/valLiqdev`, perfs, ratios) lisent `valorisation
 > Donnee financiere sensible : la SAUVEGARDE (etape B) rend l'operation reversible.
 
 ```bash
-set -e
 API=/var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api
 cd "$API"
 
-# --- A. Recuperer le script de propagation (commit d4a237d) ---
+# A. Recuperer les scripts (commits d4a237d propagate + 8ac921c indref_admin) + redemarrer API
 git stash; git pull --rebase origin claude/code-review-improvements-ikvuj; git stash pop || true
 pm2 restart api-monolith
 
-# --- B. SAUVEGARDE indRef (ROLLBACK) : table datee avant tout UPDATE de masse ---
-mysql -h127.0.0.1 -ufund_opcvm -p"$DB_PASSWORD" fund_opcvm -e "
-  CREATE TABLE IF NOT EXISTS valorisations_indref_bak_20260626 AS
-  SELECT id, fund_id, date, indRef, indRef_EUR, indRef_USD FROM valorisations;
-  SELECT COUNT(*) AS lignes_sauvegardees FROM valorisations_indref_bak_20260626;"
+# B. SAUVEGARDE indRef (rollback possible) — node, lit .env, AUCUN mot de passe demande
+node scripts/scraper/indref_admin.js backup
 
-# --- C. Corriger indice_references (table brute) — NON propageant, sans impact pages fonds ---
+# C. Corriger indice_references (table brute) — NON propageant, sans impact pages fonds
 node scripts/scraper/fix_index_tail.js --since 2000-01-01 --seuil 3 --execute
 
-# --- D. Propager indice_references -> valorisations.indRef (DRY-RUN puis EXECUTE) ---
-node scripts/scraper/propagate_indref_range.js --since 2024-01-01           # dry-run : verifier le volume
-node scripts/scraper/propagate_indref_range.js --since 2024-01-01 --execute # ecriture indRef (devise locale)
+# D. Propager indice_references -> valorisations.indRef (DRY-RUN puis EXECUTE)
+node scripts/scraper/propagate_indref_range.js --since 2024-01-01
+node scripts/scraper/propagate_indref_range.js --since 2024-01-01 --execute
 
-# --- E. Recalculer indRef_EUR / indRef_USD (DIVISION par taux, logique validee) ---
+# E. Recalculer indRef_EUR / indRef_USD (DIVISION par taux, logique validee)
 node scripts/recalc/recalc_eur_usd_daily_rate.js
 
-# --- F. Rafraichir la valeur du jour (scrape + propagation +-7j native) ---
+# F. Rafraichir la valeur du jour (scrape + propagation +-7j native)
 node scripts/scraper/scrape_indices_daily.js --execute
 
-# --- G. Installer le cron quotidien indices (si absent) ---
+# G. Installer le cron quotidien indices (si absent)
 crontab -l | grep -q cron_indices_daily || (crontab -l 2>/dev/null; echo '30 18 * * 1-5 '"$API"'/scripts/cron/cron_indices_daily.sh >> /var/log/cron_indices_daily.log 2>&1') | crontab -
 crontab -l | grep indices
 
-# --- H. Verifications ---
+# H. Verifications (etat DB via node, pas de mot de passe + check API)
+node scripts/scraper/indref_admin.js state
 curl -s -o /dev/null -w "valLiq/866: %{http_code}\n" https://africafunds.chainsolutions.fr/api/valLiq/866
-mysql -h127.0.0.1 -ufund_opcvm -p"$DB_PASSWORD" fund_opcvm -e "
-  SELECT id_indice, MAX(date) derniere, MAX(valeur) val FROM indice_references
-  WHERE id_indice IN ('NSE','Tunindex','MASI','BRVM') GROUP BY id_indice;"
 echo '=== Termine. Tester une fiche fonds Nigeria/Tunisie/Maroc (graphe benchmark). ==='
 
-# --- ROLLBACK (si regression constatee) ---
-# mysql -h127.0.0.1 -ufund_opcvm -p"$DB_PASSWORD" fund_opcvm -e "
-#   UPDATE valorisations v JOIN valorisations_indref_bak_20260626 b ON v.id=b.id
-#   SET v.indRef=b.indRef, v.indRef_EUR=b.indRef_EUR, v.indRef_USD=b.indRef_USD;"
+# ROLLBACK (uniquement si regression) : remplacer la date par celle affichee a l'etape B
+# node scripts/scraper/indref_admin.js rollback valorisations_indref_bak_20260626
 ```
 
 **Verifs post-execution** : ouvrir une fiche fonds Nigeria (graphe benchmark NSE doit monter vers ~233k),
