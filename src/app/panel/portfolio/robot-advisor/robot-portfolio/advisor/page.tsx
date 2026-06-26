@@ -507,7 +507,7 @@ export default function RoboAdvisor() {
     series: [{
       name: 'Portefeuille',
       color: 'rgba(223, 83, 83, .5)',
-      data: efficientFrontierData.risks.map((risk: any, index: number) => [risk, efficientFrontierData.returns[index]])
+      data: (efficientFrontierData.risks ?? []).map((risk: any, index: number) => [risk, efficientFrontierData.returns?.[index]])
     }]
   } : {};
   const [showAdvancedConditions, setShowAdvancedConditions] = useState(false);

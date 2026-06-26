@@ -172,8 +172,8 @@ export default function Achat() {
           setcashdev(mont.toFixed(2).toString());
           settaux(data8)
           const updatedEntries = [...entries];
-
-          const montantp = updatedEntries[0].montant / parseFloat(taux);
+          const currentTaux = Number(data8);
+          const montantp = currentTaux ? updatedEntries[0].montant / currentTaux : 0;
           const dd = parseFloat(cashdev) - updatedEntries[0].montant;
           const ee = parseFloat(portefeuille?.data.portefeuille.cash) - parseFloat(montantport);
           setmontantport(montantp.toFixed(2).toString());
