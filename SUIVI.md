@@ -2112,27 +2112,31 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 ## POINT DE REPRISE COURANT
 
 ### Dernier etat stable
-**2026-06-26 : Correction + propagation indices EXECUTEE en prod. 2 correctifs d'affichage/casse pousses (A DEPLOYER).**
-- **Bloc SSH execute** (resultatOPCV 2) : indice_references corrige, propagation indRef OK, recalc EUR/USD OK, cron installe, sauvegarde creee.
-  - Propagation : **1117 fonds | 144163 indRef maj | 15079 deja ok | 59321 sans match**.
-  - Recalc EUR/USD : **942208 VL recalculees, 0 erreur** (MAD 539477, TND 304418, NGN 52483, XOF 42256, XAF 2134, USD 1440).
-  - Sauvegarde rollback : table `valorisations_indref_bak_20260626` creee.
-  - Cron `cron_indices_daily.sh` installe (30 18 * * 1-5).
-- **Etat indice_references apres run** : NSE 2026-06-25 ✓, MASI 2026-06-25 ✓, Tunindex 2026-06-26 ✓, **BRVM 2026-05-15 (FIGE)**, MONIA 2026-05-14 (WAF).
-- **Verif prod (curl valLiq)** : NSE fonds 1142 bench 2026-04-24=225722 ✓ (vs ~103k avant) ; MASI fonds 1021 bench 2026-06-24=18101 ✓ ; Tunindex fonds 2415 bench 2026-06-25=19553 ✓.
+**2026-06-27 : Correction indices COMPLETE et DEPLOYEE (lot 7 inclus). Incident MariaDB resolu. 2 nouveaux sujets identifies (classements/ratios).**
+- **Indices** : indice_references corrige (NSE/MASI 06-25, Tunindex 06-26 ; BRVM 05-15 FIGE, MONIA 05-14 WAF). Propagation indRef OK. Lot 7 (commit `85b1d1c`) DEPLOYE : garde valLiq `indRef>0` + fusion casse propagation.
+- **Re-propagation post-lot7** : 48535 indRef maj, **585 sans match** (UEMOA post-BRVM-fige, attendu). **Tunisie : 473 -> 0 sans match** (fusion casse OK).
+- **Sauvegarde rollback** : `valorisations_indref_bak_20260626`. Cron `cron_indices_daily.sh` installe.
+- **Verif prod OK** : benchmarks corrects (NSE 225722, MASI 18101, Tunindex 19553). Plus de chute a 0.
 
-### Dernier lot termine (2026-06-26 — lot 7 : 2 correctifs post-propagation)
-**2 artefacts d'affichage detectes en prod (curl) et corriges (commit API `85b1d1c`, A DEPLOYER) :**
-1. **Benchmark = 0 au dernier point** (Tunisie 2026-06-26, UEMOA recent) : des VL tres recentes sans valeur d'indice (VL du jour inseree apres propagation ; BRVM fige) etaient tracees a 0. **Fix valLiq** : ne sert plus `valuesInd` si `indRef <= 0` (garde deja presente dans valLiqdev EUR/USD). Additif, securite affichage.
-2. **Tunisie : 473 "sans match"/fonds en historique profond** : bug de casse `'TUNINDEX'` (ancien fige) vs `'Tunindex'` (corrige) — le script fusionnait mal les 2 cles. **Fix propagate_indref_range.js** : fusion par casse minuscule en PRIORISANT la casse canonique (valeurs corrigees) pour ne jamais reintroduire une valeur figee.
+### INCIDENT MariaDB (2026-06-27 ~04:45) — RESOLU
+- Le recalc EUR/USD **complet** (1202 fonds d'un coup) a fait tomber MariaDB 10.6.23 (`ECONNREFUSED 3306`) au fonds 200 → API 500 temporaire. Cause probable : saturation memoire (crash similaire le 2026-06-19).
+- **Resolu** : `systemctl restart mariadb` → API 200. Puis recalc EUR/USD Tunisie EN LOTS (`recalc ... 2415 2538` + `2869 2875`) : 304544 VL, 0 erreur.
+- **LECON** : NE JAMAIS lancer `recalc_eur_usd_daily_rate.js` sans argument (tout) en prod → toujours par PLAGES d'id (lots de ~150 fonds).
 
-### Fichiers modifies (lot 7)
-- api_opcv: `src/routes/apigestionfonds.js` (garde valLiq indRef>0), `scripts/scraper/propagate_indref_range.js` (fusion casse). Commit `85b1d1c`.
+### Dernier lot termine (lot 7 : 2 correctifs indices) — DEPLOYE commit `85b1d1c`
+1. **valLiq** : ne sert plus `valuesInd` si `indRef <= 0` (fin des benchmarks a 0 ; garde deja presente dans valLiqdev).
+2. **propagate_indref_range.js** : fusion casse `TUNINDEX`/`Tunindex` en priorisant la casse canonique (corrigee).
 
-### Resultat des tests
-- `node -c` OK sur les 2 fichiers. valLiqdev EUR/USD avait deja la garde `>0` (verifie). Propagation : mapping inchange, ne fait qu'ajouter la robustesse de casse.
+### Nouveaux sujets identifies (2026-06-27, diagnostic lecture seule) — NON COMMENCES, PRE-EXISTANTS
+**Hors perimetre indices. Domaine classements + ratios. A traiter en lot dedie, diagnostic-first.**
+- **#62 — Classement regional sous-peuple** : fonds 2870 USD → national "OBLIGATIONS Tunisie" /54, regional "OBLIGATIONS Afrique du Nord" /18 (illogique : le regional devrait etre >= national). Diagnostic API : sur 1203 fonds, **categorie_regionale=0 et categorie_afrique=0** (AUCUN fonds ne les a). Les categories regionale/continentale sont DERIVEES au calcul du classement (service `ranking.service.js` / `apigestionsavequotidien.js`), et la derivation est sous-peuplee. Question metier ouverte : regional = tous les pays de la zone, ou seulement fonds a mandat regional ?
+- **#63 — Barres ratios absentes (EUR/USD)** : fonds 2870 USD → `ranksharpe=null/total=0` (idem volatilite, DSR, Sortino...). Les classements par ratio sont vides pour cette categorie en USD (ratios EUR/USD peuples sur 163 fonds seulement, aucun dans OBLIGATIONS Tunisie/Afrique-du-Nord USD). Les barres bleues "Par rapport a la Cat" n'ont donc rien a afficher.
 
-### Prochaine action recommandee (apres deploiement lot 7) — voir bloc "FINALISATION" ci-dessous
+### Prochaine action recommandee
+1. (Optionnel, separe) Diagnostiquer/relancer la source **BRVM** (BOC PDF en echec) pour degeler UEMOA.
+2. **Lot classements/ratios (#62/#63)** : commencer par un script de DIAGNOSTIC lecture seule (comptage categories regionales/continentales derivees + couverture ratios EUR/USD par categorie), PUIS decider la correction avec l'utilisateur (question metier #62 a trancher). NE RIEN ecrire avant accord.
+
+### [HISTORIQUE] FINALISATION (lot 7) — DEJA EXECUTE le 2026-06-27 (avec incident MariaDB resolu, cf ci-dessus)
 
 ### Prochaine action recommandee — BLOC SSH COMPLET UNIQUE (correction indices end-to-end, reversible)
 #### >>> BLOC FINALISATION (lot 7) — A LANCER MAINTENANT <<<
