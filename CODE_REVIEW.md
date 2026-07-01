@@ -438,3 +438,17 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - **Securite operationnelle** : sauvegarde des colonnes indRef dans une table datee AVANT
   l'UPDATE de masse (rollback possible). Voir SUIVI.md POINT DE REPRISE pour la sequence SSH.
 - Priorite: MOYENNE — OUTILLE, execution prod en attente (donnee financiere sensible).
+
+### 62. Classement regional/continental incoherent pour le lot de fonds recents (casse) — DIAGNOSTIQUE (2026-06-27)
+- **Symptome (prod, fonds 2870 USD)** : national "OBLIGATIONS Tunisie" /54, regional "OBLIGATIONS Afrique du Nord" /18 (< national, illogique), continental "OBLIGATIONS Afrique" = vide.
+- **Confirme par API** : un fonds tunisien NORMAL (2415) donne 54 <= 344 (regional) <= 480 (continental) = COHERENT. Seuls les fonds recents (lot ~2869-2875) sont anormaux.
+- **Cause racine (casse)** : le classement Type2/Type3 groupe par la chaine exacte `categorie_fundafrica_regionale` / `categorie_fundafrica_globale` (via `ranking.service.js` `calculateRankRegionalDev`/`GlobalDev`, filtre `where categorie_fundafrica_regionale = category`). La majorite des fonds portent `OBLIGATIONS AFRIQUE DU NORD` (MAJUSCULES) → groupe de 344 ; les fonds recents portent `OBLIGATIONS Afrique du Nord` (Casse Titre) → groupe isole de 18, et pas de niveau continental (categorie_fundafrica_globale absente/incoherente) → Type3 null.
+- **Mapping pays->region** (uppercase) defini dans `routes_vl.js:300-345` (PAYS_AFRIQUE_DU_NORD = ALGERIE, MAROC, TUNISIE, LIBYE, EGYPTE, MAURITANIE...).
+- **Fix envisage (a valider)** : normaliser la casse de `categorie_fundafrica_regionale`/`_globale` (choisir UNE casse) sur les fonds concernes + recompute classement. Data-fix cible + source (la fonction qui remplit ces colonnes FundAfrica). Sensible (classement) → diagnostic-first, confirmer la casse cible.
+- Priorite: MOYENNE.
+
+### 63. Barres de ratio absentes en EUR/USD (Sharpe, Sortino, Volatilite...) — DIAGNOSTIQUE (2026-06-27)
+- **Symptome (prod)** : sur les pages summary-eur / summary-usd, `ranksharpe=null / ranksharpetotal=0` (idem volatilite, DSR, sortino, info, omega, calmar) → aucune barre "Par rapport a la Cat".
+- **Cause racine (backend)** : `upsertPerformanceDevise()` (`apigestionsavequotidien.js:1147-1182`) qui peuple `performences_eurs`/`performences_usds` **n'ecrit QUE les colonnes de performance, PAS les ratios** — contrairement a `upsertPerformance()` (local, l.1362-1431) qui ajoute `getRatioDataFields(ratioData, '1an'|'3an'|'5an')`. Donc `ratiosharpe3an` & co restent NULL en EUR/USD → `rankFundInList` filtre `!= null` → 0 fonds → `ranksharpetotal=0` → pas de barre.
+- **Fix envisage (a valider)** : (1) ajouter les ratios dans `upsertPerformanceDevise` (parite avec la version locale), (2) repeupler `performences_eurs`/`performences_usds` PAR LOTS (leçon incident MariaDB : jamais tout d'un coup), (3) recompute classements EUR/USD. Sensible (ratios/calculs) → confirmer avant ecriture.
+- Priorite: MOYENNE.
