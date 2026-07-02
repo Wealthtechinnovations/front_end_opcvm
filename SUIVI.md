@@ -2111,6 +2111,17 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### AUDIT COMPLET PLATEFORME — 2026-07-02 (lecture seule, 4 agents + tests live)
+**Site OPERATIONNEL. Base OK (987815 VL, 1209 fonds, 155 societes).** Detail complet + file:line : CODE_REVIEW.md #64-#72.
+- **Sante live** : home/tools/fiches fonds/API principales = 200. Note : `/funds/summary/:id`=404 (route renommee `/funds/:id`, PAS une regression, doc CLAUDE.md perimee). `/api/ratiosnew/:year/:id` timeout sur year=2/4/2025/2026 (ok pour 1/3/5/10) → #69.
+- **Donnees par pays** : MAROC 06-29, TUNISIE/UEMOA 06-26, NIGERIA 06-19, **CEMAC fige 2024-12 (aucun pipeline import — #70)**. Sources indices fraiches (MASI/NSE 07-01).
+- **CRITIQUES (decision utilisateur requise, NE PAS faire a l'aveugle)** :
+  - #64 secrets reels trackes par git (.env, .env.production x2 repos) → roter + purger historique.
+  - #65 routes ecriture/admin/upload + killlimiter NON authentifiees → appliquer auth par lots apres verif appels internes.
+  - #66 middleware frontend contournable (cookie isLoggedIn sans token).
+- **FINANCE (a trancher)** : #67 base VL incoherente (local=vl_ajuste vs EUR/USD/ratios=value brute) ; #68 perfs 3A/5A/YTD renvoient 0,00% au lieu de null si historique insuffisant.
+- **Rien modifie durant l'audit.** Aucune regression introduite.
+
 ### Dernier etat stable
 **2026-06-27 : Correction indices COMPLETE et DEPLOYEE (lot 7 inclus). Incident MariaDB resolu. 2 nouveaux sujets identifies (classements/ratios).**
 - **Indices** : indice_references corrige (NSE/MASI 06-25, Tunindex 06-26 ; BRVM 05-15 FIGE, MONIA 05-14 WAF). Propagation indRef OK. Lot 7 (commit `85b1d1c`) DEPLOYE : garde valLiq `indRef>0` + fusion casse propagation.

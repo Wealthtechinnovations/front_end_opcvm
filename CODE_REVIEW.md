@@ -452,3 +452,49 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - **Cause racine (backend)** : `upsertPerformanceDevise()` (`apigestionsavequotidien.js:1147-1182`) qui peuple `performences_eurs`/`performences_usds` **n'ecrit QUE les colonnes de performance, PAS les ratios** — contrairement a `upsertPerformance()` (local, l.1362-1431) qui ajoute `getRatioDataFields(ratioData, '1an'|'3an'|'5an')`. Donc `ratiosharpe3an` & co restent NULL en EUR/USD → `rankFundInList` filtre `!= null` → 0 fonds → `ranksharpetotal=0` → pas de barre.
 - **Fix envisage (a valider)** : (1) ajouter les ratios dans `upsertPerformanceDevise` (parite avec la version locale), (2) repeupler `performences_eurs`/`performences_usds` PAR LOTS (leçon incident MariaDB : jamais tout d'un coup), (3) recompute classements EUR/USD. Sensible (ratios/calculs) → confirmer avant ecriture.
 - Priorite: MOYENNE.
+
+## ============================================================
+## AUDIT COMPLET PLATEFORME — 2026-07-02 (lecture seule, 4 agents + tests live)
+## ============================================================
+> Etat prod verifie (PRODUCTION_STATE.json 2026-07-01 + curl live). Rien modifie. Findings priorises.
+> Site OPERATIONNEL : home/tools/fiches fonds/API principales = 200. Base repond (987815 VL, 1209 fonds).
+
+### 64. [CRITIQUE — SECU] Secrets reels suivis par git
+- `api_opcv/.env`, `api_opcv/.env.production`, `api_opcv/.env.production.plan-b` **trackes** (dans .gitignore mais commites avant) → `DB_PASSWORD`, `JWT_SECRET`, `EMAIL_PASSWORD`, `MAGIC_SECRET_KEY` en clair dans l'historique git.
+- `front_end_opcvm/.env.production(.plan-b)` trackes → `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_SECRET`, `NEXT_PUBLIC_STABLECOIN_API_KEY`.
+- **Reco (operateur)** : ROTER tous ces secrets, puis `git rm --cached` + purge historique (git filter-repo/BFG). Ne PAS faire a l'aveugle en prod (le JWT_SECRET rote invalide les sessions). Decision utilisateur requise.
+
+### 65. [CRITIQUE — SECU] Routes d'ecriture/admin non authentifiees
+- `apigestionsavequotidien.js` : `/api/classementmysql|eur|usd`, `/api/saveperfdate{mysql,eur,usd}`, `/api/savevlmanquante`, `/api/updatewithdividende` — ecritures batch lourdes OUVERTES.
+- **DoS** : `/api/killlimiter` (1184) + `/api/startlimiter/:max/:min` (1190) desactivent le rate-limiter, publiquement.
+- `routes_vl.js` : `/api/ajoutVL/:id`, `/api/ajoutIndice/:id`, `/api/updatefond`, `/api/postfond`, `/api/deleteportefeuille`, `/api/uploadsfilevl/:id`, `/api/uploadsfileindice/:id`, `/api/uploadsocietefilenew` — non authentifiees (upload arbitraire inclus).
+- `routes_vl_admin.js` : `/api/reject-user`, `/api/activate-user`, `/api/createfrais` — moderation sans auth.
+- Middleware `middleware/auth.js` existe (JWT+authorize('admin')) et est applique sur `routes_recalc_admin.js` (8 routes OK) mais PAS sur les ci-dessus. **Reco** : appliquer `authenticate,authorize('admin')` — MAIS verifier d'abord qu'aucun cron/process interne n'appelle ces routes en public (CLAUDE.md dit deja "recalcul classement = localhost:3005"). A faire par lots, tester chaque route.
+
+### 66. [HAUTE — SECU] Middleware frontend contournable
+- `front_end_opcvm/src/middleware.ts` : un cookie `isLoggedIn` present SANS `token` passe le garde (`:67`), et le controle de type (`:71-79`) ne s'execute que `if (token)`. JWT decode via `atob` sans verif de signature. **L'autorisation reelle DOIT etre refaite cote API** (cf #65).
+
+### 67. [MOYENNE — FINANCE] Incoherence de base VL (Total Return vs Price Return)
+- Perf LOCALE live = `vl_ajuste` (Total Return, dividendes) — `apigestionperformance.js:306`.
+- Perf EUR/USD live = `value_EUR/value_USD` (price return) — `:1480-1485` ; ratios + moyennes categorie + table `performences` = `value` brute.
+- `vl_ajuste_EUR/USD` existent (`models/vl.js:44-48`) mais INUTILISES.
+- **Impact** : comparaisons local vs EUR/USD et fonds vs categorie non homogenes (ecart = rendement dividendes). Choix a trancher : tout en `vl_ajuste*` ou tout en `value`.
+
+### 68. [MOYENNE — FINANCE] Historique insuffisant → 0,00 % au lieu de null
+- `findNearestDate*` (`functions/dates.js`) fallback sur `lastDate` si la cible precede le 1er point → perf 3A/5A/YTD d'un fonds trop jeune = `calculatePerformance(last,last)` = **0,00 %** (donnee inventee, pas `null`). Fausse tris/classements/selection. Idem YTD si aucune VL l'annee N-1.
+- Gardes qualite partielles : numerateur nul/negatif, VL <=0, dates futures non controles ; `calculerCAGR` (`newratios.js:116`) renvoie `1` (=+100%) si base<=0.
+
+### 69. [MOYENNE — API] `/api/ratiosnew/:year/:id` timeout sur certaines valeurs
+- Live : year=1/3/5/10 → 200 (~1,5s) ; year=2/4/2025/2026 → **timeout >20s** (000). Requete qui s'emballe selon le parametre. Combine avec #65 (route non protegee) = vecteur de charge. A borner/valider le parametre.
+
+### 70. [MOYENNE — DATA] CEMAC sans pipeline d'alimentation
+- Aucun script d'import CEMAC/BVMAC/COSUMAF (verifie scripts/import + scraper = NONE). VL figees au 2024-12-12 (34 fonds, 2134 VL). Les 4 autres pays ont un cron. **Reco** : identifier une source BVMAC/COSUMAF ou marquer explicitement CEMAC "donnees arretees au 2024-12".
+
+### 71. [MOYENNE — DATA] Indices doublons de casse/cle + MONIA/BRVM
+- `indice_references` : cles en double `Indice_monetaire_maroc` (2 nom_indice differents), `masi_all_shares` vs `MASI`, `INDICE MONETAIRE MAROC`. A consolider (lecture seule d'abord).
+- MONIA fige 2026-05-14 (WAF bkam.ma sur VPS). BRVM `indice_references` frais (2026-06-29) mais propagation UEMOA a verifier. Couverture indRef EUR/USD : TUNISIE 124031/304544 (=40%, cf recalc EUR/USD a finir par lots), UEMOA 41295/42286.
+
+### 72. [FAIBLE→MOYENNE] Scripts fix/ destructifs sans transaction + doc perimee
+- `scripts/fix/fix_database_phase2.js` et `fix_nigeria_pays_casing.js` : `DELETE FROM valorisations/...` SANS dry-run ni transaction. `fix_database_phase1.js` : commentaire "wrapped in transactions / nothing deleted" FAUX (DELETE reels). `import_vl_tunisie_cmf.js --force` = UPSERT destructif. → a ne lancer qu'en connaissance de cause, ajouter garde/transaction.
+- **Doc perimee** : CLAUDE.md documente `funds/summary/[fondId]/page.tsx` + `FundView.tsx` a cet endroit — FAUX (route reelle = `funds/[fondId]`, `/funds/summary/:id` renvoie 404). Bloc "Crons actifs" de CLAUDE.md incomplet (manque brvm/tunisie/indices/health ; `fix-brvm-nginx.py` reference mais ABSENT du depot).
+- Frontend : `error1.tsx` (code mort, mauvais nom → pas d'error boundary), perfs sans devise/date de reference affichee, formats `%` incoherents, pas de separateur de milliers, `tools/comparison` + `tools/search` sans metadata SEO. `fileFilter` MIME absent sur multer (#65 lie).
