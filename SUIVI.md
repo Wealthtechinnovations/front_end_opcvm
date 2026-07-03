@@ -2111,6 +2111,13 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT C EN COURS — 2026-07-03 : #63 peuplement ratios EUR/USD (via MCP)
+- **Script rendu compat bridge** : `fix_populate_performances_eur_usd.js` accepte `--flag=value` (commit `e76e8ed`). Diag ajoute `diag_local_ratio_endpoint.js` (commit `caf2675`).
+- **Tunisie peuple** : `fix_populate_performances_eur_usd.js --pays=TUNISIE` → ratiosharpe3an non-null **EUR 0->116/131, USD ->65/131** (les ~15-66 restants manquent de 3 ans d'historique value_EUR/USD = null legitime).
+- **APPRIS** : (1) le 1er run a stocke null car l'endpoint ratios etait sous charge (post-recalc) et repondait en echec transitoire → fail-safe null ; au 2e run (endpoint sain, verifie par diag : HTTP 200, 889ms, ratioSharpe=-1.364) il peuple correctement. (2) **Le bridge timeout a 60s mais le process node CONTINUE sur le VPS** → les scripts longs aboutissent, verifier via SQL apres.
+- **RESTE POUR RENDRE LES BARRES VISIBLES** : recompute classements EUR/USD (les barres "Par rapport a la Cat" lisent `ranksharpe` dans `classementfonds_eurs/usds`, encore null). Voie sanctionnee CLAUDE.md = localhost:3005 `/api/classementeur` + `/api/classementusd` (jamais URL publique). Le cron `cron_daily_eur_usd` (21h30) le fait aussi chaque nuit. A traiter en lot dedie (operation lourde/transactionnelle).
+- **Autres pays #63** : Maroc/Nigeria/UEMOA a peupler aussi (meme script `--pays=X`), a faire ensuite.
+
 ### LOT B TERMINE — 2026-07-03 : Backfill indRef Tunisie 2011-2021 (via MCP, EXECUTE + verifie prod)
 **Bridge MCP debloque** (recette upgradee : stash+rebase+pop ; branches api/front synchronisees ; frontend a maintenant un .git au chemin /frontend). Travail en autonomie.
 - **Propagation** `propagate_indref_range.js --since=2011-01-01 --until=2021-12-31 --pays=TUNISIE --execute` (commit `1a7e70a` : parsing `--flag=value` pour compat bridge) : **116 fonds, 180310 indRef remplis, 0 sans match, 0 ecrasement** (que du null->valeur, additif). Tunindex historique verifie REEL (4500 en 2011 → 19800 en 2026).
