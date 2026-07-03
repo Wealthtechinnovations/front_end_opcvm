@@ -2122,6 +2122,13 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 - **FINANCE (a trancher)** : #67 base VL incoherente (local=vl_ajuste vs EUR/USD/ratios=value brute) ; #68 perfs 3A/5A/YTD renvoient 0,00% au lieu de null si historique insuffisant.
 - **Rien modifie durant l'audit.** Aucune regression introduite.
 
+### MAJ 2026-07-03 — Chiffres EXACTS #62/#63 (via MCP SQL read-only S2)
+- **#63 couverture ratios (ratiosharpe3an)** : local **633**/1193 fonds · EUR **163**/1198 · USD **68**/1198. Cible EUR/USD = ~633.
+- **#62 la casse titre est UNIQUEMENT dans les tables classementfonds_* (cache), PAS dans la source** (`performences.categorie_fundafrica_regionale` = 100% MAJUSCULES). 19 fonds a cache perime :
+  - Cas A (6 Nigeria 2863-2868) : source propre `... AFRIQUE DE L OUEST ET CEMAC` → un RECOMPUTE classement corrige.
+  - Cas B (13 : Tunisie 2869-2875, Nigeria 2876-2880, Maroc 2881) : source NULL (aucune perf EUR/USD) → lie a #63 ; classement orphelin. A repeupler (perfs EUR/USD) OU nettoyer les lignes orphelines.
+- **Outillage** : la whitelist `exec_repo_script_s2` ne contient NI recompute-classement NI populate-perf-devise. Fixes #62/#63 = besoin d'ajouter ces scripts a la whitelist, OU deployer patch `upsertPerformanceDevise` + declencher repopulation. Diagnostic 100% fait, application en attente d'outillage/arbitrage.
+
 ### Dernier etat stable
 **2026-06-27 : Correction indices COMPLETE et DEPLOYEE (lot 7 inclus). Incident MariaDB resolu. 2 nouveaux sujets identifies (classements/ratios).**
 - **Indices** : indice_references corrige (NSE/MASI 06-25, Tunindex 06-26 ; BRVM 05-15 FIGE, MONIA 05-14 WAF). Propagation indRef OK. Lot 7 (commit `85b1d1c`) DEPLOYE : garde valLiq `indRef>0` + fusion casse propagation.
