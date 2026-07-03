@@ -2111,6 +2111,15 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT B TERMINE — 2026-07-03 : Backfill indRef Tunisie 2011-2021 (via MCP, EXECUTE + verifie prod)
+**Bridge MCP debloque** (recette upgradee : stash+rebase+pop ; branches api/front synchronisees ; frontend a maintenant un .git au chemin /frontend). Travail en autonomie.
+- **Propagation** `propagate_indref_range.js --since=2011-01-01 --until=2021-12-31 --pays=TUNISIE --execute` (commit `1a7e70a` : parsing `--flag=value` pour compat bridge) : **116 fonds, 180310 indRef remplis, 0 sans match, 0 ecrasement** (que du null->valeur, additif). Tunindex historique verifie REEL (4500 en 2011 → 19800 en 2026).
+- **Recalc EUR/USD** `recalc_eur_usd_daily_rate.js 2415 2538` : 124 fonds, 302904 VL, 0 erreur. MariaDB stable (propagation + recalc par lots = pas de crash).
+- **Verif SQL** : couverture indRef Tunisie **124031 → 304341 (99,9%)**, identique local/EUR/USD (coherent), depuis 2011-05-25.
+- **Verif PROD (curl valLiq 2415/2439)** : benchmark Tunindex desormais de 2011-05-25 (4952) a 2026-06-26 (19807). Zero regression.
+- Fichiers : `api_opcv/scripts/scraper/propagate_indref_range.js` (parsing). Docs MAJ : SUIVI, CHANGELOG, TASKS.
+- **Prochaine action** : #62/#63 (recompute classement 19 fonds + populate ratios EUR/USD) — necessite 2 scripts a ajouter a la whitelist `exec_repo_script_s2` OU utiliser `fix_populate_performances_eur_usd.js` (deja au depot, cf CHANGELOG 06-22) pour #63.
+
 ### AUDIT COMPLET PLATEFORME — 2026-07-02 (lecture seule, 4 agents + tests live)
 **Site OPERATIONNEL. Base OK (987815 VL, 1209 fonds, 155 societes).** Detail complet + file:line : CODE_REVIEW.md #64-#72.
 - **Sante live** : home/tools/fiches fonds/API principales = 200. Note : `/funds/summary/:id`=404 (route renommee `/funds/:id`, PAS une regression, doc CLAUDE.md perimee). `/api/ratiosnew/:year/:id` timeout sur year=2/4/2025/2026 (ok pour 1/3/5/10) → #69.

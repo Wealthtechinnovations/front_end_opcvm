@@ -1,5 +1,13 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
+## [2026-07-03] Backfill benchmark Tunindex Tunisie 2011-2021 (via MCP WealthTech)
+
+### API (donnees prod, EXECUTE via bridge scoped-write)
+- **indRef Tunisie historique** : `propagate_indref_range.js --since=2011-01-01 --until=2021-12-31 --pays=TUNISIE --execute` → **180310 indRef remplis** (2011-2021 n'avaient aucun benchmark ; 2022+ deja couvert). Additif : que du null->valeur, 0 ecrasement, 0 sans match. Tunindex `indice_references` verifie reel (4952 en 2011 → 19807 en 2026).
+- **Recalc EUR/USD** : `recalc_eur_usd_daily_rate.js 2415 2538` → 124 fonds, 302904 VL, indRef_EUR/USD calcules. 0 erreur.
+- **Resultat** : couverture indRef Tunisie 124031 → **304341 (99,9%)**, local=EUR=USD. Fiches tunisiennes affichent le benchmark depuis 2011 (verifie prod 2415/2439). Zero regression.
+- **Code** : `propagate_indref_range.js` commit `1a7e70a` (parsing `--flag=value` compat bridge MCP). Bridge deploy debloque (stash+rebase+pop).
+
 ## [2026-06-22] Fix classement EUR/USD + population ratios 3 ans EUR/USD
 
 ### API (commit `4adcb80`, deploye) — Fix erreur classement EUR/USD

@@ -30,6 +30,16 @@
 | LOT 2 (#55) | 2026-06-17 | Category averages fix (25 moyennes non-null) | Deploye + verifie | — |
 | LOT 3 (#56) | 2026-06-18 | Transaction consistency fix (3545+3579+3579 classements OK) | Deploye + verifie | `e3d8fec` |
 
+## Lots recents (MCP WealthTech, autonomie)
+
+| Lot | Date | Objet | Statut | Commit(s) |
+|-----|------|-------|--------|-----------|
+| Indices | 2026-06-26/27 | Correction sources indices + propagation indRef + fix valLiq/casse | Deploye + verifie | `85b1d1c`, `d4a237d` |
+| Audit | 2026-07-02 | Audit complet plateforme (secu/finance/data/frontend) | Documente (#64-#72) | `797e1ed` |
+| Lot B | 2026-07-03 | Backfill indRef Tunisie 2011-2021 (180310) + recalc EUR/USD | EXECUTE + verifie prod | `1a7e70a` |
+
+**A faire (priorise)** : #62 recompute classement 19 fonds a cache perime · #63 populate ratios EUR/USD (script `fix_populate_performances_eur_usd.js` existe, a whitelister) · #64-#66 securite (secrets git, routes admin non authentifiees).
+
 ## Prochain lot envisage
 
 - **#49** : cron_daily_update.sh `set -e` → gardes par etape
