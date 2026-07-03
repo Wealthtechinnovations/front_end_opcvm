@@ -2111,6 +2111,18 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### INCIDENT MAJEUR 2026-07-03 ~22h — api-monolith crash-loop — RESOLU (bascule Node 18)
+- **Declencheur** : `deploy_project_s2` a redemarre api-monolith (pour activer le fix rate-limiter). Le restart a charge le `node_modules` DISQUE (l'ancien process gardait d'anciens modules compatibles en memoire depuis des semaines).
+- **Cause racine** : `node_modules` a ete upgrade vers des packages **Node 15/16/18** (helmet@8 `Object.hasOwn`, ethers/@noble `node:crypto`, **puppeteer-core `??=` = SyntaxError non parsable**) mais api-monolith tournait en **Node 14.16**. Bombe dormante detonnee par le restart. API DOWN ~25 min (502).
+- **Tentatives** : polyfills app.js (Object.hasOwn, node: prefix, structuredClone) — insuffisant car `??=` est une erreur de SYNTAXE (non polyfillable).
+- **RESOLUTION** : bascule de l'interpreteur PM2 d'api-monolith sur **Node 18.20.8** (deja installe via nvm) : `scripts/fix/restart_api_node18.js` (`pm2 restart --interpreter /root/.nvm/versions/node/v18.20.8/bin/node`). Puis `scripts/fix/pm2_save.js` (`pm2 save`) pour persister au reboot. API 200 partout, stable.
+- **Commits** : `0895f74` (polyfill Object.hasOwn), `55a2642` (shims node:/structuredClone), `aa9daf7` (restart node18), `fca504b` (pm2 save). Les shims restent (inoffensifs sur Node 18).
+- **A RETENIR / A NE PAS FAIRE** :
+  1. NE JAMAIS redemarrer api-monolith sans savoir que le `node_modules` exige Node 18 → l'interpreteur PM2 est maintenant Node 18 + `pm2 save` fait, donc OK.
+  2. Le log d'erreur PM2 a atteint **1,1 Go** (crash-loop) — a vider (`pm2 flush api-monolith`) en suivi.
+  3. **Dette** : aligner Node partout (workers worker-data-import/recalculation tournent encore en Node 14 — a verifier/basculer), documenter Node 18 comme runtime requis (package.json engines).
+- **Verif prod** : /, valLiq/866, summary-eur/2415, classementquartiledev/2415/EUR, performancesdev = 200. PM2 : api-monolith online interpreter node18.
+
 ### LOT C EN COURS — 2026-07-03 : #63 peuplement ratios EUR/USD (via MCP)
 - **Script rendu compat bridge** : `fix_populate_performances_eur_usd.js` accepte `--flag=value` (commit `e76e8ed`). Diag ajoute `diag_local_ratio_endpoint.js` (commit `caf2675`).
 - **Tunisie peuple** : `fix_populate_performances_eur_usd.js --pays=TUNISIE` → ratiosharpe3an non-null **EUR 0->116/131, USD ->65/131** (les ~15-66 restants manquent de 3 ans d'historique value_EUR/USD = null legitime).

@@ -1,5 +1,15 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
+## [2026-07-03] INCIDENT api-monolith + bascule Node 18 + fix rate-limiter interne
+
+### Incident (resolu) — api-monolith crash-loop apres restart
+- Un restart d'api-monolith a charge le node_modules disque, upgrade vers des packages Node 15/18 (helmet@8, ethers/node:crypto, puppeteer-core `??=`) incompatibles avec le Node 14.16 sur lequel tournait l'app. API DOWN ~25 min.
+- **Fix** : bascule de l'interpreteur PM2 sur **Node 18.20.8** (nvm) + `pm2 save`. Scripts `scripts/fix/restart_api_node18.js` + `scripts/fix/pm2_save.js`. Shims Node14 additifs dans app.js (inoffensifs). Commits `0895f74`, `55a2642`, `aa9daf7`, `fca504b`.
+
+### Fix — rate-limiter n'exempte plus les appels internes (commit `d57deaa`)
+- `src/middleware/validate.js` : les appels loopback SANS `X-Forwarded-For` (crons/scripts batch sur localhost:3005) sont exemptes du rate-limit 200/15min. `trust proxy=1` -> les clients externes gardent leur IP reelle et restent limites (zero impact securite externe).
+- **Cause** : le peuplement ratios EUR/UST (#63) et les crons appellent l'API en boucle en interne et etaient throttles (429 -> ratios null). Explique la couverture partielle des ratios.
+
 ## [2026-07-03] Backfill benchmark Tunindex Tunisie 2011-2021 (via MCP WealthTech)
 
 ### API (donnees prod, EXECUTE via bridge scoped-write)
