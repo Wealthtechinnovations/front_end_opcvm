@@ -2123,6 +2123,13 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
   3. **Dette** : aligner Node partout (workers worker-data-import/recalculation tournent encore en Node 14 — a verifier/basculer), documenter Node 18 comme runtime requis (package.json engines).
 - **Verif prod** : /, valLiq/866, summary-eur/2415, classementquartiledev/2415/EUR, performancesdev = 200. PM2 : api-monolith online interpreter node18.
 
+### LOT C — #63 barres ratios : EUR RESOLU (Tunisie), USD a completer — MAJ 2026-07-04
+- **Rate-limiter interne corrige** (`d57deaa`, deploye Node18) : c'etait la cause de la couverture partielle des ratios (crons/scripts internes throttles 200/15min → 429 → ratios null).
+- **EUR Tunisie = COMPLET** : re-peuplement ratios (via `fix_populate_performances_eur_usd.js --pays=TUNISIE`) + recompute classement (`trigger_classement_recompute.js`, voie localhost). Verif : `classementfonds_eurs` type1 Tunisie **0 → 131 avec ranksharpe** ; API `classementquartiledev/2415/EUR` → ranksharpe 38/45, rankvolatilite 29/45, sortino/dsr/pertemax/info peuples → **barres EUR affichees**. Global EUR ranksharpe 640→771.
+- **USD = a completer** : ratios USD encore partiels (133 global, ~65 Tunisie ; le peuplement USD avait ete coupe a 65 avant le fix rate-limiter). ranksharpe USD Tunisie encore 0. A finir : re-peupler USD (maintenant sans throttle) + recompute USD.
+- **Voie la plus simple pour tout completer (tous pays + USD)** : le cron `cron_daily_eur_usd` (21h30) fait populate+recompute de TOUS les fonds ; il est maintenant DEBLOQUE (rate-limiter interne exempte + Node 18) → il completera automatiquement cette nuit. OU relance manuelle : `fix_populate_performances_eur_usd.js` (tous) puis `trigger_classement_recompute.js`.
+- Scripts ajoutes : `scripts/fix/trigger_classement_recompute.js`, `scripts/diag/diag_local_ratio_endpoint.js`, `scripts/diag/tail_pm2_error.js`, `scripts/fix/restart_api_node18.js`, `scripts/fix/pm2_save.js`.
+
 ### LOT C EN COURS — 2026-07-03 : #63 peuplement ratios EUR/USD (via MCP)
 - **Script rendu compat bridge** : `fix_populate_performances_eur_usd.js` accepte `--flag=value` (commit `e76e8ed`). Diag ajoute `diag_local_ratio_endpoint.js` (commit `caf2675`).
 - **Tunisie peuple** : `fix_populate_performances_eur_usd.js --pays=TUNISIE` → ratiosharpe3an non-null **EUR 0->116/131, USD ->65/131** (les ~15-66 restants manquent de 3 ans d'historique value_EUR/USD = null legitime).
