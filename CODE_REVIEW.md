@@ -439,13 +439,14 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
   l'UPDATE de masse (rollback possible). Voir SUIVI.md POINT DE REPRISE pour la sequence SSH.
 - Priorite: MOYENNE — OUTILLE, execution prod en attente (donnee financiere sensible).
 
-### 62. Classement regional/continental incoherent pour le lot de fonds recents (casse) — DIAGNOSTIQUE (2026-06-27)
+### 62. Classement regional/continental incoherent pour le lot de fonds recents — RESOLU + DEPLOYE + VERIFIE (2026-07-09)
 - **Symptome (prod, fonds 2870 USD)** : national "OBLIGATIONS Tunisie" /54, regional "OBLIGATIONS Afrique du Nord" /18 (< national, illogique), continental "OBLIGATIONS Afrique" = vide.
-- **Confirme par API** : un fonds tunisien NORMAL (2415) donne 54 <= 344 (regional) <= 480 (continental) = COHERENT. Seuls les fonds recents (lot ~2869-2875) sont anormaux.
-- **Cause racine (casse)** : le classement Type2/Type3 groupe par la chaine exacte `categorie_fundafrica_regionale` / `categorie_fundafrica_globale` (via `ranking.service.js` `calculateRankRegionalDev`/`GlobalDev`, filtre `where categorie_fundafrica_regionale = category`). La majorite des fonds portent `OBLIGATIONS AFRIQUE DU NORD` (MAJUSCULES) → groupe de 344 ; les fonds recents portent `OBLIGATIONS Afrique du Nord` (Casse Titre) → groupe isole de 18, et pas de niveau continental (categorie_fundafrica_globale absente/incoherente) → Type3 null.
-- **Mapping pays->region** (uppercase) defini dans `routes_vl.js:300-345` (PAYS_AFRIQUE_DU_NORD = ALGERIE, MAROC, TUNISIE, LIBYE, EGYPTE, MAURITANIE...).
-- **Fix envisage (a valider)** : normaliser la casse de `categorie_fundafrica_regionale`/`_globale` (choisir UNE casse) sur les fonds concernes + recompute classement. Data-fix cible + source (la fonction qui remplit ces colonnes FundAfrica). Sensible (classement) → diagnostic-first, confirmer la casse cible.
-- Priorite: MOYENNE.
+- **Cause racine reelle (affinee 07-09)** : PAS la casse — les fonds recents (2869-2881) avaient `categorie_fundafrica_regionale`/`_globale` **NULL** dans `fond_investissements` (et copies `performences_*`). Or `calculateRankRegionalDev(null, ...)` via Sequelize `where: {col: null}` devient `WHERE col IS NULL` → le fonds etait classe parmi le groupe des ~18 fonds SANS categorie (d'ou le "6/18"). Les fonctions locales (`calculateRankNational`) utilisent SQL `= :category` (jamais `IS NULL`) donc n'etaient pas touchees ; seules les fonctions dev ORM l'etaient.
+- **Fix DEPLOYE (commit api_opcv `10dafc0`)** :
+  1. `ranking.service.js` : garde `if (!category) return { error }` ajoutee dans `calculateRankNationalDev` + `calculateRankRegionalDev` (alignement sur `calculateRankGlobalDev` qui l'avait deja). Un fonds sans categorie n'est plus classe dans le groupe NULL.
+  2. `scripts/fix/fix_fundafrica_categories.js` : derive les categories FundAfrica manquantes par vote majoritaire des pairs (meme pays + meme categorie_national), transaction par fond, jamais d'invention (skip si pas de pair ou egalite). `--execute` le 07-09 : **12 fonds corriges** (2869-2880), 1 ignore (2881, seul de sa categorie nationale → aucun pair).
+- **Verifie prod (07-09)** : 2870 USD 6/18 → **44/347 "OBLIGATIONS AFRIQUE DU NORD"** ; type3 continental 151/484 "OBLIGATIONS AFRIQUE" ; Nigeria 2876 52/87, 2878 99/137 ; temoins 866 (139/347) et 2415 (98/347) non regresses, ranksharpe #63 intact ; 2881 type2/type3 ABSENT (garde OK, plus de classement bidon).
+- Priorite: MOYENNE. **STATUT : CLOS.**
 
 ### 63. Barres de ratio absentes en EUR/USD (Sharpe, Sortino, Volatilite...) — DIAGNOSTIQUE (2026-06-27)
 - **Symptome (prod)** : sur les pages summary-eur / summary-usd, `ranksharpe=null / ranksharpetotal=0` (idem volatilite, DSR, sortino, info, omega, calmar) → aucune barre "Par rapport a la Cat".

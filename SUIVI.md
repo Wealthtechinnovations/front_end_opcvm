@@ -2111,7 +2111,13 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
-### LOT D — 2026-07-09 : #63 RESOLU TOUS PAYS (verifie prod) + #62 cause racine affinee + fix pousse (NON deploye, bridge MCP down)
+### LOT D DEPLOYE + VERIFIE — 2026-07-09 : #62 CLOS (garde null-category + derivation categories) + #63 RESOLU tous pays
+- **#62 DEPLOYE et VERIFIE en prod** : `git pull` (commits `10dafc0` garde + `da208bb` transaction), `fix_fundafrica_categories.js --execute` (**12 fonds corriges** 2869-2880 par vote majoritaire des pairs ; 1 ignore = 2881 Maroc seul de sa categorie nationale, jamais invente), restart api-monolith Node 18 + `pm2 save`, puis recompute classements EUR (200/173s) + USD (200/176s) + local `classementmysql` (200) — tous `finishrank`.
+  - **INCIDENT MINEUR (resolu)** : le 1er enchainement a lance le recompute juste apres le restart PM2 → `ECONNREFUSED` (API pas encore prete). Correctif : relance du recompute seul apres `curl health` OK → succes. **LECON : toujours attendre la readiness de l'API (curl health) entre un restart PM2 et un appel API interne.**
+  - **Verif prod (curl)** : 2870 USD 6/18 → **44/347 "OBLIGATIONS AFRIQUE DU NORD"** (type3 continental 151/484) ; 2869 47/347 ; Nigeria 2876 52/87, 2878 99/137 ; temoins 866 (ranksharpe 187/272, regional 139/347) et 2415 (30/45, 98/347) NON regresses ; 2881 type2/type3 ABSENT (garde OK) ; health ok ; /funds/2870 HTTP 200.
+- **A FAIRE (suivi, non bloquant)** : `pm2 flush api-monolith` (log 1,1 Go) ; basculer workers worker-data-import/worker-recalculation en Node 18 (encore Node 14, ↺ faible) ; `engines` package.json ; securite #64-#66.
+
+### LOT D (historique) — 2026-07-09 : #63 RESOLU TOUS PAYS (verifie prod) + #62 cause racine affinee + fix pousse
 - **#63 RESOLU et VERIFIE en prod (curl API publique)** : le peuplement complet ratios EUR/USD (lance 07-09, sans throttle apres fix rate-limiter) + recompute classements ont abouti. Barres "Par rapport a la Cat" desormais servies partout :
   - Maroc 866 : ranksharpe **181/272 EUR**, **187/272 USD** (volatilite, sortino, pertemax aussi peuples)
   - Nigeria 1142 : **7/19 EUR**, **5/19 USD** · Tunisie 2415 : **38/45 EUR**, **30/45 USD**

@@ -38,9 +38,9 @@
 | Audit | 2026-07-02 | Audit complet plateforme (secu/finance/data/frontend) | Documente (#64-#72) | `797e1ed` |
 | Lot B | 2026-07-03 | Backfill indRef Tunisie 2011-2021 (180310) + recalc EUR/USD | EXECUTE + verifie prod | `1a7e70a` |
 | Lot C | 2026-07-03/09 | #63 ratios EUR/USD : fix rate-limiter interne + Node 18 + populate complet + recompute | TERMINE + verifie prod (tous pays) | `d57deaa`, `e76e8ed` |
-| Lot D | 2026-07-09 | #62 garde null-category (ranking.service) + script derivation categories FundAfrica | Pousse, A DEPLOYER + executer (bridge MCP down) | `10dafc0` |
+| Lot D | 2026-07-09 | #62 garde null-category (ranking.service) + derivation categories FundAfrica (12 fonds) + recompute | DEPLOYE + verifie prod — #62 CLOS | `10dafc0`, `da208bb` |
 
-**A faire (priorise)** : deployer Lot D + executer `fix_fundafrica_categories.js` (dry-run puis --execute) + recompute (cf SUIVI.md POINT DE REPRISE) · #64-#66 securite (secrets git, routes admin non authentifiees, middleware frontend) · `pm2 flush api-monolith` (log 1,1 Go) · basculer workers Node 14→18 + `engines` package.json.
+**A faire (priorise)** : #64-#66 securite (secrets git, routes admin non authentifiees, middleware frontend) · `pm2 flush api-monolith` (log 1,1 Go) · basculer workers Node 14→18 + `engines` package.json.
 
 ## Prochain lot envisage
 

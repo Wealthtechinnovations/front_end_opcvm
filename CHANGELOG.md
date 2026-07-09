@@ -1,5 +1,13 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
+## [2026-07-09] #62 CLOS — deploye + verifie prod (garde null-category + derivation categories FundAfrica)
+
+### API (commits `10dafc0` + `da208bb`, DEPLOYES) + donnees (EXECUTE prod)
+- `ranking.service.js` : garde `if (!category) return error` dans `calculateRankNationalDev`/`calculateRankRegionalDev` — un fonds sans categorie FundAfrica n'est plus classe dans le groupe `IS NULL` (cause du "6/18" sur 2870).
+- `scripts/fix/fix_fundafrica_categories.js` (transaction par fond) execute : **12 fonds corriges** (2869-2880) par vote majoritaire des pairs (meme pays + meme categorie_national), 1 ignore (2881, sans pair — jamais invente). Puis recompute classements EUR+USD+local (`finishrank`).
+- **Verifie prod** : 2870 USD 6/18 → 44/347 "OBLIGATIONS AFRIQUE DU NORD" ; continental 151/484 ; Nigeria 2876 52/87, 2878 99/137 ; temoins 866/2415 non regresses (#63 ranksharpe intact) ; 2881 type2/type3 absent (garde OK).
+- **Lecon operationnelle** : attendre la readiness API (`curl /api/health`) entre un restart PM2 et tout appel API interne (un recompute lance trop tot a echoue en ECONNREFUSED, relance OK).
+
 ## [2026-07-09] #63 RESOLU tous pays (barres ratios EUR/USD) + fix #62 pousse (garde null-category)
 
 ### Donnees (EXECUTE en prod, verifie via API publique)
