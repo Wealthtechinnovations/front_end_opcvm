@@ -3,6 +3,14 @@
 ## Vision
 Plateforme de reference pour les OPCVM africains : donnees VL, performances, classements, comparaisons multi-devises (locale, EUR, USD), referentiel FundAfrica, panels utilisateurs.
 
+## CHANTIER MAJEUR (decide 2026-07-09) — Architecture benchmarks 3 couches
+Decision actee sur la base du rapport deep-research + complement obligatoire fournis par l'utilisateur (integres au suivi le 2026-07-09) :
+- **3 couches par fonds et par page devise** : (1) benchmark national en devise locale ; (2) MEME benchmark converti EUR/USD ; (3) benchmark Afrique distinct (S&P All Africa / Africa Sovereign Bond). Ne JAMAIS fusionner couche 2 et couche 3.
+- **Par pays et categorie** : actions, diversifie (composite parametrable par fonds), obligataire CT, obligataire LT, monetaire, taux sans risque (overnight + courbe), MAR Sortino (defaut = RFR local, meme devise, meme frequence ; override par fonds/strategie/part).
+- **Mappings cibles** : Maroc = MASI / composites MBI+MASI / MBI_CT / MBI_MLT-LT / MONIA / courbe BKAM. Tunisie = TUNINDEX (series officielles TND-USD-EUR Bourse de Tunis a preferer a une conversion maison) / TBI CT-MT-MLT-LT (BIAT) / cash synthetique TM-TMM / courbe CMF. Nigeria = NGX ASI / NITTY-NTB / S&P-FMDQ Nigeria Sovereign / NOFR (CBN) / NFEM FX. Afrique = S&P All Africa (+ ex-SA, Africa 40), S&P Africa Sovereign Bond (+ ex-SA) ; monetaire Afrique = composite synthetique explicite (aucun indice public identifie).
+- **Regles imperatives** : jamais date==today strict (derniere valeur <= date cible avec tolerance par type de serie) ; statuts structures (OK_EXACT_DATE, OK_PREVIOUS_AVAILABLE_DATE, NO_VALUE_MARKET_CLOSED, NO_VALUE_LICENSE_REQUIRED, SYNTHETIC_BENCHMARK_USED...) ; tracabilite complete par serie (source, is_official, is_synthetic, confidence, hash) ; 4 niveaux de validation par source (identifiee / accessible / backfillable / integree cron) ; migration additive versionnee derriere feature flags ; aucun remplacement silencieux ; benchmark synthetique toujours explicite et versionne.
+- **Sequencement** : F1 audit interne code benchmark/RFR → F2 matrice sources testees en ligne → F3 mapping pays×categorie×devise×couche + plan schema → F4 adapters + statuts + flags → F5 tests + backfill + mise en prod progressive. Suivi operationnel : SUIVI.md.
+
 ## Fait (mis a jour 2026-06-13)
 
 ### Infrastructure
