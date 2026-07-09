@@ -1,5 +1,15 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
+## [2026-07-09] #63 RESOLU tous pays (barres ratios EUR/USD) + fix #62 pousse (garde null-category)
+
+### Donnees (EXECUTE en prod, verifie via API publique)
+- **#63 termine** : peuplement complet des ratios 3 ans dans `performences_eurs/usds` (tous fonds, EUR+USD, sans throttle apres le fix rate-limiter du 07-03) + recompute des classements EUR/USD. Barres "Par rapport a la Cat" servies partout : Maroc 866 ranksharpe 181/272 EUR et 187/272 USD ; Nigeria 1142 7/19 et 5/19 ; Tunisie 2415 38/45 et 30/45. Entretien assure par le cron `cron_daily_eur_usd` (21h30), desormais debloque.
+
+### API (commit `10dafc0`, pousse — A DEPLOYER puis executer, cf SUIVI.md POINT DE REPRISE)
+- **#62 cause racine** : les fonds recents (2863-2881) ont `categorie_fundafrica_regionale/globale` NULL ; `calculateRankRegionalDev(null)` classait ces fonds dans le groupe `IS NULL` (18 fonds) → classements absurdes type "6/18".
+- `src/services/ranking.service.js` : garde `if (!category) return error` dans `calculateRankNationalDev` et `calculateRankRegionalDev` (alignement sur `calculateRankGlobalDev`).
+- `scripts/fix/fix_fundafrica_categories.js` (nouveau) : derive les categories FundAfrica manquantes par vote majoritaire des pairs (meme pays + meme categorie_national), dry-run par defaut, jamais d'invention (skip si pas de pair/egalite) ; met a jour fond_investissements + performences/_eurs/_usds.
+
 ## [2026-07-03] INCIDENT api-monolith + bascule Node 18 + fix rate-limiter interne
 
 ### Incident (resolu) — api-monolith crash-loop apres restart

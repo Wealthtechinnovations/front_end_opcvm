@@ -2111,6 +2111,31 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT D — 2026-07-09 : #63 RESOLU TOUS PAYS (verifie prod) + #62 cause racine affinee + fix pousse (NON deploye, bridge MCP down)
+- **#63 RESOLU et VERIFIE en prod (curl API publique)** : le peuplement complet ratios EUR/USD (lance 07-09, sans throttle apres fix rate-limiter) + recompute classements ont abouti. Barres "Par rapport a la Cat" desormais servies partout :
+  - Maroc 866 : ranksharpe **181/272 EUR**, **187/272 USD** (volatilite, sortino, pertemax aussi peuples)
+  - Nigeria 1142 : **7/19 EUR**, **5/19 USD** · Tunisie 2415 : **38/45 EUR**, **30/45 USD**
+  - Le cron nocturne `cron_daily_eur_usd` (21h30) entretient desormais ces donnees (debloque par exemption rate-limiter interne + Node 18).
+- **#62 CAUSE RACINE AFFINEE (verifie via API prod)** : le probleme des fonds recents (2863-2881) n'est pas seulement la casse — leur `categorie_fundafrica_regionale`/`globale` est **NULL** dans `fond_investissements` (et donc dans `performences_*`). Or `calculateRankRegionalDev(null, ...)` via Sequelize devient `WHERE ... IS NULL` → le fond est classe parmi le groupe des **18 fonds SANS categorie** → l'absurde "6/18 Afrique du Nord" observe sur 2870 (vs 866 correctement classe /344 dans "OBLIGATIONS AFRIQUE DU NORD").
+- **Fix pousse (commit api_opcv `10dafc0`), PAS ENCORE DEPLOYE** :
+  1. `src/services/ranking.service.js` : garde `if (!category) return error` dans `calculateRankNationalDev` + `calculateRankRegionalDev` (comme deja fait pour Global). Additif : plus jamais de classement dans le groupe NULL.
+  2. `scripts/fix/fix_fundafrica_categories.js` (NOUVEAU) : derive les categories FundAfrica manquantes par vote majoritaire des PAIRS (meme pays + meme categorie_national) — jamais d'invention, skip si pas de pair ou egalite. Dry-run par defaut, `--execute` pour appliquer, `--pays=X` pour cibler. Met a jour fond_investissements + performences/_eurs/_usds. Classements a reconstruire ensuite.
+- **BLOCAGE : bridge MCP wealthtech_ssh_bridge DECONNECTE** (necessite re-authentification cote utilisateur). Impossible de deployer/executer sur S2 depuis cette session. Sequence a executer sur le VPS (ou via bridge une fois reconnecte) :
+  ```bash
+  cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api \
+    && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj && git stash pop \
+    && node scripts/fix/fix_fundafrica_categories.js \
+    && node scripts/fix/fix_fundafrica_categories.js --execute \
+    && /root/.nvm/versions/node/v18.20.8/bin/node -e "require('child_process').execSync('pm2 restart api-monolith --interpreter /root/.nvm/versions/node/v18.20.8/bin/node --update-env && pm2 save',{stdio:'inherit'})" \
+    && node scripts/fix/trigger_classement_recompute.js \
+    && curl -s "http://localhost:3005/api/classementmysql" >/dev/null
+  ```
+  (dry-run d'abord, lire le rapport, puis --execute ; restart AVANT recompute pour charger la garde null ; recompute EUR+USD puis local.)
+- **Verif post-deploiement attendue** : `classementquartiledev/2870/USD` type2 doit montrer soit un vrai classement regional dans "OBLIGATIONS AFRIQUE DU NORD" (~/344), soit AUCUN type2 (si categorie non derivable) — plus jamais "6/18".
+- **Tests realises** : node --check OK (script + service) ; diagnostic 100% via curl API prod (aucune ecriture prod dans ce lot).
+- **Risques** : garde null → les fonds sans categorie perdent leur classement regional bidon au prochain recompute (comportement voulu, pas une regression : la donnee affichee etait fausse). Script de derivation = dry-run obligatoire avant --execute.
+- **A ne pas faire** : ne pas lancer le recompute AVANT le restart api-monolith (sinon l'ancienne version sans garde reconstruit le groupe NULL) ; ne pas redemarrer api-monolith sans l'interpreteur Node 18.
+
 ### INCIDENT MAJEUR 2026-07-03 ~22h — api-monolith crash-loop — RESOLU (bascule Node 18)
 - **Declencheur** : `deploy_project_s2` a redemarre api-monolith (pour activer le fix rate-limiter). Le restart a charge le `node_modules` DISQUE (l'ancien process gardait d'anciens modules compatibles en memoire depuis des semaines).
 - **Cause racine** : `node_modules` a ete upgrade vers des packages **Node 15/16/18** (helmet@8 `Object.hasOwn`, ethers/@noble `node:crypto`, **puppeteer-core `??=` = SyntaxError non parsable**) mais api-monolith tournait en **Node 14.16**. Bombe dormante detonnee par le restart. API DOWN ~25 min (502).
