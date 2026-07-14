@@ -2111,6 +2111,21 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT J — 2026-07-14 17h45 UTC : CEMAC DEBLOQUE — scraper BVMAC BOC valide contre PDF reel
+- **Sources CEMAC transmises par l'utilisateur** : `https://www.bvm-ac.org/bulletin-officiel-de-la-cote-boc/` (743 BOC references depuis 2023-01, verifie en ligne) + `https://www.bvm-ac.org/wp-content/uploads/2026/07/BOC-20260714.pdf` (30 pages, verifie HTTP 200 reel). Ces liens n'avaient PAS ete retrouves dans la transcription de session (recherche honnete faite au tour precedent) — transmis a nouveau par l'utilisateur, exploites immediatement sans fabrication.
+- **Format PDF verifie IDENTIQUE a BRVM** : section "OPCVM : FONDS COMMUN DE PLACEMENT ET SOCIETE D'INVESTISSEMENT A CAPITAL VARIABLE" pages 14-17, memes colonnes (Societe de gestion/Depositaire/OPCVM/Categorie/VL Origine-Precedente-Actuelle/Variation), memes categories D/M/O/A. Donnees reelles CEMAC identifiees : AFRICA BRIGHT ASSET MANAGEMENT, HARVEST ASSET MANAGEMENT, EDC ASSET MANAGEMENT CEMAC, ASCA ASSET MANAGEMENT, ESS ASSET MANAGEMENT, etc.
+- **Script livre et VALIDE REELLEMENT** : `scripts/scraper/bvmac_boc_daily.py` (commit `84caa8f`) — adaptation directe de `brvm_boc_daily.py` (moteur de parsing deja durci en prod), tables additives prefixees `bvmac_` (zero collision avec `brvm_boc_*`).
+  - **Test end-to-end reel** (environnement isole avec pdfplumber 0.11.10 fonctionnel, contournant un bug d'environnement pyo3/cryptography cassé du sandbox de conception qui affecte aussi `brvm_boc_daily.py` a l'identique — non lie a mon code) : **30/30 lignes extraites du BOC-20260714.pdf reel, 0 echec de parsing**, 24 lignes OK, 6 `SUSPECT_VARIATION` (garde-fou : variation >50% detectee sur des fonds a frequences multiples avec probable artefact de nom colle "FCPHARVEST" — correctement NON promues automatiquement, a examiner via `--repair-missing`).
+  - Un correctif mineur applique (pattern `V` accepte desormais `-` en plus de `ND` pour une valeur absente, vu sur "FCP ESS PREMIUM PERSO" 1re periode) — jamais de fabrication, juste traite comme None comme `ND`.
+  - Selftest etendu avec le cas reel de ligne corrompue (artefact de date type Excel serial "46 204,00") qui DOIT echouer le parsing.
+- **Reste a valider avant `--production`** (necessite acces DB, indisponible en environnement de conception) : rapprochement des noms de fonds BOC contre les 34 fonds CEMAC reels (`fond_investissements WHERE pays='CEMAC'`) — executer `--dry-run` sur le serveur en premier des que le MCP repond, examiner le taux MATCHED_EXACT vs UNMATCHED avant tout `--production`.
+- **`.gitignore` etendu** (additif) : `/data/bvmac_boc/{pdf,reports,logs}/` (meme pattern que brvm_boc).
+- **ACTIONS RELAIS MISES A JOUR** :
+  a) `deploy_project_s2 project=front_end_opcvm` (decision #5) ;
+  b) `exec_repo_script_s2 scripts/diag/check_dormant_funds_coverage.js` (decision #3) ;
+  c) **NOUVEAU** : `exec_repo_script_s2 scripts/scraper/bvmac_boc_daily.py --dry-run --latest` (valider le rapprochement des 34 fonds CEMAC avant tout backfill) ;
+  d) verification post-18h30 UTC du cron indices auto-reparant.
+
 ### LOT I — 2026-07-14 17h15 UTC : 5 decisions utilisateur actees + diagnostic dormants livre
 - **Decisions F3 mises a jour** (`api_opcv/docs/BENCHMARKS_F3_MAPPING_SCHEMA.md` §5, commit `a6657d7`) :
   1. **Afrique = proxy synthetique maison DECIDE** (sans licence S&P).
