@@ -2111,7 +2111,17 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
-### LOT F — 2026-07-11 : MCP durable + fix scrapeMONIA v2 (HTML) — EN ATTENTE DU PULL SERVEUR
+### LOT G DEPLOYE + VERIFIE — 2026-07-14 : MCP AUTONOME OPERATIONNEL, serveur reconcilie, ebf1305+bfd1a64 EN PROD
+- **MCP bridge enfin appelable en session** (ping=wealthtech_ssh_bridge_ok, scoped-write-tools). Travail 100% via MCP, zero SSH manuel.
+- **API serveur reconcilie** : `git_pull_project_s2 api_opcv` -> fetch a23d2f3..bfd1a64 (6 commits appliques : 8802eb3 F1, ebf1305 cron backfill, 8b2e6ff F2, df06ce0 F3, d2ecd33 MCP durable, bfd1a64 MONIA v2) ; les 87 snapshots serveur REJOUES proprement (rebase ok, stash pop ok, logs.txt/0/sec_ng_downloads intacts). Preuve fonctionnelle : dry-run affiche le format par-date de ebf1305.
+- **Frontend serveur aligne** : pull e313df9 -> 59c1096 (fast-forward, docs uniquement).
+- **Run execute via MCP** : Tunindex 20281.12 insere pour 2026-07-14 + **461 VL indRef propagees** (126 VL TN recentes avec indRef, verifie SQL). MASI/NSE/BRVM/MONIA vides a 9h17 = normal (marches non clos / MONIA J+1) -> **le cron 18h30 (nouveau code --backfill-days 7) comble automatiquement 07-10 -> 07-14, MONIA inclus** (fenetre HTML ~10 seances).
+- **Verif zero regression** : health ok, front HTTP 200, temoin #62 (2870: 57/347 OBLIGATIONS AFRIQUE DU NORD) intact.
+- **Note whitelist exec_repo_script_s2** : --dry-run et --execute acceptes ; --help/--verbose/--backfill-days=N refuses -> le backfill profond passe par le cron .sh (qui contient --backfill-days 7), pas par appel MCP direct.
+- **Nigeria VL J-11** : cron SEC hebdo lundi 10h00 (aujourd'hui) — a verifier apres son passage.
+- **PROCHAINE VERIF (demain)** : SQL indices -> MASI/NSE/Tunindex/BRVM doivent etre a J-1 et MONIA deloque (>= 2026-07-10) apres le cron de ce soir.
+
+### LOT F — 2026-07-11 : MCP durable + fix scrapeMONIA v2 (HTML) — DEPLOYE via Lot G
 - **MCP_AUTONOMY.md rendu permanent dans les 2 depots** (commits api `d2ecd33`, front `55dd1e1`) : URL MCP, verifs demarrage (ping/get_write_tools_context/git_status x2), MODE RELAIS MCP EXTERNE si outils absents, non-regression (logs.txt/0/sec_ng_downloads/.env), liste .md, regles MCP globales.
 - **fix scrapeMONIA v2 (commit api `bfd1a64`)** : voie principale = parsing du TABLEAU HTML de la page bkam (verifie en ligne le 11/07 : 200 avec UA navigateur ; colonnes MONIA index|volume|Reference date|Publication ; on stocke la Reference date ; derniere valeur reelle 2.227% au 09/07). blockcsv (corps vide en automatise) garde en fallback. Parser teste 5/5 contre le HTML reel (y compris piege date publication != reference). Fenetre page ~10 seances -> compatible cron+backfill-days ; trou 05-14->06-25 non comblable par cette source (documente F2). MONIA pays:[] = aucun impact benchmarks fonds.
 - **ETAT SERVEUR (via MCP avant coupure)** : API ahead 28 (snapshots horaires) avec ref origin PERIME -> `ebf1305` PAS ENCORE sur le serveur (cron indices tourne encore sans --backfill-days) ; front serveur fige au 03/07 (e313df9, docs only). **ACTION RELAIS EN ATTENTE : `git_pull_project_s2 project=api_opcv`** (stash+rebase+pop, preserve snapshots+logs.txt, pas de restart PM2 ; deploie ebf1305 + bfd1a64 + docs). Puis pull front (docs), puis verif cron 18h30.
