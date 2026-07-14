@@ -2111,6 +2111,20 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT I — 2026-07-14 17h15 UTC : 5 decisions utilisateur actees + diagnostic dormants livre
+- **Decisions F3 mises a jour** (`api_opcv/docs/BENCHMARKS_F3_MAPPING_SCHEMA.md` §5, commit `a6657d7`) :
+  1. **Afrique = proxy synthetique maison DECIDE** (sans licence S&P).
+  2. **CEMAC VL = TOUJOURS BLOQUE.** L'utilisateur affirme avoir transmis des liens/exemples "BOC" (Bulletin Officiel de la Cote, analogue BRVM) pour la CEMAC. **Recherche exhaustive faite sur la transcription complete de la session (grep du fichier .jsonl, pas seulement le contexte resume)** : aucune occurrence de BOC/URL specifique CEMAC trouvee — uniquement le module BOC BRVM/UEMOA deja en prod (different, ne couvre pas CEMAC). Demande faite a l'utilisateur de re-transmettre les liens ; **aucune URL fabriquee** (regle CLAUDE.md : jamais inventer une source).
+  3. **337 fonds dormants = diagnostic + mise a jour DECIDE.** Script livre : `scripts/diag/check_dormant_funds_coverage.js` (commit `a2b0458`, SELECT uniquement) — distingue UEMOA/NIGERIA (cron continu, fonds absents = tres probablement dissous, verif reglementaire avant desactivation) vs MAROC/TUNISIE/CEMAC (import periodique par fichier ASFIM/CMF/COSUMAF, pas de cron continu -> dormants tant qu'un nouvel export n'arrive pas). A EXECUTER des que MCP repond.
+  4. **Priorite F4 = par COUCHE DECIDE** : couche 1 (national local tous pays) -> couche 2 (converti EUR/USD) -> couche 3 (Afrique synthetique).
+  5. **Build+restart frontend = AUTORISE.** Deploiement des fixes UI 13/06 (quartile EUR/USD `8a60083`, barres ratios `cf6dba2`) a executer via `deploy_project_s2 project=front_end_opcvm` des que MCP repond.
+- **MCP toujours `enabledInChat:false`** dans cette session (verifie a nouveau) — travail poursuivi en local/origin, rien de bloque.
+- **ACTIONS RELAIS EN ATTENTE (des que MCP repond ou via relais externe)** :
+  a) `deploy_project_s2 project=front_end_opcvm` (decision #5) ;
+  b) `exec_repo_script_s2 scripts/diag/check_dormant_funds_coverage.js` (decision #3, lecture seule) ;
+  c) verification post-18h30 UTC du cron indices (MASI/NSE/BRVM/Tunindex/MONIA).
+- **BLOQUANT REEL restant : decision #2 (CEMAC)** — attente des liens/exemples BOC-CEMAC de l'utilisateur.
+
 ### LOT H — 2026-07-14 16h57 UTC : verification "tout est-il installe ?" + addendum F3 (documents 020eb3de/45cdc9fc)
 - **Contexte** : l'utilisateur a transmis 2 nouveaux fichiers .md (upload) : `benchmarks_afrique_prompt_claude.md` (14/07, prompt maitre benchmarks) et `deepresearchreport_1.md`. Verification : **le 2e fichier est IDENTIQUE mot pour mot** au rapport deep-research deja lu et exploite en F1/F2/F3 (07-09/07-10) — pas d'info nouvelle. Le 1er fichier est une version enrichie du meme chantier avec des precisions actionnables nouvelles.
 - **Verification honnete "tout a-t-il ete installe ?"** : NON, F4 n'a jamais ete implemente (grep confirme : aucune trace de `benchmark_series`/`benchmark_mapping` dans le code) — conforme a l'etat documente (F3 = schema PROPOSE, jamais execute, en attente des decisions). Aucune regression : rien n'a ete tente prematurement.
