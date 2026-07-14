@@ -2111,6 +2111,15 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT H — 2026-07-14 16h57 UTC : verification "tout est-il installe ?" + addendum F3 (documents 020eb3de/45cdc9fc)
+- **Contexte** : l'utilisateur a transmis 2 nouveaux fichiers .md (upload) : `benchmarks_afrique_prompt_claude.md` (14/07, prompt maitre benchmarks) et `deepresearchreport_1.md`. Verification : **le 2e fichier est IDENTIQUE mot pour mot** au rapport deep-research deja lu et exploite en F1/F2/F3 (07-09/07-10) — pas d'info nouvelle. Le 1er fichier est une version enrichie du meme chantier avec des precisions actionnables nouvelles.
+- **Verification honnete "tout a-t-il ete installe ?"** : NON, F4 n'a jamais ete implemente (grep confirme : aucune trace de `benchmark_series`/`benchmark_mapping` dans le code) — conforme a l'etat documente (F3 = schema PROPOSE, jamais execute, en attente des decisions). Aucune regression : rien n'a ete tente prematurement.
+- **MCP** : connecteur `connected:true` au niveau org mais **`enabledInChat:false`** dans cette session (nuance precise, differente d'un simple "MCP absent") — travail poursuivi sur le depot local/origin sans blocage, conformement au mode relais.
+- **Addendum F3 ajoute (commit api `7ed0724`)** : `docs/BENCHMARKS_F3_MAPPING_SCHEMA.md` §6 — 5 statuts structures supplementaires (SOURCE_OFFICIAL_UNREACHABLE_TRY_FALLBACK, SOURCE_DYNAMIC_NEEDS_BROWSER, SOURCE_UNDER_LICENSE, BACKFILL_NOT_AUTHORIZED, MIGRATION_PENDING_VALIDATION), URLs reelles Flash Quotidien MASI (PDF fallback) et prospectus AMMC (6 fiches signaletiques concretes pour peupler `source_prospectus` fonds par fonds au lieu d'un mapping generique), reference circulaire FMAN Nigeria, endpoints BCE XML/dataset precis, tolerance de dates chiffree par type de serie. **100% additif documentaire — zero migration, zero code touche.**
+- **Decision #5 ajoutee a la liste F3** : autoriser le build+restart frontend (fixes UI en attente depuis le 13/06) ?
+- **Cron auto-reparant (`ebf1305`+`bfd1a64`, deployes Lot G) pas encore verifiable** : il est 16h57 UTC, le cron tourne a 18h30 UTC — verification MASI/NSE/BRVM/Tunindex/MONIA a faire APRES ce soir, prochaine session ou wakeup.
+- **A ne pas faire** : ne pas creer benchmark_series/benchmark_mapping sans validation explicite des 5 decisions ; ne pas confondre "documente" avec "installe".
+
 ### LOT G DEPLOYE + VERIFIE — 2026-07-14 : MCP AUTONOME OPERATIONNEL, serveur reconcilie, ebf1305+bfd1a64 EN PROD
 - **MCP bridge enfin appelable en session** (ping=wealthtech_ssh_bridge_ok, scoped-write-tools). Travail 100% via MCP, zero SSH manuel.
 - **API serveur reconcilie** : `git_pull_project_s2 api_opcv` -> fetch a23d2f3..bfd1a64 (6 commits appliques : 8802eb3 F1, ebf1305 cron backfill, 8b2e6ff F2, df06ce0 F3, d2ecd33 MCP durable, bfd1a64 MONIA v2) ; les 87 snapshots serveur REJOUES proprement (rebase ok, stash pop ok, logs.txt/0/sec_ng_downloads intacts). Preuve fonctionnelle : dry-run affiche le format par-date de ebf1305.
