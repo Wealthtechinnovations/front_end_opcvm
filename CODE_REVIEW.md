@@ -490,6 +490,7 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 
 ### 70. [MOYENNE — DATA] CEMAC sans pipeline d'alimentation
 - Aucun script d'import CEMAC/BVMAC/COSUMAF (verifie scripts/import + scraper = NONE). VL figees au 2024-12-12 (34 fonds, 2134 VL). Les 4 autres pays ont un cron. **Reco** : identifier une source BVMAC/COSUMAF ou marquer explicitement CEMAC "donnees arretees au 2024-12".
+- **MAJ 2026-07-14 (sources partiellement identifiees)** : cote INDICE, la source est transmise et documentee dans `api_opcv/referentiel_fundafrica.json` → `BVMAC_INDICES` (`https://www.bvm-ac.org/indices/`, « source officielle a verifier pour historique ») ; mapping deja corrige CEMAC = BVMAC ALL SHARE INDEX (plus BRVM COMPOSITE). RFR CEMAC deja en base (tsrhisto BEAC 137 entrees 2015-2026 via fix_tsr_per_country.js). **Ce qui manque toujours : la source des VL des 34 fonds** (COSUMAF « a identifier » — aucun fichier/URL VL CEMAC dans les depots ni dans les documents transmis ; a fournir par l'utilisateur : export COSUMAF, fichiers societes de gestion, ou autre). Plan des que la source VL est fournie : importeur type import_vl_* + scraper indice BVMAC + entree INDEX_CONFIG (pays:['CEMAC'], XAF deja gere : parite fixe + paires EUR/XAF, USD/XAF fraiches).
 
 ### 71. [MOYENNE — DATA] Indices doublons de casse/cle + MONIA/BRVM
 - `indice_references` : cles en double `Indice_monetaire_maroc` (2 nom_indice differents), `masi_all_shares` vs `MASI`, `INDICE MONETAIRE MAROC`. A consolider (lecture seule d'abord).

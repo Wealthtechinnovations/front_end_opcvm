@@ -22,18 +22,23 @@
 - [x] **#46** .catch() + guard headersSent sur 11 routes apigestionperformance.js — commit `89cabd4` (verifie code 2026-06-26)
 - [x] **#49** cron `set -e` supprime + run_step/run_curl (ou ERRORS counter inline pour eur_usd) — commit `26d1f93` (verifie code 2026-06-26)
 - [x] **#50** validation HTTP status dans les crons (HTTP_CODE + ERRORS counter) — commit `26d1f93` (verifie code 2026-06-26)
-- [x] **Indices** : rebranchement 5 sources 2026 + fix MONIA + fix Tunindex case + outils diagnostic/correction — commits `5314fe0`,`9feb550`,`8a8520b` (a deployer + executer correction)
+- [x] **Indices** : rebranchement 5 sources 2026 + fix MONIA + fix Tunindex case + outils diagnostic/correction — commits `5314fe0`,`9feb550`,`8a8520b` — DEPLOYE (correction historique executee, benchmarks verifies prod 06-27)
+- [x] **#62** classement regional/continental fonds recents (categories FundAfrica NULL) — commits `10dafc0`,`da208bb` — DEPLOYE + verifie prod 07-09 (2870 : 6/18 → 44/347)
+- [x] **#63** barres ratios EUR/USD tous pays — fix rate-limiter `d57deaa` + populate + recompute — verifie prod 07-09 (866 : ranksharpe 187/272)
+- [x] **Cron indices auto-reparant** : `--backfill-days 7` (`ebf1305`) + **fix MONIA v2 parsing HTML** (`bfd1a64`) — DEPLOYES serveur 07-14 via MCP (Lot G) ; 1er passage cron 18h30 du 07-14 comble 07-10→07-14 + debloque MONIA
+- [x] **Installer cron** `cron_indices_daily.sh` (30 18 * * 1-5) — INSTALLE et actif (verifie crontab 07-09)
+- [x] **Chantier BENCHMARKS 3 couches — conception F1/F2/F3** : `api_opcv/docs/BENCHMARKS_AUDIT_F1.md` + `BENCHMARKS_SOURCES_F2.md` + `BENCHMARKS_F3_MAPPING_SCHEMA.md` — F4 bloque sur 4 decisions utilisateur
 
 ## A deployer sur VPS
 
-- [ ] **Indices** : deployer `8a8520b` (fix Tunindex) puis executer la correction historique (cf SUIVI.md POINT DE REPRISE — commandes SSH)
-- [ ] **Frontend AUDIT-D** : quartile EUR/USD fix (FundSubView.tsx summary-eur + summary-usd) — commit `8a60083`, `npm run build` + `pm2 restart fundafrique-frontend`
-- [ ] **#52 ClickHouse resilience** — commit `b815153`, pas encore deploye
+- [ ] **Frontend BUILD JAMAIS REFAIT depuis les fixes merges** : le serveur front a pulle `b2fc30c` (07-14) mais AUCUN `npm run build` + `pm2 restart fundafrique-frontend` depuis — le bundle servi date d'avant le 3 juillet. Inclut AUDIT-D quartile EUR/USD (`8a60083`) et barres ratios dynamiques (`cf6dba2`). **Action : `deploy_project_s2 project=front_end_opcvm` (build + restart) — VALIDATION UTILISATEUR requise (restart PM2).**
+- [ ] **#52 ClickHouse resilience** — commit `b815153` : dans l'historique pulle, mais actif seulement apres restart api-monolith (a coupler avec un prochain restart planifie)
 
 ## Actions cron (sans risque de regression)
 
 - [ ] **#40** Supprimer ghost cron fix-brvm-nginx.py de la crontab (script absent du VPS) — operation crontab VPS
-- [ ] **Installer cron** `cron_indices_daily.sh` (30 18 * * 1-5) — apres correction historique indices
+- [ ] `pm2 flush api-monolith` : log d'erreur 1,1 Go herite du crash-loop du 07-03
+- [ ] Basculer workers `worker-data-import`/`worker-recalculation` en Node 18 (encore Node 14) + `engines` dans package.json
 
 ## Dette technique (cf CODE_REVIEW.md)
 
@@ -52,10 +57,20 @@
 
 ## Donnees
 
-- [x] UEMOA : **comble** — derniere VL 2026-06-12 (cron BRVM BOC operationnel)
-- [ ] CEMAC : derniere VL 2024-12-12 (source COSUMAF a identifier, 539+ jours stale)
+- [x] UEMOA : **comble** — cron BRVM BOC operationnel (VL J-1 au 07-14)
+- [x] Tunisie indRef 2011-2021 : **backfill 180310 VL** (Lot B 07-03), couverture 99,9%
+- [ ] CEMAC : derniere VL 2024-12-12 (34 fonds). **Indice = source transmise et identifiee** (`BVMAC_INDICES` → bvm-ac.org/indices, referentiel_fundafrica.json ; mapping CEMAC=BVMAC corrige ; RFR BEAC en base). **VL fonds = source manquante** (COSUMAF a fournir : export regulateur ou fichiers societes de gestion). Cf CODE_REVIEW #70 MAJ 07-14.
 - [ ] TUNISIE EUR/USD gap 24% : attente fichier VL avec dividendes
-- [ ] Nigeria : SEC a change format, ~195 fonds absents des fichiers recents
+- [ ] Nigeria : SEC a change format, ~195 fonds absents des fichiers recents ; 337 fonds actifs sans VL >30j toutes zones (politique dormants a decider)
+- [ ] Ratios locaux 641 < EUR/USD 947 : realigner le populate local (apres F4)
+
+## Decisions utilisateur en attente (bloquent la suite)
+
+1. **Couche Afrique** : proxy synthetique maison (reco, sans licence, is_synthetic=true) OU licence S&P DJI ?
+2. **CEMAC VL** : fournir la source des valeurs liquidatives (l'indice BVMAC, lui, est identifie)
+3. **337 fonds dormants** : diagnostic + desactivation validee (reco) OU laisser en l'etat ?
+4. **Priorite F4 benchmarks** : par pays (reco : couche 1 complete pays par pays) OU par couche ?
+5. **Build+restart frontend** : autoriser `deploy_project_s2 front_end_opcvm` pour activer les fixes UI en attente depuis le 13/06 ?
 
 ## Surveillance
 
