@@ -2111,6 +2111,21 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT K — 2026-07-23 : AUDIT NIGERIA Phase A (LECTURE SEULE, MCP) — EN ATTENTE DE "VALIDER CORRECTIONS NIGERIA"
+Audit demande par prompt dedie (PROMPT_CLAUDE_CODE_NIGERIA_OPCVM_ZERO_REGRESSION_V2_1.md). **AUCUNE ecriture/correction/deploiement** — le prompt impose Phase A read-only puis STOP jusqu'a validation humaine explicite. Tous les reperes du prompt confirmes en direct sur la prod (SELECT via MCP, 2026-07-23) :
+- **#1 REGRESSION CRITIQUE — effondrement import hebdo** : depuis le **2026-05-08**, seulement **39-41 lignes/semaine** chargees contre **224-227 avant** (04-02→04-24) et 220+ dans les fichiers SEC. Base **figee au 2026-07-03** (manquent 07-10, 07-17, 07-23). Cause racine probable : changement de format du fichier SEC 2026 (blocs larges multi-semaines 100+ colonnes) que l'extracteur `sec_ng_nav_extractor_v6.py` (racine du depot, 2317 lignes, non suivi git) ne parse plus que partiellement -> CSV `sec_ng_latest.csv` tronque -> `import_vl_nigeria_sec.js` n'importe que ~41 fonds. A CONFIRMER par dry-run de l'extracteur sur un fichier recent (Phase B).
+- **#2 confusion devise fonds Dollar** : AFRINVEST DOLLAR FUND 2026-07-03 value=118.9768 (USD) mais value_USD=0.087 -> le pipeline a traite la VL USD comme NGN et l'a divisee par USD/NGN. Idem probable autres fonds Dollar/Eurobond.
+- **#3 decalage de date suspecte (a confirmer contre SEC)** : AFRINVEST DOLLAR 2026-07-03 en base = 118.9768 / actif_net 4 532 910 642 = valeurs du bloc SEC 2026-06-26 (le bloc SEC 07-03 publierait 119.2832). Ne PAS decaler en masse : verifier bloc/colonne/date source ligne par ligne.
+- **#4 doublon GDL** : id 1219 "GDL CANARYGROWTH FUND" (274 VL 2020->2026-04-24) + id 2867 "GDL Canary Growth Fund" (17 VL 2026-01->04-24), meme societe 301, periodes chevauchantes.
+- **#5 statut actif non fiable** : 285 fonds tous active=1 ; **52 fonds actifs sans aucune valeur 2026** ; 1 fonds sans aucune VL (FAAM MONEY MARKET FUND).
+- **#6 valeurs sentinelles** : 546 lignes value=1000000 sur 2 fonds (a verifier vs source).
+- **#7 types & semantique** : actif_net/souscription/rachat = varchar(255) (mesure numerique en texte) ; souscription/rachat vides pour 100% des fonds Nigeria (0 rempli) ; Bid/Offer/VL non distingues (un seul champ `value` de type ambigu).
+- **#8 sociétes** : 69 societe_id mais 72 libelles societe_gestion (alias/marques a auditer, pas fusionner).
+- **#9 historique** : base depuis 2017-12-29 seulement ; SEC publie depuis 2011 (686 fichiers) -> ~6 ans manquants.
+- **Etat Git serveur** : branche claude/code-review-improvements-ikvuj, ahead 208 (snapshots horaires), logs.txt/0/sec_ng_downloads/ non suivis (a preserver). 0 doublon (fund_id,date) actuel.
+- **PROCHAINE ACTION** : attendre "VALIDER CORRECTIONS NIGERIA". Phase B (staging + parseur versionne + dry-run + rapport avant/apres) uniquement apres. Priorite absolue = reparer l'extracteur (regression #1) car elle bloque toute fraicheur Nigeria.
+- **A NE PAS FAIRE** : aucun decalage de date en masse, aucun remplacement value par Bid/Offer, aucune fusion de noms sur ressemblance, aucune desactivation de fonds sur absence, aucune modif hors Nigeria, aucun DROP/rename destructif.
+
 ### LOT J — 2026-07-14 17h45 UTC : CEMAC DEBLOQUE — scraper BVMAC BOC valide contre PDF reel
 - **Sources CEMAC transmises par l'utilisateur** : `https://www.bvm-ac.org/bulletin-officiel-de-la-cote-boc/` (743 BOC references depuis 2023-01, verifie en ligne) + `https://www.bvm-ac.org/wp-content/uploads/2026/07/BOC-20260714.pdf` (30 pages, verifie HTTP 200 reel). Ces liens n'avaient PAS ete retrouves dans la transcription de session (recherche honnete faite au tour precedent) — transmis a nouveau par l'utilisateur, exploites immediatement sans fabrication.
 - **Format PDF verifie IDENTIQUE a BRVM** : section "OPCVM : FONDS COMMUN DE PLACEMENT ET SOCIETE D'INVESTISSEMENT A CAPITAL VARIABLE" pages 14-17, memes colonnes (Societe de gestion/Depositaire/OPCVM/Categorie/VL Origine-Precedente-Actuelle/Variation), memes categories D/M/O/A. Donnees reelles CEMAC identifiees : AFRICA BRIGHT ASSET MANAGEMENT, HARVEST ASSET MANAGEMENT, EDC ASSET MANAGEMENT CEMAC, ASCA ASSET MANAGEMENT, ESS ASSET MANAGEMENT, etc.
