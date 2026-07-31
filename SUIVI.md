@@ -2111,6 +2111,28 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT L — 2026-07-31 : NIGERIA Phase A TERMINEE — preuves exactes obtenues via le classeur SEC officiel
+**Incident prod resolu en amont** : MariaDB etait tombe (`ECONNREFUSED 127.0.0.1:3306`, toutes les routes data en 500, site sans donnees). Redemarre par l'utilisateur -> `database: connected`, 998233 valorisations, `valLiq/866` HTTP 200. Cause a surveiller (3e occurrence, probable OOM).
+
+**Materiel recu et integre au depot** (commit api `0828e5a`) :
+- `data/sec_ng_xlsx/Nigeria_SEC_OPCVM_NAV_2011_2026.xlsx` — extraction officielle complete des 686 publications SEC : **77 863 observations, 725 dates (2011-08-12 -> 2026-07-10), 352 cles de fonds, 1 186 conflits traces**. Schema exactement conforme au prompt : date de BLOC distincte de la date de rapport, actif net NGN/USD separes, VL explicite distincte de Bid/Offer, provenance complete (document SEC, fichier, URL).
+- `docs/BIBLE_REFERENCE_NIGERIA_OPCVM_SEC_v2.0.docx` (5 172 paragraphes) + `docs/PROMPT_NIGERIA_ZERO_REGRESSION_V2_2.md` — base de connaissances et contrat methodologique.
+
+**PREUVES EXACTES des 2 defauts critiques** (classeur officiel vs base, correspondance au centime) :
+| Cas | Base de donnees | Classeur SEC (verite) | Verdict |
+|---|---|---|---|
+| AFRINVEST DOLLAR 2026-07-03 | value=118.9768 / net=4 532 910 642.367836 | = valeurs du **2026-06-26** (le 03/07 vaut 119.2832 / 4 491 877 608.777167) | **decalage d'une semaine** |
+| AFRINVEST EQUITY 2023-01-13 | value=195.5378 / net=406 789 044.36 | = **Offer Price** du **2023-01-06** (VL explicite = NULL en 2023) | **decalage + Offer pris pour VL** |
+
+**DECOUVERTE STRUCTURELLE MAJEURE** (feuille Couverture) : a partir de **2022, les fichiers SEC ne publient PLUS de VL explicite** — uniquement Bid et Offer (2011-2020 : 36 268 VL explicites ; 2022-2026 : **0**). Donc tout `valorisations.value` Nigeria depuis 2022 est un Bid ou un Offer presente comme une VL. Corriger cela exige le champ `price_type` prevu au schema cible — jamais un remplacement silencieux.
+
+**ECARTS DE COUVERTURE chiffres** : classeur 62 243 obs sur la periode de la base contre 54 046 en base (**8 197 manquantes**) + **15 620 obs d'historique 2011-2017 totalement absentes** (la base demarre au 2017-12-29). Regression hebdo confirmee : le classeur a 222-223 fonds/semaine en 2026, la base 39-41 depuis le 2026-05-08 ; la semaine du 2026-07-10 est absente de la base.
+
+**LIVRABLE Phase A** : `scripts/import/sec_ng_xlsx_loader.py` — charge le classeur dans des tables STAGING additives (`sec_ng_observations`, `sec_ng_fund_aliases`, `sec_ng_load_logs`, prefixe sans collision). **Dry-run par defaut ; `--execute` n'ecrit QUE le staging ; la promotion en production n'est PAS implementee dans ce script** (elle exigera la 2e validation). Garde-fous : verification des en-tetes avant lecture (anti SCHEMA_DRIFT, jamais de lecture par position), valeurs numeriques natives Excel conservees, detection explicite du separateur decimal, zeros publies preserves, faux fonds TOTAL exclus, matching exact->compact->fuzzy avec AMBIGUOUS/UNMATCHED jamais fusionnes d'office. **Selftest vert** (10 formats numeriques du prompt + normalisation + classification Offer!=VL) ; **valide sur le classeur reel** : 77 863/77 863 lignes lues, 725 dates, 352 cles, row_hash 100% unique (idempotence garantie).
+
+**AUCUNE ECRITURE EN PRODUCTION.** Aucun decalage de date applique, aucun remplacement de value, aucune fusion de noms, aucun autre pays touche.
+**PROCHAINE ETAPE** : executer le loader sur le serveur en `--dry-run` puis `--report` (lecture seule, via MCP) pour obtenir la matrice de correspondance des 352 cles et la classification ligne a ligne, PUIS attendre `VALIDER CORRECTIONS NIGERIA` avant tout staging/correction.
+
 ### LOT K — 2026-07-23 : AUDIT NIGERIA Phase A (LECTURE SEULE, MCP) — EN ATTENTE DE "VALIDER CORRECTIONS NIGERIA"
 Audit demande par prompt dedie (PROMPT_CLAUDE_CODE_NIGERIA_OPCVM_ZERO_REGRESSION_V2_1.md). **AUCUNE ecriture/correction/deploiement** — le prompt impose Phase A read-only puis STOP jusqu'a validation humaine explicite. Tous les reperes du prompt confirmes en direct sur la prod (SELECT via MCP, 2026-07-23) :
 - **#1 REGRESSION CRITIQUE — effondrement import hebdo** : depuis le **2026-05-08**, seulement **39-41 lignes/semaine** chargees contre **224-227 avant** (04-02→04-24) et 220+ dans les fichiers SEC. Base **figee au 2026-07-03** (manquent 07-10, 07-17, 07-23). Cause racine probable : changement de format du fichier SEC 2026 (blocs larges multi-semaines 100+ colonnes) que l'extracteur `sec_ng_nav_extractor_v6.py` (racine du depot, 2317 lignes, non suivi git) ne parse plus que partiellement -> CSV `sec_ng_latest.csv` tronque -> `import_vl_nigeria_sec.js` n'importe que ~41 fonds. A CONFIRMER par dry-run de l'extracteur sur un fichier recent (Phase B).
