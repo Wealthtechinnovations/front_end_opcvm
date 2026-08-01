@@ -2111,6 +2111,25 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT M — 2026-07-31 : NIGERIA — analyse du decalage EXECUTEE sur la prod (lecture seule). VERDICT : correction globale INTERDITE
+Commandes reellement executees sur le serveur (SELECT uniquement, dry-run) :
+`sec_ng_xlsx_loader.py --xlsx data/sec_ng_xlsx/... --report` puis `--shift-analysis`.
+
+**Resolution d'identite (352 cles vs 285 fonds en base)** : 281 MATCHED_EXACT + 7 FUZZY + 2 COMPACT = **290 resolues (82%)** ; **23 AMBIGUOUS** (dont Stanbic IBTC Absolute/Aggressive/Conservative et FBN Eurobond Retail/Institutional = **vraies classes de parts distinctes**, NE PAS fusionner) ; **39 UNMATCHED** (fonds anciens absents du referentiel : ANCHOR, BEDROCK, BGL NUBIAN/SAPPHIRE, CONTINENTAL UNIT TRUST, DVCF OIL AND GAS...).
+
+**Qualite (72 247 obs rapprochees)** : `IDENTIQUE` 7 247 (**10%**) · `ECART_VALEUR` 35 042 (48,5%) · `ABSENT_EN_PROD` 20 429 · `MESURE_DIFFERENTE` 9 529. **Mesure reellement stockee dans `valorisations.value`** : 8 643 Bid NGN + 784 Offer NGN + 92 Bid USD + 10 Offer USD contre seulement 7 247 vraies VL -> le site presente des prix de rachat/souscription etiquetes « VL ».
+
+**ANALYSE DU DECALAGE — resultat structurant** : MATCH_DATE_PRECEDENTE **27 797 (52,1%)** · MATCH_DATE_COURANTE 16 774 (31,4%) · AUCUNE_CORRESPONDANCE 8 826 (16,5%).
+- **Par annee** : 2018-2021 majoritairement CORRECTS (ex 2020 : 2028 courante / 769 precedente) ; **2022-2026 massivement DECALES** (2025 : 6820 precedente / 2417 courante). La bascule 2022 coincide exactement avec l'arret des VL explicites par la SEC (0 VL depuis 2022) -> c'est le changement de format source qui a casse l'extracteur.
+- **Par categorie — CONSTAT CRITIQUE** : **MONEY MARKET FUNDS = 8 574 courante / 6 precedente : AUCUN DECALAGE**. A l'inverse BALANCED (1310/56), DOLLAR (2235/147), FIXED INCOME (5484/1043) sont quasi totalement decales.
+- **Par devise** : NGN 27 491 decales / 16 672 corrects ; USD 306 / 102.
+- **Echantillons** : `Afrinvest Equity 2026-04-10 = 794.1546` est en realite l'**Offer Price du 2026-04-02** -> double erreur simultanee (mauvaise date ET mauvaise mesure).
+
+**=> DECISION TECHNIQUE : UN DECALAGE GLOBAL D'UNE SEMAINE EST INTERDIT.** Il detruirait les **8 574 observations Money Market aujourd'hui justes**. La regle varie selon la periode ET la categorie : conformement au prompt (« si la regle varie, cree des parseurs versionnes separes au lieu d'un correctif global »), la correction devra etre **ligne a ligne, adossee a la preuve source** (chaque ligne corrigee uniquement si le classeur officiel identifie sans ambiguite sa date de bloc et sa mesure), jamais par regle de masse.
+
+**AUCUNE ECRITURE EFFECTUEE.** Aucune date decalee, aucune value modifiee, aucun fonds fusionne, aucun autre pays touche. Etat prod inchange (verifie : `database: connected`, 998 233 valorisations).
+**PROCHAINE ETAPE** : Phase B sur validation explicite `VALIDER CORRECTIONS NIGERIA` — plan detaille presente a l'utilisateur (staging + migration additive price_type/devise + correction ligne a ligne + rollback).
+
 ### LOT L — 2026-07-31 : NIGERIA Phase A TERMINEE — preuves exactes obtenues via le classeur SEC officiel
 **Incident prod resolu en amont** : MariaDB etait tombe (`ECONNREFUSED 127.0.0.1:3306`, toutes les routes data en 500, site sans donnees). Redemarre par l'utilisateur -> `database: connected`, 998233 valorisations, `valLiq/866` HTTP 200. Cause a surveiller (3e occurrence, probable OOM).
 
