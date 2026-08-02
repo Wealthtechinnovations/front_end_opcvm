@@ -2135,6 +2135,32 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 **RISQUE** : faible. Aucune ecriture dans ce lot ; les scripts appeles sont ceux deja valides en production, simplement restreints au pays. Le seul risque identifie (casse de l'usage positionnel) a ete trouve et corrige avant tout push.
 
+**CONTROLE EN DIRECT SUR L'API DE PRODUCTION (`/api/valLiq/:id`, 2026-08-02)** — la correction est bien servie au public :
+
+| Fond | Points | Derniere VL servie | Verdict |
+|---|---|---|---|
+| 2757 GUARANTY TRUST FIXED INCOME | 135 | 2026-07-10 | degele ✓ |
+| 2858 ARM SPECIALIZED DOLLAR | 63 | 2026-07-10 | degele ✓ |
+| 2868 GUARANTY TRUST BALANCED | 144 | 2026-07-10 | degele ✓ |
+| 2867 (GDL, **archive** active=0) | 267 | 2026-07-10 | **anomalie, voir ci-dessous** |
+| **1219 (GDL, survivant actif)** | **274** | **2026-04-24** | **TOUJOURS FIGE** |
+
+**ANOMALIE A INSTRUIRE AVANT LE RECALCUL — paire GDL 1219 / 2867** : la decision utilisateur etait « fusion vers 1219 avec alias conserve ». Or l'API montre l'inverse de l'effet attendu : le fonds **archive** (2867) porte l'historique frais jusqu'au 2026-07-10, tandis que le **survivant actif** (1219), celui que le site affiche, reste fige au 2026-04-24. Les volumes le confirment : 274 points sur 1219 contre 267 sur 2867 — si les VL de 2867 avaient reellement ete transferees, 2867 n'en conserverait qu'une poignee (les 17 collisions), pas 267.
+
+**Hypothese a verifier en SQL (non verifiable sans acces base)** : la resolution d'identite a rattache les observations SEC recentes a `fund_id = 2867` via l'alias, alors que la phase de fusion se contentait d'archiver 2867 sans deplacer ses valorisations vers 1219. Consequence : un fonds visible et stale, un fonds a jour mais invisible.
+
+Requete de controle a executer sur le serveur AVANT le recalcul :
+```sql
+SELECT fund_id, COUNT(*) AS n, MIN(date) AS debut, MAX(date) AS fin,
+       SUM(correction_batch = 'SECNGFIX_20260802_113036') AS lignes_du_batch
+FROM valorisations WHERE fund_id IN (1219, 2867) GROUP BY fund_id;
+
+SELECT id, nom_fond, active FROM fond_investissements WHERE id IN (1219, 2867);
+```
+Si l'hypothese est confirmee, la correction est **ciblee et reversible** (deplacer vers 1219 les valorisations de 2867 posterieures au 2026-04-24 absentes de 1219, via un nouveau batch journalise dans `sec_ng_corrections_audit`). **Ne rien deplacer avant d'avoir lu le resultat de ces deux requetes** : le perimetre exact depend du nombre de collisions reelles.
+
+Cette anomalie ne concerne **qu'une paire de fonds** et ne bloque pas le recalcul des 219 autres. Elle doit toutefois etre reglee AVANT, sinon 1219 se verra attribuer des performances calculees sur un historique qui s'arrete au 24/04.
+
 ---
 
 ### LOT N — 2026-08-02 : NIGERIA — CORRECTION APPLIQUEE EN PRODUCTION ET VERIFIEE (batch SECNGFIX_20260802_113036)
