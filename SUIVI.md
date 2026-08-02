@@ -2111,6 +2111,32 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT O — 2026-08-02 : OUTILLAGE DU RECALCUL CIBLE POST-CORRECTION (livre, NON EXECUTE)
+
+**Contexte** : apres le Lot N, les VL Nigeria sont corrigees mais tout ce qui en DERIVE reste calcule sur les anciennes valeurs — `vl_ajuste`, `value_EUR`/`value_USD`, performances locales, performances EUR/USD. Le site affiche donc des VL justes avec des colonnes YTD / Perf 1A / Perf 3A perimees. C'est l'incoherence residuelle a resorber.
+
+**Livre dans ce lot** :
+- `api_opcv/scripts/recalc/recalc_nigeria_after_correction.js` (NOUVEAU) — orchestrateur. Dry-run par defaut : photographie l'etat derive du pays (VL, `vl_ajuste` NULL, `value_EUR`/`value_USD` NULL, lignes `performences`, `ytd`/`perf1an` renseignes, **nombre de fonds dont la derniere perf est plus ancienne que la derniere VL**) puis imprime le plan sans rien ecrire. `--execute --confirm` enchaine les 4 etapes dans l'ordre impose, s'arrete a la premiere en echec (pas de propagation d'un etat partiel) et reimprime l'etat + le delta. Parametrable `--pays` (defaut NIGERIA) : reutilisable pour tout autre pays.
+- `api_opcv/scripts/recalc/recalc_vl_ajuste.js` (MODIFIE) — ajout **additif** de `--pays <PAYS>`.
+- `api_opcv/scripts/recalc/recalc_eur_usd_daily_rate.js` (MODIFIE) — ajout **additif** de `--pays <PAYS>`.
+- `fix_populate_performances.js` et `fix_populate_performances_eur_usd.js` supportaient deja `--pays` : **non modifies**.
+
+**ETAPE CLASSEMENTS DELIBEREMENT EXCLUE PAR DEFAUT** : les classements sont calcules **par categorie, toutes zones confondues**. Les recalculer deplace mecaniquement le rang de fonds d'AUTRES pays partageant une categorie avec des fonds nigerians. Ce n'est pas une regression (c'est la consequence arithmetique normale de la correction) mais cela sort du perimetre « Nigeria seul » : l'etape 5 n'est jouee que si `--with-classements` est demande explicitement.
+
+**DEFAUT ATTRAPE AVANT PRODUCTION** : la premiere version du parsing utilisait `args.filter((a, i) => !a.startsWith('--') && i !== paysIdx + 1)`. Quand `--pays` est absent, `indexOf` renvoie `-1`, donc `paysIdx + 1 === 0` et l'argument d'indice 0 etait silencieusement supprime : `node recalc_vl_ajuste.js 42` serait retombe sur « tous les fonds actifs » et `1 100` serait devenu `100`. **Regression majeure sur l'usage historique.** Corrige par le garde `!(paysIdx !== -1 && i === paysIdx + 1)` et valide par une table de 8 cas (dont les 3 usages positionnels historiques) : 8/8 OK. `node --check` OK sur les 3 fichiers.
+
+**RESTE A FAIRE (execution serveur)** — dans cet ordre, depuis `/var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api` :
+1. `git pull --rebase origin claude/code-review-improvements-ikvuj`
+2. `node scripts/recalc/recalc_nigeria_after_correction.js` (dry-run, lit l'etat reel)
+3. `node scripts/recalc/recalc_nigeria_after_correction.js --execute --confirm`
+4. Verifier une fiche fonds Nigeria (YTD / 1A / 3A coherents avec la VL affichee)
+5. Decision separee sur `--with-classements` (impact inter-pays a assumer)
+6. Puis seulement : relancer `scripts/diag/check_dormant_funds_coverage.js` pour connaitre les VRAIS dormants Nigeria (le chiffre de 243 est perime, cf. Lot N).
+
+**RISQUE** : faible. Aucune ecriture dans ce lot ; les scripts appeles sont ceux deja valides en production, simplement restreints au pays. Le seul risque identifie (casse de l'usage positionnel) a ete trouve et corrige avant tout push.
+
+---
+
 ### LOT N — 2026-08-02 : NIGERIA — CORRECTION APPLIQUEE EN PRODUCTION ET VERIFIEE (batch SECNGFIX_20260802_113036)
 Phase B/C executees apres double validation utilisateur (`VALIDER CORRECTIONS NIGERIA` + decisions fusion GDL/creation fonds).
 
