@@ -2111,7 +2111,51 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT P — 2026-08-02 : LE VRAI COUPABLE DES « DATES FIGEES EN 2024 » N'EST PAS LE NIGERIA (diagnostic chiffre)
+
+Signalement utilisateur : sur `/countries/funds/UEMOA`, la colonne **Date** affiche 2024 (2024-11-01, 2024-03-21...).
+
+**MECANISME ETABLI PAR LECTURE DU CODE** : cette colonne provient de `performences.date` — route `POST /api/listeproduitpayssociete/:id` (`src/routes/apigestionpays.js:658`), qui prend la ligne `performences` la plus recente de chaque fonds. **Elle ne reflete PAS la derniere VL.** Un fonds peut donc avoir une VL au 2026-07-24 et afficher 2024-11-01 : symptome d'un recalcul jamais fait, pas d'une donnee manquante.
+
+**MESURE 1 — les 111 fonds UEMOA actifs, VL reelle via `/api/valLiq/:id`** :
+| Situation | Fonds | Nature |
+|---|---|---|
+| **VL fraiche >= 2026, affichage perime** | **85 (77 %)** | **la donnee EST en base — pur probleme de recalcul** |
+| VL reellement arretee avant 2026 | 26 | donnee manquante a recuperer a la source |
+| Aucune VL | 0 | — |
+Ventilation des 26 par annee de derniere VL : **2014 : 3** (FCP SDE, BRM DYNAMIQUE, BRM OBLIGATAIRE — candidats desactivation), 2023 : 2, 2024 : 15, 2025 : 6.
+
+**MESURE 2 — ampleur reelle par pays (date affichee, via la route exacte du site)** :
+| Pays | Fonds actifs | Avec perf | Date affichee <= 2024 | Derniere perf |
+|---|---|---|---|---|
+| MAROC | 500 | 500 | 9 | 2026-07-29 (sain) |
+| TUNISIE | 131 | 131 | 2 | 2026-07-24 (sain) |
+| NIGERIA | 323 | 278 | 47 (+45 sans aucune perf) | 2026-07-03 |
+| **UEMOA** | **111** | **109** | **102** | 2026-07-24 |
+| **CEMAC** | **34** | **34** | **34 (100 %)** | 2024-12-12 |
+
+**CONCLUSION QUI REORIENTE LA PRIORITE** : le Nigeria n'etait qu'une partie du probleme. Les crons Maroc et Tunisie sont sains ; **UEMOA et CEMAC n'ont jamais vu leurs performances recalculees**. 194 fonds au total affichent une date <= 2024. Le correctif est le meme moteur pour tous, ce qui rend l'elargissement peu couteux.
+
+**REPONSE DIRECTE A « j'espere qu'on a toutes les donnees jusqu'en 2026 »** : non, pas partout — mais l'essentiel du symptome (85/111 en UEMOA) est un defaut d'affichage/recalcul et non une perte de donnees. Les 26 fonds UEMOA reellement sans VL recente relevent d'un chantier distinct (collecte a la source CREPMF/BRVM), a ne pas confondre avec le recalcul.
+
+**AUTRE ANOMALIE RELEVEE, non traitee dans ce lot** : `fond_investissements.datejour` est perime lui aussi (ex. fonds 2640 : `datejour = 2024-10-18` alors que sa derniere VL est au 2026-05-15). Ce champ n'alimente pas la colonne Date des pages pays, mais il faut verifier ce qu'il alimente ailleurs avant de le corriger.
+
+**ECART DE COMPTAGE A INSTRUIRE** : `valorisations_total = 1 021 964`, `nigeria = 77 818`, `pays <> 'NIGERIA' = 904 361`. Somme = 982 179, soit **39 785 valorisations non comptees**. Ce sont des lignes dont le fonds a `pays IS NULL` (exclu par `<>`) ou qui sont orphelines (aucun fonds correspondant, donc eliminees par le JOIN). Requete de controle :
+```sql
+SELECT CASE WHEN f.id IS NULL THEN 'ORPHELINE (aucun fonds)'
+            WHEN f.pays IS NULL THEN 'FONDS SANS PAYS'
+            ELSE 'RATTACHEE' END AS cas,
+       COUNT(*) AS lignes, COUNT(DISTINCT v.fund_id) AS fonds
+FROM valorisations v LEFT JOIN fond_investissements f ON f.id = v.fund_id
+GROUP BY cas;
+```
+Un fonds sans `pays` n'apparait sur AUCUNE page pays : c'est une cause possible de fonds « invisibles ».
+
+---
+
 ### LOT O — 2026-08-02 : OUTILLAGE DU RECALCUL CIBLE POST-CORRECTION (livre, NON EXECUTE)
+
+> **MISE A JOUR (lot P)** : le script `recalc_nigeria_after_correction.js` a ete **renomme `recalc_derives_par_pays.js`** — son perimetre n'est plus le seul Nigeria. Il gagne `--pays TOUS` (tous les fonds actifs, ventilation par pays dans le rapport) et `--only-perf` (etapes 3-4 seulement, pour les pays dont les VL sont saines et ou seules les performances sont en retard : **cas UEMOA et CEMAC**). Renommage sans risque : le script n'avait jamais tourne et aucun cron ne le referencait (verifie par grep sur tout le depot).
 
 **Contexte** : apres le Lot N, les VL Nigeria sont corrigees mais tout ce qui en DERIVE reste calcule sur les anciennes valeurs — `vl_ajuste`, `value_EUR`/`value_USD`, performances locales, performances EUR/USD. Le site affiche donc des VL justes avec des colonnes YTD / Perf 1A / Perf 3A perimees. C'est l'incoherence residuelle a resorber.
 
