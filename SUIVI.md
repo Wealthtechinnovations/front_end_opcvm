@@ -2111,6 +2111,62 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT R — 2026-08-02 : NIGERIA RECALCULE (256 -> 9) + 4 ANOMALIES RELEVEES DANS LE RAPPORT
+
+Commande executee : `node scripts/recalc/recalc_derives_par_pays.js --pays NIGERIA --execute --confirm` (3,0 min, **0 erreur sur les 4 etapes**).
+
+**RESULTAT** :
+| Indicateur | Avant | Apres |
+|---|---|---|
+| Lignes `performences` | 3 576 | 3 829 (+253 inseres, 65 mis a jour) |
+| Derniere perf | 2026-07-03 | **2026-07-10** (= derniere VL) |
+| **Fonds dont la perf est plus ancienne que la VL** | **256** | **9** |
+| `performences_eurs` / `_usds` | — | +212 inseres, 106 mis a jour chacun |
+| VL recalculees etape 1 / etape 2 | — | 77 551 / 76 967 |
+
+**VERIFICATION INDEPENDANTE SUR L'API PUBLIQUE** — Nigeria : `fonds avec perf 278 -> 318` (+40), `perf 2026 : 227 -> 240`. La hausse de `perf <= 2024` (47 -> 74) est **normale et souhaitable** : les 40 fonds qui n'avaient AUCUNE perf en ont maintenant une, calculee a la date de leur derniere VL reelle (BGL Nubian 2017, Anchor Fund 2016, FBN Eurobond 2016...). Ils affichent enfin leur vraie date au lieu de rien. Les 9 fonds restants sont des dormants sans historique exploitable.
+
+Etat consolide de la plateforme apres les lots Q et R (mesure API) : **942 fonds sur 1 099 affichent une date 2026**, contre 847 avant le lot Q.
+
+#### ANOMALIE R1 — verification hors perimetre dans `recalc_eur_usd_daily_rate.js` (CORRIGEE)
+Lance avec `--pays NIGERIA`, le rapport final affichait :
+`2026-07-29: 1000.9 MAD / 93.2631 EUR = taux implicite 10.7320`
+Or le Nigeria n'a ni MAD ni VL au 2026-07-29 (sa derniere est au 2026-07-10). Le bloc de verification etait **code en dur sur `WHERE f.dev_libelle = 'MAD'`** et ignorait le perimetre : il donnait l'illusion de valider le travail effectue alors qu'il examinait le Maroc. **Une verification hors perimetre est pire que pas de verification** : elle fabrique une confiance injustifiee.
+Corrige : la verification porte desormais sur le perimetre reellement traite, affiche la devise de chaque ligne, compare au taux reel du jour (`EUR/<devise>`) et rend un verdict `OK` / `ECART` (seuil 0,5 %). Le `toISOString()` qui reculait la date d'un jour en fuseau positif est egalement supprime.
+Defaut attrape dans la correction elle-meme : reutiliser `whereClause` tel quel dans une requete jointe aurait leve `Column 'id' is ambiguous` (les deux tables ont une colonne `id`). Une seconde clause `whereQualifie` prefixee `f.` est construite en parallele ; validee sur 5 combinaisons d'arguments.
+
+#### ANOMALIE R2 — casse incoherente du champ `pays` (A TRAITER)
+Le rapport ventile `NIGERIA: 313 fonds` **et** `Nigeria: 5 fonds`. Deux orthographes coexistent dans `fond_investissements.pays`. Sans consequence ici (les scripts comparent en `LOWER()`), mais tout `GROUP BY pays` ou tout filtre exact produira deux groupes distincts. Un script `fix_nigeria_pays_casing.js` existe deja. Requete de controle :
+```sql
+SELECT pays, COUNT(*) FROM fond_investissements WHERE active = 1 GROUP BY pays ORDER BY 2 DESC;
+```
+
+#### ANOMALIE R3 — 62 872 VL sans `vl_ajuste_EUR` (A INSTRUIRE)
+Verification globale de l'etape 1 : `Total VL (value > 0) = 1 021 360`, `vl_ajuste > 0 = 1 021 288`, **`vl_ajuste_EUR > 0 = 958 416`**. Environ 62 872 valorisations n'ont pas de contrepartie EUR. A rapprocher des **39 785 valorisations orphelines ou sans pays** relevees au lot P : meme famille de probleme (lignes hors perimetre de tout traitement par pays). Requete du lot P a executer.
+
+#### ANOMALIE R4 — GDL : LE TRANSFERT NE DOIT **PAS** ETRE APPLIQUE EN L'ETAT
+Dry-run de `fix_gdl_merge_1219.js` :
+- transferables (date absente de 1219) : **20 seulement** (et non 265)
+- collisions (meme date des deux cotes) : **247**, dont **232 aux valeurs DIVERGENTES**
+- exemples : `2026-04-24 archive=3.8285 / survivant=3.8228` · `2026-04-17 : 3.7552 / 3.7219` · `2026-04-10 : 3.6657 / 3.6951`
+
+**Interpretation** : 1219 et 2867 ne sont pas un fonds et son doublon vide, mais **deux series paralleles quasi completes qui divergent sur 232 dates**. Les ecarts sont faibles (~0,1-0,8 %) et de signe variable — signature typique de **deux mesures differentes du meme fonds** (Bid contre Offer contre Unit Price), pas d'une erreur de saisie. Rappel du contexte Nigeria : **depuis 2022 la SEC ne publie plus de VL explicite, seulement Bid et Offer**.
+
+Transferer les 20 lignes fabriquerait pour 1219 une serie **hybride** : ses propres valeurs jusqu'au 2026-04-24, puis 20 valeurs issues d'une autre serie. Ce serait un melange de deux sources divergentes — exactement ce que CLAUDE.md interdit. **Le script a donc correctement refuse de trancher seul.**
+
+Requete d'arbitrage a executer AVANT toute decision :
+```sql
+SELECT v.fund_id, v.price_type, v.currency_code, COUNT(*) n,
+       MIN(v.date) debut, MAX(v.date) fin
+FROM valorisations v WHERE v.fund_id IN (1219, 2867)
+GROUP BY v.fund_id, v.price_type, v.currency_code ORDER BY v.fund_id, n DESC;
+```
+`price_type` est renseigne pour les lignes ecrites par le batch SECNGFIX (2867) et NULL pour celles de 1219 (jamais touchees). Si 2867 porte des mesures qualifiees et tracees (`price_type`, `sec_document_id`, `source_url`) et 1219 des valeurs d'origine inconnue, alors **le survivant choisi est le mauvais** : il faudrait promouvoir 2867 et archiver 1219, ce qui contredirait la decision initiale « fusion vers 1219 » — d'ou la necessite d'un arbitrage explicite de l'utilisateur.
+
+**A NE PAS FAIRE** : lancer `fix_gdl_merge_1219.js --execute --confirm` avant d'avoir lu le resultat de cette requete.
+
+---
+
 ### LOT Q — 2026-08-02 : UEMOA RECALCULE EN PRODUCTION — 91 fonds en retard -> 2 (SUCCES VERIFIE)
 
 Commande executee sur le serveur :
