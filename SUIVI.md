@@ -2111,6 +2111,40 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT Q — 2026-08-02 : UEMOA RECALCULE EN PRODUCTION — 91 fonds en retard -> 2 (SUCCES VERIFIE)
+
+Commande executee sur le serveur :
+`node scripts/recalc/recalc_derives_par_pays.js --pays UEMOA --only-perf --execute --confirm`
+
+**RESULTAT (1,0 min, 0 erreur)** :
+| Indicateur | Avant | Apres |
+|---|---|---|
+| Lignes `performences` | 409 | 498 (+89 inseres, 19 mis a jour = 108 traites) |
+| `ytd` / `perf1an` renseignes | 409 | 498 |
+| Derniere perf | 2026-07-24 | **2026-07-30** (= derniere VL) |
+| **Fonds dont la perf est plus ancienne que la VL** | **91** | **2** |
+| `performences_eurs` / `_usds` | — | 108 fonds mis a jour chacun |
+
+Les 2 restants sont FCP "BRM DYNAMIQUE" et FCP "SDE" : derniere VL en **2014**, aucune perf calculable. 3 fonds « ignores » par le moteur (historique insuffisant) — comportement attendu, pas une erreur.
+
+**VERIFICATION INDEPENDANTE SUR L'API PUBLIQUE (meme route que le site)** — UEMOA :
+`fonds affichant une date 2026 : 3 -> 85`, `date <= 2024 : 102 -> 18`. Les 85 correspondent **exactement** aux 85 fonds identifies au lot P comme ayant des VL fraiches : prediction validee a l'unite pres. Les 24 restants affichent desormais la **vraie** date de leur derniere VL, ce qui est l'information juste et non un echec.
+
+Aucun autre pays touche (Maroc, Tunisie, Nigeria, CEMAC inchanges dans la mesure post-execution).
+
+### LOT Q bis — CEMAC : LE RECALCUL SERAIT INUTILE, LE PROBLEME EST LA COLLECTE
+
+Verification des 34 fonds CEMAC actifs via `/api/valLiq/:id` **avant** de lancer quoi que ce soit :
+- **VL fraiche (>= 2026) : 0 fonds sur 34**
+- VL arretee en 2024 : **34 sur 34** (du 2024-10-23 au 2024-12-12)
+- Aucune VL : 0
+
+**Conclusion : ne PAS lancer `--pays CEMAC`.** Contrairement a l'UEMOA, la perf CEMAC est deja calculee sur la derniere VL connue ; il n'y a rien a rattraper. Le pipeline de collecte CEMAC est **arrete depuis fin octobre 2024**. La bonne action est le scraper `scripts/scraper/bvmac_boc_daily.py` (livre au commit `84caa8f`, valide sur BOC-20260714.pdf : 30/30 lignes, 0 echec de parsing), a lancer en `--dry-run` pour verifier le rapprochement des noms avec les 34 fonds, PUIS import, PUIS recalcul.
+
+Cette distinction — recalcul contre collecte — est la cle de lecture a conserver : un pays dont les dates sont figees releve de l'un OU de l'autre, jamais des deux par defaut. Toujours mesurer la fraicheur des VL avant de choisir.
+
+---
+
 ### LOT P — 2026-08-02 : LE VRAI COUPABLE DES « DATES FIGEES EN 2024 » N'EST PAS LE NIGERIA (diagnostic chiffre)
 
 Signalement utilisateur : sur `/countries/funds/UEMOA`, la colonne **Date** affiche 2024 (2024-11-01, 2024-03-21...).
