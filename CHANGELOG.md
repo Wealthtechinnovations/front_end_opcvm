@@ -1,5 +1,29 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
+## [2026-08-02] NIGERIA — correction majeure des VL appliquee en production (batch SECNGFIX_20260802_113036)
+
+### Donnees (EXECUTE en prod, verifie)
+- **Regression d'import reparee** : depuis le 2026-05-08 seuls 39-41 fonds/semaine etaient importes contre 224+ avant (changement de format des fichiers SEC 2026). **Fonds avec VL au 2026-07-10 : 41 -> 220.** Les ~180 fonds figes au 2026-04-24 affichent de nouveau des donnees a jour.
+- **23 731 observations officielles inserees** (dont l'historique 2011-2017 jusqu'alors absent ; la base demarrait au 2017-12-29).
+- **27 660 valeurs corrigees** — decalage d'une periode PROUVE ligne a ligne contre le classeur officiel SEC (chaque correction porte son motif nominatif : mesure et date d'origine).
+- **16 774 lignes deja justes laissees intactes**, dont les 8 574 Money Market : un decalage global les aurait detruites.
+- **7 378 lignes d'origine inexpliquee mises en quarantaine sans modification** (jamais de valeur fabriquee).
+- **39 fonds officiels crees** (historique recupere) ; doublon GDL fusionne vers 1219, 2867 archive sans suppression.
+- **Aucun autre pays touche** : lignes hors Nigeria strictement identiques avant/apres (944 146).
+
+### Schema (migration additive, sans regression)
+- `2026_08_nigeria_additive_measures.sql` : ajout de `net_assets_ngn/usd`, `unit_price_ngn/usd`, `bid_price_ngn/usd`, `offer_price_ngn/usd`, `price_type`, `currency_code` + provenance (`sec_document_id`, `source_url`, `report_date`, `data_quality`, `correction_batch`) et table `sec_ng_corrections_audit`.
+- **`price_type` repond a un defaut de fond** : la SEC ne publie plus de VL explicite depuis 2022 (uniquement Bid/Offer). La colonne `value` contenait donc 8 643 Bid + 784 Offer presentes comme des « VL ». La nature reelle du prix est desormais explicite.
+- 100% additive : aucun DROP/RENAME, colonnes NULL par defaut, `value`/`actif_net`/`souscription`/`rachat` inchanges -> zero impact API/frontend.
+
+### Outillage livre
+- `scripts/import/sec_ng_xlsx_loader.py` (chargement + rapport + `--shift-analysis`), `scripts/fix/sec_ng_apply_corrections.py` (correction + rollback cible), `data/sec_ng_xlsx/` (classeur officiel), `docs/BIBLE_REFERENCE_NIGERIA_*.docx`.
+- Rollback : `--rollback SECNGFIX_20260802_113036` + sauvegardes horodatees.
+
+### A suivre
+Recalcul cible Nigeria (vl_ajuste, EUR/USD, performances, classements) : les metriques affichees restent calculees sur les anciennes valeurs tant qu'il n'est pas lance.
+
+
 ## [2026-07-09] #62 CLOS — deploye + verifie prod (garde null-category + derivation categories FundAfrica)
 
 ### API (commits `10dafc0` + `da208bb`, DEPLOYES) + donnees (EXECUTE prod)

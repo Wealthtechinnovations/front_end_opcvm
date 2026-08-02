@@ -2111,6 +2111,31 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT N — 2026-08-02 : NIGERIA — CORRECTION APPLIQUEE EN PRODUCTION ET VERIFIEE (batch SECNGFIX_20260802_113036)
+Phase B/C executees apres double validation utilisateur (`VALIDER CORRECTIONS NIGERIA` + decisions fusion GDL/creation fonds).
+
+**Sequence reellement executee** : sauvegarde ciblee (`bak_valorisations_ng_20260801_122943` 54 087 lignes + `bak_fond_investissements_ng_20260801_122943` 285 fonds, relecture verifiee) -> migration additive (`2026_08_nigeria_additive_measures.sql`, 7 colonnes + table d'audit ; `vl_total = value_non_null = 998 233` INCHANGE apres migration = preuve qu'aucune donnee existante n'a ete touchee) -> 2 dry-run -> `--execute --confirm`.
+
+**Defaut corrige entre les deux dry-run** : le 1er dry-run a revele que le moteur melangeait decalage prouve et origine inconnue sous un meme motif d'audit (`CORRECTED_VALUE=35 038`, `QUARANTINE=1`). Corrige (commit `ba6a343`) : separation en `CORRECTED_SHIFT` (cause identifiee, motif nominatif) et `QUARANTINE_UNKNOWN` (NON corrige par defaut). Verification arithmetique : **27 660 + 7 378 = 35 038** — decomposition exacte, rien perdu ni invente.
+
+**BILAN APPLIQUE** : `CORRECTED_SHIFT` 27 660 · `INSERTED` 23 731 · `FILL_MEASURES` 44 434 · `UNCHANGED` 16 774 (jamais touchees, dont les 8 574 Money Market) · `QUARANTINE_UNKNOWN` 7 378 (non modifiees) · `CORRECTED_UNKNOWN` 0 · 39 fonds crees · GDL 2867 archive (active=0, 17 VL en collision conservees, aucune ecrasee).
+
+**VERIFICATION POST-CORRECTION (mysql prod)** :
+| Controle | Avant | Apres | Verdict |
+|---|---|---|---|
+| valorisations total | 998 233 | 1 021 964 | +23 731 = exactement INSERTED ✓ |
+| Nigeria | 54 087 | 77 818 | +23 731 : toutes les insertions au Nigeria ✓ |
+| **Hors Nigeria** | **944 146** | **944 146** | **IDENTIQUE — aucun autre pays touche** ✓ |
+| Fonds actifs | 1 205 | 1 243 | +39 crees −1 archive ✓ |
+| **Fonds avec VL au 2026-07-10** | **41** | **220** | **~180 fonds figes au 24/04 ressuscites** ✓ |
+| Site / API | — | HTTP 200, db connected | ✓ |
+
+**ROLLBACK DISPONIBLE** : `python3 scripts/fix/sec_ng_apply_corrections.py --rollback SECNGFIX_20260802_113036` (journal avant/apres complet dans `sec_ng_corrections_audit`) + tables de sauvegarde horodatees.
+
+**PIEGE IDENTIFIE DANS LE DIAGNOSTIC DORMANTS** (`check_dormant_funds_coverage.js`) : il annoncait « NIGERIA 243 dormants — pipeline actif -> candidats dissolution ». **Conclusion trompeuse** : sa regle suppose un pipeline SAIN, or celui du Nigeria etait casse (41/226 fonds importes). ~185 de ces 243 etaient vivants mais figes par le bug. **Ne jamais desactiver sur cette seule base.** A relancer APRES correction pour connaitre les vrais dormants. Idem : le script classe CEMAC « sans pipeline », ce qui est perime depuis la livraison de `bvmac_boc_daily.py`.
+
+**RESTE A FAIRE (dependances)** : les performances (YTD, 1A, 3A) et classements Nigeria sont desormais calcules sur d'anciennes valeurs -> recalcul CIBLE Nigeria necessaire (vl_ajuste, conversions EUR/USD, performances, puis classements). Attention : les classements sont par categorie inter-pays, un recompute deplacera mecaniquement les rangs des autres pays (consequence normale de la correction, a valider par l'utilisateur).
+
 ### LOT M — 2026-07-31 : NIGERIA — analyse du decalage EXECUTEE sur la prod (lecture seule). VERDICT : correction globale INTERDITE
 Commandes reellement executees sur le serveur (SELECT uniquement, dry-run) :
 `sec_ng_xlsx_loader.py --xlsx data/sec_ng_xlsx/... --report` puis `--shift-analysis`.
