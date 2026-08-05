@@ -2111,6 +2111,36 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT S — 2026-08-02 : DEUX DECOUVERTES VIA LA REQUETE D'ARBITRAGE GDL
+
+#### S1 — BUG PLAFOND 500 : 144 FONDS MAROCAINS INVISIBLES (CORRIGE, deploiement requis)
+La requete `SELECT pays, COUNT(*) ... GROUP BY pays` a revele **MAROC = 644 fonds actifs**. Or `/api/getfondbypays/MAROC` renvoie exactement **500** (verifie en direct). Deux routes de listing par pays plafonnaient a `limit: 500` codé en dur :
+- `routes_vl_admin.js:332` (`/api/getfondbypays/:id`)
+- `apigestionpays.js:691` (`/api/listeproduitpayssociete/:id` — celle qui alimente le tableau ET la colonne Date de la page pays)
+**144 fonds marocains n'apparaissaient jamais sur le site.** Correge : limite portee a 5000 (requete filtree par pays, donc bornee au plus gros pays sans charger toute la base ; reponse de forme identique). Commit api `30543c2`.
+**Reste a faire** : deployer (`git pull` + `pm2 restart api-monolith`) puis verifier `getfondbypays/MAROC` renvoie 644. **NB** : cela n'affecte QUE l'affichage — les 144 fonds existaient deja en base, ils deviennent visibles. Certains peuvent etre dormants (date ancienne) : c'est la donnee reelle, conforme a la demande « affichée selon les données réelles en base ».
+**A auditer plus tard** : le motif `limit: 500` apparait ~90 fois dans les routes. Les autres pays (max 323) passent sous le seuil, mais tout pays qui franchira 500 sera tronque. Candidat a une constante centrale `MAX_LISTE`.
+
+#### S2 — GDL : ARBITRAGE TRANCHE PAR LES DONNEES (decision utilisateur requise)
+Requete `GROUP BY fund_id, price_type, currency_code` :
+| fund_id | price_type | devise | n | plage |
+|---|---|---|---|---|
+| **1219** (actif, survivant) | **NULL** | **NULL** | **273** | 2020-11-27 → 2026-04-24 |
+| 1219 | UNIT_PRICE | NGN | 1 | 2021-05-28 |
+| **2867** (archive) | **BID** | NGN | 240 | 2021-12-03 → 2026-07-10 |
+| 2867 | UNIT_PRICE | NGN | 26 | 2021-06-04 → 2021-11-26 |
+| 2867 | OFFER | NGN | 1 | 2025-10-31 |
+
+**Verdict sans ambiguite** : le survivant actif 1219 porte **273 lignes non qualifiees, d'origine inconnue** (`price_type`/`currency_code` NULL), jamais tracees. Le fonds archive 2867 porte **267 lignes toutes qualifiees et sourcees SEC** (240 BID + 26 UNIT_PRICE + 1 OFFER, toutes NGN). **Le mauvais fonds a ete retenu comme survivant.** L'hypothese du lot R est confirmee.
+
+Consequence : la bonne action n'est PAS le transfert des 20 lignes (qui creerait une serie hybride), mais de faire porter au fonds 1219 (id que l'utilisateur veut garder, avec son alias) la **serie qualifiee de 2867**. Cela implique, sur les 247 dates en collision, que la valeur qualifiee de 2867 remplace la valeur inconnue de 1219 (ancienne archivee, jamais supprimee).
+
+**3 options presentees a l'utilisateur (AskUserQuestion)** — voir decision ci-dessous. Rien n'est execute avant reponse. `fix_gdl_merge_1219.js` NE DOIT PAS etre lance en l'etat (il ne fait que le transfert des 20 lignes = option ecartee).
+
+**Note metier** : 1219 possede ~7 mois d'historique anterieur (2020-11-27 → 2021-05) que 2867 n'a pas. Toute option retenue doit CONSERVER cet historique ancien (aucune valeur qualifiee concurrente sur ces dates).
+
+---
+
 ### LOT R — 2026-08-02 : NIGERIA RECALCULE (256 -> 9) + 4 ANOMALIES RELEVEES DANS LE RAPPORT
 
 Commande executee : `node scripts/recalc/recalc_derives_par_pays.js --pays NIGERIA --execute --confirm` (3,0 min, **0 erreur sur les 4 etapes**).
