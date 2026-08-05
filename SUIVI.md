@@ -2135,7 +2135,13 @@ Requete `GROUP BY fund_id, price_type, currency_code` :
 
 Consequence : la bonne action n'est PAS le transfert des 20 lignes (qui creerait une serie hybride), mais de faire porter au fonds 1219 (id que l'utilisateur veut garder, avec son alias) la **serie qualifiee de 2867**. Cela implique, sur les 247 dates en collision, que la valeur qualifiee de 2867 remplace la valeur inconnue de 1219 (ancienne archivee, jamais supprimee).
 
-**3 options presentees a l'utilisateur (AskUserQuestion)** — voir decision ci-dessous. Rien n'est execute avant reponse. `fix_gdl_merge_1219.js` NE DOIT PAS etre lance en l'etat (il ne fait que le transfert des 20 lignes = option ecartee).
+**DECISION UTILISATEUR : OPTION A** (2026-08-02) — « Adopter la serie SEC ». `fix_gdl_merge_1219.js` reecrit (commit api `ce8a843`) pour cette operation :
+- Collisions (247 dates) : la ligne 1219 adopte la mesure officielle de 2867 ; ancienne valeur journalisee en snapshot JSON avant ecrasement.
+- Transferables (20 dates propres a 2867) : rattachees a 1219.
+- Historique ancien de 1219 (2020-11 -> 2021-05) : intact.
+- Ne copie que `value` (NOT NULL) + colonnes de qualification NULLABLE ; les derivees devise sont RECALCULEES ensuite (etape obligatoire imprimee par le script), jamais copiees depuis le fonds archive.
+- Reversible : `--rollback <batch>` restaure chaque colonne depuis le snapshot.
+**A executer** : dry-run, puis `--execute --confirm`, puis les 4 commandes de recalcul cible du fonds 1219 imprimees en fin d'execution. Le deploiement backend (S1) doit preceder pour que la page pays reflete le tout.
 
 **Note metier** : 1219 possede ~7 mois d'historique anterieur (2020-11-27 → 2021-05) que 2867 n'a pas. Toute option retenue doit CONSERVER cet historique ancien (aucune valeur qualifiee concurrente sur ces dates).
 
