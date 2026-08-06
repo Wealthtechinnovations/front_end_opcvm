@@ -2139,7 +2139,18 @@ Le batch SECNGFIX a insere 23 731 lignes mais n'a pas traite les cas type GDL ni
 
 **Livre** : mode `--ambiguities` (commit api `b69ef92`, LECTURE SEULE) — liste pour chaque cle non resolue les fonds candidats en base (score, id, actif, derniere VL, societe) pour arbitrage humain. Le script ne rattache JAMAIS seul une correspondance douteuse.
 
-**PROCHAINE ACTION** : lancer `--ambiguities` sur le serveur, puis arbitrer cle par cle (classe de parts = fonds distinct a conserver ; renommage = alias/rattachement au fonds actif ; serie a echeance = fonds distinct). Une fois les mappings valides, import cible des lignes vers le bon fonds + recalcul cible de ces fonds. **Ne rien ecrire avant l'arbitrage.**
+**ARBITRAGE DES 22 CLES EFFECTUE (2026-08-06, via `--ambiguities` + verification API)** :
+- La majorite des cles correspondent a des fonds **DEJA A JOUR** a leur vraie derniere date SEC (aucune action) : Guaranty Dollar->2773, VGIF->1225, Stanbic Infra S2->2819, FBN Bond->1198, FBN Eurobond Inst->2829, Stanbic Absolute->1267, Stanbic Aggressive->1253.
+- **Verifie en base** : « FCMBAM Money Market Fund » et « First Asset Money Market Fund » sont **reellement absents** (FCMBAM n'a qu'Equity/Debt/USD Bond ; First Asset a 7 fonds sans MMF) — les scores eleves pointaient vers d'autres gerants (FAAM, First Ally = fausses correspondances). Donnees jusqu'au 2026-07-10.
+- « Zenith Balanced Strategy Fund » = fonds **2825** (BALANCED STRATEGY FUND (ZENITH EQUITY)), fige au 2022-10-07 alors que le classeur va au 2026-07-10.
+
+**DECISION UTILISATEUR (2026-08-06)** : implementer les 3 actions a valeur reelle —
+1. ATTACH Zenith -> 2825 ; 2. CREATE les 2 MMF manquants ; 3. forward-fill Vantage -> 1224.
+Cles anciennes/dormantes (FBN Eurobond Retail, SIM/ValuAlliance, UBA, United Capital Bond, DV Balanced, Cordros Milestone) : **differees** (donnees <= 2021, a confirmer emetteur).
+
+**Livre** : `scripts/fix/fix_nigeria_ambiguous_apply.py` (commit api `ecc12b5`). Applique UNIQUEMENT ces decisions ; insere les dates absentes ; cree les fonds par clonage (gerant + categorie de reference, jamais le code_ISIN) ; journalise dans sec_ng_corrections_audit ; dry-run par defaut, `--execute --confirm`, `--rollback <batch>`. Le dry-run imprime la fiche des nouveaux fonds pour revue.
+
+**PROCHAINE ACTION** : sur le serveur, `--xlsx ... ` (dry-run) pour revoir la fiche des 2 fonds crees, PUIS `--execute --confirm`, PUIS recalcul cible de chaque fonds touche (commandes imprimees par le script). **Ne pas executer avant d'avoir revu le dry-run.**
 
 ---
 
