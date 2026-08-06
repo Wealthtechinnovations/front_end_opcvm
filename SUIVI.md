@@ -2168,7 +2168,7 @@ Cles anciennes/dormantes (FBN Eurobond Retail, SIM/ValuAlliance, UBA, United Cap
 
 Nigeria : 324 -> **326 fonds** (2 MMF crees), visibles et actifs via l'API.
 
-**CORRECTIF** : ajout du rollback chirurgical `--only-fund` (commit api `d7c07de`). Vantage annule seul : `--rollback NGAMB_20260806_191121 --only-fund 1224` + recalcul 1224 -> retour a l'etat anterieur (derniere VL 2024-04-19). Les 3 autres decisions conservees.
+**CORRECTIF APPLIQUE ET VERIFIE (2026-08-06)** : rollback chirurgical `--only-fund 1224` (commit api `d7c07de`) -> 20 VL retirees, 1224 revenu a 255 VL / derniere 2024-04-19. Recalcul cible OK. Suppression de la perf orpheline au 2024-06-28 (voir piege ci-dessous). **API confirme : 1224 date 2024-04-19, YTD 55,2 % (sain).** Les 3 autres decisions conservees. Regression totalement effacee.
 
 **PIEGE GENERAL DECOUVERT (perfs orphelines apres retrait de VL)** : `fix_populate_performances*` calcule la perf a la DERNIERE date VL du fonds mais ne SUPPRIME pas les lignes `performences` a des dates devenues sans VL. Apres le rollback Vantage, une perf orpheline au 2024-06-28 (ytd 15655 %) a survecu et restait la plus recente -> l'API l'affichait encore. Correctif : `DELETE FROM performences/_eurs/_usds WHERE fond_id=X AND date NOT IN (SELECT date FROM valorisations WHERE fund_id=X)`. A garder en tete pour tout futur retrait/rollback de VL. (Envisager d'integrer ce nettoyage aux scripts de rollback.)
 
