@@ -2150,7 +2150,15 @@ Cles anciennes/dormantes (FBN Eurobond Retail, SIM/ValuAlliance, UBA, United Cap
 
 **Livre** : `scripts/fix/fix_nigeria_ambiguous_apply.py` (commit api `ecc12b5`). Applique UNIQUEMENT ces decisions ; insere les dates absentes ; cree les fonds par clonage (gerant + categorie de reference, jamais le code_ISIN) ; journalise dans sec_ng_corrections_audit ; dry-run par defaut, `--execute --confirm`, `--rollback <batch>`. Le dry-run imprime la fiche des nouveaux fonds pour revue.
 
-**PROCHAINE ACTION** : sur le serveur, `--xlsx ... ` (dry-run) pour revoir la fiche des 2 fonds crees, PUIS `--execute --confirm`, PUIS recalcul cible de chaque fonds touche (commandes imprimees par le script). **Ne pas executer avant d'avoir revu le dry-run.**
+**APPLIQUE EN PRODUCTION (2026-08-06, batch `NGAMB_20260806_191121`)** :
+- ATTACH Zenith -> **2825** : +6 VL (2026-06-05 -> 2026-07-10). Fonds redevenu courant. NOTE : sous ce nom le classeur n'a que 6 obs recentes ; trou possible 2022-10 -> 2026-06 (fonds non publie, ou donnees sous un autre nom — a verifier).
+- ATTACH Vantage -> **1224** : +20 VL (jusqu'au 2024-06-28).
+- CREATE **2924** = FCMBAM Money Market Fund (FCMB Asset Management, NGN, MONETAIRE, actif=1) : 12 VL 2026-04-24 -> 2026-07-10.
+- CREATE **2925** = First Asset Money Market Fund (First Asset Management, NGN, MONETAIRE, actif=1) : 12 VL 2026-04-24 -> 2026-07-10.
+- Dry-run prealable revu (fiches des 2 fonds validees) ; transaction atomique ; tout journalise.
+- ROLLBACK : `python3 scripts/fix/fix_nigeria_ambiguous_apply.py --rollback NGAMB_20260806_191121`.
+
+**RESTE (en cours)** : recalcul cible des 4 fonds (2825, 1224, 2924, 2925) — vl_ajuste + EUR/USD + performances — puis verification API. Cles ambigues anciennes/dormantes toujours differees (donnees <= 2021).
 
 ---
 
