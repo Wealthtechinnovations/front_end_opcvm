@@ -2125,12 +2125,21 @@ Le batch SECNGFIX a insere 23 731 lignes mais n'a pas traite les cas type GDL ni
 - cote prod : STALE_SANS_SOURCE = actifs en retard sans donnee du classeur (cas GDL ou fonds clos) ;
 - cles UNMATCHED/AMBIGUOUS.
 
-**Prochaine action** : lancer `--coverage` sur le serveur (commande donnee a l'utilisateur), puis, selon la ventilation :
-1. EN_RETARD_FIXABLE -> import cible (re-run apply_corrections restreint, ou insertion des lignes manquantes) ;
-2. STALE_SANS_SOURCE type GDL -> fusion ciblee facon `fix_gdl_merge_1219.js` (adapter les id) ;
-3. UNMATCHED/AMBIGUOUS -> creation/arbitrage de fonds ;
-4. fonds reellement clos -> laisser a leur derniere VL (aucune invention).
-**Ne rien ecrire avant d'avoir lu la sortie `--coverage`.**
+**REGLE POSEE PAR L'UTILISATEUR (2026-08-06)** : le classeur `Nigeria_SEC_OPCVM_NAV_2011_2026.xlsx` est **la base de verite a privilegier** pour les fonds Nigeria. Toute divergence base <-> classeur se tranche en faveur du classeur (source officielle SEC).
+
+**RESULTAT `--coverage` (execute 2026-08-06, LECTURE SEULE)** — bien meilleur que craint :
+- Classeur : 77 863 lignes, 2011-08-12 -> 2026-07-10, 352 cles de fonds, referentiel base 324 fonds.
+- Resolution : **320 cles MATCHED_EXACT + 8 FUZZY + 2 COMPACT = 330 rattachees**, 22 AMBIGUOUS.
+- Couverture fonds matches : **A_JOUR = 307**, EN_RETARD_FIXABLE = 4, PROD_PLUS_RECENT = 8, SANS_VL_PROD = 1.
+- **CORRECTION de mon alarme du lot T** : les « ~20 figes au 24/04 / 82 anciens » du scan API n'etaient PAS des bugs. Pour 307 fonds, le classeur s'arrete AUSSI a cette date : la base est fidele a la source. Bien joue cote donnees.
+
+**EN_RETARD_FIXABLE (4)** : [2891] Continental Unit Trust (2011-08-26->09-02), [2911] Lighthouse Jubilee (2011-09-02->09-09), **[2918] Stanbic IBTC Conservation (2013-02-15 -> 2015-03-06, seul materiel)**, [2867] GDL archive (deja traite, jumeau 1219 a jour). Import additif possible mais faible valeur (fonds anciens/dormants).
+
+**LE VRAI RESTE — 22 CLES AMBIGUOUS** (classes de parts, renommages, series a echeance). Elles expliquent les 4 fonds ACTIFS figes STALE_SANS_SOURCE dont la donnee EST dans le classeur sous un nom ambigu : [2828]/[2829] FBN Eurobond (VL 2022-02-11), [2823] FBN Dollar (2022-09-16), [1198] FBN Bond (2023-01-13). Exemples de cles : FBN Bond/FBN Fixed Income, FBN Eurobond Institutional/Retail, SIM Alliance Value/SIM Capital Alliance/ValuAlliance, Cordros Milestone 2023/2028, UBA Balanced/Money Market, Stanbic Absolute/Aggressive.
+
+**Livre** : mode `--ambiguities` (commit api `b69ef92`, LECTURE SEULE) — liste pour chaque cle non resolue les fonds candidats en base (score, id, actif, derniere VL, societe) pour arbitrage humain. Le script ne rattache JAMAIS seul une correspondance douteuse.
+
+**PROCHAINE ACTION** : lancer `--ambiguities` sur le serveur, puis arbitrer cle par cle (classe de parts = fonds distinct a conserver ; renommage = alias/rattachement au fonds actif ; serie a echeance = fonds distinct). Une fois les mappings valides, import cible des lignes vers le bon fonds + recalcul cible de ces fonds. **Ne rien ecrire avant l'arbitrage.**
 
 ---
 
