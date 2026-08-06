@@ -2158,7 +2158,22 @@ Cles anciennes/dormantes (FBN Eurobond Retail, SIM/ValuAlliance, UBA, United Cap
 - Dry-run prealable revu (fiches des 2 fonds validees) ; transaction atomique ; tout journalise.
 - ROLLBACK : `python3 scripts/fix/fix_nigeria_ambiguous_apply.py --rollback NGAMB_20260806_191121`.
 
-**RESTE (en cours)** : recalcul cible des 4 fonds (2825, 1224, 2924, 2925) — vl_ajuste + EUR/USD + performances — puis verification API. Cles ambigues anciennes/dormantes toujours differees (donnees <= 2021).
+**RECALCUL + VERIFICATION API (2026-08-06)** — bilan honnete, 3/4 OK, 1 regression corrigee :
+| Fonds | Etat | Verdict |
+|---|---|---|
+| **2924 FCMBAM MMF** | MONETAIRE, NGN, actif, VL 2026-07-10, YTD 0 | ✅ correct (VL constante = normal monetaire) |
+| **2925 First Asset MMF** | MONETAIRE, NGN, actif, VL 2026-07-10, YTD 0 | ✅ correct |
+| **2825 Zenith** | VL 2026-07-10 (courante), mais **YTD 239 %** | ⚠️ VL fidele ; YTD fausse par le trou 2022->2026 (pas de base au 1er janv. -> compare a 2022). ATTENTION classements : un recompute classerait 2825 anormalement haut en categorie ACTIONS. |
+| **1224 Vantage** | **YTD 15 655 %** | ❌ REGRESSION : serie classeur (~148 599) sur une echelle ~90x differente de l'existant (~1 651). Melange d'echelles interdit. |
+
+Nigeria : 324 -> **326 fonds** (2 MMF crees), visibles et actifs via l'API.
+
+**CORRECTIF** : ajout du rollback chirurgical `--only-fund` (commit api `d7c07de`). Vantage annule seul : `--rollback NGAMB_20260806_191121 --only-fund 1224` + recalcul 1224 -> retour a l'etat anterieur (derniere VL 2024-04-19). Les 3 autres decisions conservees.
+
+**A INSTRUIRE PLUS TARD** :
+- Vantage 1224 : la cle « Vantage Dollar Fund (VDF) » du classeur est sur une base differente (probable NGN total vs unit price USD). A rejouer seulement apres avoir compris l'echelle. NE PAS re-rattacher tel quel.
+- Zenith 2825 : VL correcte mais historique discontinu (trou 2022->2026). Le calcul YTD doit ignorer une base > 1 an (amelioration moteur perf) OU combler le trou si les donnees existent sous un autre nom. En attendant, surveiller son rang en categorie ACTIONS avant tout recompute de classements.
+- Cles ambigues anciennes/dormantes : toujours differees (donnees <= 2021).
 
 ---
 
