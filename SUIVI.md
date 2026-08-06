@@ -2141,7 +2141,16 @@ Consequence : la bonne action n'est PAS le transfert des 20 lignes (qui creerait
 - Historique ancien de 1219 (2020-11 -> 2021-05) : intact.
 - Ne copie que `value` (NOT NULL) + colonnes de qualification NULLABLE ; les derivees devise sont RECALCULEES ensuite (etape obligatoire imprimee par le script), jamais copiees depuis le fonds archive.
 - Reversible : `--rollback <batch>` restaure chaque colonne depuis le snapshot.
-**A executer** : dry-run, puis `--execute --confirm`, puis les 4 commandes de recalcul cible du fonds 1219 imprimees en fin d'execution. Le deploiement backend (S1) doit preceder pour que la page pays reflete le tout.
+**EXECUTE EN PRODUCTION (2026-08-05, batch `GDLADOPT_20260805_092413`)** :
+- 1219 : **274 -> 294 lignes**, plage **2020-11-27 -> 2026-07-10** (etait figee au 2026-04-24). 247 mesures SEC adoptees + 20 lignes rattachees, transaction unique OK.
+- 2867 : 267 -> 247 (a cede ses 20 dates uniques ; reste archive, temoin historique).
+- Controle arithmetique : 294 = 27 (historique propre 1219) + 247 (collisions) + 20 (transferees).
+- **Verifie en direct sur l'API publique** : `/api/valLiq/1219` sert 294 points jusqu'au 2026-07-10 (derniere value 3.8377, serie SEC). 2867 archive non affiche.
+- Rollback disponible : `node scripts/fix/fix_gdl_merge_1219.js --rollback GDLADOPT_20260805_092413`.
+
+**BACKEND DEPLOYE (S1 applique)** : `git pull` + `pm2 restart api-monolith` faits. **Verifie : `/api/getfondbypays/MAROC` renvoie desormais 644** (etait 500). Les 144 fonds marocains masques sont visibles.
+
+**RESTE — recalcul cible du fonds 1219 (4 commandes) NON ENCORE EXECUTE** : `recalc_vl_ajuste.js 1219`, `recalc_eur_usd_daily_rate.js 1219`, `fix_populate_performances.js --fond 1219 --force`, `fix_populate_performances_eur_usd.js --devise BOTH --fond 1219 --force`. Sans lui, la VL de 1219 est correcte mais ses performances/EUR/USD restent sur l'ancien historique tronque.
 
 **Note metier** : 1219 possede ~7 mois d'historique anterieur (2020-11-27 → 2021-05) que 2867 n'a pas. Toute option retenue doit CONSERVER cet historique ancien (aucune valeur qualifiee concurrente sur ces dates).
 
