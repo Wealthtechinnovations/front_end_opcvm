@@ -2111,6 +2111,29 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT T — 2026-08-05 : NIGERIA PAS ENCORE COMPLET — outil de couverture ajoute (rappel utilisateur)
+
+**Constat honnete** : mon bilan « Nigeria 256->9 » du lot R mesurait les fonds dont la perf etait plus ancienne que leur VL, PAS la fraicheur absolue au dernier point SEC. Rappel utilisateur : le processus + le classeur complet (`Nigeria_SEC_OPCVM_NAV_2011_2026.xlsx`) devaient mettre **TOUS** les fonds a jour. Scan API des 323 fonds actifs (2026-08-05) :
+- ~220 fonds a jour au dernier point SEC (2026-07-10) ;
+- **~20 fonds bloques au 2026-04-24** (memes symptomes que GDL avant reparation : donnees recentes vraisemblablement rattachees a un doublon/alias) ;
+- **82 fonds a VL reellement ancienne** (2011->2025) — a departager : fonds clos vs donnee non importee.
+
+Le batch SECNGFIX a insere 23 731 lignes mais n'a pas traite les cas type GDL ni les cles UNMATCHED/AMBIGUOUS.
+
+**Livre** : `scripts/import/sec_ng_xlsx_loader.py --coverage` (commit api `64b2e58`, LECTURE SEULE). Croise les deux directions :
+- cote Excel (fonds matches) : EN_RETARD_FIXABLE / A_JOUR / PROD_PLUS_RECENT ;
+- cote prod : STALE_SANS_SOURCE = actifs en retard sans donnee du classeur (cas GDL ou fonds clos) ;
+- cles UNMATCHED/AMBIGUOUS.
+
+**Prochaine action** : lancer `--coverage` sur le serveur (commande donnee a l'utilisateur), puis, selon la ventilation :
+1. EN_RETARD_FIXABLE -> import cible (re-run apply_corrections restreint, ou insertion des lignes manquantes) ;
+2. STALE_SANS_SOURCE type GDL -> fusion ciblee facon `fix_gdl_merge_1219.js` (adapter les id) ;
+3. UNMATCHED/AMBIGUOUS -> creation/arbitrage de fonds ;
+4. fonds reellement clos -> laisser a leur derniere VL (aucune invention).
+**Ne rien ecrire avant d'avoir lu la sortie `--coverage`.**
+
+---
+
 ### LOT S — 2026-08-02 : DEUX DECOUVERTES VIA LA REQUETE D'ARBITRAGE GDL
 
 #### S1 — BUG PLAFOND 500 : 144 FONDS MAROCAINS INVISIBLES (CORRIGE, deploiement requis)
