@@ -2150,7 +2150,13 @@ Consequence : la bonne action n'est PAS le transfert des 20 lignes (qui creerait
 
 **BACKEND DEPLOYE (S1 applique)** : `git pull` + `pm2 restart api-monolith` faits. **Verifie : `/api/getfondbypays/MAROC` renvoie desormais 644** (etait 500). Les 144 fonds marocains masques sont visibles.
 
-**RESTE — recalcul cible du fonds 1219 (4 commandes) NON ENCORE EXECUTE** : `recalc_vl_ajuste.js 1219`, `recalc_eur_usd_daily_rate.js 1219`, `fix_populate_performances.js --fond 1219 --force`, `fix_populate_performances_eur_usd.js --devise BOTH --fond 1219 --force`. Sans lui, la VL de 1219 est correcte mais ses performances/EUR/USD restent sur l'ancien historique tronque.
+**RECALCUL CIBLE 1219 EXECUTE (2026-08-05) — CHANTIER GDL CLOS** :
+- vl_ajuste : 294 lignes, 0 erreur (fonds sans dividende : vl_ajuste = value).
+- EUR/USD : 294 lignes recalculees au taux du jour, **verification OK** — le taux implicite value/value_EUR egale le taux reel NGN a chaque date testee (2026-07-10 : 1571.61 = 1571.61). C'est aussi la preuve en prod que le correctif R1 (verification recentree sur le perimetre) fonctionne.
+- performances : 1 inseree, date 2026-07-10.
+- **Verifie en direct via `/api/listeproduitpayssociete/NIGERIA` (route reelle du site)** : 1219 affiche date=2026-07-10, YTD=25.62 %, perf1an=39.98 %, perf3ans=140.14 %, calculees sur la serie SEC. Coherence totale VL <-> performances.
+
+Rien a faire de plus sur GDL. Rollback complet toujours possible : `--rollback GDLADOPT_20260805_092413` (+ recalcul si annulation).
 
 **Note metier** : 1219 possede ~7 mois d'historique anterieur (2020-11-27 → 2021-05) que 2867 n'a pas. Toute option retenue doit CONSERVER cet historique ancien (aucune valeur qualifiee concurrente sur ces dates).
 
