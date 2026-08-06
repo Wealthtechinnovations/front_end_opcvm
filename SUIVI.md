@@ -2170,6 +2170,8 @@ Nigeria : 324 -> **326 fonds** (2 MMF crees), visibles et actifs via l'API.
 
 **CORRECTIF** : ajout du rollback chirurgical `--only-fund` (commit api `d7c07de`). Vantage annule seul : `--rollback NGAMB_20260806_191121 --only-fund 1224` + recalcul 1224 -> retour a l'etat anterieur (derniere VL 2024-04-19). Les 3 autres decisions conservees.
 
+**PIEGE GENERAL DECOUVERT (perfs orphelines apres retrait de VL)** : `fix_populate_performances*` calcule la perf a la DERNIERE date VL du fonds mais ne SUPPRIME pas les lignes `performences` a des dates devenues sans VL. Apres le rollback Vantage, une perf orpheline au 2024-06-28 (ytd 15655 %) a survecu et restait la plus recente -> l'API l'affichait encore. Correctif : `DELETE FROM performences/_eurs/_usds WHERE fond_id=X AND date NOT IN (SELECT date FROM valorisations WHERE fund_id=X)`. A garder en tete pour tout futur retrait/rollback de VL. (Envisager d'integrer ce nettoyage aux scripts de rollback.)
+
 **A INSTRUIRE PLUS TARD** :
 - Vantage 1224 : la cle « Vantage Dollar Fund (VDF) » du classeur est sur une base differente (probable NGN total vs unit price USD). A rejouer seulement apres avoir compris l'echelle. NE PAS re-rattacher tel quel.
 - Zenith 2825 : VL correcte mais historique discontinu (trou 2022->2026). Le calcul YTD doit ignorer une base > 1 an (amelioration moteur perf) OU combler le trou si les donnees existent sous un autre nom. En attendant, surveiller son rang en categorie ACTIONS avant tout recompute de classements.
