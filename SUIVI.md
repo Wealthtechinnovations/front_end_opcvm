@@ -1,5 +1,113 @@
 # Carnet de suivi - Africafunds (Fundafrique)
 
+---
+
+# BACKLOG CONSOLIDE UNIQUE — etabli le 2026-08-12
+
+> **Lire cette section AVANT toute intervention.** Elle remplace la lecture des 33 fichiers .md
+> (~9 000 lignes) des deux depots. Consolidation de 215 items extraits de api_opcv (CLAUDE.md,
+> MCP_AUTONOMY.md, CORRECTIONS.md, ARCHITECTURE_DIAGNOSTIC.md, T13_DIAGNOSTIC_INDICES.md,
+> TODO_DEPLOY.md, DEPLOYMENT_PRODUCTION.md, README_DEV.md, GPT.md) + front_end_opcvm
+> (TODO.md, TASKS.md, ROADMAP.md, CODE_REVIEW.md, CHANGELOG.md) + SUIVI.md.
+>
+> **Niveau de preuve** — regle stricte, appliquee sans exception :
+> - `PROD` = verifie le 2026-08-12 sur l'API publique de production. Seul niveau qui autorise « c'est fait ».
+> - `DOC` = ecrit dans un .md. Une consigne ecrite n'est PAS une preuve d'execution.
+> - `NON VERIFIE` = ni l'un ni l'autre.
+
+## 1. ETAT REEL DE LA PLATEFORME (verifie PROD le 2026-08-12)
+
+| Pays | Fonds (actifs) | VL la plus recente | Fonds a jour (>= 2026-07) | Verdict |
+|---|---|---|---|---|
+| MAROC | 644 (644) | **2026-08-11** | 627/644 | Sain — plafond 500 bien corrige |
+| TUNISIE | 131 (131) | **2026-08-07** | 126/131 | Sain |
+| NIGERIA | 326 (325) | 2026-07-24 | 41/326 | Conforme a la source SEC (arret 07-10) |
+| UEMOA | 118 (111) | *affiche* 2025-10-15 | 0/118 | **BUG D'AFFICHAGE — voir P1-01** |
+| CEMAC | 34 (34) | 2024-12-12 | 0/34 | **Vrai trou de donnees — source COSUMAF manquante** |
+
+- Frontend `https://africafunds.chainsolutions.fr/home` : **HTTP 200** (PROD).
+- Base : 1 251 fonds, 1 021 964 VL, 155 societes, 43 pays/regulateurs.
+- Couverture `indRef` : MAROC 548 678/549 001 · NIGERIA 77 551/77 551 · TUNISIE 306 056/306 056 ·
+  UEMOA 42 700/42 700 · **CEMAC 0/2 134** (aucun benchmark rattache).
+- `PRODUCTION_STATE.json` : `generated_at = 2026-08-02` → **10 jours de retard** (voir P2-05).
+
+## 2. BACKLOG CONSOLIDE — CE QUI RESTE VRAIMENT A FAIRE
+
+### P1 — Bloquant (donnee fausse affichee, ou perte de visibilite)
+
+| ID | Domaine | Sujet | Preuve | Action |
+|---|---|---|---|---|
+| **P1-01** | UEMOA / Page pays | **111 fonds UEMOA affiches figes au 2025-10-15 alors que leurs VL vont au 2026-08-11.** `datejour` est une colonne denormalisee de `fond_investissements` (`routes_vl_admin.js:344`), que le cron BRVM BOC n'actualise pas apres insertion des VL. Fiches fonds correctes, page pays fausse. | **PROD** (fonds 2617/2557/2539/2636 : `valLiq` → 2026-08-11 ; `getfondbypays/UEMOA` → 2025-10-15) | Diagnostic fait. Reste : `UPDATE fond_investissements f SET datejour = (SELECT MAX(date) FROM valorisations WHERE fund_id=f.id)` cible UEMOA, en dry-run d'abord ; puis ajouter l'etape au cron BRVM. Additif, reversible. |
+| **P1-02** | Nigeria / Perf | **Fonds 2825 (Zenith Balanced Strategy) : YTD affichee 239,20 %.** VL correcte, mais historique troue 2022-10 → 2026-06 : le YTD compare a une base de 2022. Un recompute de classements le placerait anormalement haut en categorie ACTIONS. | **PROD** (`performanceswithdate/fond/2825/2026-07-10` → `perf1erJanvier: 239.20`) | Faire ignorer au moteur de perf toute base anterieure a 1 an, OU combler le trou si la donnee existe sous un autre nom. **Ne pas recomputer les classements ACTIONS avant.** |
+| **P1-03** | API / DB | `/api/listeopcvm` cassee (colonnes DB manquantes). | DOC (CORRECTIONS.md §8) | `SHOW COLUMNS` lecture seule, comparaison au modele Sequelize, puis migration **additive uniquement** (ADD COLUMN, jamais DROP/rename). |
+| **P1-04** | Frontend | **Build frontend jamais refait depuis les fixes merges** : bundle servi anterieur au 3 juillet. Prive la prod de AUDIT-D (quartile EUR/USD `8a60083`) et des barres ratios dynamiques (`cf6dba2`). | DOC (TODO.md) | `npm run build` + `pm2 restart fundafrique-frontend`. **Decision utilisateur requise** (restart PM2). |
+
+### P2 — Important (integrite, securite, exploitation)
+
+| ID | Domaine | Sujet | Preuve | Action |
+|---|---|---|---|---|
+| P2-01 | CEMAC | 34 fonds sans VL depuis 2024-12-12 **et 0 % de couverture indRef**. L'indice BVMAC est identifie (bvm-ac.org) ; ce sont **les VL qui manquent**. | PROD | Obtenir la source COSUMAF (export regulateur ou fichiers societes). Bloque sur decision D2. |
+| P2-02 | Securite | #44 — `authenticate` absent sur routes POST (`ajoutVL`, `uploadsfilevl`, `postfond`, `updatefond`). | DOC | Ajouter le middleware. Bloque sur validation utilisateur. |
+| P2-03 | DB | #2 — Index UNIQUE sur `valorisations(fund_id, date)` absent : rien n'empeche les doublons de VL. | DOC | Detecter les doublons existants AVANT creation de l'index. |
+| P2-04 | Perf / Data | **Piege des perfs orphelines** : `fix_populate_performances*` ne supprime pas les lignes `performences` dont la date n'a plus de VL. Une perf orpheline reste la plus recente et s'affiche. | DOC (SUIVI, decouvert au lot T) | Integrer le `DELETE ... WHERE date NOT IN (SELECT date FROM valorisations ...)` aux scripts de rollback. |
+| P2-05 | Infra | `sync_production.sh` (cron horaire) : snapshot fige au 2026-08-02, **10 jours de retard**. La regle CLAUDE.md impose ce fichier comme source de verite — il ne l'est plus. | PROD | Verifier le cron et les logs. Tant qu'il est fige, **verifier via `curl` API**, pas via le fichier. |
+| P2-06 | Indices | `INDEX_CONFIG` duplique en 3 copies non synchronisees (`scrape_indices_daily.js`, `propagate_indref_range.js`, `import_indices_excel.js`). | DOC | Extraire une source unique. Diff des 3 avant, egalite stricte apres. |
+| P2-07 | Exploitation | `pm2 flush api-monolith` (log d'erreur 1,1 Go herite du crash-loop du 07-03) · workers `worker-data-import`/`worker-recalculation` encore en Node 14 · ghost cron `fix-brvm-nginx.py` (script absent du VPS). | DOC | Operations VPS sans risque de regression. |
+
+### P3 — Dette technique et surveillance
+
+`#51` fallback silencieux de `findValueAtDate()` (prudence : risque calcul) · `#28` factoriser panel/investor vs panel/portfolio (~100 pages) · `#39` alerting cron absent · `limit: 500` present ~90 fois dans les routes → constante centrale `MAX_LISTE` · ratios locaux 641 < EUR/USD 947 (realigner le populate local) · Tunisie gap EUR/USD 24 % (attente fichier VL avec dividendes) · surveillance OOM MariaDB.
+
+## 3. DEJA FAIT — NE PLUS REFAIRE (preuve PROD du 2026-08-12)
+
+| Sujet | Preuve directe |
+|---|---|
+| **Plafond 500 fonds par pays (S1)** | `getfondbypays/MAROC` renvoie **644** (etait 500). Les 144 fonds marocains masques sont visibles. |
+| **Fusion GDL 1219 / 2867 (S2, option A)** | Chantier clos, verifie en prod au lot S. |
+| **Creation des 2 MMF Nigeria manquants** | Fonds **2924** (FCBAM MMF) et **2925** (First Asset MMF) repondent en production. |
+| **Rollback Vantage 1224** | YTD = **55,20 %** (etait 15 655 %). Regression totalement effacee. |
+| **Fraicheur Maroc / Tunisie** | VL au 2026-08-11 et 2026-08-07. Les crons quotidiens tournent. |
+| **Couverture indRef Nigeria / Tunisie / UEMOA** | 100 %, 100 %, 100 % en base. |
+| Lots T4→T20, T35, AUDIT-A→D, LOT 1/2/3, #45, #46, #49, #50, #62, #63, indices 2026, cron indices auto-reparant | Deployes et verifies aux dates indiquees (TODO.md / TASKS.md). Ne pas rouvrir sans motif. |
+
+## 4. DECISIONS UTILISATEUR EN ATTENTE (bloquent la suite)
+
+1. **Couche Afrique benchmarks** : proxy synthetique maison (`is_synthetic=true`, sans licence — reco) OU licence S&P DJI ?
+2. **CEMAC** : fournir la source des VL (l'indice BVMAC est deja identifie).
+3. **337 fonds dormants** (sans VL > 30 j, toutes zones) : diagnostic + desactivation (reco) OU statu quo ?
+4. **Priorite F4 benchmarks** : par pays (reco) OU par couche ?
+5. **Build + restart frontend** : autoriser `deploy_project_s2 front_end_opcvm` (P1-04) ?
+6. **Nigeria phases B et C** : necessitent les phrases exactes `VALIDER CORRECTIONS NIGERIA` puis `VALIDER DEPLOIEMENT NIGERIA`.
+
+## 5. REGLES PERMANENTES — RAPPEL DES PLUS ENGAGEANTES
+
+Regles integrales : `CLAUDE.md` (2 depots) + `MCP_AUTONOMY.md`. Les plus souvent oubliees :
+
+- **Zero regression.** Toute evolution additive, progressive, reversible.
+- **Conversion devise = DIVISION** par le taux (`valeur_locale / taux_EUR_devise`), jamais multiplication.
+- **Base 100** : fonds et benchmark toujours dans la MEME devise. Highcharts en axe `datetime`, jamais `category`.
+- **Ne jamais inventer** benchmark, taux, performance, categorie, historique.
+- **Taches sensibles** (DB, migrations, prod, conversions, benchmarks, calculs, crons, auth, secrets, PM2) : **diagnostic d'abord**, modification ciblee ensuite.
+- **Nigeria** : le classeur `Nigeria_SEC_OPCVM_NAV_2011_2026.xlsx` est la base de verite ; toute divergence se tranche en sa faveur.
+- **Nigeria** : `net_assets_total` / `bid_price` / `offer_price` ne doivent JAMAIS alimenter la VL.
+- **Branche unique** : `claude/code-review-improvements-ikvuj`. Ne jamais en creer d'autre.
+- **Travail en lots courts**, POINT DE REPRISE COURANT tenu a jour.
+
+## 6. PLAN D'EXECUTION RECOMMANDE
+
+| Lot | Objet | Risque | Prealable |
+|---|---|---|---|
+| **A** | P1-01 — resynchroniser `datejour` UEMOA + ajouter l'etape au cron BRVM | Faible (colonne d'affichage, additif, reversible) | Dry-run + comptage avant/apres |
+| **B** | P2-05 — reparer `sync_production.sh` | Nul (lecture seule) | — |
+| **C** | P1-04 — build + restart frontend | Moyen (restart PM2) | **Decision 5** |
+| **D** | P1-02 — moteur de perf : ignorer une base > 1 an (fonds 2825) | Moyen (calcul financier) | Ne pas recomputer les classements ACTIONS avant |
+| **E** | P1-03 — `/api/listeopcvm` : diagnostic colonnes puis migration additive | Eleve (DB) | Sauvegarde + dry-run |
+| **F** | P2-02 / P2-03 — auth POST + index UNIQUE | Moyen | **Decisions 2 et 3** + detection prealable des doublons |
+
+**Ne pas faire a la reprise** : recomputer les classements ACTIONS avant P1-02 · re-rattacher la cle « Vantage Dollar Fund » (echelle differente, ~90x) · rouvrir les cles Nigeria ambigues dormantes (donnees <= 2021) · se fier a `PRODUCTION_STATE.json` tant que P2-05 n'est pas repare.
+
+---
+
 ## Architecture
 - **Frontend**: Next.js 14.2.3 (App Router) - `/home/user/front_end_opcvm`
 - **Backend API**: Express.js + Sequelize (MySQL) - `/home/user/api_opcv`
@@ -2110,6 +2218,46 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 - `migrations/add_ratio_ranks_eur_usd.sql` : ALTER TABLE + REPAIR TABLE + conversion InnoDB
 
 ## POINT DE REPRISE COURANT
+
+### LOT U — 2026-08-12 : CONSOLIDATION DOCUMENTAIRE + DECOUVERTE BUG UEMOA
+
+**Objectif** : mettre fin a la relecture de 33 fichiers .md a chaque reprise, en produisant un
+backlog consolide unique verifie en production. Cause du besoin : items refaits plusieurs fois
+faute de source unique distinguant « a faire » de « deja fait ».
+
+**Methode** : extraction de 215 items + 120 regles depuis les .md des 2 depots, puis
+**confrontation a l'API de production** (le seul niveau de preuve accepte).
+Note : deux tentatives de traitement multi-agents ont echoue (limite de session, puis
+`StructuredOutput retry cap` sur 9 agents) ; la verification a finalement ete faite directement.
+Les 215 items sont sauvegardes (`scratchpad/items_lot1.json`).
+
+**Livre** : section **BACKLOG CONSOLIDE UNIQUE** en tete de ce fichier (7 sections : etat reel
+verifie, backlog P1/P2/P3, deja-fait-avec-preuve, decisions en attente, regles, plan d'execution).
+
+**DECOUVERTE MAJEURE — P1-01, bug UEMOA jamais documente** :
+- `/api/getfondbypays/UEMOA` affiche les 111 fonds actifs figes au **2025-10-15** ;
+- or `/api/valLiq/2617` (et 2557, 2539, 2636) sert des VL jusqu'au **2026-08-11**.
+- **Cause** : `datejour` est une colonne denormalisee de `fond_investissements`
+  (`routes_vl_admin.js:344`), que le cron BRVM BOC n'actualise pas apres insertion des VL —
+  contrairement aux imports Maroc (ASFIM) et Tunisie, dont les dates sont correctes.
+- **Portee** : affichage uniquement (colonne Date de la page pays, tri/filtre). Les donnees sont
+  saines en base et les fiches fonds sont justes. **Aucune donnee financiere n'est fausse.**
+- Non corrige a ce stade : ecriture DB en production = tache sensible (regle §8), diagnostic d'abord.
+
+**Autres constats verifies PROD (2026-08-12)** :
+- Confirme sain : MAROC 644 fonds (fix du plafond 500 effectif), VL 2026-08-11 ; TUNISIE 2026-08-07 ;
+  fonds 2924/2925 crees et repondants ; Vantage 1224 YTD 55,20 % (regression bien effacee).
+- Confirme en anomalie : **2825 Zenith YTD 239,20 %** toujours servie par l'API (P1-02).
+- **`PRODUCTION_STATE.json` fige au 2026-08-02 (10 jours)** → `sync_production.sh` a verifier (P2-05).
+  Tant qu'il l'est, ne pas s'y fier : interroger l'API.
+
+**Tests realises** : 12 appels a l'API publique de production (listing par pays x5, valLiq x7,
+performances x2, home). **Resultat : OK**, tous concluants.
+**Erreurs restantes** : P1-01 et P1-02 ouverts (diagnostiques, non corriges).
+**Prochaine action recommandee** : **Lot A** — resynchroniser `datejour` UEMOA (dry-run d'abord),
+puis ajouter l'etape au cron BRVM. Faible risque, additif, reversible.
+
+---
 
 ### LOT T — 2026-08-05 : NIGERIA PAS ENCORE COMPLET — outil de couverture ajoute (rappel utilisateur)
 
