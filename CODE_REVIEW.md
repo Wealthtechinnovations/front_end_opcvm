@@ -58,7 +58,12 @@
   - Correction: Scraper Python automatise cree (`scripts/scraper/cmf_tunisie_daily.py`)
   - Scraping CMF multi-pages, parsing Excel bi-section, matching fuzzy, quarantaine extremes >20%
   - Cron deploye: `0 19 * * 1-5` dans crontab production (2026-06-03)
-- UEMOA: Script import existe (import_vl_uemoa.js) mais pas de scraper BRVM automatise
+- ~~UEMOA: Script import existe (import_vl_uemoa.js) mais pas de scraper BRVM automatise~~
+  - **CORRIGE depuis le lot T35 (2026-06-12)** : le scraper BRVM BOC existe
+    (`scripts/scraper/brvm_boc_daily.py`) et son cron tourne
+    (`scripts/cron/cron_brvm_daily.sh`, 30 19 * * 1-5).
+  - Verifie API prod le 2026-08-12 : VL UEMOA jusqu'au **2026-08-11**.
+    L'apparence de donnees perimees venait du bug `datejour` (cf. #34 et P1-01).
 
 ### 26. ~~Generalisation response.ok frontend~~ — CORRIGE (2026-06-03, T14+T16)
 - Probleme: 87% des fetch() frontend faisaient `.json()` sans verifier `response.ok`, causant des crashs JSON.parse quand API renvoie 404/500.
@@ -89,9 +94,24 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - **DEPLOYE** et re-execute en production: 26 253 VL UEMOA convertis correctement
 - Sanity check: XOF local=198.58 eur=0.29 → DIVISION confirmee (OK)
 
-### 34. Donnees UEMOA/CEMAC stales
-- UEMOA: donnees stales 233 jours (derniere VL 2025-10-15), pas de scraper BRVM automatise
+### 34. Donnees UEMOA/CEMAC stales — **UEMOA : DIAGNOSTIC ERRONE, CORRIGE le 2026-08-12**
+- ~~UEMOA: donnees stales 233 jours (derniere VL 2025-10-15), pas de scraper BRVM automatise~~
+  - **FAUX SUR LES DEUX POINTS.** Verifie sur l'API de production le 2026-08-12 :
+    `/api/valLiq/2617` (et 2557, 2539, 2636) sert des VL jusqu'au **2026-08-11**.
+    Les donnees UEMOA sont FRAICHES et le scraper BRVM BOC existe et tourne
+    (`scripts/cron/cron_brvm_daily.sh`, livre au lot T35 le 2026-06-12).
+  - **La date 2025-10-15 est le symptome du bug P1-01**, pas un trou de donnees :
+    `fond_investissements.datejour` (cache d'affichage lu par `/api/getfondbypays`,
+    `routes_vl_admin.js:344`) n'etait pas rafraichi par l'import BRVM. La colonne
+    "Date" des pages pays affichait donc une date perimee sur des VL a jour.
+  - **Consequence documentaire** : cet item a fait chercher plusieurs fois un
+    scraper BRVM deja livre et un backfill de donnees deja presentes. Ne plus
+    rouvrir ce chantier. Correctif reel : `scripts/fix/fix_datejour_sync.js`
+    + etape ajoutee au cron BRVM (2026-08-12).
 - CEMAC: donnees stales 539 jours (derniere VL 2024-12-12), aucune source COSUMAF identifiee
+  - **TOUJOURS VRAI** (confirme API prod 2026-08-12 : 34 fonds, VL max 2024-12-12,
+    couverture indRef 0/2134). C'est un vrai trou de donnees, pas un bug d'affichage.
+    Bloque sur la fourniture de la source COSUMAF par l'utilisateur.
 
 ### 35. ~~Routes API sans try/catch (hanging requests)~~ — CORRIGE (T22, 2026-06-05)
 - 20 routes async avec `await` sans try/catch dans 5 fichiers (apigestionpays, apigestionsociete, apigestionfonds, apigestionsavequotidien, routes_vl)

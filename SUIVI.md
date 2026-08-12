@@ -46,7 +46,7 @@
 
 | ID | Domaine | Sujet | Preuve | Action |
 |---|---|---|---|---|
-| P2-01 | CEMAC | 34 fonds sans VL depuis 2024-12-12 **et 0 % de couverture indRef**. L'indice BVMAC est identifie (bvm-ac.org) ; ce sont **les VL qui manquent**. | PROD | Obtenir la source COSUMAF (export regulateur ou fichiers societes). Bloque sur decision D2. |
+| P2-01 | CEMAC | 34 fonds sans VL depuis 2024-12-12 **et 0 % de couverture indRef**. | PROD | **CORRECTION 2026-08-12 : n'est PAS bloque sur une decision utilisateur.** Le scraper `scripts/scraper/bvmac_boc_daily.py` existe et a ete valide contre un BOC reel (30/30 lignes). Reste : `--dry-run --latest` sur le serveur, verifier le rapprochement avec les 34 fonds, puis `--production`. **Bloque uniquement par l'acces MCP/DB.** |
 | P2-02 | Securite | #44 — `authenticate` absent sur routes POST (`ajoutVL`, `uploadsfilevl`, `postfond`, `updatefond`). | DOC | Ajouter le middleware. Bloque sur validation utilisateur. |
 | P2-03 | DB | #2 — Index UNIQUE sur `valorisations(fund_id, date)` absent : rien n'empeche les doublons de VL. | DOC | Detecter les doublons existants AVANT creation de l'index. |
 | P2-04 | Perf / Data | **Piege des perfs orphelines** : `fix_populate_performances*` ne supprime pas les lignes `performences` dont la date n'a plus de VL. Une perf orpheline reste la plus recente et s'affiche. | DOC (SUIVI, decouvert au lot T) | Integrer le `DELETE ... WHERE date NOT IN (SELECT date FROM valorisations ...)` aux scripts de rollback. |
@@ -70,14 +70,28 @@
 | **Couverture indRef Nigeria / Tunisie / UEMOA** | 100 %, 100 %, 100 % en base. |
 | Lots T4→T20, T35, AUDIT-A→D, LOT 1/2/3, #45, #46, #49, #50, #62, #63, indices 2026, cron indices auto-reparant | Deployes et verifies aux dates indiquees (TODO.md / TASKS.md). Ne pas rouvrir sans motif. |
 
-## 4. DECISIONS UTILISATEUR EN ATTENTE (bloquent la suite)
+## 4. DECISIONS UTILISATEUR — **DEJA TRANCHEES LE 2026-07-14, JAMAIS EXECUTEES**
 
-1. **Couche Afrique benchmarks** : proxy synthetique maison (`is_synthetic=true`, sans licence — reco) OU licence S&P DJI ?
-2. **CEMAC** : fournir la source des VL (l'indice BVMAC est deja identifie).
-3. **337 fonds dormants** (sans VL > 30 j, toutes zones) : diagnostic + desactivation (reco) OU statu quo ?
-4. **Priorite F4 benchmarks** : par pays (reco) OU par couche ?
-5. **Build + restart frontend** : autoriser `deploy_project_s2 front_end_opcvm` (P1-04) ?
-6. **Nigeria phases B et C** : necessitent les phrases exactes `VALIDER CORRECTIONS NIGERIA` puis `VALIDER DEPLOIEMENT NIGERIA`.
+**Correction importante du 2026-08-12** : une premiere version de cette section listait ces points
+comme « en attente ». C'est FAUX. `docs/BENCHMARKS_F3_MAPPING_SCHEMA.md:150-154` les enregistre
+comme DECIDES ou DEBLOQUES le 2026-07-14. Elles n'ont jamais ete **executees** (MCP indisponible),
+ce qui les a fait passer pour non tranchees a chaque reprise — un des mecanismes concrets du
+« on refait toujours les memes choses ». **Ne pas les reposer a l'utilisateur.**
+
+| # | Decision | Tranchee le 2026-07-14 | Ce qui reste |
+|---|---|---|---|
+| D1 | Couche Afrique benchmarks | **Proxy synthetique maison** (`is_synthetic=true`, sans licence). Pas de licence S&P DJI. | Implementer en F4 |
+| D2 | CEMAC — source des VL | **DEBLOQUE** : URLs BVMAC BOC transmises, scraper `scripts/scraper/bvmac_boc_daily.py` livre (commit `84caa8f`) et valide end-to-end contre le BOC-20260714.pdf reel (30/30 lignes, 24 OK + 6 SUSPECT_VARIATION) | Executer `--dry-run --latest` sur le serveur, examiner MATCHED/UNMATCHED contre les 34 fonds CEMAC, **avant** tout `--production` |
+| D3 | 337 fonds dormants | **Diagnostic + mise a jour**, pas de desactivation aveugle. Script `scripts/diag/check_dormant_funds_coverage.js` livre (commit `a2b0458`) | L'executer (jamais lance) |
+| D4 | Priorite F4 benchmarks | **Par COUCHE** (couche 1 → 2 → 3) | Demarrer F4 |
+| D5 | Build + restart frontend | **OUI** | Executer `deploy_project_s2 front_end_opcvm` |
+
+**Seule validation reellement encore requise** : Nigeria phases B et C, qui exigent les phrases
+exactes `VALIDER CORRECTIONS NIGERIA` puis `VALIDER DEPLOIEMENT NIGERIA`
+(`docs/PROMPT_NIGERIA_ZERO_REGRESSION_V2_2.md:409,423`).
+
+**Le vrai blocage de D2/D3/D5 n'est pas une decision : c'est l'acces MCP/DB.**
+Bridge teste le 2026-08-12 → `Invalid or missing MCP session`. A retablir en priorite.
 
 ## 5. REGLES PERMANENTES — RAPPEL DES PLUS ENGAGEANTES
 
@@ -2218,6 +2232,53 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 - `migrations/add_ratio_ranks_eur_usd.sql` : ALTER TABLE + REPAIR TABLE + conversion InnoDB
 
 ## POINT DE REPRISE COURANT
+
+### LOT V — 2026-08-12 : CORRECTIFS LIVRES + REDRESSEMENT DE 4 STATUTS FAUX
+
+**Objectif** : passer du diagnostic a l'execution, et corriger les statuts documentaires errones
+qui font recommencer un travail deja fait.
+
+**Livre (code, additif et reversible)** :
+- `scripts/fix/fix_datejour_sync.js` — resynchronise `fond_investissements.datejour` avec
+  `MAX(valorisations.date)`. Dry-run par defaut, snapshot JSON avant ecriture, `--rollback`,
+  `--pays`, transaction unique. Ne touche QUE la colonne d'affichage. Corrige **P1-01**.
+- `scripts/cron/cron_brvm_daily.sh` — etape 2 ajoutee : appelle le script ci-dessus apres un
+  import reussi. **Traite la cause racine** : le decalage ne peut plus reapparaitre. L'echec de
+  l'etape ne fait pas echouer l'import (les VL sont deja en base).
+- `scripts/fix/fix_orphan_performances.js` — supprime les perfs dont la date n'a plus de VL
+  (piege du lot T, cas Vantage 1224 a 15 655 %). 3 tables (locale/EUR/USD), dry-run par defaut,
+  snapshot + `--rollback`, ne purge jamais un fonds sans aucune VL (signale a la main). Corrige **P2-04**.
+- `src/functions/newratios.js` — `calculateVAR95`/`calculateVAR99` triaient EN PLACE le tableau
+  de l'appelant. Copie ajoutee (`[...rendements]`). **Valeur de VAR inchangee** ; protege les
+  metriques dependantes de l'ordre calculees ensuite sur le meme tableau.
+
+**Statuts faux redresses (cause directe des taches refaites)** :
+1. **CODE_REVIEW #34** affirmait « UEMOA stale 233 jours, derniere VL 2025-10-15, pas de scraper
+   BRVM ». **Faux sur les deux points** : VL reelles au 2026-08-11, scraper livre au lot T35.
+   La date 2025-10-15 etait le symptome du bug `datejour`. Item corrige dans CODE_REVIEW.md.
+2. **CODE_REVIEW #11** : meme correction (scraper BRVM existant depuis le 2026-06-12).
+3. **Les 4 decisions benchmarks** etaient documentees « en attente » alors qu'elles ont ete
+   **tranchees le 2026-07-14** (`BENCHMARKS_F3_MAPPING_SCHEMA.md:150-154`) et jamais executees.
+   Section 4 du backlog entierement reecrite.
+4. **CEMAC (P2-01)** n'est pas bloque sur une decision utilisateur : le scraper `bvmac_boc_daily.py`
+   est livre et valide contre un BOC reel. Bloque uniquement par l'acces MCP/DB.
+
+**Verifications** : `node --check` OK sur les 2 nouveaux scripts et `newratios.js` ;
+`bash -n` OK sur le cron. **Non executes** : `dotenv`/`mysql2` absents du conteneur et bridge MCP
+hors service (`Invalid or missing MCP session`) — donc aucun test contre la base.
+
+**Erreurs restantes** : P1-02 (Zenith 2825, YTD 239 %) et P1-03 (`/api/listeopcvm`) ouverts.
+Nouveaux items remontes par l'inventaire, non traites : bug Sortino (le MAR 0.01 passe en 3e
+argument est ignore, la fonction n'en prend que 2 — `newratios.js:50`), EUR/USD 1.08 en dur
+(`recalc_eur_usd_daily_rate.js`), override `tauxsr = -0.0234` en dur dans 2 routes,
+`TSR_DEFAULTS` dont les cles UEMOA/CEMAC ne matchent jamais (fallback 1,42 %).
+Ces quatre-la changent des valeurs financieres affichees : **ne pas les corriger sans validation**.
+
+**Prochaine action recommandee** : retablir le bridge MCP, puis executer dans l'ordre
+`fix_datejour_sync.js --pays UEMOA` (dry-run), `bvmac_boc_daily.py --dry-run --latest`,
+`check_dormant_funds_coverage.js`. Les trois sont en lecture seule ou reversibles.
+
+---
 
 ### LOT U — 2026-08-12 : CONSOLIDATION DOCUMENTAIRE + DECOUVERTE BUG UEMOA
 

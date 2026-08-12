@@ -57,20 +57,30 @@
 
 ## Donnees
 
-- [x] UEMOA : **comble** — cron BRVM BOC operationnel (VL J-1 au 07-14)
+- [x] UEMOA : **comble** — cron BRVM BOC operationnel. **Verifie API prod 2026-08-12 : VL au 2026-08-11.**
+      NB : la page pays affichait 2025-10-15 a cause du bug `datejour` (P1-01), pas d'un trou de
+      donnees. Ne pas relancer de chantier "backfill UEMOA" ni de recherche de scraper BRVM.
 - [x] Tunisie indRef 2011-2021 : **backfill 180310 VL** (Lot B 07-03), couverture 99,9%
 - [ ] CEMAC : derniere VL 2024-12-12 (34 fonds). **Indice = source transmise et identifiee** (`BVMAC_INDICES` → bvm-ac.org/indices, referentiel_fundafrica.json ; mapping CEMAC=BVMAC corrige ; RFR BEAC en base). **VL fonds = source manquante** (COSUMAF a fournir : export regulateur ou fichiers societes de gestion). Cf CODE_REVIEW #70 MAJ 07-14.
 - [ ] TUNISIE EUR/USD gap 24% : attente fichier VL avec dividendes
 - [ ] Nigeria : SEC a change format, ~195 fonds absents des fichiers recents ; 337 fonds actifs sans VL >30j toutes zones (politique dormants a decider)
 - [ ] Ratios locaux 641 < EUR/USD 947 : realigner le populate local (apres F4)
 
-## Decisions utilisateur en attente (bloquent la suite)
+## Decisions utilisateur — DEJA TRANCHEES LE 2026-07-14 (ne plus les reposer)
 
-1. **Couche Afrique** : proxy synthetique maison (reco, sans licence, is_synthetic=true) OU licence S&P DJI ?
-2. **CEMAC VL** : fournir la source des valeurs liquidatives (l'indice BVMAC, lui, est identifie)
-3. **337 fonds dormants** : diagnostic + desactivation validee (reco) OU laisser en l'etat ?
-4. **Priorite F4 benchmarks** : par pays (reco : couche 1 complete pays par pays) OU par couche ?
-5. **Build+restart frontend** : autoriser `deploy_project_s2 front_end_opcvm` pour activer les fixes UI en attente depuis le 13/06 ?
+> **Corrige le 2026-08-12.** Ces 5 points etaient listes ici comme « en attente » alors qu'ils ont
+> ete decides le 2026-07-14 (`api_opcv/docs/BENCHMARKS_F3_MAPPING_SCHEMA.md:150-154`). Ils n'ont
+> jamais ete EXECUTES faute d'acces MCP, ce qui les faisait passer pour non tranches a chaque
+> reprise. Detail complet : SUIVI.md section 4 du BACKLOG CONSOLIDE.
+
+1. **Couche Afrique** : DECIDE = proxy synthetique maison (`is_synthetic=true`, sans licence).
+2. **CEMAC VL** : DEBLOQUE = scraper `bvmac_boc_daily.py` livre et valide (30/30 lignes sur un BOC reel). Reste a executer le dry-run serveur.
+3. **337 fonds dormants** : DECIDE = diagnostic + mise a jour (pas de desactivation aveugle). Script `check_dormant_funds_coverage.js` livre, jamais execute.
+4. **Priorite F4 benchmarks** : DECIDE = par COUCHE (1 → 2 → 3).
+5. **Build+restart frontend** : DECIDE = OUI.
+
+**Seule validation encore requise** : Nigeria phases B/C (`VALIDER CORRECTIONS NIGERIA`, puis `VALIDER DEPLOIEMENT NIGERIA`).
+**Vrai blocage de 2, 3 et 5** : acces MCP/DB indisponible, pas une decision.
 
 ## Surveillance
 
