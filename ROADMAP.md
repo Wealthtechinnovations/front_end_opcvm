@@ -44,7 +44,10 @@ Decision actee sur la base du rapport deep-research + complement obligatoire fou
 - NIGERIA : cron_nigeria_weekly.sh (SEC, lundi 10h) — AUTOMATISE
 - TUNISIE : cron_tunisie_daily.sh (CMF, lun-ven 19h) — AUTOMATISE
 - UEMOA : cron_brvm_daily.sh (BRVM BOC PDF, lun-ven 19h30) — AUTOMATISE (T35, 2026-06-12)
-- CEMAC : aucun script, aucune source (COSUMAF) — A INVESTIGUER
+- CEMAC : **source identifiee et script livre (2026-07-14)** — `scripts/scraper/bvmac_boc_daily.py`,
+  BOC BVMAC (743 bulletins depuis 2023-01), format PDF identique a BRVM, valide 30/30 lignes contre
+  le BOC-20260714. **Reste** : `--dry-run --latest` en SSH (le bridge MCP n'accepte pas les `.py`),
+  puis rapprochement avec les 34 fonds CEMAC avant `--production`. Ce n'est plus « a investiguer ».
 
 ### Crons actifs (8 dans crontab, 7 operationnels)
 - cron_tunisie_daily.sh (lun-ven 19h) : CMF Tunisie scraper
@@ -88,7 +91,10 @@ Decision actee sur la base du rapport deep-research + complement obligatoire fou
 - Tests automatises sur calculs financiers
 
 ### Automatisation data
-- UEMOA : investiguer API/site BRVM pour scraper automatise (230j stale)
+- ~~UEMOA : investiguer API/site BRVM pour scraper automatise (230j stale)~~
+  **PERIME — ne pas rouvrir.** Le scraper BRVM BOC existe depuis le lot T35 (2026-06-12) et tourne.
+  Verifie en base le 2026-08-12 : VL UEMOA au 2026-08-12. Le « 230j stale » etait le symptome du
+  bug `datejour` (corrige au lot W), pas un trou de donnees.
 - CEMAC : investiguer COSUMAF pour source donnees (537j stale)
 
 ### Panels

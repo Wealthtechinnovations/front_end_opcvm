@@ -61,7 +61,11 @@
       NB : la page pays affichait 2025-10-15 a cause du bug `datejour` (P1-01), pas d'un trou de
       donnees. Ne pas relancer de chantier "backfill UEMOA" ni de recherche de scraper BRVM.
 - [x] Tunisie indRef 2011-2021 : **backfill 180310 VL** (Lot B 07-03), couverture 99,9%
-- [ ] CEMAC : derniere VL 2024-12-12 (34 fonds). **Indice = source transmise et identifiee** (`BVMAC_INDICES` → bvm-ac.org/indices, referentiel_fundafrica.json ; mapping CEMAC=BVMAC corrige ; RFR BEAC en base). **VL fonds = source manquante** (COSUMAF a fournir : export regulateur ou fichiers societes de gestion). Cf CODE_REVIEW #70 MAJ 07-14.
+- [ ] CEMAC : derniere VL 2024-12-12 (34 fonds). **Indice ET VL : sources identifiees, script livre**
+      (`scripts/scraper/bvmac_boc_daily.py`, BOC BVMAC, valide 30/30 lignes contre le BOC-20260714).
+      **Reste a executer** : `python3 scripts/scraper/bvmac_boc_daily.py --dry-run --latest` en SSH
+      direct (le bridge MCP n'accepte que `.js`/`.ts`), verifier le rapprochement avec les 34 fonds,
+      puis `--production`. **Corrige le 2026-08-12 : n'est plus « source manquante ».**
 - [ ] TUNISIE EUR/USD gap 24% : attente fichier VL avec dividendes
 - [ ] Nigeria : SEC a change format, ~195 fonds absents des fichiers recents ; 337 fonds actifs sans VL >30j toutes zones (politique dormants a decider)
 - [ ] Ratios locaux 641 < EUR/USD 947 : realigner le populate local (apres F4)

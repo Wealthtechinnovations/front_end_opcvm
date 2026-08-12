@@ -108,10 +108,13 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
     scraper BRVM deja livre et un backfill de donnees deja presentes. Ne plus
     rouvrir ce chantier. Correctif reel : `scripts/fix/fix_datejour_sync.js`
     + etape ajoutee au cron BRVM (2026-08-12).
-- CEMAC: donnees stales 539 jours (derniere VL 2024-12-12), aucune source COSUMAF identifiee
-  - **TOUJOURS VRAI** (confirme API prod 2026-08-12 : 34 fonds, VL max 2024-12-12,
-    couverture indRef 0/2134). C'est un vrai trou de donnees, pas un bug d'affichage.
-    Bloque sur la fourniture de la source COSUMAF par l'utilisateur.
+- CEMAC: donnees stales (derniere VL 2024-12-12) — **vrai trou de donnees**, confirme le 2026-08-12
+  (34 fonds, VL max 2024-12-12, couverture indRef 0/2134). Contrairement a UEMOA, ce n'est PAS un
+  bug d'affichage : les 34 fonds sont bien synchronises (0 desynchronise apres le lot W).
+  - ~~aucune source COSUMAF identifiee~~ **PERIME** : source identifiee et script livre le
+    2026-07-14 (`scripts/scraper/bvmac_boc_daily.py`, BOC BVMAC, valide 30/30 lignes contre un PDF reel).
+  - **Reste** : `--dry-run --latest` en SSH direct (le bridge MCP n'accepte que `.js`/`.ts`),
+    rapprochement avec les 34 fonds, puis `--production`. **N'est pas bloque sur une decision.**
 
 ### 35. ~~Routes API sans try/catch (hanging requests)~~ — CORRIGE (T22, 2026-06-05)
 - 20 routes async avec `await` sans try/catch dans 5 fichiers (apigestionpays, apigestionsociete, apigestionfonds, apigestionsavequotidien, routes_vl)
