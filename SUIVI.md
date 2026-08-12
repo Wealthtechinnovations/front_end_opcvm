@@ -21,8 +21,8 @@
 |---|---|---|---|---|
 | MAROC | 644 (644) | **2026-08-11** | 627/644 | Sain — plafond 500 bien corrige |
 | TUNISIE | 131 (131) | **2026-08-07** | 126/131 | Sain |
-| NIGERIA | 326 (325) | 2026-07-24 | 41/326 | Conforme a la source SEC (arret 07-10) |
-| UEMOA | 118 (111) | *affiche* 2025-10-15 | 0/118 | **BUG D'AFFICHAGE — voir P1-01** |
+| NIGERIA | 326 (325) | 2026-07-24 | **223/326** | Sain — corrige au lot W (etait 41/326) |
+| UEMOA | 118 (111) | **2026-08-12** | **72/118** | Sain — corrige au lot W (etait 0/118, affichage fige au 2025-10-15) |
 | CEMAC | 34 (34) | 2024-12-12 | 0/34 | **Vrai trou de donnees — source COSUMAF manquante** |
 
 - Frontend `https://africafunds.chainsolutions.fr/home` : **HTTP 200** (PROD).
@@ -37,7 +37,7 @@
 
 | ID | Domaine | Sujet | Preuve | Action |
 |---|---|---|---|---|
-| **P1-01** | UEMOA / Page pays | **111 fonds UEMOA affiches figes au 2025-10-15 alors que leurs VL vont au 2026-08-11.** `datejour` est une colonne denormalisee de `fond_investissements` (`routes_vl_admin.js:344`), que le cron BRVM BOC n'actualise pas apres insertion des VL. Fiches fonds correctes, page pays fausse. | **PROD** (fonds 2617/2557/2539/2636 : `valLiq` → 2026-08-11 ; `getfondbypays/UEMOA` → 2025-10-15) | Diagnostic fait. Reste : `UPDATE fond_investissements f SET datejour = (SELECT MAX(date) FROM valorisations WHERE fund_id=f.id)` cible UEMOA, en dry-run d'abord ; puis ajouter l'etape au cron BRVM. Additif, reversible. |
+| ~~**P1-01**~~ | UEMOA + NIGERIA / Pages pays | ~~Fonds affiches figes sur des VL a jour (`datejour` denormalise non rafraichi par les imports BRVM et SEC).~~ | **PROD** | **RESOLU le 2026-08-12** (lot W). 315 fonds resynchronises (218 NIGERIA + 97 UEMOA), 0 desynchronise restant, verifie en SQL et sur l'API. Cause racine traitee dans les 2 crons. Rollback : `DATEJOUR_20260812225400.json`. |
 | **P1-02** | Nigeria / Perf | **Fonds 2825 (Zenith Balanced Strategy) : YTD affichee 239,20 %.** VL correcte, mais historique troue 2022-10 → 2026-06 : le YTD compare a une base de 2022. Un recompute de classements le placerait anormalement haut en categorie ACTIONS. | **PROD** (`performanceswithdate/fond/2825/2026-07-10` → `perf1erJanvier: 239.20`) | Faire ignorer au moteur de perf toute base anterieure a 1 an, OU combler le trou si la donnee existe sous un autre nom. **Ne pas recomputer les classements ACTIONS avant.** |
 | **P1-03** | API / DB | `/api/listeopcvm` cassee (colonnes DB manquantes). | DOC (CORRECTIONS.md §8) | `SHOW COLUMNS` lecture seule, comparaison au modele Sequelize, puis migration **additive uniquement** (ADD COLUMN, jamais DROP/rename). |
 | **P1-04** | Frontend | **Build frontend jamais refait depuis les fixes merges** : bundle servi anterieur au 3 juillet. Prive la prod de AUDIT-D (quartile EUR/USD `8a60083`) et des barres ratios dynamiques (`cf6dba2`). | DOC (TODO.md) | `npm run build` + `pm2 restart fundafrique-frontend`. **Decision utilisateur requise** (restart PM2). |
@@ -50,7 +50,7 @@
 | P2-02 | Securite | #44 — `authenticate` absent sur routes POST (`ajoutVL`, `uploadsfilevl`, `postfond`, `updatefond`). | DOC | Ajouter le middleware. Bloque sur validation utilisateur. |
 | P2-03 | DB | #2 — Index UNIQUE sur `valorisations(fund_id, date)` absent : rien n'empeche les doublons de VL. | DOC | Detecter les doublons existants AVANT creation de l'index. |
 | P2-04 | Perf / Data | **Piege des perfs orphelines** : `fix_populate_performances*` ne supprime pas les lignes `performences` dont la date n'a plus de VL. Une perf orpheline reste la plus recente et s'affiche. | DOC (SUIVI, decouvert au lot T) | Integrer le `DELETE ... WHERE date NOT IN (SELECT date FROM valorisations ...)` aux scripts de rollback. |
-| P2-05 | Infra | `sync_production.sh` (cron horaire) : snapshot fige au 2026-08-02, **10 jours de retard**. La regle CLAUDE.md impose ce fichier comme source de verite — il ne l'est plus. | PROD | Verifier le cron et les logs. Tant qu'il est fige, **verifier via `curl` API**, pas via le fichier. |
+| P2-05 | Infra | **Diagnostic corrige le 2026-08-12** : `sync_production.sh` fonctionne (dernier snapshot serveur 2026-08-12 22:00). Le depot serveur est **231 commits en avance sur origin** — ces snapshots ne sont jamais pousses vers GitHub, donc un clone frais lit un fichier perime. | PROD | Decider si ces commits doivent etre pousses (ou le fichier sorti du suivi Git). En attendant : **ne jamais se fier a `PRODUCTION_STATE.json` depuis un clone**, interroger l'API ou le SQL. |
 | P2-06 | Indices | `INDEX_CONFIG` duplique en 3 copies non synchronisees (`scrape_indices_daily.js`, `propagate_indref_range.js`, `import_indices_excel.js`). | DOC | Extraire une source unique. Diff des 3 avant, egalite stricte apres. |
 | P2-07 | Exploitation | `pm2 flush api-monolith` (log d'erreur 1,1 Go herite du crash-loop du 07-03) · workers `worker-data-import`/`worker-recalculation` encore en Node 14 · ghost cron `fix-brvm-nginx.py` (script absent du VPS). | DOC | Operations VPS sans risque de regression. |
 
@@ -2232,6 +2232,62 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 - `migrations/add_ratio_ranks_eur_usd.sql` : ALTER TABLE + REPAIR TABLE + conversion InnoDB
 
 ## POINT DE REPRISE COURANT
+
+### LOT W — 2026-08-12 : BRIDGE MCP RETABLI — P1-01 CORRIGE EN PRODUCTION, D3 EXECUTE
+
+**P1-01 RESOLU EN PRODUCTION.** Diagnostic confirme en SQL puis corrige et verifie.
+
+Ampleur reelle, plus large que ce que l'API laissait voir :
+
+| Pays | Desynchronises avant | Apres |
+|---|---|---|
+| NIGERIA | **218 / 325** | **0** |
+| UEMOA | **97 / 117** | **0** |
+| MAROC | 0 / 644 | 0 |
+| TUNISIE | 0 / 131 | 0 |
+| CEMAC | 0 / 34 | 0 |
+
+- Execute : `fix_datejour_sync.js --execute` — **315 fonds** resynchronises, transaction unique.
+- Snapshot de rollback : `data/datejour_snapshots/DATEJOUR_20260812225400.json`
+  (`node scripts/fix/fix_datejour_sync.js --rollback <fichier>`).
+- **Verifie API publique** : UEMOA `datejour` max **2025-10-15 -> 2026-08-12**, fonds a jour
+  **0/118 -> 72/118** ; NIGERIA **41/326 -> 223/326**. Aucune valeur financiere modifiee.
+- **Cause racine traitee** : etape de resynchronisation ajoutee aux crons BRVM (etape 2) ET
+  Nigeria (etape 8/8, commit `a9c4c16`). Maroc et Tunisie rafraichissaient deja la colonne.
+- **Elucide une alerte ancienne** : les « ~20 fonds Nigeria bloques au 2026-04-24 » du lot T
+  n'etaient pas un probleme de donnees — c'etait deja ce bug d'affichage (218 fonds concernes).
+
+**D3 EXECUTE** (decide le 2026-07-14, jamais lance faute de MCP) —
+`scripts/diag/check_dormant_funds_coverage.js`, lecture seule, seuil 30 j :
+
+- **387 fonds dormants**, repartis en deux familles qui n'appellent pas la meme action :
+  - **331 candidats a desactivation** (NIGERIA 283, UEMOA 48) : pipeline actif mais fonds absents
+    des flux recents -> dissolution/liquidation probable. Verifier aupres du regulateur ou de la
+    societe de gestion **avant** toute desactivation, jamais automatiquement.
+  - **56 en attente d'un export fichier** (CEMAC 34, MAROC 17, TUNISIE 5) : aucun cron continu,
+    ils resteront dormants tant qu'un nouvel export n'est pas fourni.
+- Cas extremes : Nigeria remonte a 2011 (5 465 j), UEMOA a 2014, Maroc a 2019 (2 756 j).
+- Aucune modification effectuee. **Decision finale utilisateur.**
+
+**P2-05 CORRIGE — mon diagnostic d'hier etait faux.** `sync_production.sh` n'est pas casse :
+il tourne et commite normalement (dernier commit serveur `chore: snapshot production state
+2026-08-12 22:00`). Le depot serveur etait **231 commits en avance sur origin** : ces snapshots
+horaires ne sont **jamais pousses vers GitHub**. Un clone frais recuperait donc un
+`PRODUCTION_STATE.json` vieux de 10 jours. Le defaut est la propagation, pas la generation.
+**Consequence pratique** : ne pas se fier a ce fichier depuis un clone ; interroger l'API ou le SQL.
+
+**Etat Git serveur** : rebase des 231 commits rejoue proprement sur les correctifs (aucun conflit).
+Restent non suivis cote serveur, volontairement jamais commites : `logs.txt`, `0`,
+`sec_ng_downloads/`, et desormais `data/datejour_snapshots/`.
+
+**Limite d'outillage rencontree** : la liste blanche `exec_repo_script_s2` refuse `--pays`
+(seuls `--dry-run` et `--execute` passent) et n'accepte que `.js`/`.ts` — donc
+`bvmac_boc_daily.py` (CEMAC, D2) **n'est pas lancable via le bridge**. A executer en SSH direct.
+
+**Prochaine action recommandee** : D2 CEMAC — `python3 scripts/scraper/bvmac_boc_daily.py
+--dry-run --latest` en SSH, examiner le rapprochement avec les 34 fonds avant tout `--production`.
+
+---
 
 ### LOT V — 2026-08-12 : CORRECTIFS LIVRES + REDRESSEMENT DE 4 STATUTS FAUX
 
