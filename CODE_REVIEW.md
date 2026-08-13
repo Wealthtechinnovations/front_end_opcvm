@@ -96,9 +96,26 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 
 ### 73. [CRITIQUE — FINANCE] Series de VL contaminees par deux echelles de devise (fonds Nigeria en USD)
 
-**Detecte le 2026-08-13 par la boucle de controle** (`check_doc_drift.js`, C3 puis C7), et
-verifie en direct sur l'API publique. Ce n'est PAS un incident ponctuel mais une **classe de
-defaut recurrente**.
+**Detecte le 2026-08-13 par la boucle de controle** (`check_doc_drift.js`, C3 puis C7).
+
+**PORTEE REEVALUEE LE 2026-08-13 — DEFAILLANCE DE CLASSE, PAS DEUX INCIDENTS.**
+Le controle C7 execute en production remonte **au moins 15 fonds** (liste tronquee par un
+`LIMIT 15` : le nombre reel est probablement superieur). Leurs facteurs d'ecart sont tous
+groupes autour de **1520x-1554x**, c'est-a-dire **le taux de change NGN/USD** :
+
+    2866 United Capital Nigerian Eurobond 1554x · 1274 United Capital Global Fixed Income 1548x
+    2774 Meristem Dollar 1538x · 1239 Nova Dollar Fixed Income 1536x · 2768 FSL Eurobond 1535x
+    2809 Myrtle Dollar Shield 1535x · 1154 ARM Eurobond 1535x · 2773 Guaranty Trust Dollar 1534x
+    2766 Comercio Partners Dollar 1533x · 1175 Cordros Dollar 1531x · 1170 Norrenberger Dollar 1527x
+    2771 Coronation Dollar 1524x · 1160 AXA Mansard Dollar Bond 1523x · 1141 Afrinvest Dollar 1520x
+
+**C'est toute la classe des fonds nigerians libelles en devise etrangere.** Pour chacun, la
+colonne `value` contient tantot le prix en USD, tantot sa contre-valeur en naira. `currency_code`
+est incoherent d'un fonds a l'autre pour une meme classe de produit (certains `NGN`, d'autres
+`USD`, alors qu'il s'agit dans tous les cas de fonds dollar).
+
+**Cas distinct a instruire separement** : `2592 FCP BRIDGE EQUILIBRE` (UEMOA/XOF) sort a
+**5067x**, hors taux de change — autre mecanisme, autre correctif.
 
 | Fonds | YTD servi publiquement | Constat sur la serie |
 |---|---|---|
