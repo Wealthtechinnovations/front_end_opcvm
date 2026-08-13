@@ -2274,6 +2274,26 @@ massivement des donnees legitimes. Avertissement ajoute en tete du script.
 **Lecon de methode** : deux invariants poses a priori ont ete invalides par l'execution reelle
 (seuils de fraicheur C4, puis perimetre C2). Un controle ne vaut que confronte aux donnees.
 
+**INSTRUCTION APPROFONDIE (2026-08-13, via API publique)** — le defaut est **recurrent**, pas ponctuel :
+
+- **1141** : 313 points, **13 ruptures d'echelle depuis 2022-03**. 300 points en NGN (10^4-10^5),
+  13 points isoles en USD (10^1-10^2). Le YTD de 143 958 % vient de la base au 1er janvier tombee
+  sur un point contamine (114,68 au 2025-12-24) contre 165 207 en NGN, soit 1 440x.
+- **1196** : 272 points, **3 echelles coexistantes** (115 / 1 655 / 159 000), bascule persistante
+  fin avril 2026. Base 2026 a 1 655 contre 159 006 courant, soit 96x.
+- Le calcul de performance est CORRECT ; ce sont les **donnees d'entree** qui melangent deux unites.
+
+**PREVENTION LIVREE — controle C7** ajoute a `check_doc_drift.js` : signale tout fonds dont le
+rapport MAX/MIN des VL depasse 20x sur 400 jours glissants. Un OPCVM ne varie pas d'un facteur 20
+en douze mois. C7 aurait attrape 1141, 1196 et Vantage 1224 avant diffusion publique.
+
+**REGLE PERMANENTE AJOUTEE aux deux CLAUDE.md** : `api_opcv/docs/ETAT_PRODUCTION_VERIFIE.md` est
+la source de verite n°1, a lire AVANT SUIVI.md. En cas de contradiction avec un autre .md, il
+gagne. Ne jamais desactiver un controle pour faire taire une alerte.
+
+**Documente dans** : CODE_REVIEW.md #73 (diagnostic complet + procedure de correction),
+TODO.md (section URGENT), les deux CLAUDE.md (regle permanente).
+
 **Prochaine action recommandee** : instruire 1141 et 1196 — identifier la date de bascule
 d'echelle et la devise reelle de chaque segment (`price_type`/`currency_code` dans
 `valorisations`), avant toute correction. Puis D2 CEMAC (`bvmac_boc_daily.py --dry-run --latest`

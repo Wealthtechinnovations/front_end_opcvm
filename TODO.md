@@ -1,5 +1,19 @@
 # TODO — Africafunds OPCVM (vue actionnable)
 
+> **Avant de lire ce fichier, lire `api_opcv/docs/ETAT_PRODUCTION_VERIFIE.md`** — genere
+> automatiquement chaque jour contre la production. En cas de contradiction, c'est lui qui fait foi.
+
+## URGENT — detecte par la boucle de controle le 2026-08-13
+
+- [ ] **#73 Series de VL melangeant deux echelles de devise** (CRITIQUE, donnee financiere publique)
+      - **1141 AFRINVEST DOLLAR FUND** sert un YTD de **143 958 %** — 13 ruptures d'echelle depuis 2022-03
+      - **1196 EMERGING AFRICA EUROBOND** sert **9 339 %** — 3 echelles coexistantes
+      - Instruction requise AVANT correction : grouper `valorisations` par `price_type`/`currency_code`
+        (methode qui a tranche le cas GDL au lot S2), decider l'echelle qui fait foi, puis corriger
+        avec snapshot et rollback.
+      - **NE PAS recomputer les classements OBLIGATIONS Nigeria avant traitement.**
+      - Detail complet : CODE_REVIEW.md #73.
+
 > Source de verite operationnelle : **SUIVI.md** (ce depot). Dette technique detaillee : **CODE_REVIEW.md**. Vision moyen/long terme : **ROADMAP.md**.
 > Ce fichier est une vue synthetique des actions a court terme. Ne pas dupliquer les details ici.
 

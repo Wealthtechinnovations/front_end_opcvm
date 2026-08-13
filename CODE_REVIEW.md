@@ -94,6 +94,45 @@ Resultat final UEMOA : **111/111 fonds (100%), 33 830/33 830 VL (100%)** local +
 - **DEPLOYE** et re-execute en production: 26 253 VL UEMOA convertis correctement
 - Sanity check: XOF local=198.58 eur=0.29 → DIVISION confirmee (OK)
 
+### 73. [CRITIQUE — FINANCE] Series de VL contaminees par deux echelles de devise (fonds Nigeria en USD)
+
+**Detecte le 2026-08-13 par la boucle de controle** (`check_doc_drift.js`, C3 puis C7), et
+verifie en direct sur l'API publique. Ce n'est PAS un incident ponctuel mais une **classe de
+defaut recurrente**.
+
+| Fonds | YTD servi publiquement | Constat sur la serie |
+|---|---|---|
+| **1141 AFRINVEST DOLLAR FUND** | **143 958 %** | 313 points, **13 ruptures d'echelle depuis 2022-03**. 300 points en NGN (10^4-10^5), 13 points isoles en USD (10^1-10^2). |
+| **1196 EMERGING AFRICA EUROBOND** | **9 339 %** | 272 points, **3 echelles coexistantes** : 115 / 1 655 / 159 000. Bascule persistante fin avril 2026. |
+| 1224 Vantage (lot T, corrige) | 15 655 % | Meme signature, rapport ~90x. Rollback effectue le 2026-08-06. |
+| 2743 APEL WEALTH MMF | 809 % en base | L'API renvoie 0 au 2026-07-10 — anomalie distincte, a instruire a part. |
+
+**Mecanisme du 1141** : la base YTD au 1er janvier tombe sur un point contamine (114,68 au
+2025-12-24, echelle USD) alors que la valeur courante est en NGN (165 207) — d'ou un rapport
+de 1 440x. Le calcul de performance est correct ; ce sont les **donnees d'entree** qui melangent
+deux unites.
+
+**Origine probable** : fonds libelles en dollars dont l'historique est stocke en naira, tandis
+que l'import SEC apporte des prix unitaires en USD. Voir la regle semantique Nigeria :
+`net_assets_total` / `bid_price` / `offer_price` ne doivent jamais alimenter la VL.
+
+**A FAIRE — instruction avant toute correction** :
+1. Requeter `valorisations` pour 1141 et 1196 en groupant par `price_type` et `currency_code`
+   (methode qui a tranche le cas GDL au lot S2) afin d'identifier quelles lignes sont en NGN et
+   lesquelles en USD.
+2. Decider quelle echelle fait foi pour le fonds (probablement USD, le fonds etant en dollars).
+3. Retirer ou reconvertir l'echelle minoritaire, avec snapshot et rollback.
+4. Recalculer les performances du perimetre, puis supprimer les eventuelles perfs orphelines
+   (`fix_orphan_performances.js --fond <id>`).
+
+**NE PAS recomputer les classements OBLIGATIONS Nigeria avant traitement** : 1141 et 1196 y
+seraient classes en tete sur des chiffres faux.
+
+**Prevention** : controle **C7** ajoute a `check_doc_drift.js` — signale tout fonds dont le
+rapport MAX/MIN des VL depasse 20x sur 400 jours glissants. Un OPCVM ne varie pas d'un facteur
+20 en douze mois ; un tel rapport signale un melange d'unites, jamais une performance reelle.
+
+
 ### 34. Donnees UEMOA/CEMAC stales — **UEMOA : DIAGNOSTIC ERRONE, CORRIGE le 2026-08-12**
 - ~~UEMOA: donnees stales 233 jours (derniere VL 2025-10-15), pas de scraper BRVM automatise~~
   - **FAUX SUR LES DEUX POINTS.** Verifie sur l'API de production le 2026-08-12 :

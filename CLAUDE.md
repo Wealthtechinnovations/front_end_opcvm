@@ -193,6 +193,26 @@ Apres chaque intervention, documenter dans SUIVI.md :
 8. Ne pas disperser la meme information dans plusieurs fichiers.
 9. Toute mise a jour d'un fichier documentaire complementaire doit etre mentionnee brievement dans SUIVI.md.
 
+## Regle obligatoire — La mesure prime sur la prose
+
+**Source de verite n°1 : `api_opcv/docs/ETAT_PRODUCTION_VERIFIE.md`.**
+
+Genere automatiquement chaque jour (06h00 UTC) par le workflow `doc-drift.yml` du depot
+`api_opcv`, qui execute `scripts/diag/check_doc_drift.js` contre la production. Il contient
+l'etat **mesure**, pas l'etat **affirme**.
+
+A chaque reprise de session : lire ce fichier AVANT `SUIVI.md`. Quatorze lignes suffisent a
+connaitre la verite du jour (fraicheur des VL par pays, coherence des caches d'affichage,
+performances aberrantes, couverture benchmark).
+
+**En cas de contradiction avec n'importe quel autre .md, c'est ce fichier qui fait foi.**
+Cette regle existe parce que l'inverse a coute des mois : `CODE_REVIEW #34` a affirme pendant
+deux mois « UEMOA stale 233 jours, pas de scraper BRVM » — faux sur les deux points — envoyant
+chaque reprise chercher un scraper deja livre et un backfill de donnees deja presentes.
+
+Ne jamais desactiver un controle pour faire taire une alerte : corriger la production, ou
+corriger le document.
+
 ## Regle obligatoire — Lecture du snapshot production avant toute action
 
 Le fichier `api_opcv/PRODUCTION_STATE.json` est genere automatiquement par `sync_production.sh` (cron horaire).
