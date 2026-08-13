@@ -2233,6 +2233,68 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT Y — 2026-08-13 : CAUSE RACINE DE #73 ETABLIE — LA CHAINE D ECRITURE N EST PAS AU CONTRAT
+
+**Canal de diagnostic sans MCP mis en place.** Le bridge etant indisponible, tout script depose
+dans `api_opcv/scripts/diag/ondemand/` est desormais execute en production par le workflow
+`doc-drift.yml` (SSH via secrets `S2_HOST`/`S2_SSH_KEY`), et sa sortie revient dans
+`api_opcv/docs/DIAG_ONDEMAND.md` par commit. Lecture seule, SELECT uniquement.
+
+**PORTEE REELLE DE #73 : au moins 15 fonds, pas 2.** Le controle C7 remonte toute la classe des
+fonds nigerians en devise etrangere, avec des facteurs tous groupes entre **1520x et 1554x** —
+soit le taux de change NGN/USD : United Capital Nigerian Eurobond, United Capital Global Fixed
+Income, Meristem Dollar, Nova Dollar, FSL Eurobond, Myrtle Dollar Shield, ARM Eurobond, Guaranty
+Trust Dollar, Comercio Partners Dollar, Cordros Dollar, Norrenberger Dollar, Coronation Dollar,
+AXA Mansard Dollar Bond, Afrinvest Dollar. La liste est tronquee par un `LIMIT 15` : **le total
+reel reste a mesurer**. Cas distinct hors taux de change : `2592 FCP BRIDGE EQUILIBRE` (UEMOA/XOF)
+a **5067x**.
+
+**CAUSE RACINE ETABLIE** (diagnostic `diag_scale_1141_1196.js`, execute en prod le 2026-08-13) :
+
+1. **Aucun document SEC ne produit deux echelles** (section B du rapport : liste vide). Les
+   fichiers sources sont coherents. Le defaut n'est donc PAS dans la lecture des colonnes.
+2. **Deux ecrivains successifs ont produit une serie hybride.** Toutes les lignes janvier→juillet
+   2026 du fonds 1141 portent `NGN / BID / OK` et le tag `correction_batch =
+   SECNGFIX_20260802_113036`, avec des valeurs a ~157 000-165 000. Les 17 et 24 juillet, deux
+   lignes a ~119,75 arrivent avec **tout a NULL** : ni devise, ni type de prix, ni document,
+   ni batch.
+3. Le prompt V2.2 atteste qu'au 2026-07-03 `value` valait **118,98** pour ce fonds : la serie
+   etait historiquement **en dollars**. Le batch SECNGFIX a charge le **bid en naira** par-dessus.
+4. **`currency_code` n'est pas faux** : le chargeur a honnetement enregistre qu'il prenait la
+   colonne NGN. La donnee est correctement decrite ; c'est la SERIE qui melange deux devises.
+5. Le fonds 1196 **alterne a l'interieur du meme batch** (24/04 : 1 654,60 · 30/04 : 159 101,71 ·
+   08/05 : 1 664,54 · 15/05 : 156 778,44) et porte **trois** echelles (115 / 1 655 / 157 000),
+   dont un rapport de 95x que le taux de change n'explique pas. A instruire separement.
+6. Trois dates consecutives de 1196 portent une valeur **strictement identique** (1637,4373 les
+   27/03, 02/04 et 10/04) sans `correction_batch` — un report de valeur, interdit par la BIBLE.
+
+**LE DEFAUT DE FOND — 10 ecrivains sur 11 n'ecrivent aucune qualification** :
+`brvm_boc_daily.py`, `cmf_tunisie_daily.py`, `bvmac_boc_daily.py`, `scrape_asfim_import.js`,
+`import_vl_maroc*.js` (x3), `import_vl_uemoa.js`, `import_vl_tunisie_cmf.js` et
+**`import_vl_nigeria_sec.js`** — ce dernier appele chaque lundi par `cron_nigeria_weekly.sh:101`,
+et responsable des deux lignes non tracees. Seul `fix_nigeria_ambiguous_apply.py` renseigne
+`price_type` et `correction_batch`.
+
+**Le schema doctrinal existe (54 colonnes), un batch de rattrapage l'a rempli une fois, mais
+aucun ecrivain de production ne l'alimente.** La qualification se degrade donc a chaque cron.
+
+**ORDRE D INTERVENTION IMPERATIF** : mettre les ecrivains au contrat AVANT de nettoyer
+l'historique. Corriger les series d'abord les exposerait a une re-contamination des le lundi
+suivant.
+
+**Point favorable** : la correction historique est chirurgicale et reversible — toutes les lignes
+en naira portent le tag `SECNGFIX_20260802_113036`.
+
+**DECISIONS UTILISATEUR REQUISES (non tranchees seul)** :
+- Quelle est la **devise canonique** de ces fonds ? Ce sont des fonds dollar, mais la SEC publie
+  les deux colonnes ; le prompt V2.2 interdit toute conversion implicite. C'est un choix produit.
+- Que faire du cas 1196 (trois echelles, rapport 95x inexplique) ?
+
+**A NE PAS FAIRE** : recomputer les classements OBLIGATIONS Nigeria ; lancer
+`fix_orphan_performances.js --execute` sans `--fond` ; corriger l'historique avant les ecrivains.
+
+---
+
 ### LOT X — 2026-08-13 : LA BOUCLE TROUVE 2 ANOMALIES INCONNUES DES SA 1re EXECUTION COMPLETE
 
 **Dispositif operationnel.** `scripts/diag/check_doc_drift.js` + workflow GitHub Actions
