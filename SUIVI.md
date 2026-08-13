@@ -2233,6 +2233,71 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT Z — 2026-08-13 : PERIMETRE CHIFFRE, ETAPE 2 REDEVENUE VIABLE, CEMAC REQUALIFIE
+
+**PERIMETRE REEL DE #73 : 44 fonds** (et non 15 — le controle C7 etait plafonne).
+Repartition : NIGERIA/NGN 25 · NIGERIA/USD 18 · UEMOA/XOF 1.
+**41 fonds ont un ratio entre 1380x et 1554x** = le taux de change NGN/USD.
+
+**REFERENTIEL : 29 fonds mal libelles.** Leur nom porte DOLLAR / EUROBOND / USD mais
+`dev_libelle = NGN`. Dont **1224 VANTAGE DOLLAR FUND** — le fonds du lot T dont on avait annule
+la fusion sans comprendre l ecart d echelle de ~90x. L explication etait la.
+Puisque la devise du fonds fait foi (decision utilisateur du 2026-08-13), ces 29 lignes doivent
+etre tranchees sur preuve avant toute correction automatique.
+
+**ETAT REEL DES COUCHES DE STAGING (verifie, plus deduit)** :
+
+| Pays | Staging | Volume | Verdict |
+|---|---|---|---|
+| UEMOA | `brvm_boc_navs_raw` + 4 tables | **111 994 lignes**, 1 103 sources, 102 alias, 3,6 Go de PDF | **Complet et vivant — modele de reference** |
+| NIGERIA | `sec_ng_corrections_audit` seul | 48 980 lignes | Audit OK, **staging absent** |
+| TUNISIE | `cmf_*` (3 tables) | 29 lignes d audit, 2 tables vides | Squelette seulement |
+| CEMAC | **aucune table** | — | **Le scraper n a JAMAIS tourne en production** |
+| MAROC | aucune | — | Aucune couche brute |
+
+Tables attendues par le code mais ABSENTES : `sec_ng_observations`, `sec_ng_fund_aliases`,
+`sec_ng_load_logs`, et les 5 tables `bvmac_*`.
+
+**CORRECTION D UNE AFFIRMATION DU LOT Y** : j avais ecrit que CEMAC « reste a executer en
+dry-run ». C est faux — **rien n a jamais ete cree** : ni tables, ni repertoire `data/bvmac_boc`.
+Le script existe et a ete valide contre un PDF reel, mais il n a jamais ete lance en production.
+
+**ETAPE 2 REDEVENUE VIABLE.** Les fichiers sources SEC sont presents sur le serveur :
+`sec_ng_downloads/` = **553 fichiers, 106,6 Mo** (445 .xlsx + 108 .xls), modifies du 2026-05-17 au
+2026-08-10. Le rejeu du parsing est donc local et rapide. **Reserve** : le prompt V2.2 recense
+686 publications officielles — environ 133 manquantes, a mesurer avant de conclure a une
+couverture complete.
+
+**CAS 1196 — A EXCLURE DE TOUTE CORRECTION DE MASSE.** Le test du nombre de parts implicite
+(actif net / valeur) tranche : segment a ~1 650 -> **2 960 624 parts** ; segment a ~157 000 ->
+**28 108 parts**, pour un actif net quasi identique (4,88 Md contre 4,65 Md). Les deux segments
+ne peuvent pas decrire le meme fonds au meme moment, et leurs periodes se **chevauchent**
+(nov. 2025 -> avr. 2026). Le facteur ~95 n est ni le taux de change ni un multiple d unite
+simple. A arbitrer document par document.
+
+**TROIS FONDS HORS TAUX DE CHANGE, TROIS CAUSES DIFFERENTES** :
+- **2592 FCP BRIDGE EQUILIBRE (UEMOA)** : 104 lignes entre **29,5 et 44,5 millions XOF** — c est
+  un **actif net total charge dans `value`**, pas un prix de part. `currency_code` absent sur
+  100 % des lignes (le chargeur UEMOA n ecrit aucune qualification). **Bug distinct de #73.**
+- **2796 FSDH HALAL** : seulement 2 lignes aberrantes isolees sur 136. Correction ponctuelle.
+- **1251 SIAML ETF 40** : progression continue de 2017 a 2026 (100 -> 14 414) qui **pourrait etre
+  reelle**. Ne pas corriger sans verification : risque de detruire une serie saine.
+
+**CORRECTION D UNE ALARME PRECEDENTE** : l incoherence de casse `NIGERIA` / `Nigeria` ne fausse
+PAS les regroupements — la collation MySQL est insensible a la casse (`GROUP BY pays` renvoie bien
+326 fonds en une ligne). Le risque se limite aux comparaisons de chaines cote JavaScript.
+Requalifie en **mineur**.
+
+**PLAN CONFIRME, ORDRE INCHANGE** : etape 0 referentiel (29 fonds) -> etape 1 contrat d ecriture
+(point de passage unique, sur le modele UEMOA qui fonctionne) -> etape 2 rejeu du parsing SEC puis
+promotion de la colonne USD -> etape 3 invariants. **Le contrat AVANT l historique** : sinon
+`import_vl_nigeria_sec.js` re-contamine des le lundi suivant.
+
+**A NE PAS FAIRE** : embarquer 1196, 1251 ou 2592 dans une correction de masse ; recomputer les
+classements OBLIGATIONS Nigeria ; corriger l historique avant les ecrivains.
+
+---
+
 ### LOT Y — 2026-08-13 : CAUSE RACINE DE #73 ETABLIE — LA CHAINE D ECRITURE N EST PAS AU CONTRAT
 
 **Canal de diagnostic sans MCP mis en place.** Le bridge etant indisponible, tout script depose
