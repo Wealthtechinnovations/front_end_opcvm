@@ -2233,6 +2233,54 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT X — 2026-08-13 : LA BOUCLE TROUVE 2 ANOMALIES INCONNUES DES SA 1re EXECUTION COMPLETE
+
+**Dispositif operationnel.** `scripts/diag/check_doc_drift.js` + workflow GitHub Actions
+`doc-drift.yml` : execution quotidienne (06h00 UTC) contre la production, sans MCP ni
+intervention humaine. Le workflow ecrit lui-meme `api_opcv/docs/ETAT_PRODUCTION_VERIFIE.md`
+(commit `677056f`, ecrit par github-actions). **Ce fichier fait foi en cas de contradiction
+avec un autre .md.** Prerequis : Settings > Actions > Workflow permissions = "Read and write"
+(une premiere execution a echoue en 403 sur ce point precis).
+
+**Resultat du 2026-08-13 00:56 UTC — 10/14 OK, 2 echecs, 2 alertes.**
+
+**CONFIRME SAIN** : C1 datejour **aucun ecart** (le lot W tient) ; C4 fraicheur MAROC 2 j,
+UEMOA 1 j, TUNISIE 6 j, NIGERIA 20 j ; C5 snapshot **0,9 h** ; C6 indRef NIGERIA/TUNISIE/UEMOA
+100 %, MAROC 99,8 %.
+
+**ANOMALIE REELLE — C3 : melange d'echelles NGN/USD sur des fonds Nigeria en dollars.**
+Verifie en direct sur l'API publique le 2026-08-13 :
+
+| Fonds | YTD servi | Diagnostic |
+|---|---|---|
+| **1141 AFRINVEST DOLLAR FUND** | **143 958 %** | Serie contaminee : 2026-07-10 = **165 207** (echelle NGN) puis 2026-07-17 = **119,75** (echelle USD). min 92 / max 185 518, rapport **2012x**. Base 1er janvier en USD comparee a une valeur en NGN. |
+| **1196 EMERGING AFRICA EUROBOND** | **9 339 %** | Meme profil. |
+| 2743 APEL WEALTH MONEY MARKET | 809 % en base | L'API renvoie 0 au 2026-07-10 — anomalie mineure, a instruire a part. |
+
+Meme signature que le bug Vantage 1224 (lot T) : **une serie ne doit jamais melanger deux
+echelles de devise**. Ces valeurs sont affichees publiquement. **Non corrige** : donnee
+financiere = tache sensible, et le correctif exige d'identifier quelles lignes sont en NGN et
+lesquelles sont en USD avant tout retrait. **Ne pas recomputer les classements OBLIGATIONS
+Nigeria avant traitement** : 1141 et 1196 y seraient classes absurdement.
+
+**FAUX POSITIF CORRIGE — C2.** Le controle a d'abord compte **50 150** perfs orphelines sur
+~67 600 lignes (74 % de la table). L'invariant etait trop large : `fix_populate_performances`
+ecrit a la derniere VL du fonds, mais les routes batch `saveperfdatemysql` historisent a
+d'autres dates — ces lignes sont normales. C2 ne signale plus que les orphelines **en tete de
+serie** (celles que l'API sert, cas Vantage). **NE JAMAIS lancer
+`fix_orphan_performances.js --execute` sans `--fond <id>`** : un passage global aurait detruit
+massivement des donnees legitimes. Avertissement ajoute en tete du script.
+
+**Lecon de methode** : deux invariants poses a priori ont ete invalides par l'execution reelle
+(seuils de fraicheur C4, puis perimetre C2). Un controle ne vaut que confronte aux donnees.
+
+**Prochaine action recommandee** : instruire 1141 et 1196 — identifier la date de bascule
+d'echelle et la devise reelle de chaque segment (`price_type`/`currency_code` dans
+`valorisations`), avant toute correction. Puis D2 CEMAC (`bvmac_boc_daily.py --dry-run --latest`
+en SSH, le bridge n'acceptant que les scripts .js/.ts).
+
+---
+
 ### LOT W — 2026-08-12 : BRIDGE MCP RETABLI — P1-01 CORRIGE EN PRODUCTION, D3 EXECUTE
 
 **P1-01 RESOLU EN PRODUCTION.** Diagnostic confirme en SQL puis corrige et verifie.
