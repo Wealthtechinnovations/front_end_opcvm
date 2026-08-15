@@ -2233,6 +2233,67 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AA — 2026-08-15 : CAUSE DE #73 PROUVEE ARITHMETIQUEMENT — ETAPE 0 DEVENUE FACTUELLE
+
+**Bootstrap MCP conforme** (`MCP_AUTONOMY.md:88-92`) : `ping` OK, mode `scoped-write-tools`,
+shell libre desactive, SQL en SELECT uniquement, chemins conformes. Git serveur : `api_opcv` sur
+la bonne branche, **301 commits d avance** (snapshots horaires), dernier `2026-08-15 20:00` ;
+**`front_end_opcvm` reste sur `b2fc30c` du 14 juillet — il n a rien tire depuis un mois**, ce qui
+confirme l item « build frontend jamais refait » de TODO.md.
+
+**LA CAUSE DE #73 EST DESORMAIS DEMONTREE, PLUS SEULEMENT DIAGNOSTIQUEE.**
+
+`valorisations` contient **488 lignes** (sur 77 930 Nigeria) ou `bid_price_usd`,
+`offer_price_usd` et `net_assets_usd` sont renseignes — periode 2026-04-30 -> 2026-07-10,
+40 fonds. `unit_price_usd` reste vide, ce qui explique que je les aie manques lors des passes
+precedentes.
+
+Ces 488 lignes donnent la preuve arithmetique :
+- `net_assets_ngn / net_assets_usd` = **1371,2** de facon constante sur presque tous les fonds.
+  **C est le taux NGN/USD publie par la SEC elle-meme**, derive de ses deux colonnes d actif net —
+  jamais un taux calcule par nous.
+- Verification sur le fonds 1141 : `bid_price_usd` va de 117,51 a 119,75, et `value` de 160 435 a
+  165 207. Or **117,51 x 1371,2 = 161 130** et **119,75 x 1371,2 = 164 199**.
+- **`value` contient donc le prix en dollars converti en naira.** Le chargeur a pris la colonne
+  « Bid Price (NGN) » la ou la serie etait en « Bid Price (USD) ».
+
+**CONSEQUENCES — les trois verrous sautent :**
+
+1. **L etape 0 devient factuelle.** Plus besoin de deviner la devise d apres le nom : la SEC ne
+   publie de colonnes USD que pour les fonds libelles en dollars. Critere objectif.
+2. **L etape 2 est prouvee realisable.** Ces 488 lignes attestent que les fichiers SEC
+   contiennent bien la colonne USD et qu un chargement l a captee. Le rejeu des 553 fichiers
+   presents la recuperera sur tout l historique.
+3. **Aucune conversion ne sera necessaire** — donc aucune donnee inventee. Le taux n est jamais
+   calcule, il est lu.
+
+**LISTE D ARBITRAGE ETAPE 0 — 23 fonds prouves par les donnees** (libelles `NGN` alors que la SEC
+publie des valeurs USD pour eux, tous actifs, taux_sec ~1371) :
+
+    1141 Afrinvest Dollar · 2764 AIICO Eurobond · 1154 ARM Eurobond
+    2861 ARM Short-Term Eurobond · 2858 ARM Specialized Dollar · 1158 AVA GAM FI Dollar
+    1160 AXA Mansard Dollar Bond · 1175 Cordros Dollar · 2767 Cowry Eurobond
+    1189 EDC Dollar · 1196 Emerging Africa Eurobond · 1213 FSDH Dollar
+    2768 FSL Eurobond · 1214 Futureview Dollar · 2856 Lead Dollar FI
+    1168 Nigeria Dollar Income · 1170 Norrenberger Dollar · 1239 Nova Dollar FI
+    1244 PACAM Eurobond · 2857 RMBN Dollar FI · 1257 Stanbic IBTC Dollar
+    1274 United Capital Global FI · 2866 United Capital Nigerian Eurobond
+
+**Six fonds a arbitrer autrement** (presents dans la liste par nom mais sans ligne USD recente,
+donc sans preuve directe) : 1199 FBN Dollar, 2899 FBN Nigeria Eurobond, 1204 FBN Specialized
+Dollar, 1208 Legacy USD Bond, 2812 Nigerian Eurobond, 1272 United Capital Eurobond, et
+**1224 Vantage Dollar**. A trancher sur prospectus, pas au meme niveau de certitude.
+
+**PROCHAINE ACTION RECOMMANDEE** : etape 1 — le contrat d ecriture, sur le modele UEMOA qui
+fonctionne deja (`brvm_boc_navs_raw`, 111 994 lignes tracees). Le contrat AVANT l historique :
+`import_vl_nigeria_sec.js` tourne chaque lundi et re-contaminerait toute correction sous huit jours.
+
+**A NE PAS FAIRE** : embarquer 1196, 1251 ou 2592 dans une correction de masse ; recomputer les
+classements OBLIGATIONS Nigeria ; corriger l historique avant les ecrivains ; convertir une valeur
+par un taux calcule — le taux se lit dans les colonnes SEC, il ne se fabrique pas.
+
+---
+
 ### LOT Z — 2026-08-13 : PERIMETRE CHIFFRE, ETAPE 2 REDEVENUE VIABLE, CEMAC REQUALIFIE
 
 **PERIMETRE REEL DE #73 : 44 fonds** (et non 15 — le controle C7 etait plafonne).
