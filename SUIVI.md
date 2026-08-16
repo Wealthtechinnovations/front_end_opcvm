@@ -2233,6 +2233,65 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AB — 2026-08-16 : FRONTEND DEGELE APRES UN MOIS — INCIDENT DE 6 MINUTES ASSUME
+
+**RESULTAT** : le frontend servait un bundle anterieur au 3 juillet. Il est desormais reconstruit
+et en ligne, sous Node 18.20.8. Les correctifs UI merges depuis (quartile EUR/USD `8a60083`,
+barres de ratios `cf6dba2`) sont enfin actifs. Verifie : `/`, `/home`, `/funds/1141`,
+`/countries`, `/funds/compare` en **HTTP 200** ; PM2 `online`, PID 2870644, compteur stabilise.
+
+**INCIDENT — coupure du site de ~08:02 a ~08:08 UTC (6 min), causee par cette intervention.**
+L API est restee disponible tout du long (HTTP 200 verifie a chaque etape).
+
+Enchainement reel, avec les deux causes distinctes :
+
+1. **Premier deploiement — echec au build.** `next build` exige Node >= 18.17 ; le shell de
+   deploiement fournit `/usr/local/bin/node` en **14.16.0**. `set -e` a interrompu avant le
+   redemarrage PM2 : **aucune regression a ce stade**, site toujours en 200.
+2. **Diagnostic.** Node 18 et 20 sont installes (`/opt/plesk/node/{18,20,21}`, nvm). Surtout,
+   PM2 lance deja tout avec `/root/.nvm/versions/node/v18.20.8/bin/node` — verifie dans
+   `~/.pm2/dump.pm2` et confirme par `/proc/<pid>/exe`. **Le runtime n a jamais ete en cause,
+   seul le PATH du build l etait.**
+3. **Deuxieme deploiement — coupure.** Le timeout du bridge MCP a **60 s** a tue la session SSH
+   et le build avec elle, laissant `.next` incomplet alors que `next start` sert depuis ce meme
+   repertoire. Le site est passe en 503.
+4. **Troisieme deploiement — build reussi, mais crash loop.** `Compiled successfully` sous
+   Node 18.20.8, puis PM2 en `errored`, compteur 17 -> 48. Les logs donnaient la cause :
+   `You are using Node.js 14.16.0`. **`pm2 restart --update-env`** — present dans le script de
+   deploiement — remplace l environnement enregistre par celui du shell courant, donc un PATH
+   en Node 14. L interpreteur nvm enregistre par PM2 a ete ecrase.
+5. **Correctif et retablissement.** Le demarrage a ete ancre comme le build.
+
+**LIVRE** (depot `front_end_opcvm`) :
+- `scripts/_pick-node.sh` — selection d un Node >= 18.17, logique unique partagee ;
+- `scripts/build.sh` et `scripts/start.sh` — construire et executer avec la **meme** version,
+  sans dependre du PATH herite ni de `--update-env` ;
+- `package.json` — `build`/`start` passent par ces scripts, `build:next`/`start:next` conservent
+  les commandes reelles ; `engines: >=18.17.0` documente enfin une contrainte que Next imposait
+  depuis toujours mais que rien n ecrivait.
+
+**LECONS, a retenir avant tout futur deploiement** :
+- **Un build Next in-place coupe le site** : `next build` ecrase `.next` pendant que `next start`
+  y lit. Prevoir une fenetre, ou un build hors ligne suivi d une bascule.
+- **Le timeout MCP de 60 s est incompatible avec `deploy_project_s2` sur ce frontend.** Un build
+  interrompu laisse `.next` corrompu. Ne pas relancer a l aveugle : verifier `.next` et les logs.
+- **`--update-env` est un piege** : il defait l interpreteur enregistre par PM2. Tout process
+  dependant d une version de Node doit l ancrer dans son propre script de demarrage.
+
+**ANOMALIE CONSIGNEE, NON TRAITEE** : un second `next-server` (pid 2100145) tourne sous
+`/usr/local/bin/node` (Node 14). Process orphelin, sans lien avec PM2. A instruire — il ne
+sert probablement rien mais consomme de la memoire.
+
+**Etat Git serveur** : `api_opcv` **313 commits d avance** (snapshots horaires jamais pousses,
+cf. P2-05). Un stash orphelin subsiste cote `api_opcv` (contenu : `logs.txt` seul, sans valeur),
+consequence d un conflit de verrou Git avec le cron horaire pendant un pull.
+
+**Prochaine action recommandee** : reprendre l etape 1 du correctif #73 — le contrat d ecriture
+est livre (`src/lib/vl_contract.js`) et branche sur `import_vl_nigeria_sec.js`, mais **jamais
+execute**. Le tester en `--dry-run` avant le cron du lundi.
+
+---
+
 ### LOT AA — 2026-08-15 : CAUSE DE #73 PROUVEE ARITHMETIQUEMENT — ETAPE 0 DEVENUE FACTUELLE
 
 **Bootstrap MCP conforme** (`MCP_AUTONOMY.md:88-92`) : `ping` OK, mode `scoped-write-tools`,
