@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "bash ./scripts/build.sh",
     "build:next": "next build",
-    "start": "next start",
+    "start": "bash ./scripts/start.sh",
+    "start:next": "next start",
     "lint": "next lint",
     "clean": "rm -rf .next node_modules"
   },
