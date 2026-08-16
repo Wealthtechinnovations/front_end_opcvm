@@ -34,6 +34,15 @@
 
 | Lot | Date | Objet | Statut | Commit(s) |
 |-----|------|-------|--------|-----------|
+| W | 2026-08-12 | P1-01 cache `datejour` : 315 fonds resynchronises (218 NG + 97 UEMOA), cause racine traitee dans 2 crons | EXECUTE + verifie prod | `a9c4c16` |
+| X-Z | 2026-08-13 | #73 diagnostic : 44 fonds a echelle melangee, 29 mal libelles, staging reel cartographie | Diagnostic | `a1359a0`, `95aeec3` |
+| AA | 2026-08-15 | #73 preuve arithmetique (taux SEC 1371,2) ; liste d arbitrage etape 0 : 23 fonds prouves | Diagnostic | `2663eb3` |
+| AB | 2026-08-16 | Frontend degele (build Node 18) + incident 6 min assume et documente | EXECUTE + verifie prod | `0e02825`, `72ea4d9`, `232d399` |
+| AC | 2026-08-16 | Etape 1 : contrat d ecriture livre et branche sur l importeur Nigeria, pre-vol 13/13 en prod | Livre, non execute | `bade04d`, `7189106`, `c9f981f` |
+
+
+| Lot | Date | Objet | Statut | Commit(s) |
+|-----|------|-------|--------|-----------|
 | Indices | 2026-06-26/27 | Correction sources indices + propagation indRef + fix valLiq/casse | Deploye + verifie | `85b1d1c`, `d4a237d` |
 | Audit | 2026-07-02 | Audit complet plateforme (secu/finance/data/frontend) | Documente (#64-#72) | `797e1ed` |
 | Lot B | 2026-07-03 | Backfill indRef Tunisie 2011-2021 (180310) + recalc EUR/USD | EXECUTE + verifie prod | `1a7e70a` |

@@ -1,5 +1,25 @@
 # CHANGELOG — Africafunds OPCVM Platform
 
+## [2026-08-16] FRONTEND degele + contrat d ecriture des VL (etape 1 de #73)
+
+### Frontend (EXECUTE en prod, verifie)
+- **Bundle reconstruit apres un mois de gel** : le serveur servait un build anterieur au 3 juillet. Les correctifs UI merges depuis (quartile EUR/USD `8a60083`, barres de ratios `cf6dba2`) sont enfin actifs.
+- **Cause** : `next build` exige Node >= 18.17 ; le shell de deploiement fournit Node 14.16.0. Le runtime, lui, tournait deja en 18.20.8 via nvm — seul le PATH du build etait fautif.
+- **Correctif** : `scripts/_pick-node.sh` partage par `scripts/build.sh` et `scripts/start.sh` — construire et executer utilisent desormais la meme version, ancree dans le depot et non dans un PATH herite. `package.json` declare `engines >= 18.17.0`.
+- **INCIDENT ASSUME — coupure du site de ~6 min (08:02-08:08 UTC)**. L API est restee disponible. Deux causes enchainees : le timeout du bridge MCP a 60 s a tue un build en cours, laissant `.next` incomplet alors que `next start` y lit ; puis `pm2 restart --update-env` a redemarre le process sous Node 14 en ecrasant l interpreteur nvm enregistre. Retabli et verifie (5 pages en HTTP 200, PM2 stable).
+
+### Backend — contrat d ecriture (livre, non encore actif sur les autres pays)
+- **`src/lib/vl_contract.js`** : point de passage unique pour toute ecriture dans `valorisations`. Impose devise, type de prix et provenance ; **refuse une mesure dont la devise contredit celle du fonds** — la regle qui aurait empeche #73. Interdit tout repli silencieux vers une devise par defaut.
+- **`import_vl_nigeria_sec.js` branche** (premier des onze ecrivains). Son INSERT passe de 28 a 35 colonnes ; `currency_code`, `price_type`, `data_quality`, `correction_batch`, `source_url`, `sec_document_id` et `report_date` sont desormais renseignes, avec identifiant de lot et commande de rollback imprimee.
+- **Mode `warn` par defaut** : seule une contradiction de devise bloque. Un import qui passait passe encore.
+- **Pre-vol execute en production** : 13/13 controles OK sous le Node reel du serveur (chargement, comportement sur le cas #73, syntaxe, 35 colonnes confrontees au schema, tuples, lecture de la devise). **Aucune regression pour le cron Nigeria du lundi.**
+
+### Diagnostic #73 — perimetre etabli
+- **44 fonds** touches (et non 15 : le controle C7 etait plafonne), dont **41 avec un ratio entre 1380x et 1554x = le taux de change NGN/USD**.
+- **Preuve arithmetique** : `net_assets_ngn / net_assets_usd` = 1371,2 constant ; sur le fonds 1141, `bid_price_usd` 117,51 x 1371,2 = 161 130, soit la `value` observee. **`value` contient le prix dollar converti en naira.**
+- **29 fonds mal libelles** dans le referentiel (nom DOLLAR/EUROBOND, `dev_libelle = NGN`), dont **23 prouves par les donnees** — la SEC ne publie de colonnes USD que pour les fonds dollar.
+- **Exclus de toute correction de masse** : 1196 (trois echelles, parts implicites incoherentes), 2592 (actif net dans `value`, bug UEMOA distinct), 1251 (progression possiblement reelle).
+
 ## [2026-08-02] NIGERIA — correction majeure des VL appliquee en production (batch SECNGFIX_20260802_113036)
 
 ### Donnees (EXECUTE en prod, verifie)
