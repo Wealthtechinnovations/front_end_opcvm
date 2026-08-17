@@ -2233,6 +2233,95 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AD — 2026-08-17 : PANNE BASE, CRONS RENDUS BRUYANTS, DEFAUT PERF DECOUVERT, ARBITRAGE #73
+
+**INCIDENT BASE — resolu.** MariaDB s est arrete (socket absent, toutes les routes API en 500,
+pages servies mais vides). Disque sain (71 %, 44 Go libres) : ce n est pas une saturation.
+Aucun outil MCP gouverne ne couvre le redemarrage d un service — le bridge n expose que
+Passenger (legacy) et le conteneur MCP de S1. Un workflow dedie a donc ete cree,
+`.github/workflows/ops-mariadb-recover.yml`, **isole du canal de controle en lecture seule**,
+sans `schedule`, qui diagnostique AVANT d agir (etat, journal, traces OOM sur 24 h, memoire) puis
+redemarre puis verifie. **Base rétablie a 18:21:24**, production verifiee : 1 253 fonds,
+1 026 577 VL, 4 routes API en 200, 3 pages en 200.
+**Limite connue** : ce workflow ecrit son diagnostic dans le resume du job, non lisible depuis
+une session Claude. La cause exacte de l arret reste a lire dans l onglet Actions.
+
+**CRONS — 7 sur 7 propagent desormais leur statut.** Audit complet des 8 scripts : **6 sortaient
+systematiquement en code 0**, meme apres un echec total. Trois defauts corriges, tous
+d observabilite — **rien de ce qui s execute n a change** :
+- `run_step` testait le statut de `tee`, pas de la commande. Les 5 etapes node du cron quotidien
+  etaient TOUJOURS rapportees OK, meme apres un `process.exit(1)`. **CODE_REVIEW #49 etait donc
+  inoperant alors qu il etait coche comme fait depuis le 2026-06-26.** Corrige par `PIPESTATUS`,
+  idiome deja utilise par les crons BRVM/Tunisie/indices du meme projet.
+- `run_curl` melangeait le corps de la reponse au code HTTP (substitution de processus ecrivant
+  dans le flux capture par `$( )`) : fausses erreurs sur des HTTP 200, ou l inverse, selon
+  l ordonnancement. **CODE_REVIEW #50 etait dans le meme cas.** Corps passe par fichier temporaire.
+- `check_cron_health.js`, seul detecteur, imprimait « N PROBLEME(S) » puis sortait 0 : la
+  detection n existait que si un humain lisait le log. Il pose desormais `process.exitCode`.
+- **Piege du CSV perime** (cron Nigeria) : `sec_ng_latest.csv` n etait jamais supprime avant
+  extraction. Un extracteur en echec laissait celui de la semaine precedente, le controle
+  « existe et >= 2 lignes » passait, l import rejouait des donnees deja presentes en journalisant
+  OK. `rm -f` ajoute avant extraction. En-tete aligne sur les 8 etapes reelles.
+- **Verifie en production** : le controle de sante sort maintenant en **code 1**.
+
+**DEFAUT MAJEUR DECOUVERT — les performances ne suivent pas les VL** (revele immediatement par le
+controle de sante rendu bruyant) :
+
+| Pays | Fonds actifs | Perf a jour | Retard moyen |
+|---|---:|---:|---:|
+| **MAROC** | 644 | **9** | **78,5 j** |
+| **TUNISIE** | 131 | **6** | **80,1 j** |
+| UEMOA | 111 | 50 | 8,5 j |
+| NIGERIA | 324 | 274 | 5,9 j |
+| CEMAC | 34 | 34 | 0 (VL figees, coherent) |
+
+Les deux pays au pipeline le plus regulier ont des VL fraiches et des **performances datant de fin
+mai**. Le site affiche des chiffres plausibles et faux depuis pres de trois mois, sans aucun
+signal. **Devenu l invariant C8.** Cause non prouvee : la correlation avec le bug `run_curl` est
+forte (le recalcul passe par `curl /api/saveperfdatemysql`) mais reste a etablir. **Le cron de
+20h, avec les correctifs, est le premier test reel.**
+
+**CONTRAT D ECRITURE — n a rien ecrit.** Le cron Nigeria a tourne ce lundi a 10h, apres que le
+serveur ait tire le code a 08:27. Aucun lot `SECNG_20260817_*` n existe : la SEC n a rien publie
+de neuf (derniere VL Nigeria au 2026-07-24, 24 jours). **On ne peut donc PAS affirmer que le
+contrat fonctionne en production — seulement qu il n a pas casse l import.**
+
+**ARBITRAGE #73 ETAPE 0 — DECISION : OPTION B (reparer l extracteur AVANT le referentiel).**
+
+Rappel des options : **A** = corriger `dev_libelle` des 23 fonds maintenant (la contamination
+s arrete, mais ces fonds gelent jusqu a ce que l extracteur produise la colonne USD) ;
+**B** = reparer l extracteur d abord, puis le referentiel (rien ne gele).
+
+Motifs, par ordre de poids :
+1. **A ne soigne pas ce qui fait mal.** Le prejudice visible — YTD a 143 958 % — porte sur un
+   historique deja servi. Geler les ecritures futures ne corrige aucune ligne existante ; ce sont
+   les etapes 2 et 3 qui soignent.
+2. **L hemorragie est lente, la plaie est ancienne.** La SEC n a rien publie depuis 24 jours.
+   A bloquerait des fonds qui ne recoivent deja rien, au prix d un gel **de duree non bornee** :
+   il dure jusqu a la reparation de l extracteur, c est-a-dire le travail de B.
+3. **B atteint le meme point d arrivee sans degrader**, par etapes additives et verifiables.
+4. **A repose sur une hypothese non verifiee.** Si l extracteur emet deja `currency_code = USD`
+   pour ces fonds, A ne gele rien ; s il emet NGN, A gele 23 fonds pour une duree inconnue.
+
+**Etat de l extracteur** (`sec_ng_nav_extractor_v6.py`, present dans le depot, 76 Ko) : il choisit
+le prix par priorite `offer > unit > bid` (`choose_vl_price`), infere la devise avec un niveau de
+confiance (`infer_currency`, ecrasable par `block_currency_code`), et n emet **qu un seul prix** —
+ni `bid_price_usd`, ni `unit_price_usd`.
+
+**PROCHAINE ACTION — mesurer avant de coder.** Lire ce que le CSV deja present porte reellement
+pour ces fonds, sans rien executer :
+```
+cd /var/www/.../api && head -1 sec_ng_latest.csv && awk -F, 'NR>1 && (/DOLLAR/ || /EUROBOND/)' sec_ng_latest.csv | head -5
+```
+Si la devise sort a `USD` : l etape 0 devient gratuite, l enchainer immediatement.
+Si elle sort a `NGN` ou vide : corriger `choose_vl_price` et `infer_currency` pour selectionner la
+colonne USD des fonds dollar, puis seulement ensuite le referentiel.
+
+**A NE PAS FAIRE** : appliquer l option A sans cette mesure ; recomputer les classements
+OBLIGATIONS Nigeria ou ACTIONS ; lancer `fix_orphan_performances.js --execute` sans `--fond`.
+
+---
+
 ### LOT AB — 2026-08-16 : FRONTEND DEGELE APRES UN MOIS — INCIDENT DE 6 MINUTES ASSUME
 
 **RESULTAT** : le frontend servait un bundle anterieur au 3 juillet. Il est desormais reconstruit
