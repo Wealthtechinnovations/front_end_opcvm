@@ -2233,6 +2233,69 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AE — 2026-08-19 : MESURE DE L EXTRACTEUR — L ETIQUETTE DE DEVISE EST DU BRUIT
+
+**Objet** : premier pas de l option B (arbitrage du lot AD). Mesurer ce que l extracteur SEC
+produit reellement AVANT de toucher au referentiel. Lecture seule, aucune ecriture.
+
+**Source mesuree** : `sec_ng_latest.csv` sur le serveur — 4,89 Mo, 4 221 lignes, 53 colonnes,
+produit le 2026-08-17 a 10:00 par le cron Nigeria.
+
+**RESULTAT 1 — l etiquette `currency_code` ne predit pas l unite de la valeur.**
+
+| Etiquette | 10^0 | 10^1 | 10^2 | 10^3 | 10^4 | 10^5 |
+|---|---:|---:|---:|---:|---:|---:|
+| **USD** | 202 | 12 | 168 | 246 | 17 | **238** |
+| **NGN** | 48 | — | 48 | 85 | — | 51 |
+
+L etiquette USD couvre **six ordres de grandeur**. Les 238 lignes a 10^5 sont des nairas
+etiquetes dollars : Afrinvest Dollar Fund a **160 284,80**, Futureview a **190 908,74**,
+AXA Mansard a **189 652,08**, Cordros a **166 840,10** — alors que le prix USD reel d Afrinvest
+est **117-119**, mesure en base au lot AA. A l inverse, CardinalStone et Coronation sortent a
+1 731 et 1 453 sous la meme etiquette.
+
+**RESULTAT 2 — l extracteur sert le prix de souscription comme VL.**
+`vl_price_source = offer_price` sur **100 %** des lignes de l echantillon. `choose_vl_price`
+applique la priorite `offer > unit > bid`. **La BIBLE l interdit explicitement** : « Ne choisis
+pas silencieusement Bid ou Offer comme VL. » Ce sont deux mesures distinctes.
+
+**CE QUE CELA CHANGE POUR L ETAPE 0 — et pourquoi l option A aurait ete pire que le gel.**
+
+Le lot AD retenait B parce que A gelerait 23 fonds pour une duree non bornee. La mesure montre
+un motif plus grave : **appliquer A ferait ACCEPTER de la donnee fausse sous un label
+rassurant.** Le contrat compare l etiquette de la mesure a `dev_libelle` ; si l on passe ces
+fonds en USD, les 238 lignes en naira etiquetees USD deviennent conformes et entrent dans la
+serie sans resistance. Le contrat cesserait de proteger precisement la ou il doit proteger.
+
+**Correction d une conclusion intermediaire de ce meme lot** : la premiere version du script
+comptait les etiquettes en les prenant pour des faits et concluait « l etape 0 est gratuite ».
+C etait naif — sixieme hypothese invalidee par les donnees sur ce dossier. Le script croise
+desormais l etiquette avec l ordre de grandeur, et signale les lignes etiquetees USD dont le
+prix depasse 10 000.
+
+**REPARATION SPECIFIEE — a mener AVANT toute etape 0**, dans `sec_ng_nav_extractor_v6.py` :
+1. `choose_vl_price` doit retenir en priorite le **prix unitaire explicite**, jamais `offer_price`
+   par defaut. Si la source ne publie qu un Bid et un Offer, la VL reste nulle et la ligne part
+   en revue — c est la regle de la BIBLE, deja appliquee par `sec_ng_xlsx_loader.py`.
+2. La devise doit etre **celle de la colonne effectivement lue**, pas une inference de contexte.
+   `infer_currency` peut rester en repli, jamais en source primaire. Les fichiers SEC publient
+   les paires (`Offer Price (NGN)` / `Offer Price (USD)`) : la colonne porte donc l information.
+3. Le CSV doit exposer la devise ET la source du prix par ligne, pour que le contrat d ecriture
+   puisse refuser en connaissance de cause.
+
+**ETAT** : aucune ecriture effectuee. Le referentiel reste inchange (23 fonds en NGN, 17 en USD).
+Le contrat reste en mode `warn`. La production n a pas ete touchee par ce lot.
+
+**PROCHAINE ACTION RECOMMANDEE** : corriger `choose_vl_price` et la propagation de devise dans
+l extracteur, puis rejouer une extraction en dry-run et remesurer avec ce meme script. L etape 0
+ne devient sure qu une fois l etiquette fiable.
+
+**A NE PAS FAIRE** : appliquer l etape 0 en l etat — le contrat validerait des nairas etiquetes
+dollars ; considerer `offer_price` comme une VL ; se fier a `currency_code` du CSV tant que la
+reparation n est pas faite.
+
+---
+
 ### LOT AD — 2026-08-17 : PANNE BASE, CRONS RENDUS BRUYANTS, DEFAUT PERF DECOUVERT, ARBITRAGE #73
 
 **INCIDENT BASE — resolu.** MariaDB s est arrete (socket absent, toutes les routes API en 500,
