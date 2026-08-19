@@ -2233,6 +2233,88 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AI — 2026-08-19 : EXTRACTEUR SEC CORRIGE ET VALIDE SUR DONNEES REELLES
+
+**RESULTAT : l extraction est fiable. L etape 0 devient sure.**
+
+Separation des echelles apres correctif, mesuree sur 5 fichiers SEC reels
+(1 102 lignes, extraction bornee ecrivant dans `sec_ng_devise_test.csv`) :
+
+| Devise de la mesure | Ordres de grandeur occupes |
+|---|---|
+| **USD** | 10^0, 10^1, 10^2 |
+| **NGN** | 10^3, 10^4, 10^5 |
+| **Ordres partages** | **AUCUN** |
+
+Avant correctif : USD couvrait 10^0 a 10^5, dont **238 lignes a 10^5** — des
+nairas etiquetes dollars. **Il n en reste aucune.** L ecart entre les deux
+plages correspond au taux de change.
+
+**CAUSE RACINE, etablie sur la structure observee et non supposee.** Les
+fichiers SEC publient les deux devises dans des colonnes SEPAREES, correctement
+etiquetees (`Bid Price ($)` = 119,92 et `Bid Price (N)` = 165 509,54 pour
+Afrinvest au 24/07). La source etait propre : l extracteur retenait la colonne
+naira puis lui collait l etiquette USD deduite du NOM du fonds.
+
+**CORRECTIF** (`sec_ng_nav_extractor_v6.py`, commits `ba1fe7b` et anterieurs) —
+chaque signal sert a ce qu il sait faire : le NOM donne la devise de libelle du
+fonds, l EN-TETE donne la devise de chaque colonne, et l on retient la colonne
+dont la devise correspond au fonds. Quatre corrections ont ete necessaires :
+1. normalisation de la ponctuation dans `detect_currency_from_text` — sans elle
+   aucun en-tete parenthese n etait lisible, et tout le reste restait sans effet ;
+2. detecteur propre aux en-tetes de colonnes, ou `(N)` designe le naira sans
+   ambiguite alors que `N` seul reste exclu des regles globales ;
+3. priorite rendue au prix unitaire sur l Offer (regle de la BIBLE) ;
+4. selection par devise parmi les six colonnes de prix du bloc.
+
+**EFFET SECONDAIRE MESURE** : l extraction passe de 739 a **1 102 lignes**, le
+fichier de juillet de 41 a 223. Le correctif debloque des blocs jusque-la ignores.
+
+**TRACABILITE AJOUTEE** : `vl_currency_code`, `vl_currency_source` et
+`vl_currency_confidence` sont exportes. Quatre drapeaux qualite apparaissent,
+dont `CURRENCY_COLUMN_DIFFERS_FROM_CONTEXT`.
+
+**CAS PARTICULIER TRANCHE** : le fichier du 10 avril ne publie AUCUNE colonne
+en dollars (28 colonnes contre 111). Les valeurs y sont donc en naira et
+desormais etiquetees NGN, ce qui est exact. Le contrat d ecriture refusera ces
+mesures pour un fonds libelle USD — comportement voulu : mieux vaut aucune
+donnee qu un naira presente comme un dollar.
+
+**TROIS ERREURS D INSTRUMENT, corrigees** — elles meritent d etre retenues car
+un instrument faux valide ou invalide sans qu on le sache :
+- le banc d essai chargeait `ColumnBlock` sans son decorateur, puis sans
+  `field` : la dataclass se chargeait comme une classe ordinaire et les
+  verifications de champs passaient a cote **en silence** ;
+- le diagnostic mesurait `currency_code` (devise de LIBELLE du fonds, que le
+  correctif ne touche pas) au lieu de `vl_currency_code` (devise de la MESURE) ;
+- le verdict comptait le NOMBRE d ordres de grandeur au lieu de tester leur
+  CHEVAUCHEMENT, concluant a l echec alors que la separation etait nette.
+
+**TESTS** : `tests/test_sec_extractor_devise.py`, **40 verifications**, sans
+reseau ni dependance externe. Passent sur le Python du serveur.
+
+**NON-REGRESSION VERIFIEE** : `sec_ng_latest.csv` intact (17/08), base non
+touchee, extraction ecrite dans un fichier de test isole.
+
+**CE QUI RESTE — l historique n est PAS corrige.** L etat production mesure le
+2026-08-19 17:36 reste a **10/16 controles OK, 4 echecs** :
+- **C7** : 44 fonds portent toujours des series a deux echelles EN BASE ;
+- **C3** : 1141 sert toujours **143 958 %**, 1196 **9 339 %** ;
+- **C2** : 13 fonds a perf orpheline en tete de serie ;
+- **C8** : Maroc 9/644 et Tunisie 6/131 avec performance a jour, ~79 j de retard.
+
+Le correctif agit sur les FUTURES extractions, pas sur les donnees deja en base.
+
+**PROCHAINE ACTION RECOMMANDEE** : etape 0 — corriger `dev_libelle` des 23 fonds
+prouves. Elle est desormais SURE : il n existe plus de naira etiquete dollar que
+le contrat pourrait accepter a tort. Puis etape 2, le rejeu de l historique.
+
+**A NE PAS FAIRE** : recomputer les classements OBLIGATIONS Nigeria ou ACTIONS
+avant correction de l historique ; lancer `fix_orphan_performances.js --execute`
+sans `--fond`.
+
+---
+
 ### LOT AE — 2026-08-19 : MESURE DE L EXTRACTEUR — L ETIQUETTE DE DEVISE EST DU BRUIT
 
 **Objet** : premier pas de l option B (arbitrage du lot AD). Mesurer ce que l extracteur SEC
