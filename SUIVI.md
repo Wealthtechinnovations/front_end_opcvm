@@ -2233,6 +2233,64 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AK — 2026-08-21 : ETAT REEL DE L AFFICHAGE ET DES CLASSEMENTS — MESURE, PAS SUPPOSE
+
+Question posee : les mises a jour front-end, affichage, classements et crons
+sont-elles faites ? **Reponse mesuree : non pour les trois premieres, partiellement
+pour les crons.** Le MCP ayant perdu sa session, tout ci-dessous vient de l API et
+du site de production interroges directement.
+
+**CLASSEMENTS : POLLUES, ET VISIBLES EN LIGNE.** `classementquartilemysql/1141` :
+
+| Mesure servie aujourd hui | Valeur |
+|---|---|
+| `rank1erJanvier` | **1 / 87** — Afrinvest est classe PREMIER de OBLIGATIONS |
+| `rank1An` | 68 / 87 |
+| `perf1An` | **-99,93 %** |
+| `perf3Ans` / `perf5Ans` | -99,86 % / -99,74 % |
+| `perf1erJanvierm` (benchmark) | **143 166 %** |
+| Idem en USD (`performancesdev/1141/USD`) | -99,92 % sur toutes les periodes |
+
+Ces chiffres sont la consequence directe des 82 lignes du lot AJ. **Aucun recalcul
+n a ete lance** : recalculer avant de corriger les lignes ne ferait que figer les
+mauvais rangs. L ordre reste : lignes -> datejour -> performances -> classements.
+
+**AFFICHAGE DES DATES : SAIN, MAIS PERIME.** Page pays Nigeria (`getfondbypays/NIGERIA`,
+326 fonds) : 41 fonds au 2026-07-24 — exactement les 41 de la rupture — 182 au
+2026-07-10, 18 au 2026-04-24. `datejour` suit donc bien `MAX(valorisations.date)` :
+le cache d affichage n a pas derive. Ce qui manque, ce sont les VL elles-memes,
+faute d import depuis le 2026-08-10.
+
+**FRONT-END : AUCUNE MODIFICATION, ET AUCUNE N EST REQUISE POUR CE DEFAUT.** Le
+front-end affiche fidelement ce que l API calcule ; le defaut est dans la donnee.
+
+**DERIVE DOCUMENTAIRE CORRIGEE DANS `CLAUDE.md` (front)** — trois affirmations
+fausses, verifiees par requete HTTP :
+- `src/app/funds/summary/[fondId]/` **n existe pas**. La fiche en devise locale
+  est `src/app/funds/[fondId]/`. En production `/funds/1141` repond **200** et
+  `/funds/summary/1141` repond **404**, pour tous les fonds testes ;
+- `FundView.tsx` est donc dans `funds/[fondId]/`, pas dans `funds/summary/[fondId]/` ;
+- `funds/compare/page.tsx` n existe pas dans le depot ;
+- `/api/classementquartile/fond/:id` n existe pas (« Route non trouvee ») et
+  `/api/classementquartile/:id` est **deprecee** — la route vivante est
+  `/api/classementquartilemysql/:id`.
+
+**CRONS : partiellement traites.**
+- Fait et verifie : les 4 scripts corriges au lot AD sont bien ceux deployes ;
+  crontab releve (**9 crons**, pas 5) ; cause de l arret Nigeria etablie (MariaDB
+  tombee le 2026-08-17, l extraction avait reussi).
+- **Pas fait** : les journaux des autres crons (Tunisie, BRVM, indices, daily,
+  eur_usd, health) n ont pas ete lus — le MCP a perdu sa session en cours de lot.
+  Indice indirect : Maroc, Tunisie et UEMOA ecrivent encore des VL jusqu au
+  2026-08-21, donc ils tournent ; leur code de sortie reste inconnu.
+
+**PROCHAINE ACTION RECOMMANDEE** : inchangee — `fix_scale_break_sec.js --execute`
+(82 lignes), en attente de validation explicite, puis datejour, performances,
+classements. Rouvrir la session MCP pour lire les journaux des 5 autres crons.
+
+---
+
+
 ### LOT AJ — 2026-08-21 : #73 N EST PAS UNE SERIE CORROMPUE, C EST UNE INSERTION — ETAPE 0 ANNULEE
 
 **MESURE EN PRODUCTION, LIGNE A LIGNE (MCP, SELECT uniquement).** La description

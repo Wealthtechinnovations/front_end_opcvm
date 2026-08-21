@@ -98,16 +98,30 @@ Ne jamais melanger devise locale, EUR et USD sans logique explicite de conversio
 ## Architecture technique Frontend
 
 ### Structure des pages cles
+
+Arborescence relevee sur le depot le 2026-08-21 et confrontee aux reponses HTTP
+de production. Les trois premieres lignes etaient fausses : ce document decrivait
+`funds/summary/[fondId]` et `funds/compare`, qui **n existent pas**. La fiche en
+devise locale est `funds/[fondId]`. Verifie : `/funds/1141` repond 200,
+`/funds/summary/1141` repond **404** — pour tous les fonds testes.
+
 ```
 src/app/
   home/page.tsx                        — Page d'accueil
   funds/
-    summary/[fondId]/page.tsx          — Fiche fonds devise locale
+    [fondId]/page.tsx                  — Fiche fonds devise locale (+ FundView.tsx)
     summary-eur/[fondId]/page.tsx      — Fiche fonds EUR
     summary-usd/[fondId]/page.tsx      — Fiche fonds USD
-    compare/page.tsx                   — Comparaison fonds
+    performance/[fondId]/page.tsx      — Performances
+    history/[fondId]/page.tsx          — Historique VL
+    portfolio/[fondId]/page.tsx        — Portefeuille
+    documents/[fondId]/page.tsx        — Documents
+    download-nav/[fondId]/page.tsx     — Export VL
+    search/page.tsx                    — Recherche fonds
   fund-managers/
-    funds/[societe]/page.tsx           — Fonds par societe de gestion
+    [fondId]/page.tsx                  — Fiche societe de gestion
+    funds/[fondId]/page.tsx            — Fonds par societe de gestion
+  countries/                           — Pages pays
   country-panel/                       — Panel pays
   panel/
     admin/                             — Panel admin
@@ -120,7 +134,7 @@ src/app/
 
 ### Composants graphiques
 ```
-src/app/funds/summary/[fondId]/FundView.tsx          — Graphique devise locale (Highcharts)
+src/app/funds/[fondId]/FundView.tsx                  — Graphique devise locale (Highcharts)
 src/app/funds/summary-eur/[fondId]/FundSubView.tsx   — Graphique EUR (Highcharts)
 src/app/funds/summary-usd/[fondId]/FundSubView.tsx   — Graphique USD (Highcharts)
 ```
@@ -133,8 +147,9 @@ src/app/funds/summary-usd/[fondId]/FundSubView.tsx   — Graphique USD (Highchar
 /api/performancesdev/fond/:id/:devise    — Performances EUR/USD
 /api/ratiosnew/:year/:id                — Ratios devise locale
 /api/ratiosnewdev/:year/:id/:devise     — Ratios EUR/USD
-/api/classementquartile/fond/:id        — Classement + quartile local
-/api/classementquartiledev/fond/:id/:devise — Classement EUR/USD
+/api/classementquartilemysql/:id         — Classement + quartile local
+                                          (`/api/classementquartile/:id` est deprecee,
+                                           `/api/classementquartile/fond/:id` n existe pas)
 /api/listeproduitsociete/:id            — Fonds par societe
 ```
 
