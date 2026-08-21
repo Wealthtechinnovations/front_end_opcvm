@@ -2233,6 +2233,100 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AJ — 2026-08-21 : #73 N EST PAS UNE SERIE CORROMPUE, C EST UNE INSERTION — ETAPE 0 ANNULEE
+
+**MESURE EN PRODUCTION, LIGNE A LIGNE (MCP, SELECT uniquement).** La description
+retenue depuis le lot Z — « 44 fonds dont la serie entiere melange deux echelles » —
+est fausse. Le decompte reel :
+
+| Fait mesure | Valeur |
+|---|---|
+| Lignes en rupture d echelle | **82** |
+| Fonds concernes | **41** (23 libelles NGN + 18 libelles USD) |
+| Lignes par fonds | **2**, toujours les memes dates : 2026-07-17 et 2026-07-24 |
+| Lot d insertion | **un seul**, le 2026-08-10 10:00 (cron Nigeria du lundi) |
+| Facteur d ecart | **1 380 a 1 725** = le taux NGN/USD |
+
+L historique de ces fonds est **sain et qualifie** : `currency_code='NGN'`,
+`source_url` SEC, `correction_batch='SECNGFIX_20260802_113036'`. Les 82 lignes
+fautives n ont **ni devise, ni source, ni batch** — les trois colonnes sont NULL.
+Exemple, AFRINVEST DOLLAR FUND (1141) :
+
+    2026-07-10  165 207,29958  currency_code=NGN   source=documents/1497
+    2026-07-17      119,7484   currency_code=NULL  source=NULL   <- rupture
+    2026-07-24      119,9184   currency_code=NULL  source=NULL   <- rupture
+
+Et `value_USD` de la ligne du 2026-07-10 vaut **120,044** : la valeur dollar
+correcte etait deja en base, dans sa propre colonne. Rien n avait ete perdu.
+
+**ETAPE 0 EST ANNULEE — elle aurait aggrave le defaut.** Elle proposait de passer
+`dev_libelle` a USD pour 23 fonds « prouves ». La preuve du lot AA reposait sur
+l EXISTENCE de lignes USD, jamais sur leur PROPORTION. La proportion mesuree :
+311 lignes naira contre 2 lignes dollar pour le fonds 1141. Basculer l etiquette
+aurait declare 311 valeurs naira comme des dollars.
+
+La demonstration decisive vient des **18 fonds deja libelles USD** (2765, 2770,
+2773, 2876...) : ils portent le meme historique en naira sous une etiquette
+dollar, et ont subi exactement la meme rupture. Le libelle n a donc jamais
+protege de rien — le basculer n aurait fait qu etendre l incoherence de 23 a
+41 fonds.
+
+**CAUSE CONFIRMEE, ET DEJA CORRIGEE A LA SOURCE.** L extracteur d alors deduisait
+la devise du NOM du fonds et retenait la colonne dollar pour tout fonds nomme
+DOLLAR ou EUROBOND. Le correctif du lot AI (2026-08-19) lit desormais l en-tete
+de chaque colonne et retient celle qui correspond a la devise du fonds. Les
+futures extractions sont saines. Le lot AI etait donc le bon correctif — pose sur
+un diagnostic partiellement faux, mais juste.
+
+**LE CONTRAT D ECRITURE N EST PAS APPLIQUE EN PRODUCTION.** Mesure des insertions
+depuis le 2026-07-01 : **toutes les lignes inserees apres le 2026-08-02 ont
+`currency_code`, `source_url` et `correction_batch` NULL**. Le seul lot qualifie
+est la correction ponctuelle du 2026-08-02 (23 731 lignes). `vl_contract.js` est
+cable dans `import_vl_nigeria_sec.js` en depot, mais aucune ecriture gouvernee n
+est arrivee en base depuis. A verifier avant de considerer l etape 1 comme faite.
+
+**IMPORT NIGERIA A L ARRET.** La derniere VL de tous les fonds Nigeria est le
+2026-07-24, inseree le 2026-08-10. Les deux lundis suivants (2026-08-17) n ont
+produit aucune ligne Nigeria. Le cron sort desormais en erreur au lieu de mentir
+(lot AD) — reste a lire son journal.
+
+**DEUX RUPTURES HORS NIGERIA, causes distinctes, a ne pas melanger** :
+- **790 UPLINE BONDS (MAROC/MAD)** : 0,67 le 2026-08-07 contre 107,05 — facteur 160.
+- **2582 SICAV ABDOU DIOUF (UEMOA/XOF)** : 1 804 893 le 2026-08-06 contre
+  18 301 544 — facteur 10,1, autre date d insertion.
+
+**LIVRE** : `scripts/fix/fix_scale_break_sec.js` (commit `8b00c99`), deploye sur
+S2. Dry-run execute : **82 lignes / 41 fonds**, conforme a la mesure SQL. Il ne
+retient que les lignes dont les trois colonnes de provenance sont nulles — une
+ligne ayant une source n est jamais touchee. Dry-run par defaut, snapshot JSON de
+la ligne entiere, `--rollback` qui reinsere sans creer de doublon, transaction
+unique, idempotent.
+
+**IL SUPPRIME PLUTOT QUE DE CONVERTIR** : ramener 119,9184 en naira imposerait de
+multiplier par un taux, donc de fabriquer une valeur jamais publiee. La valeur
+naira de ces deux semaines est dans les fichiers source presents sur le serveur
+(`sec_ng_downloads/`, 553 fichiers) ; le cron hebdomadaire la reimportera **lue**
+et non calculee.
+
+**ETAT** : aucune ecriture effectuee. La base est inchangee.
+
+**PROCHAINE ACTION RECOMMANDEE** — dans cet ordre, un lot a la fois :
+1. `fix_scale_break_sec.js --execute` (82 lignes) — **demande la validation
+   explicite de l utilisateur : c est une suppression en production** ;
+2. `fix_datejour_sync.js --pays NIGERIA --execute` (la derniere VL recule au 2026-07-10) ;
+3. recalcul des performances des 41 fonds, puis remesure de C3 et C7 ;
+4. diagnostic du cron Nigeria a l arret depuis le 2026-08-10 ;
+5. verifier pourquoi aucune ecriture ne passe par `vl_contract.js`.
+
+**A NE PAS FAIRE A LA REPRISE** :
+- basculer `dev_libelle` des 23 fonds — **etape 0 est annulee, la mesure l infirme** ;
+- embarquer 790, 2582, 1196, 1251 ou 2592 dans cette correction : autres causes ;
+- lancer `fix_orphan_performances.js --execute` sans `--fond` ;
+- recomputer les classements OBLIGATIONS Nigeria avant l etape 3.
+
+---
+
+
 ### LOT AI — 2026-08-19 : EXTRACTEUR SEC CORRIGE ET VALIDE SUR DONNEES REELLES
 
 **RESULTAT : l extraction est fiable. L etape 0 devient sure.**
