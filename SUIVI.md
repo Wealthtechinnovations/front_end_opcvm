@@ -2310,6 +2310,36 @@ et non calculee.
 
 **ETAT** : aucune ecriture effectuee. La base est inchangee.
 
+**POURQUOI L IMPORT NIGERIA EST A L ARRET — journal du 2026-08-17 lu en direct.**
+Ce n est ni l extracteur ni le site SEC : l extraction a reussi ce lundi-la
+(`sec_ng_latest.csv`, 4 222 lignes, ecrit a 10:00:22). C est **MariaDB qui etait
+tombee** — meme panne que celle du lot AD. Le journal enchaine
+`Can't add new command when connection is in closed state` puis six
+`connect ECONNREFUSED 127.0.0.1:3306`. La base est depuis retablie ; le cron du
+lundi suivant devrait importer normalement. A verifier plutot qu a supposer.
+
+Le journal porte aussi la signature de l ANCIENNE version des scripts cron
+(corps de reponse colle au code HTTP, `[4/8] OK` imprime juste apres une erreur
+fatale) : le serveur executait encore les scripts d avant le lot AD. **Verifie
+ce jour : les versions corrigees sont bien en place** pour les quatre crons.
+
+**CRONTAB RELEVE : 9 crons, pas 5.** `CLAUDE.md` en documentait cinq. Trois
+imports tournaient sans figurer nulle part : `cron_tunisie_daily.sh` (19:00),
+`cron_brvm_daily.sh` (19:30), `cron_indices_daily.sh` (18:30), plus
+`cron_health_check.sh` (22:00). `CLAUDE.md` (api_opcv) est corrige.
+
+**CONTROLE MAL CALIBRE, CORRIGE LE JOUR MEME** — deux faux positifs sur quatre.
+Le controle cherchait litteralement `body=$(mktemp)` et `exit $((ERRORS` ;
+`cron_daily_eur_usd.sh` separe le code HTTP par `tail -1` et
+`cron_health_check.sh` propage `exit "${RC_HEALTH:-0}"` — les deux sont sains.
+Un controle cale sur une seule ecriture mesure la ressemblance, pas la propriete.
+Troisieme occurrence de ce defaut apres les seuils C4 et le perimetre C2.
+
+**LE CONTRAT NE COUVRE QUE LE NIGERIA.** Insertions depuis le 2026-08-11 :
+MAROC 2 242 lignes, TUNISIE 625, UEMOA 285 — **aucune qualifiee**. `vl_contract.js`
+est cable dans `import_vl_nigeria_sec.js` (verifie sur le serveur) mais aucun
+import Nigeria n a tourne depuis. Les trois autres ecrivains restent hors contrat.
+
 **PROCHAINE ACTION RECOMMANDEE** — dans cet ordre, un lot a la fois :
 1. `fix_scale_break_sec.js --execute` (82 lignes) — **demande la validation
    explicite de l utilisateur : c est une suppression en production** ;
