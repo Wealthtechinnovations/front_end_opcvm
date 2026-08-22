@@ -2275,14 +2275,26 @@ fausses, verifiees par requete HTTP :
   `/api/classementquartile/:id` est **deprecee** — la route vivante est
   `/api/classementquartilemysql/:id`.
 
-**CRONS : partiellement traites.**
-- Fait et verifie : les 4 scripts corriges au lot AD sont bien ceux deployes ;
-  crontab releve (**9 crons**, pas 5) ; cause de l arret Nigeria etablie (MariaDB
-  tombee le 2026-08-17, l extraction avait reussi).
-- **Pas fait** : les journaux des autres crons (Tunisie, BRVM, indices, daily,
-  eur_usd, health) n ont pas ete lus — le MCP a perdu sa session en cours de lot.
-  Indice indirect : Maroc, Tunisie et UEMOA ecrivent encore des VL jusqu au
-  2026-08-21, donc ils tournent ; leur code de sortie reste inconnu.
+**CRONS : ETAT DE LIVRAISON MESURE PAR PAYS** (via `getfondbypays`, 2026-08-21).
+La question « est-ce que les crons marchent » se tranche sur ce qu ils LIVRENT,
+pas sur leur code de sortie :
+
+| Pays | Derniere date affichee | Retard | Chaine d import |
+|---|---|---|---|
+| TUNISIE | 2026-08-21 | 0 j | `cron_tunisie_daily.sh` — **livre** |
+| UEMOA | 2026-08-21 | 0 j | `cron_brvm_daily.sh` — **livre** |
+| MAROC | 2026-08-18 | 3 j | `cron_daily_update.sh` — **livre** (sous le seuil de 6 j) |
+| NIGERIA | 2026-07-24 | **28 j** | `cron_nigeria_weekly.sh` — **ne livre plus** |
+| CEMAC | 2024-12-12 | **617 j** | **aucune chaine** — le scraper BVMAC n a jamais tourne |
+
+Trois chaines sur cinq fonctionnent. Nigeria est arrete depuis la panne MariaDB du
+2026-08-17 : 28 jours pour un cron hebdomadaire, alors que le seuil d alerte C4 est
+a 45 jours — **le seuil est trop laxiste pour une cadence hebdomadaire** et n aurait
+pas signale l arret avant mi-septembre. A recalibrer.
+
+Ce qui reste non verifie : les codes de sortie des journaux des 5 autres crons. Le
+jeton du connecteur MCP a expire en cours de lot ; `/var/log` n est pas atteignable
+par l API publique.
 
 **PROCHAINE ACTION RECOMMANDEE** : inchangee — `fix_scale_break_sec.js --execute`
 (82 lignes), en attente de validation explicite, puis datejour, performances,
