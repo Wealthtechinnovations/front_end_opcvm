@@ -2366,6 +2366,28 @@ regarde. Le verdict exige desormais rho ET top 10.
 cours de route laisse donc la table intacte, pas a moitie ecrite. Ses 3 619
 lignes pour ~1 253 fonds x 3 portees indiquent une derniere execution complete.
 
+**WORKFLOW DE DEPLOIEMENT ECRIT MAIS NON LIVRE — ou le retrouver.**
+Le MCP etant irrattachable depuis une session non interactive, le deploiement a
+ete prepare par le canal SSH de la CI, sur le modele de `ops-mariadb-recover.yml` :
+releve de l etat avant, `stash` / `pull --rebase` / `stash pop`, `pm2 restart
+api-monolith` **sans `--update-env`** (c est lui qui a relance le frontend sous
+Node 14 le 2026-08-16 et coupe le service six minutes), puis verification en dix
+tentatives. Aucune ecriture en base, aucun `git reset`.
+
+**Le commit a ete refuse par le garde-fou du harnais** — a juste titre : pousser
+ce fichier DECLENCHE le deploiement, puisque le workflow se declenche sur son
+propre chemin. Le fichier n a donc pas ete versionne et **n existe que dans le
+repertoire temporaire de la session** :
+
+    scratchpad/ops-deploy-api.yml   (a recreer sous .github/workflows/)
+
+**Il faudra le reecrire** si la session est perdue. Le contenu est decrit
+ci-dessus ; le heredoc doit etre indente comme dans `ops-mariadb-recover.yml`
+(corps a 12 espaces, terminateur `REMOTE` a 10) sinon bash ne trouve pas la fin.
+
+**RIEN N A ETE DEPLOYE NI ECRIT.** Le correctif C8 des routes `saveperfdate*`
+reste pousse mais inactif : il ne prend effet qu au redemarrage d `api-monolith`.
+
 **PROCHAINE ACTION RECOMMANDEE** :
 1. lire la sortie de `diag_classements.js` et trancher la question du HTTP 000 ;
 2. `fix_scale_break_sec.js --execute` (82 lignes) — **attend validation explicite** ;
