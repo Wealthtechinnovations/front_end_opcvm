@@ -2233,6 +2233,86 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AL — 2026-08-22 : LES 8 CRONS JUGES SUR LEURS JOURNAUX — DEUX CONTRE-VERITES CORRIGEES
+
+**MCP hors ligne pour cette session** (jeton expire, OAuth impossible en mode non
+interactif). Travail poursuivi par le canal du lot Y : tout script depose dans
+`api_opcv/scripts/diag/ondemand/` est execute en production par `doc-drift.yml`
+et sa sortie revient dans `docs/DIAG_ONDEMAND.md`. Lecture seule.
+
+**VERDICT DES 8 CRONS, lu dans leurs journaux** :
+
+| Cron | Dernier journal | Verdict |
+|---|---|---|
+| `cron_daily_eur_usd` | 6 h | **OK** |
+| `cron_tunisie_daily` | 9 h | OK — 126 VL inserees au 2026-08-21 |
+| `cron_brvm_daily` | 8,6 h | OK — VL jusqu au 2026-08-20 |
+| `cron_indices_daily` | 9,6 h | OK **mais** « Echecs scraping: 23 » pour 3 lignes inserees |
+| `cron_daily_update` | 7,2 h | **ECHEC — 5 erreurs** |
+| `cron_nigeria_weekly` | 4,8 j | **ECHEC — 6 erreurs** (panne MariaDB du 2026-08-17) |
+| `cron_health_check` | 6,1 h | **2 problemes detectes**, et deux contre-verites |
+| `sync_production` | 0,1 h | tourne |
+
+**LES CLASSEMENTS NE SONT PLUS RECALCULES — cause trouvee.** Fin du journal
+`cron_daily_update` du 2026-08-21 20:53 :
+
+    [9a/9] Classement local... [9a/9] ERREUR (HTTP 000)
+    [9b/9] Classement EUR...   [9b/9] ERREUR (HTTP 000)
+    [9c/9] Classement USD...   [9c/9] ERREUR (HTTP 000)
+
+HTTP 000 = curl n a obtenu aucune reponse, le `--max-time 300` etant selon toute
+vraisemblance depasse. **Reste a trancher** : classement non recalcule, ou
+recalcule quand meme parce que le serveur a poursuivi apres l abandon du client ?
+Les deux sont possibles et n appellent pas le meme correctif. `diag_classements.js`
+est deploye pour le mesurer (fraicheur des 6 tables, retard des performances par
+pays, comptage des lignes ecrites apres 20:00). **Ne pas allonger le timeout avant
+d avoir la reponse.**
+
+**LE HEALTH CHECK PUBLIAIT DEUX CONTRE-VERITES LA MEME NUIT**, dans un seul
+fichier :
+
+    [!] Seulement 4 fonds avec perf recente
+    [OK] Performances/classements recents
+    [OK] NIGERIA: VL a jour
+
+Deux causes, toutes deux corrigees :
+1. la fraicheur des performances etait deduite de `MAX(performences.date)` sur la
+   table ENTIERE — **un seul fonds recalcule suffisait** a la declarer fraiche.
+   Remplacee par la PROPORTION de fonds dont la performance atteint leur derniere
+   VL, seuil 80 % ;
+2. le statut « ATTENTION » (7 a 30 j) etait range du cote des OK par un `else` :
+   le Nigeria, arrete depuis 29 jours, etait publie « VL a jour ».
+
+**CAUSE PROFONDE : un seuil duplique finit toujours par diverger.** Les budgets de
+fraicheur vivaient en double — par pays dans `check_doc_drift.js`, uniformes
+7 j / 30 j dans `check_cron_health.js`. Deux fichiers repondaient differemment a
+la meme question et personne ne les comparait. Ils sont desormais dans
+**`src/lib/freshness_budgets.js`**, requis par les deux. Au passage, l acces
+`FRESHNESS[pays]` etait sensible a la casse : les 18 fonds enregistres « Nigeria »
+au lieu de « NIGERIA » tombaient sur le budget par defaut.
+
+**MES PROPRES INSTRUMENTS, CORRIGES DEUX FOIS DE PLUS** — a retenir, c est
+devenu le defaut recurrent du chantier :
+- `diag_crons_journaux.js` imprimait « aucun cron en echec » alors qu il n avait
+  trouve AUCUN journal. Le resume distingue desormais *verifie sain* de
+  *pas verifiable* ;
+- il ne connaissait que les marqueurs francais et rangeait Tunisie, BRVM et
+  indices en « non verifiable » alors qu ils aboutissent — leurs scripts posent
+  « completed successfully ». Un controle qui ne connait qu une convention mesure
+  la convention, pas le resultat.
+
+**PROCHAINE ACTION RECOMMANDEE** :
+1. lire la sortie de `diag_classements.js` et trancher la question du HTTP 000 ;
+2. `fix_scale_break_sec.js --execute` (82 lignes) — **attend validation explicite** ;
+3. deployer le correctif C8 (`pm2 restart api-monolith`) — **necessite le MCP** ;
+4. instruire `cron_indices_daily` : 23 echecs de scraping pour 3 insertions.
+
+**A NE PAS FAIRE** : allonger `--max-time` des classements avant de savoir si le
+serveur aboutit ; basculer `dev_libelle` des 23 fonds (etape 0 annulee au lot AJ).
+
+---
+
+
 ### LOT AK — 2026-08-21 : ETAT REEL DE L AFFICHAGE ET DES CLASSEMENTS — MESURE, PAS SUPPOSE
 
 Question posee : les mises a jour front-end, affichage, classements et crons
