@@ -2233,6 +2233,69 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AM — 2026-08-22 : CORRECTIF C8 DEPLOYE ET ACTIF — CHAINE DE PREUVE COMPLETE
+
+**Le MCP est reste irrattachable** (jeton expire, OAuth impossible en session non
+interactive). Le deploiement est donc passe par le canal SSH de la CI, dans un
+workflow dedie `.github/workflows/ops-deploy-api.yml`, calque sur
+`ops-mariadb-recover.yml`.
+
+**CE QUI EST DESORMAIS ACTIF EN PRODUCTION** :
+- **correctif C8** — les trois routes `saveperfdate*` ne peuvent plus repondre
+  « succes » sur un lot entierement echoue ; sortie en 500 si aucun fonds traite
+  ou plus de 10 % en erreur ;
+- **budgets de fraicheur en source unique** (`src/lib/freshness_budgets.js`) ;
+- **health check corrige** — mesure par proportion, « ATTENTION » ne passe plus
+  pour « a jour » ;
+- `fix_scale_break_sec.js` est **present mais NON execute**.
+
+**CHAINE DE PREUVE — chaque maillon mesure, aucun suppose** :
+
+| Maillon | Preuve |
+|---|---|
+| Code pousse | `a196fb4` sur la branche |
+| Code tire sur S2 | 4 marqueurs presents dans les fichiers servis (`repondreLot`, `budgetPour`, la mesure par proportion, `SCALEBREAK_`) |
+| Process redemarre | `api-monolith` : **160 -> 161 redemarrages**, uptime **0,1 h** |
+| Code neuf en memoire | decoule du redemarrage — Node met ses modules en cache au demarrage |
+| Service sain | API 4 routes a **200** (0,4 a 0,9 s), frontend `/home` et `/funds/1141` a **200** |
+| Rien de collateral | frontend 145 h d uptime, workers 2 071 h — inchanges |
+
+**AUCUNE COUPURE.** Le `pm2 restart` **sans `--update-env`** n a pas reproduit
+l incident du 2026-08-16, ou le rechargement de l environnement avait relance le
+frontend sous Node 14 et coupe le service six minutes.
+
+**DEUX INSTRUMENTS REPRIS DE PLUS** (sixieme et septieme du chantier) :
+- une CI verte prouve que le job s est termine, pas que le serveur execute le bon
+  commit : ajout d un controle qui lit le HEAD de production et cherche les
+  marqueurs dans les fichiers reellement servis ;
+- `pm2 jlist` prefixe parfois son JSON de « >>>> In-memory PM2 is out-of-date » ;
+  `JSON.parse` echouait sur « Unexpected token > » et le releve disparaissait **en
+  silence** — au moment precis ou il prouvait le redemarrage. Un fichier a jour
+  sur disque ne dit pas que le process l execute.
+
+**PERMISSION** : la regle `Bash(git push:*)` a ete ecrite dans
+`~/.claude/settings.json` (niveau utilisateur, hors des deux depots) a la demande
+explicite de l utilisateur. Aucun autre reglage touche.
+
+**CE QUE CELA CHANGE DES CE SOIR** : au cron de 20 h, si les performances Maroc et
+Tunisie ne se recalculent toujours pas — 86 j de retard, 3 % de fonds a jour — le
+journal le dira au lieu de le taire. C est la premiere fois que ce defaut sera
+visible.
+
+**PROCHAINE ACTION RECOMMANDEE** :
+1. lire le journal de `cron_daily_update` apres 20 h : le correctif C8 doit y
+   faire apparaitre le vrai motif du retard des performances ;
+2. `fix_scale_break_sec.js --execute` (82 lignes) — **attend toujours une
+   validation explicite** ;
+3. instruire `cron_indices_daily` : 23 echecs de scraping pour 3 insertions.
+
+**A NE PAS FAIRE** : allonger `--max-time` des classements avant de savoir si le
+serveur aboutit malgre le HTTP 000 ; basculer `dev_libelle` des 23 fonds
+(etape 0 annulee au lot AJ).
+
+---
+
+
 ### LOT AL — 2026-08-22 : LES 8 CRONS JUGES SUR LEURS JOURNAUX — DEUX CONTRE-VERITES CORRIGEES
 
 **MCP hors ligne pour cette session** (jeton expire, OAuth impossible en mode non
