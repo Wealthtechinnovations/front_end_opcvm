@@ -2301,6 +2301,42 @@ devenu le defaut recurrent du chantier :
   « completed successfully ». Un controle qui ne connait qu une convention mesure
   la convention, pas le resultat.
 
+**RETARD DES PERFORMANCES CHIFFRE PAR PAYS** (mesure du 2026-08-22 04:13 UTC) :
+
+| Pays | A jour | % | Retard moyen | Retard max |
+|---|---|---|---|---|
+| **TUNISIE** | 5 / 131 | **3,8 %** | **86,2 j** | 95 j |
+| **MAROC** | 20 / 640 | **3,1 %** | **86,0 j** | 95 j |
+| UEMOA | 43 / 109 | 39,4 % | 15,3 j | 91 j |
+| NIGERIA | 274 / 320 | 85,6 % | 5,9 j | 665 j |
+| CEMAC | 34 / 34 | 100 % | 0 j | 0 j |
+
+**771 fonds — Maroc et Tunisie, l essentiel du catalogue — servent des
+performances vieilles de 86 jours**, soit un arret vers le 28 mai. Les VL sont
+fraiches. Le 100 % du CEMAC est trompeur : performances et VL « concordent »
+parce que ni les unes ni les autres ne bougent depuis decembre 2024.
+
+**LA FRAICHEUR D UN CLASSEMENT EST STRUCTURELLEMENT IMMESURABLE.** Les trois
+tables `classementfonds`, `_eurs`, `_usds` n ont **aucune colonne temporelle**
+(`timestamps: false`), et `performences.updated_at` est entierement NULL. C est
+la racine du mensonge du health check : prive de date, il deduisait la fraicheur
+d un `MAX()` qu un seul fonds suffisait a rendre vert.
+
+**VERDICT DE CONCORDANCE — PREMIERE MESURE ANNULEE, NE PAS LA REPRENDRE.**
+Le controle a d abord rendu « 0/473 rangs identiques — classement PERIME » sur
+quatre categories. **Ce verdict est faux.** `/api/classementmysql` ecrit TROIS
+lignes par fonds, distinguees par `type_classement` (1 national, 2 regional,
+3 global) ; le controle groupait par `categorie` et comparait un ordre global a
+des rangs nationaux. La divergence etait garantie par construction. Corrige :
+seul `type_classement = 1` est compare, au sein de `categorie_nationale`.
+**Cinquieme instrument fautif du chantier — le defaut recurrent n est pas le
+code de production, c est la mesure.**
+
+**A NOTER SUR `/api/classementmysql`** : la route commence par
+`classementfonds.destroy({ where: {} })` **dans une transaction**. Un abandon en
+cours de route laisse donc la table intacte, pas a moitie ecrite. Ses 3 619
+lignes pour ~1 253 fonds x 3 portees indiquent une derniere execution complete.
+
 **PROCHAINE ACTION RECOMMANDEE** :
 1. lire la sortie de `diag_classements.js` et trancher la question du HTTP 000 ;
 2. `fix_scale_break_sec.js --execute` (82 lignes) — **attend validation explicite** ;
