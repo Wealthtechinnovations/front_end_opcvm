@@ -2296,6 +2296,32 @@ Ce qui reste non verifie : les codes de sortie des journaux des 5 autres crons. 
 jeton du connecteur MCP a expire en cours de lot ; `/var/log` n est pas atteignable
 par l API publique.
 
+**C8 EST PLUS LARGE QUE #73 — ET SA CAUSE EST TROUVEE.** L etat mesure du
+2026-08-22 00:08 UTC donne : **Maroc 10/644 fonds a jour (1,6 %), Tunisie 5/131
+(3,8 %), retard moyen 86 jours**. #73 touche 41 fonds ; C8 touche l essentiel du
+catalogue. Le site sert des performances **plausibles et fausses**.
+
+Cause : les trois routes `saveperfdate*`, appelees par cron, attrapent l erreur de
+CHAQUE fonds pour ne pas interrompre le lot — c est juste — puis renvoyaient **200
+quel que soit le nombre d echecs**. Un lot ou les 600 fonds echouent repondait
+« Traitement des fonds termine avec succes ». **Meme mensonge que le `tee` des
+scripts cron, un etage plus haut.** Corrige : comptage traites/erreurs et sortie
+en 500 quand l echec est systemique (aucun fonds traite, ou plus de 10 % en
+erreur). Seuil a confronter aux taux reels. **Prend effet au redemarrage de
+`api-monolith`** — non deploye, le MCP etant hors ligne.
+
+**LE RECALIBRAGE C4 A PAYE IMMEDIATEMENT.** Passe de 45 a 14 jours, le controle a
+declare le Nigeria en ECHEC des la premiere execution (29 j). Le rapport passe de
+10/16 a 9/16 : ce n est pas une regression, c est un mensonge en moins.
+
+**TROISIEME FONDS A YTD ABSURDE, hors des 41** : `2743 APEL WEALTH MONEY MARKET
+FUND` a **809 %**. Ni dans la rupture du 2026-08-10, ni dans les exclusions
+connues. A instruire separement.
+
+**C7 CONFIRME L EXCLUSION DE 2592.** `FCP BRIDGE EQUILIBRE (UEMOA/XOF)` sort a
+**5 067x** — tres au-dessus des ~1 530x du taux NGN/USD. Cause distincte (actif net
+charge dans `value`), correctement tenu hors de la correction de masse.
+
 **PROCHAINE ACTION RECOMMANDEE** : inchangee — `fix_scale_break_sec.js --execute`
 (82 lignes), en attente de validation explicite, puis datejour, performances,
 classements. Rouvrir la session MCP pour lire les journaux des 5 autres crons.
