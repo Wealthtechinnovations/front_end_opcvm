@@ -2332,6 +2332,35 @@ seul `type_classement = 1` est compare, au sein de `categorie_nationale`.
 **Cinquieme instrument fautif du chantier — le defaut recurrent n est pas le
 code de production, c est la mesure.**
 
+**VERDICT DE CONCORDANCE, MESURE VALIDE** (perimetre `type_classement = 1` au
+sein de `categorie_nationale`, effectifs concordants) :
+
+| Assiette | Rang strict | Spearman | Top 10 | Ex aequo | Verdict |
+|---|---|---|---|---|---|
+| DIVERSIFIE MAROC | 18/141 (12,8 %) | **0,186** | 6/10 | 0 | **DIVERGE** |
+| ACTIONS MAROC | 6/122 (4,9 %) | **0,462** | 7/10 | 0 | **DIVERGE** |
+| OBLIGATIONS MAROC | 110/300 (36,7 %) | **0,690** | **3/10** | 0 | **DIVERGE** |
+| OBLIGATIONS NIGERIA | 12/87 (13,8 %) | 0,827 | **4/10** | 1 | **DIVERGE** |
+| MONETAIRE MAROC | 44/70 (62,9 %) | 0,978 | 8/10 | 0 | PROCHE |
+
+**Les classements ne refletent pas les performances actuellement en base.** Sur
+DIVERSIFIE MAROC la correlation de rangs tombe a **0,186** — l ordre affiche n a
+quasiment plus de rapport avec les donnees. Sur OBLIGATIONS MAROC, **7 des 10
+premiers fonds affiches ne sont pas les 10 premiers reels**.
+
+**L HYPOTHESE DES EX AEQUO EST ECARTEE** : zero ex aequo sur quatre assiettes sur
+cinq, un seul sur la cinquieme. Le departage n explique rien.
+
+**PORTEE REELLE** : `performences` est deja perime de 86 jours au Maroc ; le
+classement, lui, ne concorde meme pas avec ce contenu perime. Il est donc plus
+ancien encore. Deux couches de retard empilees.
+
+**SEUIL CORRIGE** : « PROCHE » etait accorde sur le seul rho >= 0,80.
+OBLIGATIONS NIGERIA passait pour proche avec rho 0,827 alors que 6 de ses 10
+premiers fonds etaient faux. Une correlation d ensemble honorable peut masquer
+une tete de classement entierement fausse — et la tete est ce que l utilisateur
+regarde. Le verdict exige desormais rho ET top 10.
+
 **A NOTER SUR `/api/classementmysql`** : la route commence par
 `classementfonds.destroy({ where: {} })` **dans une transaction**. Un abandon en
 cours de route laisse donc la table intacte, pas a moitie ecrite. Ses 3 619
