@@ -2233,6 +2233,82 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AO — 2026-08-28 : 82 LIGNES RETIREES · LE PLAN DE L ETAPE 2 INVALIDE PAR LA MESURE
+
+**FAIT, VERIFIE, IRREVERSIBLE UNIQUEMENT PAR ROLLBACK EXPLICITE**
+- **82 lignes supprimees** (snapshot `SCALEBREAK_20260810_201744.json`), **23 fonds**
+  resynchronises sur `datejour`. Verification finale : zero rupture sur ce perimetre.
+- Fonds 1141 — 4 semaines **-99,93 % -> +1,95 %**, 3 mois **+4,26 %**, 1 an **-5,03 %**.
+  **YTD toujours a 143 958 %** : il compare au 31 decembre, donc d autres lignes
+  fausses subsistent en amont.
+- Page pays NIGERIA coherente : plus aucun fonds au 2026-07-24.
+
+**LE CORRECTIF C8 EST ACTIF ET IL PARLE.** Journal Nigeria du 2026-08-24 :
+`{"message":"EUR performances: 586/586 fonds traites, 0 erreur(s)"}`. Les lots ne
+peuvent plus annoncer un succes sans le prouver.
+
+**PERIMETRE REEL : 233 lignes sur 84 fonds**, une douzaine de lots d insertion.
+**208 portent une source SEC** — corrigeables a la source ; **9 seulement n ont
+aucune provenance** (le chiffre de 25 annonce plus tot melangeait les lignes
+portant un `correction_batch` sans devise).
+
+**LA PHASE SECHE DE L ETAPE 2 A INVALIDE LE PLAN — c est son role.** Le rejeu de
+l extraction fonctionne (41 626 lignes, 306 fonds apparies, 0 erreur) mais
+l import annonce **« VL inserees : 0 »** : il n ajoute que des dates NOUVELLES et
+ne corrige jamais une valeur existante. Or les 233 ruptures sont a des dates deja
+en base. **« Rejouer puis reimporter » ne pouvait pas fonctionner.** Il faut un
+correctif ligne a ligne, qui reste a ecrire.
+
+**CAS ISOLES TRANCHES PAR LA MESURE** :
+- **1169 NIGERIA ENERGY SECTOR** : le 29 aout, `value` = 1 046 071 211 = **exactement
+  l actif net**, parts implicites = **1** contre ~1,9 million les semaines voisines,
+  toutes a 552,20. Encours charge a la place du prix. Cas unique, prouve.
+- **Hors Nigeria, 7 lignes sur 5 fonds**, toutes sans provenance : 790 UPLINE BONDS
+  (MAROC), 2450 et 2505 (TUNISIE), 2592 et 2642 (UEMOA). Autres chaines d import,
+  hors de portee du rejeu SEC.
+
+**INFRASTRUCTURE — deux defauts qui expliquent beaucoup** :
+- **MariaDB tombe de facon repetee** : `ECONNREFUSED 127.0.0.1:3306` le 2026-08-17,
+  puis **encore le 2026-08-27 a 21h40 et 22h00**. Cause racine de l arret de l import
+  Nigeria et de plusieurs echecs en cascade. **A instruire cote systeme.**
+- **Le serveur ne peut plus pousser vers GitHub** : `could not read Username for
+  'https://github.com'`. `PRODUCTION_STATE.json` est genere chaque heure mais **n arrive
+  jamais** — d ou les centaines de commits locaux accumules.
+- **`logs.txt` bloquait TOUT `git pull` sur le serveur** — gitignore mais toujours
+  suivi, donc l arbre perpetuellement modifie. Les mises a jour echouaient en
+  silence depuis des semaines et `doc-drift` executait l ANCIEN code. **Resolu.**
+- **Classements en HTTP 000 chaque soir** : curl abandonnait a 300 s. Ce n est pas un
+  echec serveur, c est un client qui cesse d attendre. Delai porte a **1800 s**.
+
+**INSTRUMENTS REPRIS DANS CE LOT — le defaut recurrent du chantier continue** :
+- requete du diagnostic en cout quadratique : restee **bloquee** en production,
+  reecrite avec `LAG()` ;
+- session SSH coupee (`Broken pipe`) parce que l extraction reste **muette huit
+  minutes** — `ServerAliveInterval` ajoute, CSV recent reutilise ;
+- **le comparateur a rendu 40 826 dates « absentes » sur 40 826** alors que la base en
+  contient 77 315 : `String(new Date(...)).slice(0,10)` donne « Sat Aug 2 », jamais
+  « 2026-08-29 ». Aucune cle ne pouvait correspondre. Corrige par `DATE_FORMAT` cote
+  SQL **et** un garde-fou qui denonce desormais tout appariement a 0 %.
+
+**REGLE D APPARIEMENT MISE EN COMMUN** : `normalizeNameForMatch` et `parseCSVLine`
+vivaient dans l importeur sans etre exportees. Desormais dans `src/lib/sec_csv.js`,
+requises par l importeur ET les diagnostics — deux implementations de la meme regle
+finissent toujours par diverger.
+
+**PROCHAINE ACTION RECOMMANDEE** :
+1. lire le comparateur corrige : combien des 233 lignes le fichier source redresse,
+   et vers quelles valeurs ;
+2. ecrire le correctif ligne a ligne (UPDATE cible, snapshot, rollback) — l import
+   ne sait pas le faire ;
+3. traiter 1169 separement : valeur prouvee, 552,20 ;
+4. instruire la chute repetee de MariaDB.
+
+**A NE PAS FAIRE** : supprimer les 208 lignes qualifiees ; melanger les cas hors
+Nigeria au lot SEC ; recalculer performances et classements avant assainissement.
+
+---
+
+
 ### LOT AN — 2026-08-28 : 82 LIGNES RETIREES, 233 RESTENT — ET LA SUPPRESSION N EST PLUS LE BON OUTIL
 
 **FAIT ET VERIFIE.** `fix_scale_break_sec.js --execute` a retire les **82 lignes**
