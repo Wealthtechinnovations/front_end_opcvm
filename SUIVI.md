@@ -2233,6 +2233,83 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AN — 2026-08-28 : 82 LIGNES RETIREES, 233 RESTENT — ET LA SUPPRESSION N EST PLUS LE BON OUTIL
+
+**FAIT ET VERIFIE.** `fix_scale_break_sec.js --execute` a retire les **82 lignes**
+du lot du 2026-08-10 (snapshot `SCALEBREAK_20260810_201744.json`), puis
+`fix_datejour_sync.js --pays NIGERIA` a resynchronise **23 fonds**. Verification a
+zero rupture sur ce perimetre. Effet mesure sur le fonds 1141 :
+
+| Mesure | Avant | Apres |
+|---|---|---|
+| 4 semaines | -99,93 % | **+1,95 %** |
+| 3 mois | -99,93 % | **+4,26 %** |
+| 1 an | -99,93 % | **-5,03 %** |
+| YTD | 143 958 % | **143 958 % — inchange** |
+
+Page pays NIGERIA : plus aucun fonds au 2026-07-24, la colonne Date est coherente.
+
+**LE YTD INCHANGE A REVELE QUE MON PERIMETRE ETAIT TROP ETROIT.** Il compare au
+31 decembre ; ce point de reference etait donc lui aussi a la mauvaise echelle.
+J avais borne la recherche a UNE date d insertion, celle ou la mesure m avait
+mene. Ce que j y avais vu etait juste — ce n etait pas tout.
+
+**MESURE SANS BORNE (2026-08-28 20:35, LAG sur toute la table) : 233 lignes sur
+84 fonds.** Reparties sur **une douzaine de lots d insertion** de mai a aout, pas
+un seul. Et surtout :
+
+| Provenance | Lignes | Traitement |
+|---|---|---|
+| **AVEC** source_url / currency_code | **208** | **corriger a la source — jamais supprimer** |
+| SANS provenance | 25 | meme signature que les 82 deja retirees |
+
+**LA SUPPRESSION N EST PLUS LE BON OUTIL.** 208 lignes sur 233 portent une source
+SEC identifiable : elles se corrigent en rejouant l extraction, pas en effaçant.
+
+**FORME DES RUPTURES : des pics isoles, par paires.** Une semaine bascule a
+l echelle dollar puis revient au naira — l aller et le retour comptent chacun
+comme une rupture. Exemple, fonds 1141 : `2026-03-18 = 94,93` entre deux valeurs
+a ~39 000. C est exactement le defaut corrige au lot AI (l extracteur deduisait la
+devise du NOM du fonds au lieu de lire l en-tete de colonne), mais applique a
+l historique deja charge.
+
+**PLUSIEURS CAUSES COHABITENT — ne pas les traiter en bloc** :
+- facteur ~1 380 a 1 540 : taux NGN/USD, colonne dollar prise pour du naira ;
+- facteur 100 / 180 / 340 / 410 / 810 : autres echelles (prix unitaire 1 vs 100) ;
+- **1169 NIGERIA ENERGY SECTOR FUND : facteur 1 894 370** — 1 046 071 210 contre
+  552. Un actif net charge dans `value`, meme defaut que 2592 (UEMOA) ;
+- hors Nigeria : 790 UPLINE BONDS (MAROC, x24,5), 3 lignes TUNISIE, 3 UEMOA.
+
+**BLOCAGE GIT DU SERVEUR — RESOLU DEFINITIVEMENT.** `logs.txt` figurait dans
+`.gitignore` mais restait **suivi** par git : `.gitignore` n agit que sur les
+fichiers non suivis. L application y ecrivant en continu, l arbre de travail etait
+perpetuellement modifie et **tout `git pull` echouait**. Consequence : le serveur
+ne recevait plus aucune mise a jour, en silence, et `doc-drift.yml` executait
+l ANCIEN code sans que rien ne le signale — `diag_ruptures_restantes.js`, pousse
+une heure plus tot, n existait tout simplement pas sur le serveur.
+`git rm --cached` en depot + sur le serveur. Ne reviendra plus.
+
+**INSTRUMENT REPRIS (huitieme).** La premiere version du diagnostic correlait un
+`SELECT MAX(date) ... WHERE date < v.date` a chaque ligne : cout quadratique sur
+plus d un million de VL, elle est restee bloquee en production sans rien afficher.
+Reecrite avec `LAG() OVER (PARTITION BY fund_id ORDER BY date)` — meme critere,
+une seule passe.
+
+**PROCHAINE ACTION RECOMMANDEE — etape 2, le rejeu de l extraction SEC.** Les 553
+fichiers sources sont sur le serveur. L extracteur corrige au lot AI lit desormais
+l en-tete de chaque colonne et retient celle qui correspond a la devise du fonds.
+Rejouer le parsing puis reimporter via `vl_contract.js` restitue des valeurs
+**lues** et non fabriquees. Le workflow `ops-sec-extract-dryrun.yml` existe deja
+pour la phase seche.
+
+**A NE PAS FAIRE** : supprimer les 208 lignes qualifiees — elles ont une source,
+donc une correction possible ; traiter 1169 et 790 avec le lot Nigeria — causes
+distinctes ; recalculer performances et classements avant assainissement, cela ne
+ferait que recopier proprement des chiffres faux.
+
+---
+
+
 ### LOT AM — 2026-08-22 : CORRECTIF C8 DEPLOYE ET ACTIF — CHAINE DE PREUVE COMPLETE
 
 **Le MCP est reste irrattachable** (jeton expire, OAuth impossible en session non
