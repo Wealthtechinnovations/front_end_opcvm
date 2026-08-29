@@ -2233,6 +2233,60 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AQ — 2026-08-29 : LA SOURCE TRANCHE — L OPTION DOLLAR EST INAPPLICABLE A L HISTORIQUE
+
+**BALAYAGE DES 340 FICHIERS SEC** (`scan_sec_headers.py`, en-tetes des 4 premieres
+lignes de chaque feuille) :
+
+| Annee | Fichiers | Avec en-tete ($) | Avec (N) |
+|---|---|---|---|
+| 2020 | 49 | **0** | 0 |
+| 2021 | 52 | **0** | 6 |
+| 2022 | 51 | **0** | 51 |
+| 2023 | 52 | **0** | 52 |
+| 2024 | 52 | **0** | 52 |
+| 2025 | 51 | **0** | 51 |
+| **2026** | 33 | **16** | 33 |
+
+**16 fichiers sur 340.** Tous en 2026, a partir de **mi-mai 2026** (le rapport
+annoncait le 10 juillet : c etait l ordre ALPHABETIQUE — « 10th_July » precede
+« 15th_May ». Corrige, la date de bascule decidant du perimetre applicable).
+
+**CONSEQUENCE : L OPTION DOLLAR NE PEUT PAS S APPLIQUER A L HISTORIQUE.** Avant
+mai 2026, la SEC n a jamais publie de prix en dollars. Il n y a rien a lire. La
+reecrire en dollars supposerait soit de convertir — interdit — soit de supprimer
+**88,4 % de la serie** (4 648 VL sur 5 260). La decision de l utilisateur est
+doctrinalement juste mais materiellement inexecutable sur 2020-2025.
+
+**ET LA PLATEFORME RESOUT DEJA CE PROBLEME.** Le schema porte `value` (devise
+locale), `value_EUR` et `value_USD`. Verifie au lot AJ sur le fonds 1141 au
+2026-07-10 : `value` = 165 207,30 NGN **et** `value_USD` = **120,044** — la bonne
+valeur dollar etait deja la, dans sa propre colonne.
+
+**LE DEFAUT N A DONC JAMAIS ETE « CES FONDS DEVRAIENT ETRE EN USD ».** Il etait
+que, certaines semaines, la valeur dollar a ete ecrite dans `value` a la place de
+la valeur naira. Le remede est de rendre `value` au naira partout — pas de
+basculer la devise du fonds.
+
+**RECOMMANDATION REVISEE, a soumettre a l utilisateur** : conserver `value` en
+naira sur toute la serie ; corriger les 233 ruptures VERS le naira depuis la
+colonne (N) de la source, disponible sur les 340 fichiers ; laisser la vue dollar
+vivre dans `value_USD`, qui fonctionne deja. Le caractere « fonds dollar » reste
+exprime, sans amputer l historique ni fabriquer une valeur.
+
+**CE QUI RESTE INCHANGE** : les 12 286 ecarts mineurs a instruire separement ; le
+cas 1169 (encours dans `value`, valeur prouvee 552,20) ; les 7 lignes hors
+Nigeria ; la chute repetee de MariaDB ; le serveur qui ne peut plus pousser vers
+GitHub.
+
+**PROCHAINE ACTION** : obtenir la confirmation de l utilisateur sur la
+recommandation revisee, puis ecrire le correctif vers le naira. **A NE PAS
+FAIRE** : appliquer les 378 ecarts comme des corrections ; supprimer 88 % de la
+serie ; convertir une valeur par un taux.
+
+---
+
+
 ### LOT AP — 2026-08-29 : LE COMPARATEUR MESURE ENFIN — ET IL DESIGNE UNE DECISION, PAS UN BOGUE
 
 **LE COMPARATEUR FONCTIONNE** (apres correction de la cle de date ET ajout d un
