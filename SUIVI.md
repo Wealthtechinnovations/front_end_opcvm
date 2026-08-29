@@ -2233,6 +2233,67 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AP — 2026-08-29 : LE COMPARATEUR MESURE ENFIN — ET IL DESIGNE UNE DECISION, PAS UN BOGUE
+
+**LE COMPARATEUR FONCTIONNE** (apres correction de la cle de date ET ajout d un
+`git pull` au workflow, qui executait le code du serveur et non celui pousse) :
+
+| | Lignes |
+|---|---|
+| Appariees a un fonds | 40 826 |
+| **Identiques a moins de 1 %** | **27 077** |
+| Dates absentes (un import les ajouterait) | 1 085 |
+| **En ecart** | **12 664** |
+| — dont changements d ECHELLE (>= x10) | **378** |
+| — dont ecarts mineurs (1 % a 10x) | **12 286** |
+
+**LES 378 NE SONT PAS DES ERREURS A CORRIGER — C EST UN CHANGEMENT DE DEVISE.**
+Repartition des devises attribuees par l extracteur corrige :
+
+    306 lignes  USD  (source : column_header_matched_fund)
+     43 lignes  NGN  (source : column_header_matched_fund)
+     29 lignes  NGN  (source : column_header)
+
+Et **339 des 378 vont vers une valeur PLUS PETITE**. Exemple, fonds 1141 au
+2026-07-10 : la base tient **165 207,30 NGN**, le fichier SEC relu donne
+**119,2832 USD**. Les deux sont exacts — dans leur devise. Facteur 1 385 : le
+taux de change.
+
+**APPLIQUER CES « CORRECTIONS » REMPLACERAIT DES NAIRAS CORRECTS PAR DES DOLLARS**
+et recreerait exactement le melange d echelles qu on cherche a eliminer. Le
+comparateur a donc evite une correction qui aurait aggrave le defaut.
+
+**LE BLOCAGE EST REFERENTIEL, PAS TECHNIQUE.** Trois sources, trois reponses :
+- la **SEC** publie ces fonds en dollars, dans une colonne dediee ;
+- la **base** les tient en nairas (`dev_libelle = NGN` pour 23 d entre eux) ;
+- l **extracteur corrige** tranche pour le dollar (`column_header_matched_fund`).
+
+**FAIT NOUVEAU DECISIF, qui reouvre l etape 0 annulee au lot AJ.** Je l avais
+annulee parce que basculer `dev_libelle` seul aurait declare 311 valeurs naira
+comme des dollars. La mesure d aujourd hui montre que **la source publie une
+serie dollar complete** : basculer ces fonds en USD est donc realisable en LISANT
+la colonne dollar semaine par semaine, sans convertir ni fabriquer aucune valeur.
+Ce que je ne pouvais pas affirmer au lot AJ.
+
+**DECISION A PRENDRE — elle appartient a l utilisateur** :
+- **Option NAIRA** : la base reste en NGN, on corrige les seules semaines ou une
+  valeur dollar s est glissee. Peu invasif. Mais contredit la SEC et le nom des
+  fonds, et le prix d un fonds dollar reste affiche en naira.
+- **Option DOLLAR** : ces 41 fonds passent en USD, serie entiere reecrite depuis
+  la colonne dollar de la source, `dev_libelle` mis a jour. Coherent avec « la
+  devise du fonds fait foi » et avec la SEC. Reecriture large mais entierement
+  lue.
+
+**12 286 ECARTS MINEURS RESTENT A INSTRUIRE** — ils ne relevent d aucune des deux
+options et ne doivent pas etre corriges en masse. Piste a verifier : type de prix
+(bid / offer / unit) different entre le chargement d origine et le rejeu.
+
+**PROCHAINE ACTION** : obtenir l arbitrage devise, puis n ecrire le correctif
+qu apres. **A NE PAS FAIRE** : appliquer les 378 ecarts comme des corrections.
+
+---
+
+
 ### LOT AO — 2026-08-28 : 82 LIGNES RETIREES · LE PLAN DE L ETAPE 2 INVALIDE PAR LA MESURE
 
 **FAIT, VERIFIE, IRREVERSIBLE UNIQUEMENT PAR ROLLBACK EXPLICITE**
