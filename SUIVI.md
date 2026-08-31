@@ -2233,6 +2233,92 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AR — 2026-08-31 : 75 VL RAMENEES AU NAIRA LU DANS LA SOURCE, ET CE QUE LA MESURE A INTERDIT
+
+**ECRITURE REALISEE** — `fix_naira_depuis_source.js --execute`, transaction unique,
+snapshot complet `data/naira_snapshots/NAIRA_SRC_20260831182550.json` (75 lignes entieres).
+
+| | avant garde-fou | apres garde-fou |
+|---|---|---|
+| ruptures Nigeria detectees | 226 | 226 |
+| **lignes ecrites** | 81 | **75** |
+| lignes saines ecartees | — | **25** |
+| « la valeur source reste aberrante » | 27 | **8** |
+
+**LE GARDE-FOU AJOUTE (4e condition).** Une rupture d echelle produit TOUJOURS deux
+lignes signalees : la valeur aberrante, et la valeur saine qui la borde. Le correctif
+reecrivait les deux. Sur MYRTLE DOLLAR SHIELD au 2026-06-11 il aurait remplace
+1533,67 (voisin sain : 1534,91) par 1370,39 — un decrochage de 10 % creuse dans une
+serie qui n en avait aucun. Meme lue dans la source, une valeur ecrite sur une ligne
+saine est une regression. Condition ajoutee : la valeur EN BASE doit elle-meme
+s ecarter d un facteur >= 10 du voisin sain.
+
+Effet secondaire du meme garde-fou : 19 des 27 lignes classees « source aberrante »
+n etaient pas des problemes de source — c etaient des lignes saines jugees contre
+leur voisine cassee. Le reste reellement a instruire tombe de 27 a **8**.
+
+**MESURE APRES ECRITURE** : ruptures Nigeria 226 -> **146** (71 dans la fenetre du
+rejeu, 75 anterieures a 2022, hors fenetre).
+
+**PANNE MARIADB PENDANT LE LOT — 4e occurrence.** A 18:33 UTC, en pleine mesure :
+`Can't connect to local server through socket`. Disque sain (81 %, 30 Go libres).
+Historique : 2026-08-17, 2026-08-27 a 21:40 puis 22:00, 2026-08-31 a 18:33.
+Remise en route par `ops-mariadb-recover.yml`. **Les 75 lignes ont survecu** —
+verifie apres redemarrage : 75 lignes, 75 etiquetees NGN. La transaction et le
+snapshot ont fait leur office. Tant que la cause n est pas etablie, toute correction
+de donnees doit rester transactionnelle et accompagnee d un snapshot.
+
+**LA BASCULE `dev_libelle` DES 27 FONDS USD EST REFUSEE EN L ETAT.** Presomption de
+depart : les 27 fonds Nigeria declares USD contiennent du naira, il faut tous les
+basculer. `diag_devise_declaree_nigeria.js` compare chaque serie aux DEUX colonnes de
+la source (`vl_price_ngn` / `vl_price_usd`). Verdict :
+
+| fonds | naira | dollar | lecture |
+|---|---|---|---|
+| 2804 FBN BLENDED DOLLAR | 69 % | **0 %** | aucune VL en dollars |
+| 2774 MERISTEM DOLLAR | 55 % | 3 % | serie MIXTE |
+| 2769 ALPHA10 DOLLAR | 22 % | 52 % | serie MIXTE |
+| 2878 FCMBAM USD Bond | 6 % | 81 % | majoritairement dollar |
+
+**9 fonds sur 27** n ont AUCUNE VL correspondant a un prix dollar publie : pour eux
+l etiquette USD est demontrablement fausse (8 le sont a 100 % naira, plus 2804).
+Les 18 autres melangent les deux devises A L INTERIEUR d une meme serie — consequence
+de la bascule SEC d avril 2026, ou l importateur a pris tantot une colonne tantot
+l autre. Changer leur etiquette ne les reparerait pas : il faut d abord homogeneiser
+les valeurs. C est le meme chantier que les ecarts base/source deja au backlog.
+
+Consequence chiffree en attendant : **474 VL** portent un `value_USD` faux d un
+facteur ~1 400 (naira presente comme dollars), et les performances/classements USD
+qui en decoulent.
+
+**FICHIERS**
+- `scripts/fix/fix_naira_depuis_source.js` — 4e condition (ligne coupable vs voisine)
+- `scripts/diag/ondemand/diag_devise_declaree_nigeria.js` — CREE, lecture seule
+- `.github/workflows/ops-recalc-derives.yml` — CREE : le MCP ne peut pas lancer le
+  recalcul (liste blanche refuse `--pays`, fenetre de 60 s trop courte)
+- `.github/workflows/ops-mariadb-recover.yml` — recurrence consignee
+
+**ETAT DES DERIVES**
+- `vl_ajuste` : RECALCULE (985 700 VL, 0 erreur)
+- `value_EUR` / `value_USD`, performances, classements : **NON RECALCULES** pour le
+  Nigeria. Dry-run passe : 32 fonds ont une performance plus ancienne que leur
+  derniere VL. Le recalcul s obtient par `ops-recalc-derives.yml`, pays NIGERIA,
+  mode execute, phrase `VALIDER RECALCUL DERIVES` — declenchement manuel volontaire.
+
+**PROCHAINE ACTION RECOMMANDEE**
+1. Lancer `ops-recalc-derives.yml` (NIGERIA, execute) — etapes 1 a 4, classements exclus.
+2. Basculer en NGN les 9 fonds a dollar 0 %, eux seuls, snapshot a l appui.
+3. Instruire separement les 18 fonds a serie mixte, ligne par ligne et non fonds par fonds.
+4. Elargir le rejeu a 2011-2021 pour les 75 ruptures hors fenetre (108 `.xls` a convertir).
+
+**A NE PAS FAIRE A LA REPRISE**
+- Ne pas basculer les 27 fonds USD en bloc : la mesure montre que 18 ont une serie mixte.
+- Ne pas relancer le correctif naira en esperant traiter les 8 refus « source aberrante » :
+  c est la source elle-meme qui est aberrante a ces dates, aucune lecture ne les resoudra.
+- Ne pas lancer les classements sans decision explicite : ils deplacent le rang de fonds
+  d autres pays partageant une categorie.
+
+
 ### LOT AQ — 2026-08-29 : LA SOURCE TRANCHE — L OPTION DOLLAR EST INAPPLICABLE A L HISTORIQUE
 
 **BALAYAGE DES 340 FICHIERS SEC** (`scan_sec_headers.py`, en-tetes des 4 premieres
