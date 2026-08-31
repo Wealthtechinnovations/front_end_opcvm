@@ -2280,6 +2280,36 @@ Meme racine dans les deux cas : une reference reduite a un point unique.
 - refus restants : 79 hors fenetre / sans naira, **36 series bimodales**,
   18 deja conformes, 6 lignes saines, 3 sources aberrantes
 
+**CAUSE DES PANNES MARIADB — ETABLIE, ENFIN, PAR LA MESURE.** Le workflow
+`ops-mariadb-recover.yml` consigne desormais son releve dans `api_opcv/docs/OPS_MARIADB.md`
+(il ne l ecrivait que dans l onglet Actions, invisible : on a redemarre quatre fois
+sans jamais lire le diagnostic). Le journal du noyau, au 2026-08-31 18:33:01 :
+
+```
+node invoked oom-killer
+Out of memory: Killed process 2593316 (mariadbd) anon-rss:13763268kB
+InnoDB: Initializing buffer pool, total size = 134217728      <- 128 Mo
+Mem: 17945 total
+```
+
+**MariaDB ne s arrete pas : le noyau le TUE.** Un processus `node` — le recalcul de
+985 700 VL — a reclame de la memoire, et l OOM-killer a choisi la plus grosse cible :
+`mariadbd`, a **13,7 Go de RSS sur 17,9 Go de RAM**.
+
+Le point anormal n est pas l OOM, c est le 13,7 Go : le buffer pool InnoDB est
+configure a **128 Mo**. Ces 13,7 Go ne viennent donc PAS du cache de donnees. Ils
+viennent d ailleurs — buffers par session (`sort_buffer_size`, `join_buffer_size`,
+`tmp_table_size`) multiplies par le nombre de connexions, tables temporaires, ou une
+fuite de la 10.6.23. **A instruire avant tout nouveau recalcul lourd**, faute de quoi
+la panne se reproduira exactement de la meme facon.
+
+Cela explique la chronologie : 27 aout 21:40 et 22:00 encadrent le cron EUR/USD de
+21:30 ; 31 aout 18:33 pendant un recalcul manuel. Les pannes ne sont pas aleatoires,
+elles suivent la charge d ecriture.
+
+Aucune modification de configuration MySQL n a ete faite : c est une tache sensible
+qui demande une validation explicite.
+
 **CE QUE CET INCIDENT ENSEIGNE, ET QUI VAUT AU-DELA DE CE LOT.** Un garde-fou
 teste sur les cas qui l ont motive ne prouve rien : les deux erreurs de la
 journee sont passees a travers des controles ecrits juste avant, parce que
