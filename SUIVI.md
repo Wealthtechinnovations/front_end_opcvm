@@ -2233,6 +2233,61 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AR-bis — 2026-08-31 : LE CORRECTIF A ECRASE 3 BONNES VL — CAUSE CORRIGEE, LIGNES RESTAUREES
+
+**A LIRE EN PREMIER.** Le correctif naira a introduit une regression, detectee en
+verifiant la serie du fonds 1141 apres ecriture. Trois lignes SAINES ont ete
+ecrasees par une valeur aberrante :
+
+| fonds | date | avant | ecrit a tort |
+|---|---|---|---|
+| 1141 AFRINVEST DOLLAR | 2022-04-01 | 39 441,4650 | 92,1946 |
+| 1168 NIGERIA DOLLAR INCOME | 2022-04-01 | 427,1666 | 1,0259 |
+| 2779 HOUSING SOLUTION | 2025-04-11 | 111,0368 | 1,1100 |
+
+**CAUSE.** Le correctif comparait chaque ligne a UN voisin sain. Quand
+l aberration dure deux releves consecutifs, les deux points bas ne different pas
+entre eux d un facteur 10 : aucune rupture n est signalee entre eux, elle ne l est
+que sur la ligne SAINE qui suit le plateau. Et de ce cote, le seul voisin « sain »
+disponible est l autre moitie du plateau. **Un plateau aberrant se validait
+lui-meme**, et la ligne saine passait pour la coupable.
+
+C est l erreur SYMETRIQUE de celle corrigee deux heures plus tot le meme jour.
+Meme racine dans les deux cas : une reference reduite a un point unique.
+
+**CORRECTIONS APPORTEES**
+1. `referenceSaine()` — la reference devient la MEDIANE des voisins non rompus
+   (5 de chaque cote). Il faudrait desormais que la moitie de la fenetre soit
+   aberrante pour la faire basculer. Mediane et non moyenne : une valeur extreme
+   deplace une moyenne, pas une mediane.
+2. **Garde-fou bimodal** — la mediane ne veut rien dire sur une serie ou une
+   moitie des releves est vers 1,1 et l autre vers 1 400 : elle tombe vers 696,
+   un nombre qui n existe dans aucun fichier. Le script refuse desormais d ecrire
+   dans ce cas (motif « serie bimodale »). Sans ce garde-fou il proposait 29
+   corrections jugees contre de faux reperes ; il n en propose plus que 4.
+3. `fix_naira_reprise_plateau.js` — CREE, restaure les 3 lignes depuis le
+   snapshot. Les valeurs sont LUES dans le snapshot, jamais saisies. Chaque ligne
+   n est reprise que si elle porte encore la valeur fautive.
+4. `--ids` ajoute au rollback : un lot n est pas juste ou faux en bloc. Tout
+   restaurer aurait annule 72 corrections justes pour en defaire 3.
+
+**ETAT FINAL MESURE**
+- 75 lignes ecrites, **3 restaurees** -> 72 corrections justes conservees
+- puis **4 lignes** ecrites apres correction de la regle
+  (snapshot `NAIRA_SRC_20260831184519.json`)
+- ruptures Nigeria : 226 -> **139** (64 dans la fenetre du rejeu, 75 avant 2022)
+- `vl_ajuste` recalcule apres les reprises : 985 700 VL, 0 erreur
+- refus restants : 79 hors fenetre / sans naira, **36 series bimodales**,
+  18 deja conformes, 6 lignes saines, 3 sources aberrantes
+
+**CE QUE CET INCIDENT ENSEIGNE, ET QUI VAUT AU-DELA DE CE LOT.** Un garde-fou
+teste sur les cas qui l ont motive ne prouve rien : les deux erreurs de la
+journee sont passees a travers des controles ecrits juste avant, parce que
+chacun jugeait contre un repere trop etroit. Verifier une correction, ce n est
+pas relire le code — c est relire les DONNEES ecrites, serie par serie. Les
+trois lignes n ont ete vues que parce que la serie du fonds 1141 a ete affichee
+apres coup.
+
 ### LOT AR — 2026-08-31 : 75 VL RAMENEES AU NAIRA LU DANS LA SOURCE, ET CE QUE LA MESURE A INTERDIT
 
 **ECRITURE REALISEE** — `fix_naira_depuis_source.js --execute`, transaction unique,
