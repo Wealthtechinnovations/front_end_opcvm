@@ -1,5 +1,6 @@
 "use client";
-import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
+import { useUserId } from '@/hooks/useUserId';
+import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/lib/constants";
 
 
 import Link from "next/link";
@@ -10,9 +11,7 @@ import Select from 'react-select';
 //import * as XLSX from 'xlsx';
 import HighchartsReact from "highcharts-react-official";
 import Highcharts from 'highcharts';
-//import { router } from 'next/router';
-import Router from 'next/router';
-import Header from "@/app/Header";
+import Header from '@/components/layout/Header';
 import { useRouter } from "next/navigation";
 import { Dropdown } from "react-bootstrap";
 
@@ -72,8 +71,8 @@ interface QuizMifidOfUser {
   volatilityPortfolioTarget: any;
   // Autres propriétés...
 }
-export default function Profile(props: PageProps) {
-  let id = props.searchParams.id;
+export default function Profile() {
+  const id = useUserId();
 
   let response: globalThis.Response;
   const handleSearch = (e: any) => {
@@ -132,7 +131,6 @@ export default function Profile(props: PageProps) {
         if (quizData && commentPartSeven) {
           // Convertir les données JSON en un objet JavaScript
           const quiz = JSON.parse(quizData);
-          console.log(quiz);
           // Mettre à jour l'état mifidForUser avec les données récupérées
           setQuizMifidOfUser({
             userId: "your_user_id", // Remplacez "your_user_id" par l'ID de l'utilisateur approprié
@@ -170,122 +168,14 @@ export default function Profile(props: PageProps) {
   }, []); // Dépendance vide pour n'exécuter l'effet qu'une seule fois lors du premier rendu
 
 
-
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  const [menuOpen, setMenuOpen] = useState(false);
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
-
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/Fundmanager/recherche`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/accueil`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
   const [userConnected, setUserConnected] = useState<number | null>(null);
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-        router.push('/portefeuille/login');
-      }, 5);
-    }
-  };
-
-  const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-  const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-  };
-
-  const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-  };
-  const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/actualite`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
-  const [isHoveredp, setIsHoveredp] = useState(false);
-
-  const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-  };
-
-  const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-  };
-  const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/pays`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
   return (
-
 
 
     < Fragment >
@@ -356,7 +246,7 @@ export default function Profile(props: PageProps) {
                               <button
                                 className={toggleState === 1 ? "tabs active-tabs" : "tabs"}
                                 onClick={() => setToggleState(1)}
-                                style={{ width: "250px", backgroundColor: toggleState === 1 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState === 1 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>profil investisseur</span>
                               </button>
@@ -364,7 +254,7 @@ export default function Profile(props: PageProps) {
                               <button
                                 className={toggleState === 2 ? "tabs active-tabs" : "tabs"}
                                 onClick={() => setToggleState(2)}
-                                style={{ width: "250px", backgroundColor: toggleState === 2 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState === 2 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Capacité financière</span>
                               </button>
@@ -372,7 +262,7 @@ export default function Profile(props: PageProps) {
                               <button
                                 className={toggleState === 3 ? "tabs active-tabs" : "tabs"}
                                 onClick={() => setToggleState(3)}
-                                style={{ width: "250px", backgroundColor: toggleState === 3 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState === 3 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Connaissances financières</span>
                               </button>
@@ -380,7 +270,7 @@ export default function Profile(props: PageProps) {
                               <button
                                 className={toggleState === 4 ? "tabs active-tabs" : "tabs"}
                                 onClick={() => setToggleState(4)}
-                                style={{ width: "250px", backgroundColor: toggleState === 4 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState === 4 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Expérience en investissement</span>
                               </button>
@@ -447,7 +337,7 @@ export default function Profile(props: PageProps) {
                               <button
                                 className={toggleState1 === 5 ? "tabs active-tabs gr-text-8 text-color-opacity" : "tabs gr-text-8 text-color-opacity"}
                                 onClick={() => toggleTab1(5)}
-                                style={{ width: "250px", backgroundColor: toggleState1 === 5 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState1 === 5 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Besoin d investissement</span>
                               </button>
@@ -455,7 +345,7 @@ export default function Profile(props: PageProps) {
                               <button
                                 className={toggleState1 === 6 ? "tabs active-tabs gr-text-8 text-color-opacity" : "tabs gr-text-8 text-color-opacity"}
                                 onClick={() => toggleTab1(6)}
-                                style={{ width: "250px", backgroundColor: toggleState1 === 6 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState1 === 6 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Objectifs et motivations</span>
                               </button>
@@ -463,7 +353,7 @@ export default function Profile(props: PageProps) {
                               <button
                                 className={toggleState1 === 7 ? "tabs active-tabs gr-text-8 text-color-opacity" : "tabs gr-text-8 text-color-opacity"}
                                 onClick={() => toggleTab1(7)}
-                                style={{ width: "250px", backgroundColor: toggleState1 === 7 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState1 === 7 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Préférence </span>
                               </button>
@@ -471,7 +361,7 @@ export default function Profile(props: PageProps) {
                               <button
                                 className={toggleState1 === 8 ? "tabs active-tabs gr-text-8 text-color-opacity" : "tabs gr-text-8 text-color-opacity"}
                                 onClick={() => toggleTab1(8)}
-                                style={{ width: "250px", backgroundColor: toggleState1 === 8 ? '#6366f1' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
+                                style={{ width: "250px", backgroundColor: toggleState1 === 8 ? '#1B3A5C' : '#ccc', border: 'none', padding: '10px 20px', borderRadius: '5px', color: '#fff', cursor: 'pointer' }}
                               >
                                 <span className=''>Aversion au risque</span>
                               </button>

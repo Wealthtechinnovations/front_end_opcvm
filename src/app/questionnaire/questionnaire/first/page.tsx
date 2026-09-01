@@ -1,12 +1,13 @@
 "use client";
-import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
+import { useUserId } from '@/hooks/useUserId';
+import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/lib/constants";
 
 import React, { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import { useRouter } from "next/navigation";
 import Swal from 'sweetalert2';
 //import ProgressBar from 'react-bootstrap/ProgressBar';
 import 'react-step-progress-bar/styles.css'; // Assurez-vous d'importer les styles CSS si nécessaire
-import Header from "@/app/Header";
+import Header from '@/components/layout/Header';
 import Link from "next/link";
 import { Button, Dropdown } from "react-bootstrap";
 
@@ -42,9 +43,9 @@ interface PageProps {
 
 // FIN
 
-export default function CConditionsProfil(props: PageProps): JSX.Element {
+export default function CConditionsProfil(): JSX.Element {
   // Variable de l'url de l'api
-  let id = props.searchParams.id;
+  const id = useUserId();
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [messageError, setMessageError] = useState();
@@ -100,78 +101,13 @@ export default function CConditionsProfil(props: PageProps): JSX.Element {
   // Fin
 
 
-
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  const [menuOpen, setMenuOpen] = useState(false);
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
-
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/Fundmanager/recherche`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/accueil`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
   const [userConnected, setUserConnected] = useState<number | null>(null);
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-        router.push('/portefeuille/login');
-      }, 5);
-    }
-  };
   return (
     <>
       < Fragment >

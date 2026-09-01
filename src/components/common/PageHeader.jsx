@@ -1,6 +1,6 @@
 import React from 'react';
 
-const PageHeader = ({ title, subtitle, breadcrumbs, actions, className = '' }) => (
+const PageHeader = ({ title = '', subtitle = '', breadcrumbs = [], actions = null, className = '' }) => (
   <div className={`mb-4 ${className}`}>
     {breadcrumbs && (
       <nav aria-label="breadcrumb">

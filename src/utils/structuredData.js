@@ -17,7 +17,7 @@ export const websiteSchema = {
   url: 'https://fundafrique.com',
   potentialAction: {
     '@type': 'SearchAction',
-    target: 'https://fundafrique.com/Opcvm/recherche?q={search_term_string}',
+    target: 'https://fundafrique.com/funds/search?q={search_term_string}',
     'query-input': 'required name=search_term_string',
   },
 };

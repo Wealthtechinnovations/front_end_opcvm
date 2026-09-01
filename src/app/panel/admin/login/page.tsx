@@ -2,15 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
-import { signIn } from 'next-auth/react';
-
-
-import Select from 'react-select';
-//import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
-import Head from 'next/head';
-import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
+import { urlconstant } from "@/lib/constants";
 
 import { useRouter } from 'next/navigation';
 interface Res {
@@ -25,10 +17,12 @@ async function emailexist(email: string) {
   return data;
 }
 async function login(email: string, password: string) {
-  const data = (
-    await fetch(`${urlconstant}/api/userlogin?email=${email}&password=${password}`)
-  ).json();
-  return data;
+  const response = await fetch(`${urlconstant}/api/userlogin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  return response.json();
 }
 export default function Login() {
   const [response, setResponse] = useState<Res | null>(null);
@@ -55,43 +49,40 @@ export default function Login() {
       const data = await emailexist(email);
       setResponse(data);
       if (data.code === 200) {
-        //  router.push(`/panel/societegestionpanel/login/register?email=${email}&password=${password}`);
+        //  router.push(`/panel/management/login/register?email=${email}&password=${password}`);
 
-        console.log(data);
         setisExist("OUI");
         setError("Vous existez deja en base")
         setShowPassword(true);
 
 
       } else {
-        const href = `/panel/portefeuille/login/register?email=${email}`;
-
-        router.push(href);
+        router.push(`/panel/admin/login/register?email=${email}`);
       }
 
     } else {
       const data = await login(email, password);
       setResponse(data);
       if (data.code === 200) {
-        console.log(data)
-        let href: string = '';
-        //  router.push(`/panel/societegestionpanel/login/register?email=${email}&password=${password}`);
-        //   if (data.data.userExists.typeusers_id == 1) {
-        href = `/panel/admin/home?id=${data.data.userExists.id}`;
+        const userData = data.data.userExists || data.data.user;
+        const token = data.data?.token || data.token;
 
-        /* } else if (data.data.userExists.typeusers_id == 2) {
-           href = `/panel/admin/pagehome?id=${data.data.userExists.id}`;
- 
-         }*/
+        if (userData.typeusers_id != 0) {
+          setError("Accès réservé aux administrateurs");
+          return;
+        }
+
         localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userId', data.data.userExists.id);
+        localStorage.setItem('userId', userData.id);
+        if (token) {
+          localStorage.setItem('tokenEnCours', token);
+          document.cookie = `tokenEnCours=${token}; path=/; max-age=86400; SameSite=Lax`;
+        }
+        document.cookie = 'isLoggedIn=true; path=/; max-age=86400; SameSite=Lax';
 
-        router.push(href);
-
-
-
+        router.push('/panel/admin/dashboard');
       } else {
-        setError("Login ou mot de passe incorrect")
+        setError(data.message || "Login ou mot de passe incorrect")
       }
 
     }
@@ -115,12 +106,12 @@ export default function Login() {
         </label>
 
         <ul id="main-menu" className="sm sm-blue">
-          <li><Link className="link-style" href="/accueil"> Accueil</Link>
+          <li><Link className="link-style" href="/home"> Accueil</Link>
 
           </li>
 
           <li>  <Link className="link-style"
-            href="/Opcvm/recherche"
+            href="/funds/search"
 
           >
             Fonds
@@ -145,7 +136,7 @@ export default function Login() {
 
           </li>
           <li><Link className="link-style"
-            href="/portefeuille/login"
+            href="/panel/investor/login"
           //href="/auth/login"
 
           >
@@ -155,7 +146,7 @@ export default function Login() {
           </li>
           <li>
             <Link className="link-style"
-              href="/societegestionpanel/login"
+              href="/panel/management/login"
 
             >
               Espace membre
@@ -212,7 +203,7 @@ export default function Login() {
                               type="submit"
                               style={{
                                 textDecoration: 'none',
-                                backgroundColor: '#6366f1',
+                                backgroundColor: '#1B3A5C',
                                 color: 'white',
                                 padding: '10px 20px',
                                 borderRadius: '5px',
