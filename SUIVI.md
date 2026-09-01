@@ -2233,6 +2233,59 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AU — 2026-09-01 : DIRECTIVE PERMANENTE DE TRAVAIL INSCRITE (documentation uniquement)
+
+**AUCUNE MODIFICATION DE CODE NI DE DONNEES DANS CE LOT.**
+
+**Ce qui a ete fait.** Le proprietaire a edicte une directive permanente de travail
+en 28 sections. Elle modifie les regles permanentes du projet, et le protocole
+anti-compactage interdit que la memoire principale vive dans la conversation :
+elle est donc inscrite dans `DIRECTIVE_TRAVAIL.md`, **identique dans les deux
+depots**, et referencee en **etape 0** de la premiere action obligatoire des deux
+`CLAUDE.md` — placee avant tout le reste, sinon elle serait lue trop tard pour
+servir.
+
+**Ce qu elle ajoute** aux CLAUDE.md existants, qui ne les couvraient pas : HTML
+semantique, meta tags, SEO, architecture de referencement, Schema.org, Atomic
+Design. Plus une formalisation de l ordre de travail en douze etapes et une
+analyse d impact en dix points avant toute modification de fichier.
+
+**Rang precise dans le document lui-meme** : la directive complete `CLAUDE.md`
+sans le remplacer ; mais sur un point de FAIT — etat de production, fraicheur des
+donnees, existence d une route — c est `api_opcv/docs/ETAT_PRODUCTION_VERIFIE.md`
+qui tranche. La mesure prime sur la prose, y compris sur la directive.
+
+**DIVERGENCE DOCUMENTAIRE REPAREE AU PASSAGE.** `api_opcv/SUIVI.md` existait mais
+etait un vestige vide — 13 lignes, « a completer », intouche depuis le 2026-08-11 —
+alors que le suivi reel compte 5 300+ lignes ici meme. Or `CLAUDE.md` et la
+directive imposent toutes deux de relire `SUIVI.md` avant toute intervention : une
+session travaillant sur `api_opcv` seul ouvrait donc un fichier vide et pouvait
+conclure qu aucun point de reprise n existait, alors que tout l historique
+l attendait dans l autre depot.
+
+Le supprimer aurait laisse la meme lecture echouer, en silence. Il est desormais un
+**pointeur explicite** vers `front_end_opcvm/SUIVI.md`, avec la regle rappelee :
+ne rien y ecrire.
+
+**FICHIERS**
+- `DIRECTIVE_TRAVAIL.md` — CREE dans les deux depots, copies identiques a maintenir
+- `api_opcv/CLAUDE.md` et `front_end_opcvm/CLAUDE.md` — etape 0 ajoutee
+- `api_opcv/SUIVI.md` — transforme en pointeur
+
+**ETAT DES CHANTIERS EN COURS — INCHANGE PAR CE LOT**
+Le lot AT reste le point de reprise technique : 157 VL prretes a corriger, workflow
+`ops-fix-segments-naira.yml` en attente de lancement (phrase
+`VALIDER CORRECTION SEGMENTS NAIRA`), fuite MariaDB ~700 Mo/h non traitee,
+21 performances fausses en production.
+
+**MCP** : instable. Un `ping` a repondu `wealthtech_ssh_bridge_ok` a 05:0x UTC,
+puis le connecteur a disparu quelques secondes plus tard
+(`Error: No such tool available`). Le serveur alterne connecte / deconnecte ; la
+fenetre de disponibilite a dure moins d une minute. **Non exploitable pour un
+travail en base**, ou une coupure en milieu de sequence laisserait un etat
+indetermine. Le canal des workflows GitHub Actions reste le seul fiable.
+
+
 ### LOT AT — 2026-09-01 : LA SOURCE SEULE COMME JUGE — 157 VL PRETES A CORRIGER (NON EXECUTE)
 
 **RIEN N A ETE ECRIT DANS CE LOT.** Correctif et canal d execution prets, dry-run
