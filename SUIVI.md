@@ -2233,6 +2233,79 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AT — 2026-09-01 : LA SOURCE SEULE COMME JUGE — 157 VL PRETES A CORRIGER (NON EXECUTE)
+
+**RIEN N A ETE ECRIT DANS CE LOT.** Correctif et canal d execution prets, dry-run
+confirme en production, lancement laisse a l utilisateur.
+
+**CE QUE LES DEUX CORRECTIFS PRECEDENTS ONT EN COMMUN, ET POURQUOI ILS ONT ECHOUE.**
+Tous deux jugeaient la serie d apres SA PROPRE FORME — une rupture entre VL
+consecutives, puis un voisinage de reference. Une serie ne peut pas s auditer
+elle-meme quand une partie d elle-meme est fausse :
+
+- un voisin bordant une rupture etait pris pour la coupable (3 bonnes VL ecrasees
+  le 2026-08-31, restaurees) ;
+- un plateau de deux releves se validait lui-meme ;
+- un plateau de **quatorze** releves constants a 100,00 (GUARANTY TRUST,
+  2026-05-15 -> 2026-08-14) ne declenchait rien du tout.
+
+**MESURE (`diag_plateaux_nigeria.js`, CREE, lecture seule)** : 41 segments en
+dollars sur 30 fonds, **157 VL**, dont **145 dans 29 plateaux** de 2 releves ou
+plus — soit **92 % invisibles** a la detection par rupture.
+
+**NOUVEAU CRITERE, UNIQUE ET EXTERNE** : le prix naira publie par la SEC pour la
+date exacte, retenu si `prix_naira_publie / valeur_en_base >= 100`. Le taux
+NGN/USD va de 400 (2022) a 1 600 (2026) ; les ecarts de valeur recenses sont tous
+< 10x. L intervalle entre 10 et 100 est vide. Chaque ligne est jugee SEULE : aucun
+plateau ne peut plus se valider lui-meme, quelle que soit sa longueur.
+
+**DRY-RUN CONFIRME EN PRODUCTION (04:45 UTC)** : 157 VL sur 30 fonds. Rapports de
+129 a 1 767. Quatre lignes ont un rapport qui ne correspond a AUCUN taux de change
+(1183 a 129, 1171 a 310, 1245 a 348, 1277 a 559) : ce ne sont pas de simples
+conversions, la valeur en base y est fausse pour une autre raison. La correction
+reste valide — on ecrit ce que la SEC publie, jamais un calcul — mais ces cas ne
+relevent pas de l explication « dollar au lieu de naira ». Sept fonds basculent le
+MEME jour, le 2022-05-06 : signature d un import fautif, pas d un probleme par fonds.
+
+**CE QUE CE CORRECTIF NE FERA PAS, VOLONTAIREMENT**
+- les ecarts de valeur (rapport entre 1,01 et 100) — autre chantier ;
+- les dates sans source — aucune ecriture sans valeur publiee ;
+- GUARANTY TRUST en aout 2026, ou la SOURCE elle-meme porte 100,00 en colonne
+  naira. Mes deux ecritures du 31 aout y ont prolonge le plateau au lieu de le
+  corriger (moins faux que le 0,0725 present, mais faux). **Cela se corrige a la
+  source, pas en base.**
+
+**FICHIERS CREES**
+- `scripts/diag/ondemand/diag_plateaux_nigeria.js` — lecture seule
+- `scripts/fix/fix_segments_dollars_nigeria.js` — dry-run par defaut, snapshot,
+  transaction, rollback avec `--ids`
+- `.github/workflows/ops-fix-segments-naira.yml` — phrase
+  `VALIDER CORRECTION SEGMENTS NAIRA`, recalculs derives en OPTION
+
+**POURQUOI LES RECALCULS SONT EN OPTION** : sans eux le site montre des VL justes
+et des performances calculees sur les anciennes ; mais le recalcul EUR/USD porte
+sur ~990 000 lignes, et c est ce profil de charge qui a fait tuer mariadbd par
+l OOM-killer. Les enchainer d office jouerait la correction contre la
+disponibilite. Le cron de 20 h les fait de toute facon, et un echec de recalcul
+n annule pas la correction.
+
+**MCP** : non connecte cote session malgre la reconnexion cote utilisateur.
+`mcp__wealthtech_ssh_bridge__*` introuvable. Tout ce lot est passe par le canal
+SSH des workflows GitHub Actions, qui lui fonctionne.
+
+**PROCHAINE ACTION RECOMMANDEE**
+1. Lancer `ops-fix-segments-naira.yml` en mode execute (`recalculer` a false).
+2. Verifier ensuite les performances des 21 fonds fautifs — en particulier 1141
+   (+143 958 %) et les quinze a -99,93 %.
+3. Redemarrage preventif de MariaDB : fuite ~700 Mo/h, prochaine panne attendue
+   vers 14:00 UTC.
+
+**A NE PAS FAIRE A LA REPRISE**
+- Ne pas activer `recalculer` tant que la fuite MariaDB n est pas traitee.
+- Ne pas corriger GUARANTY TRUST aout 2026 en base : c est la source qui publie
+  100,00.
+
+
 ### LOT AS — 2026-09-01 : LA FUITE MARIADB EST PROUVEE, ET 21 PERFORMANCES SONT FAUSSES EN PRODUCTION
 
 **1. PANNES MARIADB — CAUSE TRANCHEE : FUITE MEMOIRE, PAS UN REGLAGE.**
