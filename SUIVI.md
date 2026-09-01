@@ -2233,6 +2233,98 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AS — 2026-09-01 : LA FUITE MARIADB EST PROUVEE, ET 21 PERFORMANCES SONT FAUSSES EN PRODUCTION
+
+**1. PANNES MARIADB — CAUSE TRANCHEE : FUITE MEMOIRE, PAS UN REGLAGE.**
+`ops-mysql-memoire.yml` (CREE, lecture seule) mesure ce que le serveur S AUTORISE
+a consommer et le compare au constate :
+
+| mesure | valeur |
+|---|---|
+| pire cas autorise par la configuration | **0,70 Go** |
+| RSS constate apres 9 h 51 de service | **6,95 Go** |
+| RSS au moment du kill du 31 aout | **13,7 Go** |
+| connexions maximales jamais atteintes | 24 sur 151 |
+| tables temporaires creees | **0** |
+
+La configuration ne peut pas produire ces 6,95 Go : 0,27 Go global + 2,94 Mo x 151
+connexions = 0,70 Go au plafond, et le serveur n a jamais depasse 24 connexions.
+Les deux premieres hypotheses — buffers par session, tables temporaires — sont donc
+**eliminees par la mesure**. Reste la fuite (MariaDB 10.6.23).
+
+Croissance mesuree : **~700 Mo/heure**. Le kill precedent est survenu a 13,7 Go.
+Swap deja consomme a 1 718 Mo sur 2 047.
+
+**CONSEQUENCE A RETENIR : augmenter les buffers ne reglerait rien et aggraverait
+la situation.** C etait l hypothese de depart, elle est fausse. Le contournement
+usuel d une fuite est un redemarrage preventif planifie (par exemple apres les
+crons de nuit), en attendant d en identifier l origine. Decision de production,
+non prise.
+
+Les crons du 20:00 et du 21:30 du 31 aout sont passes SANS panne : la charge
+d ecriture n est pas le declencheur, elle avance seulement l echeance.
+
+**2. VINGT-ET-UNE PERFORMANCES FAUSSES AFFICHEES EN PRODUCTION.**
+Balayage des 330 fonds Nigeria actifs sur `/api/performanceswithdate` :
+
+| symptome | fonds |
+|---|---|
+| gonflee (> +500 %) | **3** — dont 1141 a **+143 958 %**, 1196 a +9 339 % |
+| effondree (<= -99 %) | **18** — dont 15 a -99,93 % |
+| sans reponse de l API | 6 |
+| **total suspect** | **21 sur 330 (6,4 %)** |
+
+**Les 15 fonds a -99,93 % sont EXACTEMENT les fonds a serie mixte** identifies au
+lot AR : 2765, 2766, 2768, 2770-2778, 2856, 1239. La question de leur devise n est
+donc pas theorique — elle produit 15 performances fausses, visibles des utilisateurs.
+
+-99,93 % = 1 - 1/1441 : la VL courante est en dollars, la VL de reference en naira.
++143 958 % est le meme rapport en sens inverse.
+
+**3. POURQUOI 1141 RESTE FAUX MALGRE LA CORRECTION.** Sa serie porte un plateau de
+TROIS releves en dollars en fin d annee 2025 :
+
+```
+2025-12-05  165 682,93   naira
+2025-12-12      114,47   dollars
+2025-12-19      114,55
+2025-12-24      114,68
+2026-01-02  165 297,52   naira
+```
+
+Le YTD 2026 part de 114,68 pour arriver a 165 207 : d ou les 143 958 %.
+La perf 1 an, elle, est correcte (-5,03 %) — la correction du lot AR a bien opere.
+
+**Un plateau de N releves n est signale comme rupture que sur son PREMIER point.**
+Les suivants ne different pas entre eux, passent donc pour sains, polluent la
+fenetre de reference — qui devient bimodale — et declenchent le refus ajoute au
+lot AR-bis. Le garde-fou concu pour eviter d ecrire a tort bloque ici une
+correction evidente. Il protege correctement ; il ne suffit pas.
+
+**CE QU IL FAUDRAIT, ET QUI N EST PAS FAIT** : detecter les PLATEAUX (segments
+entiers dont le niveau est incompatible avec celui de la serie), et non les seules
+ruptures ponctuelles. Comparer a une mediane de serie plutot qu a un voisinage
+local. A instruire avec la decision sur les series mixtes — c est le meme sujet.
+
+**FICHIERS** : `.github/workflows/ops-mysql-memoire.yml` (CREE, lecture seule),
+`api_opcv/docs/OPS_MYSQL_MEMOIRE.md` et `docs/OPS_MARIADB.md` (releves generes).
+
+**PROCHAINE ACTION RECOMMANDEE**
+1. Decider du redemarrage preventif de MariaDB (fuite ~700 Mo/h, prochaine panne
+   attendue vers 14:00 UTC le 2026-09-01 au rythme constate).
+2. Trancher la devise des 18 fonds a serie mixte — 15 performances fausses en
+   dependent directement.
+3. Traiter les plateaux (1141, 1196) une fois la regle de detection etendue.
+4. Instruire a part les 4 fonds a -100 % (1267, 2821, 2885, 2886) et les 6 sans
+   reponse de l API.
+
+**A NE PAS FAIRE A LA REPRISE**
+- Ne pas augmenter innodb_buffer_pool_size en croyant traiter les pannes : mesure
+  faite, ce n est pas la cause, et cela accelererait la saturation.
+- Ne pas desactiver le garde-fou bimodal pour debloquer 1141 : il protege
+  reellement ; c est la detection des plateaux qui manque.
+
+
 ### LOT AR-bis — 2026-08-31 : LE CORRECTIF A ECRASE 3 BONNES VL — CAUSE CORRIGEE, LIGNES RESTAUREES
 
 **A LIRE EN PREMIER.** Le correctif naira a introduit une regression, detectee en
