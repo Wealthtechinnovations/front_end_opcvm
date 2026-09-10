@@ -4,7 +4,7 @@
 
 ## POINT DE REPRISE COURANT — GOV-006 / gouvernance GitHub ↔ S2
 
-> **Statut : `TECHNICALLY_RECONCILED / DOCUMENTATION_CLOSURE_IN_PROGRESS` — 2026-09-10.**
+> **Statut : `GOV-006 = CERTIFIED` — baseline pré-INST certifiée le 2026-09-10.**
 > Ce checkpoint prime sur les anciennes lignes P2-05 relatives aux snapshots Git S2.
 
 ### Réalisé et vérifié
@@ -39,13 +39,13 @@
 - runbook : `docs/runbooks/GITHUB_S2_RECONCILIATION_RUNBOOK.md` ;
 - preuves structurées : `docs/evidence/GOV-006_EVIDENCE_2026-09-10.json`.
 
-### Garde de clôture
+### Certification GOV-006
 
-Ne passer GOV-006 à `CERTIFIED` qu'après : relecture des nouveaux HEAD GitHub documentaires, synchronisation S2 non destructive, preuve `API_S2=API_GITHUB` et `FRONT_S2=FRONT_GITHUB`, CI de gouvernance verte et vérification runtime/HTTP post-documentation.
+La garde de clôture a été satisfaite : documentation canonique committée, HEAD GitHub relus, synchronisation S2 non destructive exécutée par le workflow gouverné, égalité API/Frontend GitHub↔S2 attestée, snapshot runtime régénéré hors Git sans mutation du HEAD, CI de gouvernance verte, PM2 sain et contrôles HTTP AfricaFunds à 200. Le commit de certification lui-même doit être inclus dans la dernière attestation S2 avant toute déclaration externe finale.
 
 ### Prochaine action unique
 
-**Terminer l'attestation post-documentation GOV-006. `INST-001` reste fermé jusqu'à cette preuve.**
+**GOV-006 clôturé. Prochaine tâche gouvernée sélectionnable : `INST-001 — Institutional Platform`, après réconciliation fraîche des HEAD conformément au Loop Engineering.**
 
 ---
 
