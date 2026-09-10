@@ -2280,6 +2280,71 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AW — 2026-09-10 : GOUVERNANCE RACCORDEE AU MESURE (5 lots enchaines, CI verte)
+
+**ETAT FINAL** — api `c106083`, front `dc42162`, les deux SYNC, arbres propres.
+Checks `governance` et `FundAfrica governance contract` : **success**. Miroir 9/9.
+Validateur : 15 requirements / 15 traces, aucun orphelin. `FILES_DELETED = 0`.
+
+**1. Check `governance`** — echouait sur `NONCANONICAL_PRODUCT_NAME`. Correctif
+redige puis **abandonne** au rebase : une session parallele avait deja traite la
+cause autrement (`3f5c80a`, verification de PRESENCE de marqueurs canoniques au
+lieu d une interdiction de terme). Verifiee vert, rien impose.
+
+**2. Derive miroir** — `632c954` avait refondu deux des neuf fichiers cote api sans
+propager. Un premier controle de non-perte par `iconv //TRANSLIT` concluait a la
+disparition de deux regles : **faux negatif**, l outil echouait en silence sur les
+accents. Refait par normalisation Unicode puis comparaison des titres de sections :
+la version api est un sur-ensemble reformule. Propage. 9/9 identiques sur origin.
+
+**3. Carte d autorite** — 8 -> 17 domaines. Le manquant le plus grave :
+`docs/ETAT_PRODUCTION_VERIFIE.md`, declare source de verite n°1 par les deux
+CLAUDE.md, **etait absent de l index machine**. Preseance explicite ajoutee, avec
+`production_measured_state` en tete.
+
+**4. Tracabilite des echecs** — les six echecs critiques mesures le 2026-09-10 a
+02:02 UTC n existaient nulle part dans le registre. Un echec non trace n a ni
+proprietaire, ni critere de sortie, ni preuve attendue.
+
+| | | |
+|---|---|---|
+| `AF-REQ-011` | C7 | 15 series melangeant deux echelles, facteur ~1500 |
+| `AF-REQ-012` | C3 | 3 performances > 500 % (1141 a 143 958 %) |
+| `AF-REQ-013` | C8 | MAROC 1.4 %, TUNISIE 6.1 %, UEMOA 32.4 % a jour |
+| `AF-REQ-014` | C2 | 14 perf. orphelines local, 23 EUR, 23 USD |
+| `AF-REQ-015` | C4 | NIGERIA 27 j (budget 14), TUNISIE 13 j (budget 9) |
+
+Preuve `AF-EVD-011`. `STATUS.md`, `LOOP_STATE.md`, `NEXT_ACTION.md`, `WORK_LOG.md`
+alignes sur le reel — STATUS se disait « photographie courante » en taisant six
+echecs critiques.
+
+**5. Ordre de lecture qui pointait dans le vide** — `00_START_HERE.md` est identique
+dans les deux depots et prescrit dix-huit lectures obligatoires ; **douze n existent
+que dans `api_opcv`**. Une session ouvrant le frontend suivait une prescription
+vide, sans signal. Meme motif que le `SUIVI.md` vide repare le 2026-09-01. Corrige
+en nommant le depot porteur de chaque registre — les dupliquer aurait cree
+l autorite parallele qu interdit `GOVERNANCE.md`.
+
+**VERDICT : `GOVERNED_WITH_EXTERNAL_GAPS`.**
+
+**BLOCAGES REELS, NON CONTOURNES**
+
+`REQUIRED_HUMAN_APPROVAL` — les six echecs critiques se corrigent par des workflows
+prets et mesures, proteges par une phrase de confirmation. L acces API GitHub est
+desormais authentifie (`Wealthtechinnovations`) : la phrase pourrait etre fournie
+par une session. **Elle ne doit pas l etre.** Ce verrou existe pour que l ecriture
+en base financiere de production soit un acte trace du proprietaire ; un mandat
+autonome ne leve pas les approbations que les regles en place exigent.
+
+`REQUIRED_SOURCE_UNAVAILABLE` — `wealthtech_ssh_bridge` demande une reautorisation.
+Fuite MariaDB (~700 Mo/h) non instruite faute d acces en base.
+
+**PROCHAINE ACTION** — inscrite dans `api_opcv/NEXT_ACTION.md` : lancer
+`ops-fix-segments-naira.yml`, mode `execute`, `recalculer: false`, phrase
+`VALIDER CORRECTION SEGMENTS NAIRA`. Corrige `AF-REQ-011` (C7) et, par voie de
+consequence, `AF-REQ-012` (C3).
+
+
 ### LOT AV — 2026-09-10 : DERIVE MIROIR INTER-DEPOTS RESORBEE (check CI remis au vert)
 
 **TRIGGER** : check `FundAfrica governance contract` en echec sur les deux depots.
