@@ -1,0 +1,52 @@
+name: GOV-006 certification one-shot
+
+on:
+  push:
+    branches:
+      - claude/code-review-improvements-ikvuj
+    paths:
+      - '.github/workflows/gov006-certify-one-shot.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gov006-certify-one-shot
+  cancel-in-progress: false
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/code-review-improvements-ikvuj
+          fetch-depth: 0
+
+      - name: Verify writer baseline
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = 'claude/code-review-improvements-ikvuj'
+          REMOTE_HEAD="$(git ls-remote origin refs/heads/claude/code-review-improvements-ikvuj | awk '{print $1}')"
+          test "$REMOTE_HEAD" = "$GITHUB_SHA"
+
+      - name: Update GOV-006 certification markers only
+        run: |
+          set -euo pipefail
+          python3 scripts/governance/certify_gov006.py
+          git diff --check
+          CHANGED="$(git diff --name-only)"
+          test "$CHANGED" = 'SUIVI.md'
+
+      - name: Commit with concurrency guard
+        run: |
+          set -euo pipefail
+          git config user.name 'FundAfrica Governance Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add SUIVI.md
+          git commit -m 'docs(governance): certify GOV-006 baseline'
+          REMOTE_HEAD="$(git ls-remote origin refs/heads/claude/code-review-improvements-ikvuj | awk '{print $1}')"
+          test "$REMOTE_HEAD" = "$GITHUB_SHA"
+          git push origin HEAD:claude/code-review-improvements-ikvuj
