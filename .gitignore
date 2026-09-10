@@ -43,3 +43,6 @@ next-env.d.ts
 .vscode/
 .idea/
 logs/
+
+# Local MCP/agent runtime logs (never canonical project state)
+.mcp_logs/
