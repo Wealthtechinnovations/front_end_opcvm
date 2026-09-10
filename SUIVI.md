@@ -2,6 +2,53 @@
 
 ---
 
+## POINT DE REPRISE COURANT — GOV-006 / gouvernance GitHub ↔ S2
+
+> **Statut : `TECHNICALLY_RECONCILED / DOCUMENTATION_CLOSURE_IN_PROGRESS` — 2026-09-10.**
+> Ce checkpoint prime sur les anciennes lignes P2-05 relatives aux snapshots Git S2.
+
+### Réalisé et vérifié
+
+- gouvernance Regulatory complémentaire intégrée sans remplacer la gouvernance FundAfrica existante ;
+- branches canoniques des deux dépôts maintenues sur `claude/code-review-improvements-ikvuj` ;
+- `00_START_HERE.md`, `GOVERNANCE.md`, `SOURCE_OF_TRUTH.md`, `AGENTS.md`, `LOOP_ENGINEERING.md` synchronisés entre API et frontend ;
+- `governance-contract` inter-repository introduit et exécuté avec succès ;
+- divergence API S2 analysée : **854 commits locaux exclusifs = 854 snapshots `PRODUCTION_STATE.json`, 0 commit applicatif local** ;
+- cause racine : `sync_production.sh`/cron fabriquait un historique Git depuis le runtime ;
+- snapshot live déplacé vers `/var/lib/fundafrica/runtime/PRODUCTION_STATE.json` ;
+- `check_doc_drift.js` rendu backward-compatible avec fallback historique ;
+- mutations Git automatiques retirées du producteur de snapshot et contrôlées par CI ;
+- ancienne branche API S2 sauvegardée pendant la réconciliation dans `/var/backups/fundafrica-governance/20260910T020803Z/api/local-branch-before.bundle` avec `git bundle verify` réussi ;
+- réalignement API réalisé sans `git reset --hard`, sans `git clean -fd`, sans force-push et sans suppression des untracked ;
+- changement local frontend `package-lock.json` reconnu légitime (`engines.node >=18.17.0`) et remonté dans GitHub avant synchronisation ;
+- `.mcp_logs/` classé comme log local et ignoré sans suppression ;
+- avant le lot documentaire GOV-006, GitHub et S2 étaient fraîchement attestés identiques : API `723f893da2d6925b03cd1c81c9a91b6440ddaacf`, frontend `edd597b18e5879667152c92164226437a259f42b` ;
+- documentation canonique ajoutée sous `docs/governance/`, `docs/architecture/`, `docs/runbooks/` et `docs/evidence/`.
+
+### Vigilance conservée
+
+- les répertoires API `data/datejour_snapshots/`, `data/naira_snapshots/`, `data/scale_break_snapshots/`, `sec_ng_downloads/` sont préservés ;
+- l'artefact API S2 non suivi `0` reste **`UNKNOWN`** : ne pas supprimer, ignorer ou committer avant classification ;
+- la divergence PM2 in-memory/local observée est une maintenance séparée, pas un sous-lot opportuniste de GOV-006 ;
+- les anomalies métier/data historiques (Nigeria, performances, CEMAC, etc.) restent des chantiers distincts.
+
+### Autorités et runbook
+
+- post-mortem : `docs/governance/GOV-006_GITHUB_S2_RECONCILIATION_2026-09-10.md` ;
+- architecture : `docs/architecture/GITHUB_S2_RUNTIME_AUTHORITY_MODEL.md` ;
+- runbook : `docs/runbooks/GITHUB_S2_RECONCILIATION_RUNBOOK.md` ;
+- preuves structurées : `docs/evidence/GOV-006_EVIDENCE_2026-09-10.json`.
+
+### Garde de clôture
+
+Ne passer GOV-006 à `CERTIFIED` qu'après : relecture des nouveaux HEAD GitHub documentaires, synchronisation S2 non destructive, preuve `API_S2=API_GITHUB` et `FRONT_S2=FRONT_GITHUB`, CI de gouvernance verte et vérification runtime/HTTP post-documentation.
+
+### Prochaine action unique
+
+**Terminer l'attestation post-documentation GOV-006. `INST-001` reste fermé jusqu'à cette preuve.**
+
+---
+
 # BACKLOG CONSOLIDE UNIQUE — etabli le 2026-08-12
 
 > **Lire cette section AVANT toute intervention.** Elle remplace la lecture des 33 fichiers .md
@@ -50,7 +97,7 @@
 | P2-02 | Securite | #44 — `authenticate` absent sur routes POST (`ajoutVL`, `uploadsfilevl`, `postfond`, `updatefond`). | DOC | Ajouter le middleware. Bloque sur validation utilisateur. |
 | P2-03 | DB | #2 — Index UNIQUE sur `valorisations(fund_id, date)` absent : rien n'empeche les doublons de VL. | DOC | Detecter les doublons existants AVANT creation de l'index. |
 | P2-04 | Perf / Data | **Piege des perfs orphelines** : `fix_populate_performances*` ne supprime pas les lignes `performences` dont la date n'a plus de VL. Une perf orpheline reste la plus recente et s'affiche. | DOC (SUIVI, decouvert au lot T) | Integrer le `DELETE ... WHERE date NOT IN (SELECT date FROM valorisations ...)` aux scripts de rollback. |
-| P2-05 | Infra | **Diagnostic corrige le 2026-08-12** : `sync_production.sh` fonctionne (dernier snapshot serveur 2026-08-12 22:00). Le depot serveur est **231 commits en avance sur origin** — ces snapshots ne sont jamais pousses vers GitHub, donc un clone frais lit un fichier perime. | PROD | Decider si ces commits doivent etre pousses (ou le fichier sorti du suivi Git). En attendant : **ne jamais se fier a `PRODUCTION_STATE.json` depuis un clone**, interroger l'API ou le SQL. |
+| ~~P2-05~~ | Infra | **RESOLU GOV-006 le 2026-09-10** : les commits S2 provenaient du snapshot horaire `PRODUCTION_STATE.json`. Classification finale : 854/854 snapshots, 0 commit applicatif local. Le snapshot live est maintenant hors Git dans `/var/lib/fundafrica/runtime/PRODUCTION_STATE.json` et le producteur ne doit plus muter Git. | **PROD + GOV-006** | Surveiller le contrat CI et appliquer le runbook `docs/runbooks/GITHUB_S2_RECONCILIATION_RUNBOOK.md` à toute nouvelle divergence. |
 | P2-06 | Indices | `INDEX_CONFIG` duplique en 3 copies non synchronisees (`scrape_indices_daily.js`, `propagate_indref_range.js`, `import_indices_excel.js`). | DOC | Extraire une source unique. Diff des 3 avant, egalite stricte apres. |
 | P2-07 | Exploitation | `pm2 flush api-monolith` (log d'erreur 1,1 Go herite du crash-loop du 07-03) · workers `worker-data-import`/`worker-recalculation` encore en Node 14 · ghost cron `fix-brvm-nginx.py` (script absent du VPS). | DOC | Operations VPS sans risque de regression. |
 
@@ -112,7 +159,7 @@ Regles integrales : `CLAUDE.md` (2 depots) + `MCP_AUTONOMY.md`. Les plus souvent
 | Lot | Objet | Risque | Prealable |
 |---|---|---|---|
 | **A** | P1-01 — resynchroniser `datejour` UEMOA + ajouter l'etape au cron BRVM | Faible (colonne d'affichage, additif, reversible) | Dry-run + comptage avant/apres |
-| **B** | P2-05 — reparer `sync_production.sh` | Nul (lecture seule) | — |
+| **B** | ~~P2-05 — reparer `sync_production.sh`~~ **RESOLU GOV-006** | Clos | Snapshot live hors Git + controle CI ; appliquer le runbook en cas de nouvelle divergence |
 | **C** | P1-04 — build + restart frontend | Moyen (restart PM2) | **Decision 5** |
 | **D** | P1-02 — moteur de perf : ignorer une base > 1 an (fonds 2825) | Moyen (calcul financier) | Ne pas recomputer les classements ACTIONS avant |
 | **E** | P1-03 — `/api/listeopcvm` : diagnostic colonnes puis migration additive | Eleve (DB) | Sauvegarde + dry-run |
