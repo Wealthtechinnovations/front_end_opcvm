@@ -2280,6 +2280,62 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AV — 2026-09-10 : DERIVE MIROIR INTER-DEPOTS RESORBEE (check CI remis au vert)
+
+**TRIGGER** : check `FundAfrica governance contract` en echec sur les deux depots.
+**RESULTAT** : 9 fichiers miroir sur 9 identiques sur `origin`. Contrat local OK des deux cotes.
+
+**CE QUI S ETAIT PASSE.** Le commit `632c954` (Regulatory Plus) a refondu
+`00_START_HERE.md` et `LOOP_ENGINEERING.md` cote `api_opcv` — renommage AfricaFunds,
+restructuration, accents — **sans propager le miroir** vers `front_end_opcvm`, reste
+aux versions de 04:33 et 04:36. Le contrat exige une egalite BINAIRE stricte
+(`if local != peer`) sur neuf fichiers ; deux divergeaient.
+
+**UNE ERREUR DE DIAGNOSTIC, ET SA CORRECTION.** Un premier controle de non-perte,
+fonde sur `iconv //TRANSLIT`, a conclu que deux regles du front etaient absentes cote
+api — « refuser l ecriture si le contexte est obsolete » et « Preuve
+post-documentation ». **Faux negatif** : la translitteration echouait silencieusement
+sur les accents. Refait par normalisation Unicode puis par comparaison des titres de
+sections, le controle etablit l inverse :
+
+  - `## Etat FundAfrica` est devenu `## Etat AfricaFunds` ;
+  - `### Interdictions`, `### Classification des untracked`, `### Snapshot production`
+    et `### Preuve post-documentation` sont absorbees dans
+    `## 20. S2 DIVERGENCE GATE — GOV-006`, contenu intact.
+
+La version api est un **sur-ensemble reformule**. La propagation n a efface aucune
+regle. Lecon retenue : un outil de normalisation qui echoue en silence produit un
+diagnostic inverse de la realite — verifier la structure, pas seulement le texte.
+
+**AUTRE CHECK, DEJA RESOLU EN AMONT.** `governance` echouait sur
+`NONCANONICAL_PRODUCT_NAME` : le commit 632c954 avait livre d un bloc la regle
+interdisant « FundAfrica » ET la phrase qui l explique. Une session parallele l avait
+deja corrige (`3f5c80a`) en remplacant l interdiction par une verification de
+PRESENCE de marqueurs canoniques. Un correctif concurrent redige ici a ete
+**abandonne** (`git rebase --skip`) plutot qu impose : verifie, la version amont
+passe.
+
+**FICHIERS** : `front_end_opcvm/00_START_HERE.md`, `front_end_opcvm/LOOP_ENGINEERING.md`
+(alignes). `FILES_DELETED = 0`.
+
+**ETAT GIT** : api `3f5c80a`, front `b77664a`, les deux SYNC avec origin, arbres propres.
+
+**GATE NON FRANCHI, VOLONTAIREMENT.** L API GitHub est desormais accessible et
+authentifiee (`Wealthtechinnovations`), donc `ops-fix-segments-naira.yml` serait
+declenchable. Il ne l a pas ete : la phrase `VALIDER CORRECTION SEGMENTS NAIRA` est un
+verrou concu pour que cette ecriture en base financiere soit un acte delibere et trace
+du proprietaire. `REQUIRED_HUMAN_APPROVAL` — non contourne.
+
+**INCHANGE DEPUIS LE 2026-09-01** : 157 VL non corrigees, 21 performances fausses en
+production (1141 a +143 958 %, quinze fonds a -99,93 %), fuite MariaDB ~700 Mo/h non
+instruite (MCP indisponible : `wealthtech_ssh_bridge` demande une reautorisation).
+
+**PROCHAINE ACTION** : etendre `.governance/knowledge/authority-map.json` aux domaines
+reels encore sans autorite declaree (frontend, donnees financieres, crons/imports,
+base de donnees, SEO/Schema.org introduits par `DIRECTIVE_TRAVAIL.md`), en pointant
+vers les documents EXISTANTS — enrichissement, sans creer d autorite parallele.
+
+
 ### LOT AU — 2026-09-01 : DIRECTIVE PERMANENTE DE TRAVAIL INSCRITE (documentation uniquement)
 
 **AUCUNE MODIFICATION DE CODE NI DE DONNEES DANS CE LOT.**
