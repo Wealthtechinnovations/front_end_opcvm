@@ -2280,6 +2280,59 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AX — 2026-09-10 : LA BASE EST RESTEE MORTE 10 H 22 SANS QUE PERSONNE NE LE SACHE
+
+**FAIT MESURE** (`AF-EVD-012`, releve `ops-mysql-memoire.yml` enrichi) :
+
+```
+Sep 08 20:02:42  node invoked oom-killer ... cpuset=cron.service
+Sep 08 20:02:42  Out of memory: Killed process 239498 (mariadbd) anon-rss:14613428kB
+Sep 08 20:02:44  mariadb.service: Failed with result 'oom-kill'
+Sep 09 06:25:03  Started MariaDB 10.6.23 database server
+```
+
+`mariadbd` tue a **14,6 Go**, par un `node` lance depuis `cron.service`, **deux
+minutes apres** le demarrage de `cron_daily_update.sh` (20:00). La correlation
+charge de recalcul / OOM est donc **confirmee**.
+
+**LE FAIT NEUF** : `systemd` a constate `Failed with result 'oom-kill'` **puis n a
+rien fait**. Aucune politique `Restart=`. Le service n est reparti que dix heures
+et vingt-deux minutes plus tard. Pendant tout ce temps la production etait HS —
+sans base, chaque route de l API renvoie 500. Rien ne l a signale.
+
+**CORRECTION D UNE AFFIRMATION ANTERIEURE.** Le lot AS annoncait « fuite ~700 Mo/h,
+prochaine coupure vers 14:00 UTC le 2026-09-01 ». C etait une extrapolation
+**fondee sur un point de mesure unique**. Deux points la contredisent :
+
+| | 2026-09-01 | 2026-09-10 |
+|---|---|---|
+| RSS mariadbd | 6,95 Go | **6,54 Go** |
+| uptime | 9 h 51 | **23 h 03** |
+| croissance moyenne | ~708 Mo/h | ~284 Mo/h |
+
+Le RSS **plafonne** autour de 6,5 Go au lieu de croitre sans borne. La coupure a
+eu lieu sept jours plus tard, a une autre heure, **sous charge** — pas au terme
+d une derive lineaire. Le pic ponctuel a 14,6 Go reste, lui, parfaitement reel :
+c est lui qu il faut expliquer, pas une pente imaginaire.
+
+Lecon : une extrapolation sur un point unique n est pas une mesure. Elle aurait
+fait programmer un redemarrage preventif quotidien pour un probleme qui n existait
+pas sous cette forme, tout en laissant passer celui qui existait vraiment.
+
+**AF-REQ-016** porte les deux volets : politique `Restart=` couvrant `oom-kill`,
+et pic de RSS tenant dans la RAM pendant les recalculs.
+
+**NEXT_ACTION REORDONNE** : le correctif systemd (une ligne, ramene 10 h a quelques
+secondes) passe **avant** les 157 VL. Une indisponibilite de dix heures pese plus
+lourd qu une performance fausse.
+
+**MCP** : toujours non expose cote session malgre l autorisation cote utilisateur.
+Contourne sans le forcer — le releve est passe par le workflow **en lecture seule**
+declenche via l API GitHub, desormais authentifiee. Le workflow de RECUPERATION n a
+pas ete declenche : il demarre le service s il le trouve arrete, et ce risque ne se
+justifiait pas pour une lecture.
+
+
 ### LOT AW — 2026-09-10 : GOUVERNANCE RACCORDEE AU MESURE (5 lots enchaines, CI verte)
 
 **ETAT FINAL** — api `c106083`, front `dc42162`, les deux SYNC, arbres propres.
