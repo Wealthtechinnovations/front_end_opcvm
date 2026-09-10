@@ -32,26 +32,14 @@ jobs:
 
       - name: Verifier ou reconciler le Node engine racine
         env:
-          BOOTSTRAP_MESSAGE: 'ci(governance): add package-lock engines reconciliation'
+          BOOTSTRAP_MESSAGE: 'ci(governance): fix package-lock engines reconciliation'
           HEAD_MESSAGE: ${{ github.event.head_commit.message }}
           EXPECTED_SHA: ${{ github.sha }}
           BRANCH: claude/code-review-improvements-ikvuj
         run: |
           set -euo pipefail
 
-          STATUS="$(node <<'NODE'
-          const fs = require('fs');
-          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
-          const expected = pkg.engines || null;
-          const actual = lock.packages && lock.packages[''] ? (lock.packages[''].engines || null) : null;
-          if (JSON.stringify(expected) === JSON.stringify(actual)) {
-            process.stdout.write('MATCH');
-          } else {
-            process.stdout.write('MISMATCH');
-          }
-NODE
-          )"
+          STATUS="$(node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));const l=JSON.parse(fs.readFileSync('package-lock.json','utf8'));const a=l.packages&&l.packages['']?(l.packages[''].engines||null):null;process.stdout.write(JSON.stringify(p.engines||null)===JSON.stringify(a)?'MATCH':'MISMATCH')")"
 
           if [ "$STATUS" = 'MATCH' ]; then
             echo 'package.json et package-lock.json portent le meme engines racine.'
@@ -65,14 +53,7 @@ NODE
             exit 1
           fi
 
-          node <<'NODE'
-          const fs = require('fs');
-          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
-          if (!lock.packages || !lock.packages['']) throw new Error('package-lock v3 root package missing');
-          lock.packages[''].engines = pkg.engines;
-          fs.writeFileSync('package-lock.json', JSON.stringify(lock, null, 2) + '\n');
-NODE
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));const l=JSON.parse(fs.readFileSync('package-lock.json','utf8'));if(!l.packages||!l.packages[''])throw new Error('package-lock v3 root package missing');l.packages[''].engines=p.engines;fs.writeFileSync('package-lock.json',JSON.stringify(l,null,2)+'\\n')"
 
           git diff -- package-lock.json
 
