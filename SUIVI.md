@@ -2280,6 +2280,37 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AY — 2026-09-11 : UN CHECK ROUGE DORMAIT SUR UN PROBLEME DEJA RESOLU
+
+**ETAT** — `governance-contract` : **success** sur le HEAD des deux depots
+(api `b2753cd`, front `4b87979`). Miroir 9/9, contrat local vert des deux cotes.
+Aucun fichier modifie dans ce lot.
+
+**CE QUI S ETAIT PASSE.** Le commit `1a49e35` (« align canonical AfricaFunds
+identity ») a fait echouer `governance-contract` le 2026-09-10 a 06:05. Deux
+commits suivants — `e029305` puis `718c75e` — ont corrige la cause, mais ils ont
+declenche d AUTRES workflows : `Governance Regulatory Plus`, puis un nouveau
+`AfricaFunds Project Link Contract`. **Celui qui avait echoue n a jamais ete
+relance.** Son dernier verdict connu est donc reste `failure`, pendant plus de
+vingt-quatre heures, sur un SHA depasse.
+
+**POURQUOI CE MOTIF EST DANGEREUX.** La PR paraissait saine : les runs les plus
+recents etaient tous verts. Il fallait lister les runs **par workflow** pour voir
+qu un check precis n avait plus tourne depuis son echec. Un tableau de bord qui
+montre « les derniers runs » ne montre pas « le dernier run de chaque controle » —
+et c est la seconde lecture qui dit la verite.
+
+**VERIFICATION AVANT ACTION.** La condition reelle a ete reproduite localement
+AVANT de relancer quoi que ce soit : 0 divergence sur les 9 fichiers miroir,
+contrat local vert dans les deux depots. Le contrat etait satisfait ; seul le
+constat manquait. La relance (`workflow_dispatch`, lecture seule) n a donc rien
+masque — elle a enregistre un etat deja vrai.
+
+**A RETENIR POUR LA SUITE** : apres un correctif de CI, verifier que **le check
+qui a echoue** est celui qui repasse au vert, et non un voisin. Lister les runs
+par workflow, pas par date.
+
+
 ### LOT AX — 2026-09-10 : LA BASE EST RESTEE MORTE 10 H 22 SANS QUE PERSONNE NE LE SACHE
 
 **FAIT MESURE** (`AF-EVD-012`, releve `ops-mysql-memoire.yml` enrichi) :
