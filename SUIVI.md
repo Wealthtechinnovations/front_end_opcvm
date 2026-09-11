@@ -2310,6 +2310,26 @@ masque — elle a enregistre un etat deja vrai.
 qui a echoue** est celui qui repasse au vert, et non un voisin. Lister les runs
 par workflow, pas par date.
 
+**MAIS CETTE METHODE A SON PROPRE ANGLE MORT**, constate en l appliquant. Lister
+le dernier verdict par workflow remonte aussi :
+
+- les runs dont le NOM est un chemin de fichier — GitHub affiche
+  `.github/workflows/x.yml` au lieu du `name:` quand le YAML ne parse pas. Le
+  meme workflow reapparait ensuite sous son vrai nom, en succes, et compte donc
+  comme deux entrees distinctes ;
+- les workflows **one-shot supprimes apres usage**, dont le dernier verdict reste
+  a jamais celui d avant leur correction.
+
+Les deux cas se sont presentes cote frontend le 2026-09-10 :
+`package-lock-engine-contract` (YAML invalide a 02:01, corrige a 02:02) et
+`governance-suivi-gov006` (corrige a 02:40, reussi, puis retire par `9a75895`
+« remove completed one-shot SUIVI workflow »). Aucun des deux n etait un echec
+reel, et aucun controle n a disparu.
+
+**Regle complete** : un verdict `failure` ne vaut alerte que si le workflow existe
+ENCORE dans `.github/workflows/` et que son nom n est pas un chemin de fichier.
+Verifier ces deux points avant de conclure.
+
 
 ### LOT AX — 2026-09-10 : LA BASE EST RESTEE MORTE 10 H 22 SANS QUE PERSONNE NE LE SACHE
 
