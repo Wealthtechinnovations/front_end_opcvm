@@ -2280,6 +2280,53 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT AZ — 2026-09-11 : TROIS OUTILS EN ECHEC — UNE COURSE, PAS UNE CASSE
+
+**RESULTAT** : `ops-fix-segments-naira` de nouveau **operationnel**. Dry-run du
+2026-09-11 23:34 UTC : **157 VL sur 30 fonds**, perimetre identique au 2026-09-01.
+Production saine (API et frontend HTTP 200). Aucun fichier modifie dans ce lot.
+
+**CONTEXTE.** Une session parallele a mene un chantier de securite consequent le
+2026-09-11 entre 21:14 et 23:30 : cle d hote SSH epinglee
+(`scripts/governance/prepare_s2_ssh.sh`), rotation du mot de passe DB, detachement
+de l environnement runtime, inventaire des secrets, validateur enrichi. Mes
+workflows d operation y ont ete migres automatiquement vers le SSH epingle.
+
+**TROIS ECHECS A 22:08**, tous sur `d578101` :
+`OPS — segments en dollars vers naira`, `OPS — retirer les VL en rupture d echelle`,
+`DIAG — memoire MySQL`.
+
+**DIAGNOSTIC PAR LE LOG, PAS PAR HYPOTHESE.** Le job sortait en `exit 4`, code que
+mon script reserve au dry-run de controle — donc **la connexion SSH avait reussi**.
+Le rapport consigne dans le depot donnait la cause exacte :
+
+```
+CSV introuvable : .../sec_ng_replay.csv
+fatal: Cannot rebase onto multiple branches.
+```
+
+Or `OPS — rejeu SEC etape 2`, qui REGENERE ce CSV (`rm -f` puis reconstruction), a
+**reussi a 22:08 lui aussi**. Les deux avaient ete declenches par le meme push :
+le correctif a cherche le fichier pendant que l autre le reconstruisait. **Course,
+pas casse.** Verifie par un dry-run declenche en lecture seule : le CSV est la, le
+perimetre est intact.
+
+**LECON.** Un workflow qui consomme un artefact produit par un autre workflow ne
+doit pas dependre du hasard d ordonnancement. Les deux sont declenches par des
+`paths` qui se recouvrent. A traiter : soit un `needs:`, soit une verification
+d age du CSV cote consommateur, soit des `paths` disjoints.
+
+**DEUX POINTS OUVERTS, SANS EFFET SUR LA PRODUCTION**
+- `git pull --rebase origin <branche>` echoue sur S2 : `Cannot rebase onto multiple
+  branches`. Le serveur travaille donc sur du code potentiellement en retard.
+- `DIAG — memoire MySQL` ne trouve plus `.env` a l emplacement attendu — probable
+  consequence du detachement de l environnement runtime. L API, elle, tourne : ce
+  sont mes outils de diagnostic qui sont a readapter, pas l application.
+
+**INCHANGE** : les 157 VL et les 21 performances fausses attendent toujours le gate
+proprietaire ; `Restart=on-failure` sur `mariadb.service` reste la premiere action.
+
+
 ### LOT AY — 2026-09-11 : UN CHECK ROUGE DORMAIT SUR UN PROBLEME DEJA RESOLU
 
 **ETAT** — `governance-contract` : **success** sur le HEAD des deux depots
