@@ -2280,6 +2280,54 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BA — 2026-09-12 : TOUS LES CHECKS AU VERT, ET UN 3e POINT DE MESURE MEMOIRE
+
+**CI ENTIEREMENT VERTE.** Les quatre echecs constates sont traites :
+
+| controle | verdict | cause |
+|---|---|---|
+| `OPS — segments en dollars vers naira` | **success** | course transitoire (CSV en cours de regeneration) |
+| `OPS — retirer les VL en rupture d echelle` | **success** | idem, re-teste en dry-run |
+| `DIAG — memoire MySQL` | **success** | idem, re-teste en lecture seule |
+| `AfricaFunds State Coherence` | **corrige** | `HUMAN_CURRENT_TASK_DRIFT:HANDOFF.md` |
+
+**LE SEUL ECHEC REEL : `HANDOFF.md` EN RETARD DE HUIT TACHES.** Le controle exige
+que `NEXT_ACTION.md`, `LOOP_STATE.md` et `HANDOFF.md` nomment la tache courante.
+Les deux premiers portaient `AF-TASK-006` ; `HANDOFF.md` s arretait a `AF-TASK-004`.
+
+Ce n est pas un defaut de forme : `HANDOFF.md` est le document qu une session lit
+pour REPRENDRE le travail. Arrete a la tache 004, il envoyait reprendre un chantier
+deja depasse pendant que l etat machine en declarait six autres. Les huit entrees
+ont ete **lues** dans `task-queue.json` (titres) et `LOOP_STATE.md` (statuts), jamais
+redigees. Ajout additif, controle repasse a `PASS`.
+
+**TROISIEME POINT DE MESURE MARIADB** — et il corrige encore le tableau :
+
+| | 2026-09-01 | 2026-09-10 | 2026-09-12 |
+|---|---|---|---|
+| RSS mariadbd | 6,95 Go (9 h) | 6,54 Go (23 h) | **8,81 Go (2 j 18 h)** |
+| memoire disponible | 7 656 Mo | 8 036 Mo | **5 676 Mo** |
+| swap utilise | 628 Mo | 760 Mo | **1 843 / 2 047 Mo** |
+
+Le RSS **n a pas plafonne** comme le lot AX le supposait : il monte encore, mais a
+~53 Mo/h entre les deux derniers points — loin des 700 Mo/h extrapoles au lot AS
+d un point unique. **Aucune date de prochaine panne n est avancee ici** : deux
+extrapolations successives ont deja ete dementies par la mesure suivante.
+
+Le signal preoccupant est ailleurs : **le swap est consomme a 90 %** et la memoire
+disponible a perdu 2,4 Go en deux jours. Aucun nouvel OOM depuis le 2026-09-08 ;
+`mariadbd` tourne sans interruption depuis le 2026-09-09 06:25.
+
+**CE QUE CELA CHANGE POUR LA PRIORITE** : `Restart=on-failure` gagne en urgence.
+Le service n a toujours aucune politique de redemarrage, et la marge memoire se
+reduit.
+
+**REGLE D AUDIT CI COMPLETEE** (suite du lot AY) : un `failure` ne vaut alerte que
+si le workflow existe encore ET que son nom n est pas un chemin de fichier ET qu il
+a ete re-teste depuis. Trois des quatre echecs d hier etaient des courses
+transitoires que seule une relance a pu distinguer d une casse.
+
+
 ### LOT AZ — 2026-09-11 : TROIS OUTILS EN ECHEC — UNE COURSE, PAS UNE CASSE
 
 **RESULTAT** : `ops-fix-segments-naira` de nouveau **operationnel**. Dry-run du
