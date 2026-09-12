@@ -2295,6 +2295,83 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BC — 2026-09-12 : LE CANAL SSH REJETTE ~27 % DES CONNEXIONS, ET LA RELANCE N Y PEUT RIEN
+
+**CE QUE GITHUB AFFICHE N EST PAS LA PANNE.** Le check `diagnose` remonte
+`json.decoder.JSONDecodeError: Expecting value: line 1 column 1`. C est un
+artefact : le script distant n a jamais tourne, son fichier de sortie est reste
+vide, et c est l etape **suivante** qui bute dessus. La panne reelle est deux
+etapes plus haut :
+
+```
+kex_exchange_identification: read: Connection reset by peer
+Connection reset by *** port 22 — exit 255
+```
+
+Connexion coupee pendant la negociation, **avant toute authentification**.
+
+**CE QUE LA MESURE ELIMINE** :
+
+| hypothese | verdict | preuve |
+|---|---|---|
+| hote tombe | non | production HTTP 200 (site, API, `/funds/1141`), sous la seconde |
+| configuration du workflow | non | meme `prepare_s2_ssh.sh` que ceux qui passent |
+| cle ou secret invalide | non | le reset precede l authentification |
+| authentification base perimee | non | le script n a pas ete execute |
+
+**MESURE SUR VINGT MINUTES — 8 SUCCES / 3 ECHECS, ~27 % DE REJET.** A 13:40:57
+une connexion passe, dix-neuf secondes plus tard deux sont rejetees. **La relance
+n est pas un remede** : elle retire une piece, elle ne change pas la probabilite.
+
+Le motif par workflow oriente vers la cause :
+
+| workflow | succes / echecs | connexions ouvertes |
+|---|---|---|
+| `OPS — observer S2 read-only` | **4 / 0** | une |
+| `Attestation gouvernance` | 2 / 3 | plusieurs |
+| `DB Auth Diagnostic` | 1 / 2 | plusieurs |
+
+Plus un workflow ouvre de connexions, plus il a de chances d en voir une rejetee :
+comportement d un rejet **probabiliste par connexion** (type `MaxStartups` cote
+`sshd`), pas d un bannissement d hote — un fail2ban serait deterministe, et
+l intermittence l ecarte. **Cela reste une hypothese** : le journal de S2
+trancherait, et il n est atteignable que par le canal concerne.
+
+**CORRECTION QUE LA MESURE DESIGNE** : ces workflows se declenchent en rafale sur
+une meme poussee et ouvrent leurs connexions dans la meme seconde. Un groupe
+`concurrency` **commun** les serialiserait et ramenerait a une le nombre de
+connexions simultanees. C est la seule mesure qui agit sur la quantite
+incriminee ; les reprises la font monter.
+
+**NON APPLIQUEE, ET DELIBEREMENT** : elle traverse les fichiers de deux sessions,
+et le groupe `concurrency` de `ops-fix-segments-naira.yml` ne doit pas etre touche
+maintenant — c est le workflow verrouille qui porte la correction des 157 VL, et
+le destabiliser avant son execution serait le pire moment. Coordination proprietaire.
+
+**CE QUE CELA IMPLIQUE POUR LA CORRECTION NAIRA** — point operationnel a retenir :
+avec ~27 % de rejet, **un echec au premier essai ne signifiera pas que la
+correction a echoue**. Un rejet SSH survient avant toute connexion a la base ; le
+script est transactionnel et precede d un snapshot. Conduite a tenir : relancer,
+ne pas conclure a une panne.
+
+**DEUX ERREURS DE MA PART SUR CE FIL, TOUTES DEUX LEVEES PAR LA MESURE** — elles
+valent d etre consignees, le raisonnement seul les avait laissees passer :
+1. j ai ecrit que le refus « tient sans interruption » et que des reprises de 4-6 s
+   « renouvellent la penalite ». Faux : des connexions passent et echouent dans la
+   meme minute — c est intermittent, pas soutenu ;
+2. j ai porte au credit de la boucle de reprise de `bb1f977` le succes de 13:35:34.
+   Inverse : ce succes est celui de la version **sans** boucle (run 34696703755,
+   tentative 4) ; la version **avec** boucle a echoue (run 34696810579, 4 resets).
+
+Les deux rectifications sont publiees sur la PR api_opcv#1, pas seulement ici.
+
+- Fichiers modifies : aucun (diagnostic et documentation)
+- Commentaires PR : 4 sur api_opcv#1, dont 2 rectifiant mes propres affirmations
+- Relances effectuees : une par echec, conformement a la regle du lot AY
+- Production : HTTP 200 sur toute la periode — site, API, fiche fonds
+- Perimetre naira : **inchange**, 157 VL sur 30 fonds
+
+
 ### LOT BB — 2026-09-12 : LA COURSE DU LOT AZ AVAIT UNE CAUSE PRECISE — ELLE EST SUPPRIMEE
 
 Le lot AZ avait conclu « une course, pas une casse » et relance les trois outils.
