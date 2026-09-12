@@ -2,7 +2,15 @@
 
 import { create } from 'zustand';
 import axios from 'axios';
-import { urlconstant } from '@/app/constants';
+import { urlconstant } from '@/lib/constants';
+
+const authHeaders = () => {
+  const token =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('tokenEnCours')
+      : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 interface Portfolio {
   id: number;
@@ -37,9 +45,13 @@ const usePortfolioStore = create<PortfolioState>()((set, get) => ({
     try {
       set({ loading: true, error: null });
       const response = await axios.get(
-        `${urlconstant}/api/portefeuilles/user/${userId}`
+        `${urlconstant}/api/getportefeuillebyuser/${userId}`,
+        { headers: authHeaders() }
       );
-      set({ portfolios: response.data || [] });
+      set({
+        portfolios:
+          response.data?.data?.portefeuille || response.data || [],
+      });
     } catch (error: any) {
       set({ error: error.message });
     } finally {
@@ -53,8 +65,9 @@ const usePortfolioStore = create<PortfolioState>()((set, get) => ({
     try {
       set({ loading: true, error: null });
       const response = await axios.post(
-        `${urlconstant}/api/portefeuilles`,
-        data
+        `${urlconstant}/api/postportefeuille`,
+        data,
+        { headers: authHeaders() }
       );
       const newPortfolio = response.data;
       set((state) => ({
@@ -72,7 +85,11 @@ const usePortfolioStore = create<PortfolioState>()((set, get) => ({
   deletePortfolio: async (id) => {
     try {
       set({ loading: true, error: null });
-      await axios.delete(`${urlconstant}/api/portefeuilles/${id}`);
+      await axios.post(
+        `${urlconstant}/api/deleteportefeuille/${id}`,
+        {},
+        { headers: authHeaders() }
+      );
       set((state) => ({
         portfolios: state.portfolios.filter((p) => p.id !== id),
         selectedPortfolio:

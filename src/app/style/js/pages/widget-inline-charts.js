@@ -12,10 +12,8 @@ $(function () {
        //console.log("change : " + value);
        },
        release : function (value) {
-       console.log("release : " + value);
        },
        cancel : function () {
-       console.log("cancel : " + this.value);
        },*/
       draw: function () {
 

@@ -1,13 +1,14 @@
 "use client";
-import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
+import { useUserId } from '@/hooks/useUserId';
+import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/lib/constants";
 
 import React, { useState, useEffect, Fragment } from 'react';
 import { useRouter } from "next/navigation";
 import Swal from 'sweetalert2';
 //import ProgressBar from 'react-bootstrap/ProgressBar';
-import ProgressBar from '../ProgressBar';
+import ProgressBar from '@/components/common/ProgressBar';
 import 'react-step-progress-bar/styles.css'; // Assurez-vous d'importer les styles CSS si nécessaire
-import Header from "@/app/Header";
+import Header from '@/components/layout/Header';
 import Link from "next/link";
 import { Button } from "react-bootstrap";
 import { DropdownButton, Dropdown } from 'react-bootstrap';
@@ -36,7 +37,6 @@ interface MifidForUser {
 }
 
 
-
 interface PageProps {
   searchParams: {
     selectedfund: any;
@@ -48,9 +48,9 @@ interface PageProps {
 
 // FIN
 
-export default function TypeProfil(props: PageProps): JSX.Element {
+export default function TypeProfil(): JSX.Element {
   // Variable de l'url de l'api
-  let id = props.searchParams.id;
+  const id = useUserId();
 
   const router = useRouter();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -62,7 +62,7 @@ export default function TypeProfil(props: PageProps): JSX.Element {
     // Appel à l'API lors du premier rendu du composant
     async function getQuestionnaireForUser() {
       try {
-        const token = "gg";
+        const token = localStorage.getItem('tokenEnCours');
         const response = await fetch(`${urlstableconstant}/api/profile/opcvm/find-profile-opcvm-questionnaire-of-user-signIn`, {
           headers: {
             'x-api-key': API_KEY_STABLECOIN, // Utiliser directement la variable sans ${}
@@ -117,74 +117,10 @@ export default function TypeProfil(props: PageProps): JSX.Element {
   // FIN
   const [userConnected, setUserConnected] = useState<number | null>(null);
 
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-        router.push('/portefeuille/login');
-      }, 5);
-    }
-  };
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
-  };
-  const [menuOpen, setMenuOpen] = useState(false);
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
-
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/Fundmanager/recherche`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/accueil`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
   };
   return (
     <>
@@ -207,7 +143,6 @@ export default function TypeProfil(props: PageProps): JSX.Element {
                     <h1 className='text-center'>Votre profil investisseur provisoire </h1>
                   </div>
                 </div>
-
 
 
                 {/* Les cards */}
@@ -303,7 +238,7 @@ export default function TypeProfil(props: PageProps): JSX.Element {
                                       <Button
                                         color="primary"
                                         type="button"
-                                        href='/portefeuille/first'
+                                        href='/panel/investor/first'
                                       >
                                         Cliquez ici pour nous donner votre avis sur votre résultat
                                       </Button>
@@ -314,7 +249,7 @@ export default function TypeProfil(props: PageProps): JSX.Element {
                                       <Button
                                         color="primary"
                                         type="button"
-                                        href='/portefeuille/profile'
+                                        href='/panel/investor/profile'
                                       >
                                         Voir profil MIFID
                                       </Button>
