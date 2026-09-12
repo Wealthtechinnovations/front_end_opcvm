@@ -2,50 +2,65 @@
 
 ---
 
-## POINT DE REPRISE COURANT — GOV-006 / gouvernance GitHub ↔ S2
+## POINT DE REPRISE COURANT — AF-GOV-FINAL-CERT / AF-TASK-011
 
-> **Statut : `GOV-006 = CERTIFIED` — baseline pré-INST certifiée le 2026-09-10.**
-> Ce checkpoint prime sur les anciennes lignes P2-05 relatives aux snapshots Git S2.
+> **Statut : `FINAL_ATTESTATION_IN_PROGRESS` — 2026-09-12.**
+> Ce checkpoint remplace uniquement l'ancien point de reprise courant ; tout l'historique et le backlog ci-dessous sont conservés.
 
-### Réalisé et vérifié
+### Produit et Git
 
-- gouvernance Regulatory complémentaire intégrée sans remplacer la gouvernance FundAfrica existante ;
-- branches canoniques des deux dépôts maintenues sur `claude/code-review-improvements-ikvuj` ;
-- `00_START_HERE.md`, `GOVERNANCE.md`, `SOURCE_OF_TRUTH.md`, `AGENTS.md`, `LOOP_ENGINEERING.md` synchronisés entre API et frontend ;
-- `governance-contract` inter-repository introduit et exécuté avec succès ;
-- divergence API S2 analysée : **854 commits locaux exclusifs = 854 snapshots `PRODUCTION_STATE.json`, 0 commit applicatif local** ;
-- cause racine : `sync_production.sh`/cron fabriquait un historique Git depuis le runtime ;
-- snapshot live déplacé vers `/var/lib/fundafrica/runtime/PRODUCTION_STATE.json` ;
-- `check_doc_drift.js` rendu backward-compatible avec fallback historique ;
-- mutations Git automatiques retirées du producteur de snapshot et contrôlées par CI ;
-- ancienne branche API S2 sauvegardée pendant la réconciliation dans `/var/backups/fundafrica-governance/20260910T020803Z/api/local-branch-before.bundle` avec `git bundle verify` réussi ;
-- réalignement API réalisé sans `git reset --hard`, sans `git clean -fd`, sans force-push et sans suppression des untracked ;
-- changement local frontend `package-lock.json` reconnu légitime (`engines.node >=18.17.0`) et remonté dans GitHub avant synchronisation ;
-- `.mcp_logs/` classé comme log local et ignoré sans suppression ;
-- avant le lot documentaire GOV-006, GitHub et S2 étaient fraîchement attestés identiques : API `723f893da2d6925b03cd1c81c9a91b6440ddaacf`, frontend `edd597b18e5879667152c92164226437a259f42b` ;
-- documentation canonique ajoutée sous `docs/governance/`, `docs/architecture/`, `docs/runbooks/` et `docs/evidence/`.
+- produit canonique : **AfricaFunds** ;
+- API : `Wealthtechinnovations/api_opcv` ;
+- frontend : `Wealthtechinnovations/front_end_opcvm` ;
+- branche default + canonique des deux repos : `claude/code-review-improvements-ikvuj` ;
+- aucune nouvelle branche de travail créée par le programme de certification ;
+- toute nouvelle session doit reconstruire le contexte depuis Git et découvrir le second repo avant write.
 
-### Vigilance conservée
+### Loop Engineering / gouvernance
 
-- les répertoires API `data/datejour_snapshots/`, `data/naira_snapshots/`, `data/scale_break_snapshots/`, `sec_ng_downloads/` sont préservés ;
-- l'artefact API S2 non suivi `0` reste **`UNKNOWN`** : ne pas supprimer, ignorer ou committer avant classification ;
-- la divergence PM2 in-memory/local observée est une maintenance séparée, pas un sous-lot opportuniste de GOV-006 ;
-- les anomalies métier/data historiques (Nigeria, performances, CEMAC, etc.) restent des chantiers distincts.
+- `AF-TASK-004` reconstruction de contexte : DONE ;
+- `AF-TASK-005` certification Markdown : DONE et maintenue par CI ; dernier registre observé 242/242, 0 autorité orpheline, 0 contradiction critique ;
+- `AF-TASK-006` observation S2 sans bridge : DONE avec pin SSH TOFU strict ; vérification OOB reste externe ;
+- `AF-TASK-007` fallback API/frontend + GOV-006 : DONE et prouvé en safe path/live ;
+- `AF-TASK-008` enforcement maximal disponible : DONE_WITH_EXTERNAL_GAP ; branch-policy CI active, rulesets GitHub natifs absents ;
+- `AF-TASK-009` multi-agent / bridge-down : tests principaux PASS, rerun final à effectuer ;
+- `AF-TASK-010` secrets : interne traité, rotations fournisseur externes restantes ;
+- `AF-TASK-011` : **tâche courante** — synchronisation et attestation finale bi-repository.
 
-### Autorités et runbook
+### Canal serveur sans MCP
 
-- post-mortem : `docs/governance/GOV-006_GITHUB_S2_RECONCILIATION_2026-09-10.md` ;
-- architecture : `docs/architecture/GITHUB_S2_RUNTIME_AUTHORITY_MODEL.md` ;
-- runbook : `docs/runbooks/GITHUB_S2_RECONCILIATION_RUNBOOK.md` ;
-- preuves structurées : `docs/evidence/GOV-006_EVIDENCE_2026-09-10.json`.
+Le bridge MCP n'est pas requis pour reprendre :
+- GitHub Actions → SSH S2 est opérationnel ;
+- `StrictHostKeyChecking=yes` ;
+- host key épinglée et changement automatique interdit ;
+- observateur read-only, attestation, réconciliation GOV-006 et fallbacks API/frontend ont des preuves live ;
+- aucun état S2 ne doit être supposé sans mesure.
 
-### Certification GOV-006
+### Remédiation secrets exécutée
 
-La garde de clôture a été satisfaite : documentation canonique committée, HEAD GitHub relus, synchronisation S2 non destructive exécutée par le workflow gouverné, égalité API/Frontend GitHub↔S2 attestée, snapshot runtime régénéré hors Git sans mutation du HEAD, CI de gouvernance verte, PM2 sain et contrôles HTTP AfricaFunds à 200. Le commit de certification lui-même doit être inclus dans la dernière attestation S2 avant toute déclaration externe finale.
+- vrai `.env` retiré du HEAD Git et conservé sur S2 au même chemin runtime, local, ignoré, mode `0600` ;
+- `DB_PASSWORD` : rotation réelle PASS, ancien credential rejeté ;
+- `JWT_SECRET` : rotation PASS ; ancienne clé historiquement exposée révoquée ; anciens tokens invalidés ; API 200 ;
+- `EMAIL_PASSWORD` : rotation chez le fournisseur SMTP encore requise ;
+- `MAGIC_SECRET_KEY` : rotation chez Magic encore requise ;
+- aucune valeur de secret/token n'est stockée dans les preuves de gouvernance.
+
+### Gaps externes qui empêchent FULLY_GOVERNED
+
+1. émission/révocation d'un nouveau credential SMTP pour `EMAIL_PASSWORD` ;
+2. émission/révocation d'un nouveau `MAGIC_SECRET_KEY` chez Magic ;
+3. vérification OOB indépendante de la clé hôte S2 (le pin TOFU strict est fonctionnel) ;
+4. GitHub native rulesets/protection : non configurables via la surface connector actuellement disponible.
 
 ### Prochaine action unique
 
-**GOV-006 clôturé. Prochaine tâche gouvernée sélectionnable : `INST-001 — Institutional Platform`, après réconciliation fraîche des HEAD conformément au Loop Engineering.**
+`AF-TASK-011` :
+1. rejouer les gates finaux Git/CI ;
+2. laisser le registre Markdown se stabiliser ;
+3. réconcilier API + frontend S2 vers les HEAD finaux sans supprimer les untracked ;
+4. observer et attester Git/PM2/DB/HTTP ;
+5. conclure `GOVERNED_WITH_EXTERNAL_GAPS` si tous les contrôles internes restent verts.
+
 
 ---
 
