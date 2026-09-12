@@ -2295,6 +2295,60 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BB — 2026-09-12 : LA COURSE DU LOT AZ AVAIT UNE CAUSE PRECISE — ELLE EST SUPPRIMEE
+
+Le lot AZ avait conclu « une course, pas une casse » et relance les trois outils.
+Le diagnostic etait juste mais s arretait au symptome : **la course pouvait
+recommencer a chaque regeneration du CSV**. Elle est maintenant impossible.
+
+**CAUSE EXACTE, LOCALISEE A UNE LIGNE.** `ops-sec-replay-dryrun.yml` executait
+`rm -f sec_ng_replay.csv` puis relancait une extraction bornee a **quarante
+minutes**. Pendant toute cette fenetre, la source etait absente, puis
+partiellement ecrite. Or ce CSV est la SOURCE que trois outils interrogent :
+`fix_segments_dollars_nigeria.js`, `fix_naira_depuis_source.js` et les
+diagnostics `diag_*`.
+
+**LE CAS ABSENT ETAIT LE CAS BENIN.** Un outil qui ne trouve pas le fichier
+s arrete et le dit (`exit 4`). Le cas grave n avait pas ete vu : un CSV **a
+moitie ecrit**, qu un correcteur prendrait pour la source complete et contre
+lequel il jugerait des valeurs, sans que rien ne le signale. Aucune ecriture
+fautive n a eu lieu — la fenetre n a jamais coincide avec une execution en
+`execute` — mais le risque etait porte par la conception, pas par la chance.
+
+**CORRECTION** : l extraction ecrit desormais dans `sec_ng_replay.csv.partiel` et
+ne publie qu apres succes, par `mv` — atomique dans le meme systeme de fichiers.
+Un lecteur voit l ancien CSV complet, ou le nouveau complet, jamais un vide ni un
+fragment. En cas d echec d extraction, l ancien CSV est **conserve intact** pour
+les autres outils et la mesure echoue comme avant (`exit 4`), sans le dommage
+collateral.
+
+**POURQUOI PAS UN GROUPE `concurrency`** — l option evidente, et insuffisante :
+le cron hebdomadaire de S2 lance l extraction **hors de GitHub Actions**, ou un
+groupe de concurrence n a aucun effet. La correction devait etre dans la
+publication elle-meme.
+
+- Fichier modifie : `api_opcv/.github/workflows/ops-sec-replay-dryrun.yml` (1 seul)
+- Verifications : YAML valide (6 etapes), `bash -n` sur le bloc distant : OK
+- Aucune ecriture en base. Aucun changement du perimetre de correction.
+- Commit `14a07d5`, pousse sur `claude/code-review-improvements-ikvuj`
+
+**PERIMETRE NAIRA INCHANGE** — dry-run du 2026-09-12 06:34 UTC : **157 VL sur
+30 fonds**, identique au 2026-09-01 et au 2026-09-11. La correction reste prete
+et verrouillee par la phrase de confirmation.
+
+**ETAT MESURE DU JOUR** (`docs/ETAT_PRODUCTION_VERIFIE.md`, 2026-09-12 10:27 UTC) :
+8/16 controles OK, 6 echecs critiques, 2 alertes — **inchange**. C7 liste toujours
+15 fonds a ~1 500x, C3 toujours les trois performances aberrantes (1141 a
+143 958 %). Ces deux echecs sont exactement ce que la correction verrouillee
+traite.
+
+**LES DEUX ACTIONS QUI RESTENT SONT CELLES DU PROPRIETAIRE**, par ordre d urgence :
+1. `Restart=on-failure` + `RestartSec=10` sur `mariadb.service` (override systemd,
+   puis `daemon-reload`) — le service n a toujours aucune politique de redemarrage ;
+2. `ops-fix-segments-naira` en `execute`, `recalculer: false`, phrase
+   `VALIDER CORRECTION SEGMENTS NAIRA`.
+
+
 ### LOT BA — 2026-09-12 : TOUS LES CHECKS AU VERT, ET UN 3e POINT DE MESURE MEMOIRE
 
 **CI ENTIEREMENT VERTE.** Les quatre echecs constates sont traites :
