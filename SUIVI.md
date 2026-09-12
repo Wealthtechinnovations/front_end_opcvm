@@ -2322,15 +2322,59 @@ fragment. En cas d echec d extraction, l ancien CSV est **conserve intact** pour
 les autres outils et la mesure echoue comme avant (`exit 4`), sans le dommage
 collateral.
 
+**RECTIFICATION DE CE QUI PRECEDE — LA PREMIERE VERSION NE FERMAIT PAS LE CAS
+GRAVE.** Le paragraphe ci-dessus a d abord ete ecrit et pousse (commit `14a07d5`)
+alors que le garde-fou ne testait que `-s`, c est-a-dire « fichier non vide ». Un
+banc d essai monte ensuite — le bloc **reel** du workflow extrait du YAML et
+execute avec un extracteur factice, sans connexion ni base — l a mis en defaut en
+une execution : un extracteur qui ecrit puis meurt laisse un fichier **non vide et
+tronque**, que `-s` accepte. Le fragment etait publie par-dessus la source saine.
+La correction annoncait donc fermer precisement le cas qu elle laissait ouvert.
+
+Ce n etait pas une regression : l ancien code, qui ecrivait directement, acceptait
+le meme fragment. Mais l affirmation, elle, etait fausse, et elle etait deja dans
+le depot.
+
+**GARDE-FOU DEFINITIF — TROIS CONDITIONS** (commit `76d4db3`) :
+1. **code de sortie nul** — `timeout` rend 124 quand il tue le processus, ce qui
+   est le scenario de troncature realiste sur une extraction bornee a 40 minutes ;
+2. **fichier non vide** ;
+3. **pas d effondrement du volume** — l archive de la SEC ne retrecit pas ;
+   rejouer les memes annees ne peut pas perdre la moitie des lignes. Une chute
+   sous 50 % denonce une extraction amputee qui se serait terminee proprement.
+   Le controle ne s applique pas a la premiere extraction, faute de reference.
+
+**NEUF SCENARIOS VERIFIES HORS PRODUCTION** : `succes`, `echec`, `tronque`,
+`partiel`, `ampute`, `vide`, puis les trois memes sans source de reference. La
+source en place est preservee dans **tous** les cas de refus, aucun fichier
+`.partiel` ne subsiste, et le seul cas qui publie est le succes a volume plein.
+
+**LECON, ET ELLE EST LA MEME QU AU LOT AZ** : un raisonnement qui se tient n est
+pas une mesure. « Ecrire a cote puis `mv` » est correct et ne suffisait pas ; il a
+fallu executer le bloc contre un extracteur qui echoue pour voir ce que la lecture
+du code n avait pas montre. Le banc d essai lit le YAML plutot que de recopier le
+script, sans quoi il aurait valide une version qui n est pas celle qui tourne.
+
 **POURQUOI PAS UN GROUPE `concurrency`** — l option evidente, et insuffisante :
 le cron hebdomadaire de S2 lance l extraction **hors de GitHub Actions**, ou un
 groupe de concurrence n a aucun effet. La correction devait etre dans la
 publication elle-meme.
 
 - Fichier modifie : `api_opcv/.github/workflows/ops-sec-replay-dryrun.yml` (1 seul)
-- Verifications : YAML valide (6 etapes), `bash -n` sur le bloc distant : OK
+- Verifications : YAML valide (6 etapes), `bash -n` sur le bloc distant : OK,
+  puis **banc d essai a 9 scenarios** sur le bloc reel extrait du YAML
 - Aucune ecriture en base. Aucun changement du perimetre de correction.
-- Commit `14a07d5`, pousse sur `claude/code-review-improvements-ikvuj`
+- Commits `14a07d5` (publication atomique) et `76d4db3` (refus des CSV tronques),
+  pousses sur `claude/code-review-improvements-ikvuj`
+- **Le nouveau chemin de code n a pas encore tourne sur S2** : la dry-run
+  declenchee par la poussee a pris la branche de **reutilisation** (CSV vieux de
+  12 h, 41 627 lignes). Elle prouve que le chemin existant n est pas casse, pas
+  que le nouveau fonctionne — d ou le banc d essai. Forcer une reextraction de
+  quarante minutes maintenant aurait charge une machine dont le swap est
+  consomme a 90 % et dont MariaDB n a aucune politique de redemarrage : ce
+  serait jouer la verification contre la disponibilite, le meme arbitrage que
+  celui refuse pour `recalculer`. La prochaine reextraction naturelle
+  l exercera.
 
 **PERIMETRE NAIRA INCHANGE** — dry-run du 2026-09-12 06:34 UTC : **157 VL sur
 30 fonds**, identique au 2026-09-01 et au 2026-09-11. La correction reste prete
