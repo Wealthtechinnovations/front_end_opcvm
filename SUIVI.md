@@ -1,5 +1,51 @@
 # Carnet de suivi - Africafunds (Fundafrique)
 
+## POINT DE REPRISE COURANT — 2026-09-13 17:59 UTC — AF-TASK-011 clôturée
+
+**Projet :** AfricaFunds — `CS-AFRICAFUNDS-001`  
+**Boucle :** `AF-GOV-FINAL-CERT-20260911-01`  
+**Branche canonique des deux repositories :** `claude/code-review-improvements-ikvuj`
+
+### Verdict de la boucle de gouvernance
+
+- `AF-TASK-011 = DONE` — synchronisation/attestation bi-repository exécutée via le guard GOV-006 existant ;
+- `AF-TASK-003 = DONE_WITH_EXTERNAL_GAPS` — tous les éléments sous contrôle du projet sont attestés ;
+- verdict cible et désormais justifié : `GOVERNED_WITH_EXTERNAL_GAPS`, jamais `FULLY_GOVERNED` tant que les gaps externes ci-dessous subsistent.
+
+### Preuve GitHub ↔ S2 mesurée
+
+La réconciliation GOV-006 GitHub Actions → SSH S2, run `34773189857`, a réussi de bout en bout avec `StrictHostKeyChecking=yes` et pin `TOFU_PINNED_PENDING_OOB`.
+
+- API GitHub/S2 après réconciliation : `ceff72e0e0dad7a7522835940a9537662b16f844` ;
+- frontend GitHub/S2 après réconciliation : `55191a74c8d581adb383123ce1d9f5bea98dc267` ;
+- branches S2 : canoniques ;
+- ahead/behind : `0/0` sur les deux repositories ;
+- tracked dirty : aucun sur les deux repositories ;
+- API untracked conservés sans suppression : `0`, `data/datejour_snapshots/`, `data/naira_snapshots/`, `data/scale_break_snapshots/`, `sec_ng_downloads/` ;
+- `api-monolith = online` ; `fundafrique-frontend = online` ;
+- DB connectivity : `PASS` ;
+- public root = 200 ; public home = 200 ; public API = 200 ; local API = 200.
+
+### Refus MariaDB post-rotation — classification
+
+L'enquête n'a trouvé **aucun consommateur stale persistant** dans les processus AfricaFunds actifs, les crons, les variables DB globales, les fichiers env ayant le même DB user, les workflows GitHub ni les workers PM2. Le `.env` runtime courant est valide ; `.env.production` et `.env.production.plan-b` ne contiennent que des placeholders. Deux observations read-only successives à 17:42 et 17:56 UTC montrent le même dernier refus, `2026-09-13 17:36:56 UTC`, sans nouveau refus pendant l'intervalle alors que DB, PM2 et HTTP restent sains.
+
+L'exécutable historique exact à l'origine des tentatives passées ne peut pas être attribué rétrospectivement avec les traces existantes : MariaDB avait `general_log=OFF`, `performance_schema=OFF` et aucun plugin audit/userstat. Cette limite de forensic est enregistrée comme **gap technique d'observabilité historique**, pas comme blocker runtime actif. Aucune nouvelle rotation DB n'est justifiée.
+
+### Gaps externes conservés
+
+- `EMAIL_PASSWORD_PROVIDER_ROTATION_REQUIRED` ;
+- `MAGIC_SECRET_KEY_PROVIDER_ROTATION_REQUIRED` ;
+- `S2_HOST_KEY_OOB_VERIFICATION_PENDING` ;
+- `GITHUB_NATIVE_RULESETS_UNAVAILABLE` via la surface administrative actuelle.
+
+### Prochaine action
+
+La tâche interne de certification est fermée. La seule tâche gouvernée restante est `AF-TASK-010`, bloquée sur les rotations fournisseurs externes. Après la présente mise à jour documentaire et la persistance des registres API, GOV-006 doit être rejoué une dernière fois afin que S2 reflète exactement les HEAD documentaires finaux ; aucune donnée métier C2/C3/C4/C7/C8 ne doit être modifiée dans cette clôture.
+
+---
+
+
 ---
 
 ## POINT DE REPRISE COURANT — AF-GOV-FINAL-CERT / AF-TASK-011
