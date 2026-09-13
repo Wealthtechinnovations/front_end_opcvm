@@ -2295,6 +2295,53 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BD — 2026-09-13 : LA SOURCE DE VERITE N°1 N EST PAS GENEREE A L HEURE QU ELLE ANNONCE
+
+`CLAUDE.md` (les deux depots) affirme que `docs/ETAT_PRODUCTION_VERIFIE.md` est
+« genere automatiquement chaque jour (06h00 UTC) ». **La declaration cron est bien
+`0 6 * * *`, mais aucune execution planifiee n a lieu a cette heure.** Mesure sur
+les trois dernieres :
+
+| jour | heure reelle | retard |
+|---|---|---|
+| 2026-09-10 | 11:09 UTC | ~5 h |
+| 2026-09-11 | 10:57 UTC | ~5 h |
+| 2026-09-12 | 10:25 UTC | ~4 h |
+
+Retard de quatre a cinq heures, systematique. C est le comportement connu de
+GitHub Actions sur les crons planifies aux heures rondes tres demandees : ils sont
+differes, parfois abandonnes.
+
+**CE QUE CELA CHANGE CONCRETEMENT.** La regle du projet impose de lire ce fichier
+en premier a chaque reprise. Une session qui reprend entre 06:00 et ~10:30 UTC lit
+donc un etat vieux de plus de vingt heures **en croyant lire celui du jour**. Le
+fichier ne ment pas — il porte sa date en clair, ligne 8 — mais la regle qui le
+cite, elle, annonce une fraicheur qu il n a pas a ce moment-la.
+
+**COMMENT JE M EN SUIS APERCU, ET L ERREUR A NE PAS REPETER** : a 06:05 UTC ce
+matin j ai lu « Derniere verification : 2026-09-12 10:27 » et j ai d abord conclu
+« la source de verite a un jour de retard ». C etait faux. L historique des
+executions montre qu elle est simplement en cours de retard habituel et qu elle
+tombera vers 10-11 UTC. Conclure a la panne sur un seul releve aurait declenche un
+diagnostic inutile — la meme erreur de forme qu aux lots AS et AZ.
+
+**VERIFICATION A FAIRE A CHAQUE REPRISE** : lire la ligne 8 du fichier (sa date),
+pas seulement son contenu. Si elle date de plus de ~30 h, alors il y a vraiment un
+probleme de generation ; entre 0 et 30 h, c est le fonctionnement normal.
+
+**ETAT MESURE (fichier du 2026-09-12 10:27, le plus recent disponible)** :
+8/16 controles OK, 6 echecs critiques, 2 alertes — inchange. C7 : 15 fonds a
+~1 500x. C3 : 1141 a 143 958 %. Ce sont les deux echecs que la correction
+verrouillee traite.
+
+- Fichiers modifies : aucun (observation)
+- `CLAUDE.md` **non modifie** : la phrase « 06h00 UTC » decrit la declaration cron,
+  qui est exacte ; c est la fraicheur effective qui differe, et cela releve du
+  suivi operationnel, pas des regles permanentes.
+- Production : HTTP 200 (site, API, fiche fonds) — verifie apres le cron de 21:30
+- Nuit du 12 au 13 : 7 executions CI, 0 echec ; aucune recidive des rejets SSH
+
+
 ### LOT BC — 2026-09-12 : LE CANAL SSH REJETTE ~27 % DES CONNEXIONS, ET LA RELANCE N Y PEUT RIEN
 
 **CE QUE GITHUB AFFICHE N EST PAS LA PANNE.** Le check `diagnose` remonte
