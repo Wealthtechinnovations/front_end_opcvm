@@ -2341,6 +2341,72 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BE — 2026-09-14 : TROISIEME OOM, 3 H 56 DE BASE MORTE, ET PERSONNE N EN A ETE AVERTI
+
+**INCIDENT DE PRODUCTION, DETECTE ET RESOLU DANS CE LOT.**
+
+| | |
+|---|---|
+| Mort de `mariadbd` | 2026-09-14 **10:04:14 UTC**, `Result: oom-kill` |
+| Detection | 2026-09-14 13:59 UTC — par lecture de `ETAT_PRODUCTION_VERIFIE.md` |
+| Retablissement | 2026-09-14 **14:00 UTC** via `ops-mariadb-recover.yml` |
+| **Duree d indisponibilite** | **3 h 56 min** |
+
+Pendant ces quatre heures, `/api/getfondbypays/MAROC` et `/api/valLiq/1141`
+renvoyaient **HTTP 500**. Les pages Next.js repondaient 200 — elles servent leur
+coquille — ce qui rend la panne **invisible a un controle qui ne teste que la page
+d accueil**. Apres redemarrage : API 200, 1 259 fonds, derniere VL 2026-09-10.
+
+**TROISIEME OCCURRENCE DU MEME MOTIF, ET LA COURBE EST NETTE** :
+
+| date | RSS de `mariadbd` a la mort | ce qui a declenche l OOM |
+|---|---|---|
+| 2026-08-31 | 13,7 Go | cron de recalcul |
+| 2026-09-08 | 14,6 Go | `cron.service`, 2 min apres le cron de 20 h |
+| 2026-09-14 | **14,9 Go** | **`npm start invoked oom-killer`**, `cpuset=user.slice` |
+
+Le declencheur **change a chaque fois** ; la victime, jamais. Le noyau tue le plus
+gros RSS, et `mariadbd` occupe ~83 % des 17,9 Go de la machine. N importe quelle
+allocation notable — ici un `npm start`, vraisemblablement un build frontend —
+suffit alors a le condamner. **Ce n est pas le declencheur qu il faut traquer,
+c est le RSS.** Rappel mesure : `innodb_buffer_pool_size` = 128 Mo, donc ces
+14,9 Go ne sont **pas** le buffer pool. Apres redemarrage : 2,4 Go utilises,
+15,0 Go disponibles.
+
+**CE QUE CET INCIDENT PROUVE ET QUE LES DEUX PRECEDENTS SUGGERAIENT** :
+`Restart=on-failure` n est pas une precaution, c est ce qui separe une coupure de
+dix secondes d une coupure de quatre heures. Le service est `enabled` mais sans
+politique de redemarrage : une fois tue, il reste mort jusqu a intervention
+humaine. C est la troisieme fois.
+
+**AUCUNE ALERTE N A ETE EMISE** — et c est le second defaut, aussi grave :
+- `cron_health_check.sh` tourne a 22:00, soit douze heures apres la mort ;
+- `doc-drift.yml` l a bien vu a 12:21 (« Erreur fatale : connect ECONNREFUSED
+  127.0.0.1:3306 ») mais il **ecrit un fichier**, il n alerte personne ;
+- la panne n a ete vue que parce que ce lot lisait l etat mesure du jour.
+
+**DECOUVERTE COLLATERALE — DES CENTAINES D ECHECS D AUTHENTIFICATION** : le journal
+montre `Access denied for user 'fund_opcvm'@'localhost' (using password: YES)`
+toutes les quelques minutes, toute la nuit (01:16, 01:21, 01:37, 01:53, 02:23,
+02:31, 02:55, 03:32, 04:12, 04:13, 05:46, 05:50, 06:14, 06:16, 06:36, 06:48,
+07:48, 07:50, 07:52, 09:19, 09:47...). Un consommateur detient encore **l ancien
+mot de passe** apres la rotation `DB_PASSWORD`. C est exactement le chantier
+ouvert par la session parallele (`s2_db_auth_diagnostic.py`, « locate stale DB
+credential consumers », « trace cross-vhost DB auth consumers ») — je le signale
+sans l instruire, il ne m appartient pas. **Aucun lien etabli avec l OOM** : des
+authentifications refusees coutent peu de memoire.
+
+- Fichiers modifies : aucun (incident et documentation)
+- Action executee : `ops-mariadb-recover.yml` en `workflow_dispatch` — il
+  diagnostique AVANT de redemarrer, la cause n a donc pas ete effacee
+- Releve complet : `api_opcv/docs/OPS_MARIADB.md`, execution du 2026-09-14 14:00
+- Production : **retablie**, verifiee sur l API et la base
+
+**LA PRIORITE N A PAS CHANGE, ELLE S EST AGGRAVEE** : `Restart=on-failure` +
+`RestartSec=10` sur `mariadb.service`. Troisieme OOM, quatre heures de coupure
+non alertee. Tout le reste vient apres.
+
+
 ### LOT BD — 2026-09-13 : LA SOURCE DE VERITE N°1 N EST PAS GENEREE A L HEURE QU ELLE ANNONCE
 
 `CLAUDE.md` (les deux depots) affirme que `docs/ETAT_PRODUCTION_VERIFIE.md` est
