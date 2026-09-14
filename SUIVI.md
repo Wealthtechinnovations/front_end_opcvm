@@ -2433,17 +2433,33 @@ charge egale** :
 | glibc | 122 896 kB | 196 696 kB | **+73 800 kB** (72 Mo) |
 | jemalloc | 125 796 kB | 223 280 kB | **+97 484 kB** (95 Mo) |
 
-**Sous cette charge, jemalloc croit 32 % de PLUS que glibc.** C est l inverse de
-ce que l hypothese des arenes laissait attendre. A noter cependant : `vmsize`
-apres charge vaut 2,07 Go sous glibc contre 0,85 Go sous jemalloc — jemalloc
-reserve moins d espace virtuel, ce qui n est pas la question du RSS mais merite
-d etre garde.
+*Troisieme execution (23:30)* — **charge reelle** cette fois, un dry-run EUR/USD
+au lieu d un stress synthetique. C est ce type de traitement qui tournait lors
+des OOM du 31 aout et du 8 septembre.
 
-**CE QUE CELA NE TRANCHE PAS NON PLUS** : ces deux tests durent ~60 secondes sur
-un processus neuf. Les 7 Go s accumulent sur des heures, avec des motifs
-d allocation varies. Conclure « jemalloc est pire, hypothese abandonnee » serait
-aussi premature que l inverse. Le seul essai concluant serait jemalloc laisse en
-place plusieurs heures sous la charge reelle.
+**LES TROIS TESTS, TOUS A FROID** :
+
+| charge | glibc | jemalloc | ecart |
+|---|---|---|---|
+| courte / repos (23:19) | — | — | +1,2 % |
+| stress synthetique (23:25) | +73 800 kB | +97 484 kB | **+32 %** |
+| **dry-run EUR/USD reel (23:30)** | **+84 588 kB** | **+83 728 kB** | **−1,0 %** |
+
+**Sous la charge reelle, les deux allocateurs sont indiscernables.** Le +32 % du
+stress synthetique **ne se generalise pas** : son motif d allocation — liberations
+bornees de tailles variables — ne reflete pas le travail reel. Retenir le +32 %
+comme un resultat aurait ete une erreur, et c est le test suivant qui l a montre,
+pas le raisonnement.
+
+`vmsize` apres charge reste systematiquement plus bas sous jemalloc — 0,80 Go
+contre 2,20 Go, soit 2,8x. C est de la reservation virtuelle, pas du resident :
+a garder, sans rapport avec la question du RSS.
+
+**CE QU AUCUN DES TROIS NE TRANCHE** : ils durent tous ~40 a 60 secondes sur un
+processus neuf. Les 7 Go s accumulent sur des heures. Aucun de ces tests, dans un
+sens ou dans l autre, ne peut mesurer une derive de cette echelle de temps. Le
+seul essai concluant reste jemalloc laisse en place plusieurs heures sous la
+charge de production.
 
 **CE QUI EST DESORMAIS SOLIDE** : `memory_used_bytes` — la comptabilite interne
 de MariaDB — vaut **~450 a 465 Mo dans TOUTES les phases des deux runs**, y
