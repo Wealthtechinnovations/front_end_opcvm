@@ -2341,6 +2341,76 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BF — 2026-09-14 : LE CONTROLE QUI FAIT FOI ETAIT AVEUGLE, DEUX FOIS
+
+Suite directe du lot BE. La panne y est racontee ; ici, **pourquoi personne ne
+l a vue**. Deux defauts distincts, tous deux dans la chaine que `CLAUDE.md`
+designe comme source de verite n°1. Aucun n a ete devine : chacun a ete mesure,
+corrige, puis verifie en production.
+
+**DEFAUT 1 — LE CODE DE SORTIE ETAIT JETE** (`doc-drift.yml`, commit `d58508f`)
+
+L etape faisait `ssh ... | tee rapport.txt`. Le shell par defaut d une etape
+GitHub sur Linux est `bash -e {0}`, **sans `pipefail`** — les journaux de ce
+depot l affichent a chaque execution. C est donc le code de `tee` qui comptait,
+toujours 0. **Un commentaire du fichier affirmait exactement l inverse** : « Les
+etapes GitHub tournent en `bash -eo pipefail` ». Une contre-verite ecrite a cote
+du code qu elle decrivait.
+
+Mesure : a 12:21 UTC le controle a rendu « Erreur fatale : connect ECONNREFUSED
+127.0.0.1:3306 » et sorti en code 2. **Job vert.** Le tableau de bord de la
+verite affichait tout va bien sur une base morte depuis deux heures.
+
+Correction : `set -o pipefail`, code du `ssh` capture, echec **si et seulement
+si >= 2**. Les deux codes n ont pas le meme sens et un seul doit alerter :
+- **1** = la mesure a REUSSI et trouve des derives critiques. C est l etat connu
+  (C2, C3, C7, C8). Le faire echouer rendrait ce check rouge en permanence, donc
+  illisible, donc ignore — l inverse du but.
+- **>= 2** = la mesure n a PAS PU AVOIR LIEU. Aucun etat n existe, et le silence
+  devient un mensonge.
+
+Verifie hors CI sur les quatre codes (0, 1, 2, 3) : vert sur 0 et 1, rouge sur
+2 et 3.
+
+**DEFAUT 2 — UN AVERTISSEMENT TUAIT LES CONTROLES CRITIQUES** (`check_doc_drift.js`, commit `9f051c0`)
+
+Revele par le premier correctif : la relance est passee au rouge sur une erreur
+fatale **differente**, `Unexpected end of JSON input`. Le `JSON.parse` du
+snapshot runtime (C5) etait nu. Pendant les 3 h 56 d arret, `sync_production.sh`
+— horaire — a laisse un `PRODUCTION_STATE.json` de **0 octet**. L exception
+remontait au `main().catch()` et **toute** la mesure etait perdue : C2, C3, C4,
+C7, C8 compris, qui n ont rien a voir avec ce fichier. Un controle classe
+AVERTISSEMENT emportait les CRITIQUES.
+
+Correction : parse garde ; un snapshot illisible fait echouer C5 **et lui seul**.
+Le message distingue « absent » de « ILLISIBLE (n octets) » avec l erreur exacte
+— un fichier corrompu dit que le producteur a tourne et mal fini, ce qu une
+absence ne dit pas. Verifie sur cinq etats : frais, perime, vide, tronque,
+absent.
+
+**RESULTAT MESURE, PAS ANNONCE** — execution de 14:11 UTC, job **vert** :
+```
+[ALERTE] C5  runtime: fichier ILLISIBLE (0 octets) — Unexpected end of JSON input.
+7/16 controles OK — 6 echec(s) critique(s), 3 alerte(s).
+```
+La mesure est de retour, C5 alerte justement, et le check n est pas rouge en
+permanence — les deux craintes levees.
+
+**CE QUE CETTE JOURNEE APPREND** : le second defaut etait present depuis
+toujours, invisible **parce que** le premier avalait le signal. Reparer un
+detecteur en fait apparaitre un autre. C est aussi pourquoi le premier correctif
+ne devait surtout pas rendre le check rouge en permanence : un voyant toujours
+allume n aurait jamais montre le second.
+
+- Fichiers modifies : `api_opcv/.github/workflows/doc-drift.yml`,
+  `api_opcv/scripts/diag/check_doc_drift.js`
+- Aucune ecriture en base, aucun controle desactive — deux echecs muets rendus audibles
+- `PRODUCTION_STATE.json` reste a 0 octet sur S2 : le cron horaire le regenerera,
+  et C5 le signalera tant que ce ne sera pas fait
+- **Priorite inchangee et renforcee** : `Restart=on-failure` + `RestartSec=10`
+  sur `mariadb.service`
+
+
 ### LOT BE — 2026-09-14 : TROISIEME OOM, 3 H 56 DE BASE MORTE, ET PERSONNE N EN A ETE AVERTI
 
 **INCIDENT DE PRODUCTION, DETECTE ET RESOLU DANS CE LOT.**
