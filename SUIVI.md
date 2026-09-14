@@ -2384,9 +2384,37 @@ des morts s accumulent sur des jours. Savoir si la suite est lineaire, asymptoti
 ou par paliers demanderait des releves reguliers a anciennete croissante, que la
 serie actuelle — quatre points, trois anciennetes differentes — ne fournit pas.
 
+**COMPLEMENT — RELEVE DE 22:53, AVEC LA SONDE DE MAPPINGS** (la session parallele
+a corrige `ops-mysql-memoire.yml` entre les deux executions) :
+
+| mesure | valeur |
+|---|---|
+| `RssAnon` | 6 974 948 kB — **6,97 Go** |
+| `RssFile` | 24 380 kB — 24 Mo |
+| `RssShmem` | 0 |
+| `Private_Dirty` (smaps_rollup) | 6 976 696 kB |
+| threads | 18 |
+| `ALT_ALLOCATOR_LIBRARY` | **ABSENT** |
+
+**Le RSS est anonyme, prive et sale a ~100 %.** Ce n est ni le buffer pool
+(128 Mo), ni du cache de fichiers (24 Mo), ni de la memoire partagee (0). Cela
+elimine definitivement les explications par la configuration InnoDB.
+
+Les mappings de tete sont des regions **anonymes de ~64 Mio**, presque
+integralement sales. 64 Mio est la granularite que la glibc emploie pour ses
+arenes malloc secondaires, et aucun allocateur alternatif n est installe.
+
+**CE QUE JE NE PEUX PAS CONCLURE, ET POURQUOI** : le releve ne liste que les
+**20 premiers** mappings par taille sale — 1,87 Go au total, dont 0,62 Go en dix
+arenes de 64 Mio. Totaliser les arenes a partir d une liste tronquee donnerait un
+chiffre faux. Pour trancher entre fragmentation d arenes et autre chose, il
+faudrait **la liste complete des mappings**, ou `MALLOC_ARENA_MAX` et le nombre
+d arenes effectivement crees. C est une extension d une ligne de la sonde
+existante, et elle appartient a la session parallele qui l instruit.
+
 - Fichiers modifies : aucun (observation)
-- Source : `api_opcv/docs/OPS_MYSQL_MEMOIRE.md`, releve du 2026-09-14 22:49 UTC,
-  produit par `ops-mysql-memoire.yml` (lecture seule)
+- Source : `api_opcv/docs/OPS_MYSQL_MEMOIRE.md`, releves du 2026-09-14 22:49 et
+  22:53 UTC, produits par `ops-mysql-memoire.yml` (lecture seule)
 - CI : 21 executions depuis 21:50, 0 echec — le validateur d incidents repare tient
 - Production : HTTP 200
 
