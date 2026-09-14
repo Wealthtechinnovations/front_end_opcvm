@@ -2412,9 +2412,53 @@ faudrait **la liste complete des mappings**, ou `MALLOC_ARENA_MAX` et le nombre
 d arenes effectivement crees. C est une extension d une ligne de la sonde
 existante, et elle appartient a la session parallele qui l instruit.
 
+**A/B ALLOCATEUR DU 2026-09-14 23:18 ET 23:25 — L HYPOTHESE N EST PAS CONFIRMEE**
+
+La session parallele a livre un A/B glibc / jemalloc, reversible et gouverne.
+Deux executions, et la seconde corrige la methode de la premiere.
+
+*Premiere execution (23:18)* — chiffres spectaculaires et **trompeurs** :
+7,00 Go sous glibc contre 193 Mo sous jemalloc. Mais **le PID change a chaque
+phase** : A portait sur un processus age de ~9 h, B sur un processus fraichement
+redemarre. L ecart mesurait le redemarrage, pas l allocateur. Le run contenait
+pourtant son propre controle : `B_PRE` (jemalloc, frais) 124 200 kB contre
+`ROLLBACK` (glibc, frais) **122 732 kB** — **1,2 % d ecart**. A froid, jemalloc
+ne changeait rien de mesurable.
+
+*Seconde execution (23:25)* — comparaison correcte, **les deux a froid sous
+charge egale** :
+
+| allocateur | RSS avant | RSS apres | croissance |
+|---|---|---|---|
+| glibc | 122 896 kB | 196 696 kB | **+73 800 kB** (72 Mo) |
+| jemalloc | 125 796 kB | 223 280 kB | **+97 484 kB** (95 Mo) |
+
+**Sous cette charge, jemalloc croit 32 % de PLUS que glibc.** C est l inverse de
+ce que l hypothese des arenes laissait attendre. A noter cependant : `vmsize`
+apres charge vaut 2,07 Go sous glibc contre 0,85 Go sous jemalloc — jemalloc
+reserve moins d espace virtuel, ce qui n est pas la question du RSS mais merite
+d etre garde.
+
+**CE QUE CELA NE TRANCHE PAS NON PLUS** : ces deux tests durent ~60 secondes sur
+un processus neuf. Les 7 Go s accumulent sur des heures, avec des motifs
+d allocation varies. Conclure « jemalloc est pire, hypothese abandonnee » serait
+aussi premature que l inverse. Le seul essai concluant serait jemalloc laisse en
+place plusieurs heures sous la charge reelle.
+
+**CE QUI EST DESORMAIS SOLIDE** : `memory_used_bytes` — la comptabilite interne
+de MariaDB — vaut **~450 a 465 Mo dans TOUTES les phases des deux runs**, y
+compris quand le noyau attribue 7,00 Go au meme processus. **Facteur 15** entre
+ce que MariaDB croit utiliser et ce qu il occupe. Joint au `RssAnon` de 22:53,
+cela etablit que la memoire est retenue **hors des structures comptabilisees par
+MariaDB**. Le niveau ou elle est retenue, lui, reste ouvert.
+
+Production HTTP 200 pendant et apres les deux A/B ; le rollback a bien remis
+glibc (PID distinct a chaque phase, `libjemalloc2` desinstalle en fin de run).
+
 - Fichiers modifies : aucun (observation)
 - Source : `api_opcv/docs/OPS_MYSQL_MEMOIRE.md`, releves du 2026-09-14 22:49 et
-  22:53 UTC, produits par `ops-mysql-memoire.yml` (lecture seule)
+  22:53 UTC, produits par `ops-mysql-memoire.yml` (lecture seule) ; runs
+  `34908277049` et `34908755786` pour les A/B
 - CI : 21 executions depuis 21:50, 0 echec — le validateur d incidents repare tient
 - Production : HTTP 200
 
