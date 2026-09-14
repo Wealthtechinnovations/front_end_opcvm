@@ -2341,6 +2341,56 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BG — 2026-09-14 : LA SERIE MEMOIRE MARIADB, SANS MECANISME AFFIRME
+
+Complement factuel aux lots BE et BF. **Aucune cause n est avancee ici** : deux
+extrapolations memoire ont deja ete dementies dans cette session (lots AS et BA),
+et la session parallele instruit le sujet (`c7e055a`, inspection des mappings
+anonymes). Ce lot verse la serie au dossier, rien de plus.
+
+| date | RSS `mariadbd` | anciennete du processus |
+|---|---|---|
+| 2026-09-01 | 6,95 Go | ~9 h |
+| 2026-09-10 | 6,54 Go | 23 h |
+| 2026-09-12 | 8,81 Go | 2 j 18 h |
+| **2026-09-14 22:49** | **6,68 Go** | **8 h 47** (apres le redemarrage de 14:00) |
+
+Et les trois morts : 13,7 Go (08-31), 14,6 Go (09-08), 14,9 Go (09-14).
+
+**CE QUE LA CONFIGURATION AUTORISE, RELEVE LE 2026-09-14 22:49** :
+
+| buffers globaux | valeur |
+|---|---|
+| `innodb_buffer_pool_size` | 128 Mo |
+| `key_buffer_size` | 128 Mo |
+| `innodb_log_buffer_size` | 16 Mo |
+| `max_heap_table_size` / `tmp_table_size` | 16 Mo chacun |
+| `query_cache_size` | 1 Mo |
+
+Somme des buffers globaux : **~317 Mo**. Les buffers par session
+(`sort_buffer_size` 2 Mo, `join_buffer_size` 256 Ko, `read_rnd_buffer_size`
+256 Ko...) multiplies par `Max_used_connections` = **19**, ajoutent quelques
+dizaines de Mo. `Created_tmp_disk_tables` = 0.
+
+**La configuration declaree n explique donc pas 5 % du RSS observe.** C est le
+seul enonce que la mesure autorise. Ni « fuite », ni « working set » : les deux
+demanderaient une observation que je n ai pas.
+
+**CE QUE LA SERIE PERMET DE DIRE** : deux releves a anciennete comparable — 6,95 Go
+a ~9 h le 01-09, 6,68 Go a 8 h 47 le 14-09 — donnent une valeur **reproductible**,
+a deux semaines et un redemarrage d intervalle. La montee vers ~6,7 Go en neuf
+heures est donc le comportement normal de cette instance, et les 13,7 a 14,9 Go
+des morts s accumulent sur des jours. Savoir si la suite est lineaire, asymptotique
+ou par paliers demanderait des releves reguliers a anciennete croissante, que la
+serie actuelle — quatre points, trois anciennetes differentes — ne fournit pas.
+
+- Fichiers modifies : aucun (observation)
+- Source : `api_opcv/docs/OPS_MYSQL_MEMOIRE.md`, releve du 2026-09-14 22:49 UTC,
+  produit par `ops-mysql-memoire.yml` (lecture seule)
+- CI : 21 executions depuis 21:50, 0 echec — le validateur d incidents repare tient
+- Production : HTTP 200
+
+
 ### LOT BF — 2026-09-14 : LE CONTROLE QUI FAIT FOI ETAIT AVEUGLE, DEUX FOIS
 
 Suite directe du lot BE. La panne y est racontee ; ici, **pourquoi personne ne
