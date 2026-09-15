@@ -2341,6 +2341,46 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BH — 2026-09-15 : LA CORRELATION NIGERIA EXPLIQUE UN OOM SUR TROIS
+
+La session parallele a persiste une « Nigeria OOM correlation evidence »
+(`e5c6f17`). Le rapprochement est reel pour le dernier incident, mais il ne
+couvre pas les deux autres — et un RCA qui nommerait le Nigeria enverrait la
+remediation au mauvais endroit.
+
+| OOM | jour | heure | charge en cours au moment de la mort |
+|---|---|---|---|
+| 2026-08-31 | lundi | **18:33** | correction de VL lancee manuellement (aucun cron a cette heure) |
+| 2026-09-08 | **mardi** | ~20:02 | `cron_daily_update.sh` — `0 20 * * 1-5` |
+| 2026-09-14 | lundi | **10:04** | `cron_nigeria_weekly.sh` — `0 10 * * 1` |
+
+Deux lundis sur trois peuvent evoquer une signature Nigeria. Le mardi la refute,
+et le 31 aout aussi : `cron_nigeria_weekly` tourne a 10:00, pas a 18:33.
+
+**LE FACTEUR COMMUN EST LE TRAITEMENT PAR LOTS, PAS SON ORIGINE.** Trois charges
+lourdes de trois natures differentes, trois OOM. Cela concorde avec ce
+qu etablissait le lot BE : `mariadbd` occupe ~83 % des 17,9 Go de la machine, et
+n importe quelle allocation notable le condamne alors. Le declencheur du
+2026-09-14 etait d ailleurs `npm start invoked oom-killer` — un build frontend,
+pas l import Nigeria lui-meme, mais concomitant.
+
+**PORTEE DE CE CONSTAT** : il ne designe pas une cause, il ecarte une fausse
+piste. Chercher ce que le Nigeria ferait de particulier ferait perdre le temps
+que le RSS de fond reclame. La question reste celle du lot BG : pourquoi 6,97 Go
+de `RssAnon` quand la comptabilite interne de MariaDB en declare 450 Mo.
+
+L incident est en `RCA_PENDING` cote registre — rien n est fige, et ce lot est
+verse comme donnee, pas comme contradiction.
+
+- Fichiers modifies : aucun (observation)
+- Sources : `docs/OPS_MARIADB.md` (releve du 2026-09-14 14:00),
+  `.github/workflows/ops-mariadb-recover.yml` (en-tete, incident du 31 aout),
+  `CLAUDE.md` > crons actifs
+- CI : 15 executions depuis 23:30, 2 echecs — ruptures YAML transitoires sur
+  `ops-mysql-memoire.yml`, corrigees ; fichier valide, mes sections intactes
+- Production : HTTP 200
+
+
 ### LOT BG — 2026-09-14 : LA SERIE MEMOIRE MARIADB, SANS MECANISME AFFIRME
 
 Complement factuel aux lots BE et BF. **Aucune cause n est avancee ici** : deux
