@@ -2350,12 +2350,35 @@ remediation au mauvais endroit.
 
 | OOM | jour | heure | charge en cours au moment de la mort |
 |---|---|---|---|
-| 2026-08-31 | lundi | **18:33** | correction de VL lancee manuellement (aucun cron a cette heure) |
+| 2026-08-31 | lundi | **18:33** | `cron_indices_daily.sh` — `30 18 * * 1-5` — ET une correction de VL lancee a la main |
 | 2026-09-08 | **mardi** | ~20:02 | `cron_daily_update.sh` — `0 20 * * 1-5` |
 | 2026-09-14 | lundi | **10:04** | `cron_nigeria_weekly.sh` — `0 10 * * 1` |
 
 Deux lundis sur trois peuvent evoquer une signature Nigeria. Le mardi la refute,
 et le 31 aout aussi : `cron_nigeria_weekly` tourne a 10:00, pas a 18:33.
+
+**RECTIFICATION — J AI ECRIT ICI « aucun cron a cette heure » POUR LE 31 AOUT.
+C ETAIT FAUX.** Le crontab live, relevé le 2026-09-15 par `ops-mysql-memoire`,
+contient `30 18 * * 1-5 cron_indices_daily.sh`. Le 31 aout etait un lundi :
+**un cron a bien demarre a 18:30, trois minutes avant la mort.** Je l avais
+manque en consultant la liste de `CLAUDE.md` sans verifier l heure de chaque
+ligne contre l heure de l incident.
+
+**CE QUE LA RECTIFICATION CHANGE : ELLE RENFORCE LA CONCLUSION.** Les quatre
+incidents connus surviennent tous dans les minutes qui suivent le demarrage d un
+traitement par lots :
+
+| incident | cron demarre | ecart |
+|---|---|---|
+| 2026-08-27 21:40 (jeudi) | `cron_daily_eur_usd.sh` 21:30 | ~10 min |
+| 2026-08-31 18:33 (lundi) | `cron_indices_daily.sh` 18:30 | **3 min** |
+| 2026-09-08 ~20:02 (mardi) | `cron_daily_update.sh` 20:00 | **2 min** |
+| 2026-09-14 10:04 (lundi) | `cron_nigeria_weekly.sh` 10:00 | **4 min** |
+
+**Quatre crons DIFFERENTS, quatre jours de semaine differents.** La these Nigeria
+reste ecartee, et le facteur commun se precise : ce n est pas un traitement
+particulier, c est le demarrage d un traitement lourd, quel qu il soit, sur une
+base deja a ~83 % de la RAM.
 
 **LE FACTEUR COMMUN EST LE TRAITEMENT PAR LOTS, PAS SON ORIGINE.** Trois charges
 lourdes de trois natures differentes, trois OOM. Cela concorde avec ce
