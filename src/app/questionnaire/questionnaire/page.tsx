@@ -1,12 +1,13 @@
 "use client";
-import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
+import { useUserId } from '@/hooks/useUserId';
+import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/lib/constants";
 
 import React, { useState, useEffect, Fragment } from 'react';
 import { useRouter } from "next/navigation";
 import Swal from 'sweetalert2';
 //import ProgressBar from 'react-bootstrap/ProgressBar';
 import 'react-step-progress-bar/styles.css'; // Assurez-vous d'importer les styles CSS si nécessaire
-import Header from "@/app/Header";
+import Header from '@/components/layout/Header';
 import Link from "next/link";
 import { Button } from "react-bootstrap";
 import { DropdownButton, Dropdown } from 'react-bootstrap';
@@ -35,7 +36,6 @@ interface MifidForUser {
 }
 
 
-
 interface PageProps {
   searchParams: {
     selectedfund: any;
@@ -47,15 +47,14 @@ interface PageProps {
 
 // FIN
 
-export default function TypeProfil(props: PageProps): JSX.Element {
+export default function TypeProfil(): JSX.Element {
   // Variable de l'url de l'api
-  let id = props.searchParams.id;
+  const id = useUserId();
 
   const router = useRouter();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [questionnaireForUser, setQuestionnaireForUser] = useState<QuizMifidOfUser | null>(null);
   const [mifidForUser, setMifidForUser] = useState<MifidForUser | null>(null);
-
 
 
   // FIN
@@ -75,7 +74,6 @@ export default function TypeProfil(props: PageProps): JSX.Element {
         if (quizData) {
           // Convertir les données JSON en un objet JavaScript
           const quiz = JSON.parse(quizData);
-          console.log(quiz);
           // Mettre à jour l'état mifidForUser avec les données récupérées
           setQuestionnaireForUser({
             userId: "user_id",
@@ -95,117 +93,10 @@ export default function TypeProfil(props: PageProps): JSX.Element {
 
   // FIN
   const [userConnected, setUserConnected] = useState<number | null>(null);
-  console.log(questionnaireForUser);
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-        router.push('/portefeuille/login');
-      }, 5);
-    }
-  };
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
-  };
-  const [menuOpen, setMenuOpen] = useState(false);
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
-
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/Fundmanager/recherche`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/accueil`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
-
-  const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-  const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-  };
-
-  const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-  };
-  const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/actualite`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
-  const [isHoveredp, setIsHoveredp] = useState(false);
-
-  const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-  };
-
-  const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-  };
-  const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/pays`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
   };
   return (
     <>
@@ -228,7 +119,6 @@ export default function TypeProfil(props: PageProps): JSX.Element {
                     <h1 className='text-center'>Votre profil investisseur provisoire </h1>
                   </div>
                 </div>
-
 
 
                 {/* Les cards */}
@@ -297,7 +187,6 @@ export default function TypeProfil(props: PageProps): JSX.Element {
                                   ) : ("")}
 
 
-
                                   {/* Si le profil est : Croissance */}
                                   {questionnaireForUser?.typeProfile === "Croissance" ? (
                                     <div className='d-flex align-items-center'>
@@ -310,7 +199,6 @@ export default function TypeProfil(props: PageProps): JSX.Element {
                                       </div>
                                     </div>
                                   ) : ("")}
-
 
 
                                 </div>

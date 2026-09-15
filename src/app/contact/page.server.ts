@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { urlsite } from "@/app/constants";
+import { urlsite } from "@/lib/constants";
 
 export const metadata: Metadata = {
     title: "Contact - Fundafrique | OPCVM Afrique",
