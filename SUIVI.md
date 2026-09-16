@@ -2341,6 +2341,57 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BI — 2026-09-16 : LE DECLENCHEMENT DE WORKFLOW N EST PLUS AUTORISE DEPUIS CETTE SESSION
+
+**CONSTAT VERIFIE, PAS SUPPOSE.** Un `POST .../workflows/<fichier>/dispatches`
+renvoie desormais **HTTP 403** avec un message du harnais, non de GitHub :
+
+```
+Dispatching, enabling or disabling workflows and deleting workflow runs,
+logs or artifacts are not permitted for this session type.
+```
+
+**CE CHEMIN FONCTIONNAIT ENCORE HIER.** Le 2026-09-14 a 14:00 UTC, c est par un
+`workflow_dispatch` de `ops-mariadb-recover.yml` — HTTP 204, workflow execute,
+production revenue — que la coupure de 3 h 56 a ete levee (lot BE).
+
+**CE QUE CELA FERME** :
+- declencher `ops-mariadb-recover.yml` en cas de nouvel OOM ;
+- declencher `ops-mysql-memoire.yml` pour un releve a la demande ;
+- declencher `ops-fix-segments-naira.yml` — sans consequence ici, cette action
+  etait de toute facon reservee au proprietaire et le reste.
+
+**CE QUI RESTE OUVERT** : lecture de l API GitHub (runs, jobs, journaux),
+commits et poussees, commentaires de PR, appels HTTP vers la production. Les
+workflows continuent de se declencher normalement sur `push` et sur `schedule`.
+
+**NON VERIFIE** : la relance d un job en echec (`rerun-failed-jobs`) ne figure
+pas dans la liste des actions refusees et fonctionnait hier, mais aucun echec ne
+s est presente depuis pour le confirmer. Ne pas tenir pour acquis.
+
+**CE QUE CELA CHANGE POUR LA PRIORITE** — et c est le point :
+`Restart=on-failure` + `RestartSec=10` sur `mariadb.service` etait deja la
+premiere des deux actions verrouillees. **Elle devient la seule remediation
+possible d un quatrieme OOM.** Hier, la base est restee morte quatre heures et
+n est repartie que parce qu une intervention manuelle etait encore possible
+depuis cette session. Elle ne l est plus. Sans politique de redemarrage, la
+prochaine coupure durera jusqu a ce qu un humain s en apercoive — et le lot BE a
+etabli qu aucune alerte n est emise.
+
+**ANCIENNETE REELLE DU PROCESSUS MARIADB — correction d une lecture hative** :
+j allais compter 40 h depuis la recuperation de 14:00 le 14 septembre. Le releve
+du 15 a 00:43 montre `0,24 Go — demarre depuis 01:09:46` : le processus datait
+donc de ~23:32 le 14, cree par le **rollback de l A/B allocateur**, pas par ma
+recuperation. Les redemarrages de l A/B ont remis le compteur a zero trois fois
+cette nuit-la. Ancienneté au 2026-09-16 06:12 : **~30 h**, pas 40.
+
+- Fichiers modifies : aucun (observation)
+- Production : HTTP 200 (API et fiche fonds) ; 13 executions CI depuis le 15 a
+  20:00, 0 echec ; MariaDB a passe les crons de mardi soir
+- Etat mesure : inchange — 8/16, 6 echecs critiques (celui du 15 a 11:30 ; le
+  controle du jour tombe entre 10:25 et 12:20, cf. lot BD)
+
+
 ### LOT BH — 2026-09-15 : LA CORRELATION NIGERIA EXPLIQUE UN OOM SUR TROIS
 
 La session parallele a persiste une « Nigeria OOM correlation evidence »
