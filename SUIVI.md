@@ -2415,28 +2415,32 @@ contient `30 18 * * 1-5 cron_indices_daily.sh`. Le 31 aout etait un lundi :
 manque en consultant la liste de `CLAUDE.md` sans verifier l heure de chaque
 ligne contre l heure de l incident.
 
-**CE QUE LA RECTIFICATION CHANGE : ELLE RENFORCE LA CONCLUSION.** Les quatre
-incidents connus surviennent tous dans les minutes qui suivent le demarrage d un
-traitement par lots :
+**CE QUE LA RECTIFICATION CHANGE : ELLE RENFORCE LA NECESSITE DE CORRELER
+LES BATCHS, MAIS NE PROUVE PAS UN DECLENCHEUR UNIVERSEL.** Les trois OOM dont la
+fenetre de travail est reconstruite montrent des charges lourdes heterogenes :
 
-| incident | cron demarre | ecart |
+| incident | contexte lourd observe | conclusion permise |
 |---|---|---|
-| 2026-08-27 21:40 (jeudi) | `cron_daily_eur_usd.sh` 21:30 | ~10 min |
-| 2026-08-31 18:33 (lundi) | `cron_indices_daily.sh` 18:30 | **3 min** |
-| 2026-09-08 ~20:02 (mardi) | `cron_daily_update.sh` 20:00 | **2 min** |
-| 2026-09-14 10:04 (lundi) | `cron_nigeria_weekly.sh` 10:00 | **4 min** |
+| 2026-08-31 18:33 (lundi) | `cron_indices_daily.sh` demarre a 18:30 ET correction/recalcul Nigeria manuel actif | coexistence prouvee, cause exacte non prouvee |
+| 2026-09-08 ~20:02 (mardi) | `cron_daily_update.sh` actif, `recalc_eur_usd_daily_rate` vers 600/1250 fonds | workload au moment de la chute prouve, causalite exacte non prouvee |
+| 2026-09-14 10:04 (lundi) | `cron_nigeria_weekly.sh`, etape `recalc_vl_ajuste` vers 700/1251 fonds | workload au moment de l OOM prouve, Nigeria non prouve comme cause generale |
 
-**Quatre crons DIFFERENTS, quatre jours de semaine differents.** La these Nigeria
-reste ecartee, et le facteur commun se precise : ce n est pas un traitement
-particulier, c est le demarrage d un traitement lourd, quel qu il soit, sur une
-base deja a ~83 % de la RAM.
+**LE 27 AOUT NE DOIT PAS ETRE UTILISE COMME QUATRIEME CORRELATION DE
+DECLENCHEMENT.** Le cron EUR/USD commence vers 21:30 alors que MariaDB repond
+deja `ECONNREFUSED`. Il n est donc pas etabli comme declencheur initial.
 
-**LE FACTEUR COMMUN EST LE TRAITEMENT PAR LOTS, PAS SON ORIGINE.** Trois charges
-lourdes de trois natures differentes, trois OOM. Cela concorde avec ce
-qu etablissait le lot BE : `mariadbd` occupe ~83 % des 17,9 Go de la machine, et
-n importe quelle allocation notable le condamne alors. Le declencheur du
-2026-09-14 etait d ailleurs `npm start invoked oom-killer` — un build frontend,
-pas l import Nigeria lui-meme, mais concomitant.
+**CE QUE LES TROIS OOM PERMETTENT DE DIRE** : plusieurs traitements lourds,
+de natures differentes, sont presents autour des incidents. Aucun job unique
+n est prouve comme cause commune. Cela justifie la poursuite de la serie RSS
+longue duree et la recherche de marches / retention apres workload, sans
+promouvoir ce modele en cause racine tant que la marche exacte n est pas
+mesuree.
+
+**RECTIFICATION AF-EVD-050 — `npm start`** : la ligne kernel
+`npm start invoked oom-killer` ne prouve PAS un build frontend. Dans l API,
+`npm start` lance `node app.js`; dans le frontend, `npm start` lance
+`scripts/start.sh`, tandis que le build est `npm run build`. Sans PID/cwd ou
+autre preuve processus, l invocateur exact reste **UNKNOWN**.
 
 **PORTEE DE CE CONSTAT** : il ne designe pas une cause, il ecarte une fausse
 piste. Chercher ce que le Nigeria ferait de particulier ferait perdre le temps
