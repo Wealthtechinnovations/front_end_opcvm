@@ -92,9 +92,21 @@ Avant toute écriture dans la queue, chaque candidat doit être vérifié, regro
 6. Gap Harvester → vérification/déduplication → même queue ;
 7. prochaine boucle automatiquement dérivée par le Programme Directeur.
 
-### Prochaine évolution du Programme Directeur
+### Claims de surfaces multi-agent — OBSERVE_ONLY actif
 
-Le moteur sait désormais calculer dépendances, waves, READY/BLOCKED/WAITING, chronologie et candidats de gaps. Le prochain mécanisme à ajouter est le **claim de surfaces multi-agent** (`touched_surfaces / conflicts_with / claim`) afin que le parallèle ne soit plus seulement calculé par dépendances mais également certifié au niveau des fichiers/surfaces réellement modifiées.
+Le Programme Directeur sait désormais calculer dépendances, waves, READY/BLOCKED/WAITING, chronologie, candidats de gaps **et valider un contrat de claims de surfaces** sans créer de second registre.
+
+Preuve : `AF-EVD-062` / run Programme Director `35788502090 = SUCCESS`.
+
+Etat observé :
+
+- `active_claim_count = 0` ;
+- `conflict_count = 0` ;
+- `surface_certified_parallel_pairs = 0` ;
+- stockage futur des claims = **dans les tâches de la queue unique**, jamais dans un verrou/registre parallèle ;
+- enforcement actuel = `ADVISORY_ONLY_NO_WRITE_BLOCK`.
+
+Ce mécanisme ne doit donc pas encore être interprété comme une autorisation de parallélisme fichier. La prochaine étape est de matérialiser de vrais `claim / touched_surfaces / base_api_sha / base_frontend_sha` sur les tâches qui vont réellement écrire, observer plusieurs runs verts sans collision, puis seulement envisager un enforcement.
 
 ---
 
