@@ -6462,3 +6462,54 @@ curl -X POST http://localhost:3005/api/admin/scheduler/toggle -H 'Content-Type: 
 - Ne PAS installer ClickHouse si les ressources serveur sont insuffisantes
 - Ne PAS modifier le .env de production
 - Ne PAS executer de scripts de fix/import sans backup DB prealable
+
+---
+
+## PROGRAMME ALLOCATION / ROBOT ADVISOR — INTEGRE A LA QUEUE CANONIQUE (2026-09-22)
+
+### Decision et perimetre
+
+Le sous-systeme historique Allocation / Robot Advisor a ete retrouve et audite en lecture seule dans les deux depots. Il reutilise deja `portfolio-allocation@0.0.11` et `portfolio-analytics@0.0.4`, avec plusieurs generations de code : `src/routes/routes_vl_robotadvisor.js`, `services/analytics/routes.js`, `src/routes/efficient_frontier.py`, `src/routes/effi.py`, `src/classes/advisor.js` et les pages frontend Robot Advisor investor/portfolio.
+
+Decision : NE PAS recreer un moteur, une queue, une branche ou une UI parallele. Le programme est integre a la queue AfricaFunds existante dans `api_opcv/.governance/loop/task-queue.json`, sous `program_id = AF-ALLOC-001`.
+
+Commit API de materialisation de la queue : `0eed7c532d9fcf0e7fb7fd72d51a36061601b5a6`.
+
+### Taches gouvernees ajoutees
+
+- `AF-TASK-012` — cartographie runtime et certification de l'existant (READ_ONLY_DISCOVERY).
+- `AF-TASK-013` — contrat API canonique, validation d'entree, authentification et ownership.
+- `AF-TASK-014` — moteur canonique de preparation des donnees quantitatives.
+- `AF-TASK-015` — persistance normalisee, provenance et reproductibilite des runs.
+- `AF-TASK-016` — adapter canonique et strategies d'optimisation multi-methodes.
+- `AF-TASK-017` — moteur de contraintes AfricaFunds.
+- `AF-TASK-018` — validation numerique, cross-engine et non-regression quantitative.
+- `AF-TASK-019` — backtesting, walk-forward, rebalancement et couts.
+- `AF-TASK-020` — analytics portefeuille, contribution au risque et explicabilite.
+- `AF-TASK-021` — Portfolio Lab frontend V2 et comparaison multi-strategies.
+- `AF-TASK-022` — Model Portfolios, Mandate Engine et reporting institutionnel.
+- `AF-TASK-023` — rollout canonique, observabilite et retrait gouverne du legacy.
+
+### Garde-fous de non-regression
+
+- `AF-OPS-003` reste la priorite operationnelle courante ; ce programme ne la remplace pas.
+- `AF-TASK-012` est le premier lot Allocation executable et reste strictement read-only.
+- Les donnees quantitatives et leur certification live doivent tenir compte des gates `AF-OPS-007`, `AF-OPS-008` et `AF-OPS-009`.
+- Aucun code historique n'est supprime avant preuve d'inactivite ou equivalence, tests et rollback.
+- Aucun deploiement, restart, mutation DB, migration schema ou action S2 n'a ete effectue dans ce lot.
+- Les routes et simulations historiques doivent rester compatibles pendant la migration.
+- Le moteur cible doit reutiliser/corriger/renforcer l'existant avant d'etendre les strategies.
+- Les solveurs JS/Python seront traites comme candidat canonique / reference de validation, pas comme deux autorites runtime concurrentes.
+- Les erreurs methodologiques deja identifiees (contrat frontend/Python divergent, rendement utilise comme borne de poids, horizon `limit:500`, taux sans risque hardcode, unites/frequences implicites) sont maintenant couvertes par les taches gouvernees et ne doivent pas etre corrigees hors de ce programme.
+
+### Etat du lot du 2026-09-22
+
+- Modification applicative : AUCUNE.
+- Modification base de donnees : AUCUNE.
+- Production/S2 : NON TOUCHEE.
+- Nouvelle branche : AUCUNE.
+- Nouvelle queue parallele : AUCUNE.
+- Queue canonique completee : OUI.
+- Prochaine action Allocation : `AF-TASK-012` — cartographier et prouver le chemin runtime reel avant toute modification quantitative.
+- Prochaine action operationnelle globale : conservee selon `NEXT_ACTION.md` / `AF-OPS-003`.
+
