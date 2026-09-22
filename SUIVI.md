@@ -4,8 +4,8 @@
 
 **Projet :** AfricaFunds — `CS-AFRICAFUNDS-001`  
 **Branches canoniques :** `claude/code-review-improvements-ikvuj` sur API et frontend  
-**API observée avant ce checkpoint :** `271e21c72dae07d2dbce106390206ee93c1aba9a`  
-**Frontend observé avant ce checkpoint :** `dcd8e5a79b27d93b66723884727f55ec2ffc9944`  
+**API observée avant ce checkpoint :** `a3e2be1a05a515ebb719bc2e680e50c44d7706c1`  
+**Frontend observé avant ce checkpoint :** `198441af894f921917916532cf4bfd4ead94d8b5`  
 **Production S2 :** dernier correctif AF-OPS-003 réconcilié/attesté à API `84c3e4fe06c4282f0ab1f09a95962c6fb49c1ef3` et frontend `dcd8e5a79b27d93b66723884727f55ec2ffc9944`.
 
 ### Continuité préservée
@@ -44,8 +44,9 @@ Le Programme Directeur est maintenant matérialisé **au-dessus de la queue exis
 - chronologie dérivée : `scripts/governance/program_event_ledger.py` ;
 - Gap Harvester read-only : `scripts/governance/program_gap_harvester.py` ;
 - workflow : `.github/workflows/governance-program-director.yml` ;
-- run de validation complet : `35787836771 = SUCCESS` ;
-- preuve : `AF-EVD-061`.
+- run de validation orchestration/chronologie/gaps : `35787836771 = SUCCESS` ;
+- run avec claims réels + anti-régression : `35793007081 = SUCCESS` ;
+- preuves : `AF-EVD-061`, `AF-EVD-062`, `AF-EVD-063`.
 
 Le run GREEN confirme :
 
@@ -98,15 +99,40 @@ Le Programme Directeur sait désormais calculer dépendances, waves, READY/BLOCK
 
 Preuve : `AF-EVD-062` / run Programme Director `35788502090 = SUCCESS`.
 
-Etat observé :
+Etat observé au run `35793007081` :
 
-- `active_claim_count = 0` ;
+- `active_claim_count = 1` ;
+- claim actif = `AF-TASK-017` / Allocation constraint engine ;
+- owner = `ChatGPT-GPT-5.6-Sol` ;
+- surfaces API protégées : `src/services/allocation/constraints/**`, `tests/allocation-constraints.test.js`, `.github/workflows/governance-allocation-constraints.yml` ;
 - `conflict_count = 0` ;
-- `surface_certified_parallel_pairs = 0` ;
-- stockage futur des claims = **dans les tâches de la queue unique**, jamais dans un verrou/registre parallèle ;
+- `surface_certified_parallel_pairs = 0` car une seule tâche active est actuellement claimée ;
+- stockage des claims = **dans les tâches de la queue unique**, jamais dans un verrou/registre parallèle ;
 - enforcement actuel = `ADVISORY_ONLY_NO_WRITE_BLOCK`.
 
-Ce mécanisme ne doit donc pas encore être interprété comme une autorisation de parallélisme fichier. La prochaine étape est de matérialiser de vrais `claim / touched_surfaces / base_api_sha / base_frontend_sha` sur les tâches qui vont réellement écrire, observer plusieurs runs verts sans collision, puis seulement envisager un enforcement.
+Le claim est donc désormais réel et protège le chantier Allocation concurrent. Toute écriture hors de ce chantier doit préserver ces surfaces ; aucune paire de writes n'est certifiée parallèle tant qu'un second claim actif, non chevauchant et validé n'existe pas.
+
+### Contrat anti-régression machine-checkable — ACTIF
+
+Le Programme Directeur exécute maintenant `scripts/governance/program_invariants.py` en **hard-fail uniquement sur les invariants déjà normatifs**. Le premier run a correctement détecté une lecture incomplète des gates Allocation ; le validateur a été corrigé pour lire les champs structurés réels sans modifier ni affaiblir `AF-TASK-014`. Le run exact-SHA `35793007081` est ensuite **SUCCESS**.
+
+Le contrat vérifie automatiquement :
+
+- un produit / deux repositories ;
+- tuple `FUND_STATE` à quatre dimensions ;
+- queue unique et absence de seconde gouvernance ;
+- single-writer et double relecture des HEAD ;
+- interdiction de nouvelle branche, force-push et history rewrite ;
+- reconstruction de contexte / peer discovery / no blind work ;
+- cohérence de `NEXT_ACTION.md` avec la priorité opérationnelle ;
+- `front_end_opcvm/SUIVI.md` comme checkpoint global unique ;
+- ordre data `AF-OPS-007 + AF-OPS-009 → AF-OPS-008` ;
+- maintien des gates live Allocation `AF-OPS-007/008/009` ;
+- unicité des identifiants de preuves et résolution des evidence refs ;
+- aucun second registre de claims.
+
+Preuve : `AF-EVD-063`.
+
 
 ---
 
