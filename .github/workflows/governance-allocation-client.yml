@@ -1,0 +1,46 @@
+name: Allocation Frontend Contract
+
+on:
+  push:
+    branches:
+      - claude/code-review-improvements-ikvuj
+    paths:
+      - 'src/lib/allocation.ts'
+      - '.github/workflows/governance-allocation-client.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: allocation-client-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck:
+    name: Typecheck shared allocation client
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout canonical frontend
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies without package scripts
+        run: npm ci --ignore-scripts
+
+      - name: Typecheck allocation client in isolation
+        run: >
+          npx tsc --noEmit
+          --target ES2020
+          --module esnext
+          --moduleResolution node
+          --lib ES2020,DOM
+          --skipLibCheck
+          --esModuleInterop
+          src/lib/allocation.ts
