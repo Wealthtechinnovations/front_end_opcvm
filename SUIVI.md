@@ -1,5 +1,18 @@
 # Carnet de suivi - Africafunds (Fundafrique)
 
+<!-- PROGRAMME_DIRECTOR:BEGIN -->
+### Projection gérée — checkpoint global
+
+- project_uid: `CS-AFRICAFUNDS-001`
+- operational_priority: `AF-OPS-003`
+- operational_phase: `POST_FIX_VALIDATION`
+- programme_task: `AF-TASK-026`
+- programme_phase: `WRITEBACK_GATE_PREFLIGHT`
+- active_claims: `AF-TASK-017, AF-TASK-026`
+- latest_programme_evidence: `AF-EVD-066`
+
+<!-- PROGRAMME_DIRECTOR:END -->
+
 ## POINT DE REPRISE COURANT — 2026-09-22 — Programme Directeur actif / AF-OPS-003 POST_FIX_VALIDATION
 
 **Projet :** AfricaFunds — `CS-AFRICAFUNDS-001`  
