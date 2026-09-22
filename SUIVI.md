@@ -1,5 +1,105 @@
 # Carnet de suivi - Africafunds (Fundafrique)
 
+## POINT DE REPRISE COURANT — 2026-09-22 — Programme Directeur actif / AF-OPS-003 POST_FIX_VALIDATION
+
+**Projet :** AfricaFunds — `CS-AFRICAFUNDS-001`  
+**Branches canoniques :** `claude/code-review-improvements-ikvuj` sur API et frontend  
+**API observée avant ce checkpoint :** `271e21c72dae07d2dbce106390206ee93c1aba9a`  
+**Frontend observé avant ce checkpoint :** `dcd8e5a79b27d93b66723884727f55ec2ffc9944`  
+**Production S2 :** dernier correctif AF-OPS-003 réconcilié/attesté à API `84c3e4fe06c4282f0ab1f09a95962c6fb49c1ef3` et frontend `dcd8e5a79b27d93b66723884727f55ec2ffc9944`.
+
+### Continuité préservée
+
+- aucune nouvelle branche ;
+- aucune seconde queue, seconde gouvernance ou second SUIVI ;
+- `.governance/loop/task-queue.json` reste l'unique autorité des tâches ;
+- `state.json`, `handoff.json`, le registre de preuves, le registre d'incidents et ce `SUIVI.md` conservent leurs rôles existants ;
+- aucun déploiement S2 n'a été déclenché pour le Programme Directeur : ces commits sont gouvernance/diagnostic dérivés et ne nécessitent pas de mutation runtime ;
+- les travaux Allocation `AF-TASK-012→023`, data-quality `AF-OPS-007/008/009`, sécurité et incidents restent dans la même queue canonique.
+
+### AF-OPS-003 — correctif déployé, RCA en validation post-fix
+
+`AF-OPS-003` est désormais :
+
+```text
+status = OPEN
+phase = POST_FIX_VALIDATION
+latest evidence = AF-EVD-060
+root cause = UNKNOWN
+```
+
+La chaîne gouvernée est maintenant persistée :
+
+- `AF-EVD-058` — contrat RED → correction protocolaire minimale → GREEN exact-SHA ;
+- `AF-EVD-059` — déploiement GOV-006 PASS du correctif `execute() → query()` sur les deux UPDATE dynamiques massifs ;
+- `AF-EVD-060` — attestation S2 post-déploiement : branche canonique, tracked clean, contrat SQL GREEN.
+
+La prochaine preuve n'est plus de reconstruire ou rejouer le correctif. Il faut observer les prochains vrais passages des étapes 3/4 avec le code corrigé, comparer RSS/RssAnon/Private_Dirty et `Com_stmt_*` au baseline pré-fix, vérifier l'équivalence des sorties métier, puis seulement réévaluer le niveau de confiance de la RCA. Aucun restart MariaDB ni nouvel A/B allocateur n'est autorisé par cette étape.
+
+### Programme Directeur AfricaFunds — actif en lecture seule
+
+Le Programme Directeur est maintenant matérialisé **au-dessus de la queue existante**, jamais à sa place :
+
+- orchestrateur : `scripts/governance/program_orchestrator.py` ;
+- chronologie dérivée : `scripts/governance/program_event_ledger.py` ;
+- Gap Harvester read-only : `scripts/governance/program_gap_harvester.py` ;
+- workflow : `.github/workflows/governance-program-director.yml` ;
+- run de validation complet : `35787836771 = SUCCESS` ;
+- preuve : `AF-EVD-061`.
+
+Le run GREEN confirme :
+
+- intégrité du programme = PASS ;
+- 0 cycle de dépendance ;
+- 0 dépendance manquante ;
+- 0 référence de preuve pendante détectée ;
+- priorité opérationnelle correctement reconstruite = `AF-OPS-003 / POST_FIX_VALIDATION` ;
+- `AF-OPS-008` reste dependency-gated derrière `AF-OPS-007 + AF-OPS-009` ;
+- les candidats au parallèle restent **dependency-only** tant que les claims de surfaces fichiers ne sont pas encore implémentés.
+
+### Chronologie dérivée / event ledger
+
+La chronologie automatique est une **projection**, pas une nouvelle autorité. Elle reconstruit la séquence à partir du registre de preuves, des incidents et de l'historique Git API/frontend.
+
+Dernière validation :
+
+- 62 événements temporels reconstruits ;
+- 5 marqueurs historiques non temporels conservés séparément pour éviter de les classer faussement comme dates ;
+- aucune réécriture des preuves historiques : les faits plus récents supersèdent les anciens pour les décisions courantes sans les effacer.
+
+### Gap Harvester — découverte uniquement, aucune création automatique
+
+Le Gap Harvester a inventorié :
+
+- API : 589 fichiers texte ;
+- frontend : 584 fichiers texte ;
+- 125 candidats heuristiques `TODO/FIXME/HACK/XXX` après filtrage ;
+- 2 candidats ont une correspondance heuristique possible avec une tâche existante ;
+- 123 restent non appariés.
+
+**Ces 125 éléments ne sont PAS des tâches et ne constituent PAS encore un backlog certifié.**  
+Statut obligatoire : `DISCOVERED_CANDIDATE_NOT_TASK_UNTIL_VERIFIED_AND_DEDUPED`.
+
+Avant toute écriture dans la queue, chaque candidat doit être vérifié, regroupé si dupliqué, confronté aux requirements/incidents/preuves/tâches existants et soit rattaché à l'existant, soit seulement alors matérialisé comme nouvelle tâche dans la queue unique.
+
+### Ordre de marche conservé
+
+1. `AF-OPS-003` — validation post-fix MariaDB sur vrais batchs ;
+2. `AF-OPS-005` — attribution DB-auth strictement read-only ;
+3. `AF-OPS-007` + `AF-OPS-009` — intégrité/fraîcheur VL ;
+4. `AF-OPS-008` — performances dérivées après validation des couches amont ;
+5. Allocation continue selon `AF-TASK-013→023`, sans modèle fonds parallèle ;
+6. Gap Harvester → vérification/déduplication → même queue ;
+7. prochaine boucle automatiquement dérivée par le Programme Directeur.
+
+### Prochaine évolution du Programme Directeur
+
+Le moteur sait désormais calculer dépendances, waves, READY/BLOCKED/WAITING, chronologie et candidats de gaps. Le prochain mécanisme à ajouter est le **claim de surfaces multi-agent** (`touched_surfaces / conflicts_with / claim`) afin que le parallèle ne soit plus seulement calculé par dépendances mais également certifié au niveau des fichiers/surfaces réellement modifiées.
+
+---
+
+
+
 
 ## POINT DE REPRISE COURANT — 2026-09-22 — AF-OPS-003 RCA resserrée
 
