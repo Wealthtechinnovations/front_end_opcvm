@@ -6728,3 +6728,84 @@ Classification :
 
 Décision de non-régression : aucun moteur existant n'est promu canonique tel quel. Ne pas réactiver aveuglément les routes legacy ou le Flask historique. La suite est `AF-TASK-013` : contrat API canonique backward-compatible + validation/auth/ownership, puis seulement raccordement progressif du moteur.
 
+### AF-TASK-013 / 014 / 016 — CONTRAT, DATA ET MOTEUR ALLOCATION NODE CERTIFIES (2026-09-22)
+
+Décision d'architecture confirmée : le runtime Allocation / Robot Advisor canonique est construit en **Node/JavaScript**, dans le monolithe AfricaFunds. Les anciens solveurs Python restent `LEGACY_INACTIVE/PROTOTYPE` et ne sont pas une cible runtime.
+
+#### AF-TASK-013 — DONE / API_CONTRACT_STABLE
+
+- Contrat canonique `Allocation V2 / schema 2.0.0`.
+- Surface additive montée dans `api-monolith` :
+  - `GET /api/allocation/capabilities`
+  - `POST /api/allocation/validate`
+  - simulations et portefeuilles owner-only sous `/api/allocation/simulations/**`.
+- Ownership dérivé exclusivement du JWT ; aucun `user_id` client n'est accepté comme autorité.
+- Compatibilité legacy contrôlée : ancien payload reconnu mais les ambiguïtés dangereuses sont rejetées.
+- Client frontend partagé : `src/lib/allocation.ts`, sans logique quantitative dupliquée.
+- Preuves CI :
+  - API contract/auth/ownership : run `35791124146` = SUCCESS.
+  - Frontend shared contract : run `35791446456` = SUCCESS.
+- Aucun solveur historique réactivé ; aucun déploiement S2 effectué.
+
+#### AF-TASK-014 — DONE_WITH_EXTERNAL_GAPS / DATA_PREPARATION_CONTRACT_STABLE
+
+Moteur de préparation quantitative Node déterministe :
+- horizons explicites `1Y/3Y/5Y/MAX/CUSTOM`, aucun `limit:500`;
+- normalisation DAILY/WEEKLY/MONTHLY et alignement par période, pas intersection exacte naïve des dates ;
+- Total Return via `vl_ajuste`, `vl_ajuste_EUR`, `vl_ajuste_USD`;
+- NAV disponible explicitement comme méthode distincte ;
+- LOCAL/EUR/USD natifs et autres devises via les paires historiques `EUR/<devise>` de `devisedechanges` ;
+- covariance sample centrée sur la moyenne (`assume_zero_mean=false`) + diagonal shrinkage ;
+- taux sans risque jamais hardcodé : absent = `NOT_CONFIGURED`, fourni = source obligatoire ;
+- quality gate avant solveur et provenance explicite.
+
+Provider Data :
+- réutilise `fond_investissements`, `valorisations` et `devisedechanges`;
+- aucun dataset parallèle ;
+- aucun calcul quantitatif dans la DB ;
+- aucun `limit:500`.
+
+Preuve CI : run `35791298711` = SUCCESS.
+
+La certification live reste conditionnée à `AF-OPS-007`, `AF-OPS-008`, `AF-OPS-009`. Risque conservé explicitement : le comportement historique du Forex qui utilise le premier taux disponible pour une date antérieure à l'historique ne doit JAMAIS être utilisé en backtest Allocation ; un guard anti-look-ahead est requis avant certification backtest/live.
+
+#### AF-TASK-016 — MOTEUR ALLOCATION NODE CERTIFIE / DONE
+
+Adapter canonique : `src/services/allocation/engine/adapter.js`.
+
+Le package déjà présent `portfolio-allocation@0.0.11` est encapsulé comme solveur interne, jamais appelé directement par le frontend ni par les anciennes routes.
+
+Stratégies Node couvertes :
+- Equal Weight ;
+- Inverse Volatility ;
+- Global Minimum Variance ;
+- Equal Risk Contribution ;
+- Risk Budgeting ;
+- Maximum Diversification ;
+- Maximum Sharpe ;
+- Mean-Variance / Efficient Frontier ;
+- Minimum Correlation.
+
+`Minimum Tracking Error` reste volontairement non exécutable tant qu'une série benchmark valide n'est pas fournie au contrat.
+
+Contrôles indépendants du solveur :
+- dimensions rendement/covariance ;
+- symétrie covariance ;
+- validation semi-définie positive ;
+- poids finis, long-only et somme = 1 ;
+- faisabilité des bornes uniformes ;
+- métriques rendement/variance/volatilité/Sharpe recalculées par AfricaFunds ;
+- erreurs solveur encapsulées et structurées ;
+- aucune méthode n'est présentée comme universellement optimale.
+
+Premier cycle CI : RED sur une mauvaise hypothèse de test concernant une covariance nulle. Correction méthodologique : une matrice nulle est PSD et ne doit pas être rejetée. Un contrôle réel de covariance non-PSD a été ajouté.
+Second cycle CI : run `35792117985` = SUCCESS, HEAD testé `dab0285fe7030a7ed361db90f301e0d2b408567e`.
+
+Aucun endpoint d'optimisation n'est encore activé en production et aucun déploiement S2 n'a été effectué.
+
+#### Suite
+
+`AF-TASK-017` est maintenant `IN_PROGRESS / CONSTRAINT_ENGINE_IMPLEMENTATION`.
+
+Objectif : compiler et vérifier avant solveur les contraintes AfricaFunds réelles : nombre de fonds, poids par fonds, catégories/asset classes, SGO, pays/régions, devises, SRRI lorsqu'une source explicite existe, liquidité/fréquence, qualité/DDQ et futurs mandats institutionnels. Le modèle Fund Master actuel ne contient pas de colonne SRRI : aucune valeur SRRI ne sera inventée ou déduite silencieusement.
+
