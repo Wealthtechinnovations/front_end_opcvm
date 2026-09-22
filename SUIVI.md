@@ -4,8 +4,8 @@
 
 **Projet :** AfricaFunds — `CS-AFRICAFUNDS-001`  
 **Branches canoniques :** `claude/code-review-improvements-ikvuj` sur API et frontend  
-**API observée avant ce checkpoint :** `a3e2be1a05a515ebb719bc2e680e50c44d7706c1`  
-**Frontend observé avant ce checkpoint :** `198441af894f921917916532cf4bfd4ead94d8b5`  
+**API observée avant ce checkpoint :** `715d77c67e7f5cf9ffedff9b5fbcdba5a04edde1`  
+**Frontend observé avant ce checkpoint :** `c253c7ff379cd58d07d7b660c5517d2e3f859ec6`  
 **Production S2 :** dernier correctif AF-OPS-003 réconcilié/attesté à API `84c3e4fe06c4282f0ab1f09a95962c6fb49c1ef3` et frontend `dcd8e5a79b27d93b66723884727f55ec2ffc9944`.
 
 ### Continuité préservée
@@ -101,16 +101,16 @@ Preuve : `AF-EVD-062` / run Programme Director `35788502090 = SUCCESS`.
 
 Etat observé au run `35793007081` :
 
-- `active_claim_count = 1` ;
-- claim actif = `AF-TASK-017` / Allocation constraint engine ;
+- `active_claim_count = 2` ;
+- claims actifs = `AF-TASK-017` / Allocation constraint engine **et** `AF-TASK-025` / Programme Director projection generator ;
 - owner = `ChatGPT-GPT-5.6-Sol` ;
 - surfaces API protégées : `src/services/allocation/constraints/**`, `tests/allocation-constraints.test.js`, `.github/workflows/governance-allocation-constraints.yml` ;
 - `conflict_count = 0` ;
-- `surface_certified_parallel_pairs = 0` car une seule tâche active est actuellement claimée ;
+- paire certifiée non chevauchante = `AF-TASK-017 ↔ AF-TASK-025` ;
 - stockage des claims = **dans les tâches de la queue unique**, jamais dans un verrou/registre parallèle ;
 - enforcement actuel = `ADVISORY_ONLY_NO_WRITE_BLOCK`.
 
-Le claim est donc désormais réel et protège le chantier Allocation concurrent. Toute écriture hors de ce chantier doit préserver ces surfaces ; aucune paire de writes n'est certifiée parallèle tant qu'un second claim actif, non chevauchant et validé n'existe pas.
+Les deux claims sont désormais réels et certifiés non chevauchants. Le chantier Allocation et le Programme Directeur peuvent donc écrire en parallèle **uniquement sur leurs surfaces déclarées** ; tout chevauchement futur ferme le gate.
 
 ### Contrat anti-régression machine-checkable — ACTIF
 
@@ -132,6 +132,20 @@ Le contrat vérifie automatiquement :
 - aucun second registre de claims.
 
 Preuve : `AF-EVD-063`.
+
+
+### Générateur déterministe des projections — observe-only
+
+`AF-TASK-025 = IN_PROGRESS / GENERATOR_DETERMINISM_GREEN`.
+
+Preuve : `AF-EVD-065`, run Programme Director `35798266486 = SUCCESS`.
+
+- deux générations indépendantes sur les mêmes autorités structurées : **byte-for-byte identiques** ;
+- `repository_write_performed = false` ;
+- `input_sha256 = f3edbd134b6b56b55216834e0db74f38638828d3f545fa5ba04d4b9f28d3c92e` ;
+- 6 blocs gérés candidats : NEXT_ACTION, CURRENT_ITERATION, LOOP_STATE, HANDOFF, STATUS, SUIVI ;
+- 17 artefacts Programme Directeur archivés dans le même run ;
+- prochaine étape : simuler insertion/remplacement **en mémoire seulement**, prouver diff borné + idempotence avant tout write-back Git.
 
 
 ---
