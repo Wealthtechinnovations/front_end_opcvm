@@ -4,8 +4,8 @@
 
 **Projet :** AfricaFunds — `CS-AFRICAFUNDS-001`  
 **Branches canoniques :** `claude/code-review-improvements-ikvuj` sur API et frontend  
-**API observée avant ce checkpoint :** `715d77c67e7f5cf9ffedff9b5fbcdba5a04edde1`  
-**Frontend observé avant ce checkpoint :** `c253c7ff379cd58d07d7b660c5517d2e3f859ec6`  
+**API observée avant ce checkpoint :** `9c6e24bb95055ce5e975cb00a6214ac5e51d05d3`  
+**Frontend observé avant ce checkpoint :** `c4caa665f2add337824bb5d9c41b460a7da9fffa`  
 **Production S2 :** dernier correctif AF-OPS-003 réconcilié/attesté à API `84c3e4fe06c4282f0ab1f09a95962c6fb49c1ef3` et frontend `dcd8e5a79b27d93b66723884727f55ec2ffc9944`.
 
 ### Continuité préservée
@@ -102,11 +102,11 @@ Preuve : `AF-EVD-062` / run Programme Director `35788502090 = SUCCESS`.
 Etat observé au run `35793007081` :
 
 - `active_claim_count = 2` ;
-- claims actifs = `AF-TASK-017` / Allocation constraint engine **et** `AF-TASK-025` / Programme Director projection generator ;
+- claims actifs = `AF-TASK-017` / Allocation constraint engine **et** `AF-TASK-026` / Programme Director projection generator ;
 - owner = `ChatGPT-GPT-5.6-Sol` ;
 - surfaces API protégées : `src/services/allocation/constraints/**`, `tests/allocation-constraints.test.js`, `.github/workflows/governance-allocation-constraints.yml` ;
 - `conflict_count = 0` ;
-- paire certifiée non chevauchante = `AF-TASK-017 ↔ AF-TASK-025` ;
+- paire certifiée non chevauchante = `AF-TASK-017 ↔ AF-TASK-026` ;
 - stockage des claims = **dans les tâches de la queue unique**, jamais dans un verrou/registre parallèle ;
 - enforcement actuel = `ADVISORY_ONLY_NO_WRITE_BLOCK`.
 
@@ -134,18 +134,18 @@ Le contrat vérifie automatiquement :
 Preuve : `AF-EVD-063`.
 
 
-### Générateur déterministe des projections — observe-only
+### Write-back gate des projections — preflight
 
-`AF-TASK-025 = IN_PROGRESS / GENERATOR_DETERMINISM_GREEN`.
+`AF-TASK-026 = IN_PROGRESS / WRITEBACK_GATE_PREFLIGHT`.
 
-Preuve : `AF-EVD-065`, run Programme Director `35798266486 = SUCCESS`.
+Preuves amont : `AF-EVD-065` (générateur déterministe) et `AF-EVD-066` (simulation idempotente zéro-write).
 
 - deux générations indépendantes sur les mêmes autorités structurées : **byte-for-byte identiques** ;
 - `repository_write_performed = false` ;
 - `input_sha256 = f3edbd134b6b56b55216834e0db74f38638828d3f545fa5ba04d4b9f28d3c92e` ;
 - 6 blocs gérés candidats : NEXT_ACTION, CURRENT_ITERATION, LOOP_STATE, HANDOFF, STATUS, SUIVI ;
 - 17 artefacts Programme Directeur archivés dans le même run ;
-- prochaine étape : simuler insertion/remplacement **en mémoire seulement**, prouver diff borné + idempotence avant tout write-back Git.
+- prochaine étape : rerun generator+simulator au nouvel état exact, vérifier HEAD/claims/marqueurs, puis seulement insérer les blocs gérés si tous les gates restent verts.
 
 
 ---
