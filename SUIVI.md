@@ -1,5 +1,82 @@
 # Carnet de suivi - Africafunds (Fundafrique)
 
+
+## POINT DE REPRISE COURANT — 2026-09-22 — AF-OPS-003 RCA resserrée
+
+**Projet :** AfricaFunds — `CS-AFRICAFUNDS-001`  
+**Branches canoniques :** `claude/code-review-improvements-ikvuj` sur API et frontend  
+**API observée avant ce checkpoint :** `ac526a5f25621c9aabbf73e5f33742777fd78bb4`  
+**Frontend observé avant ce checkpoint :** `986bb29310705b33f940bb85774348347ef8ef7d`
+
+### Gouvernance et travaux concurrents préservés
+
+- `AF-TASK-003 = DONE_WITH_EXTERNAL_GAPS` et `AF-TASK-011 = DONE` restent fermées ;
+- `AF-OPS-003 = OPEN / RCA_PENDING` reste la priorité opérationnelle ;
+- le programme Allocation / Robot Advisor `AF-ALLOC-001`, matérialisé séparément dans la queue canonique avec `AF-TASK-012→023`, est conservé intégralement ; aucun doublon ni seconde queue n'a été créé ;
+- aucune nouvelle branche, aucune mutation DB, aucun restart MariaDB et aucun nouvel A/B allocateur n'ont été exécutés dans ce lot.
+
+### 7e OOM MariaDB désormais prouvé
+
+Le diagnostic read-only persistant prouve une nouvelle occurrence :
+
+- `2026-09-21 10:02:23 UTC` : `mariadb.service` frappé par l'OOM-killer ;
+- `mariadbd` PID `2100513` tué à `anon-rss=15054704 kB` ;
+- `2026-09-21 10:02:25 UTC` : service en échec `oom-kill` ;
+- `2026-09-22 06:25:02 UTC` : MariaDB redevient ready ;
+- `Restart=on-abort`, `NRestarts=0` : pas de reprise automatique.
+
+Le registre d'incident `AF-INC-20260817-001` compte maintenant **7 occurrences**. La root cause reste volontairement `UNKNOWN`.
+
+### Trajectoire longue et saut du daily update
+
+Les preuves gouvernées ajoutées sont :
+
+- `AF-EVD-053` — 7e OOM du 21/09 ;
+- `AF-EVD-054` — accumulation longue : ~127–130 MB quelques minutes après restart, ~247 MB vers 1 h, puis ~8.55 GiB vers 46 h 52, alors que `Memory_used` reste ~450–482 MB ;
+- `AF-EVD-056` — le 22/09, RSS `468032 kB` à 19:55:55 puis `7240796 kB` à 20:03:21 après démarrage de `cron_daily_update` à 20:00:01, soit environ +6.77 GiB en moins de huit minutes ;
+- le journal du même run prouve qu'avant les endpoints de performances, l'étape 3 `recalc_eur_usd_daily_rate.js` a recalculé **994766 VL** et l'étape 4 `recalc_vl_ajuste.js` **995370 VL** ;
+- à 20:04–20:09, pendant `saveperfdatemysql`, le RSS reste autour de 7.21–7.24 GiB : le saut principal est donc déjà produit dans la fenêtre des étapes 1→4.
+
+### Candidat prepared statements — non encore causalement prouvé
+
+`AF-EVD-057` constate que les deux recalculs massifs construisent des `UPDATE ... CASE` variables et les exécutent avec `mysql2.execute()`. La version verrouillée est `mysql2 3.11.3`. Le contrat mysql2 met en cache les prepared statements par texte SQL exact ; le pattern est donc un candidat technique sérieux, mais **pas encore déclaré root cause**.
+
+Un sampler gouverné read-only a été ajouté :
+
+`.github/workflows/ops-mariadb-rss-timeseries.yml`
+
+Il mesure sans écriture :
+
+- RSS / RssAnon / Private_Dirty / swap / cgroup ;
+- `Memory_used`, connexions, threads et tables temporaires ;
+- `Prepared_stmt_count`, `Com_stmt_prepare`, `Com_stmt_execute`, `Com_stmt_close` ;
+- batch/processus actifs et journaux de cron ;
+- baseline horaire, fenêtres ciblées `19:55 → 20:05` en semaine et `09:55 → 10:05` le lundi autour du cron Nigeria.
+
+Premiers runs read-only : `35777740702`, `35777856903`, `35778223875`, `35778385728`, tous PASS. Les preuves sont conservées comme artifacts Actions, sans commit automatique de chaque échantillon.
+
+### Etat data live mesuré
+
+`AF-EVD-055` / `docs/ETAT_PRODUCTION_VERIFIE.md` à 19:56 UTC :
+
+- **10/16 contrôles OK, 4 échecs critiques, 2 alertes** ;
+- fraîcheur VL dans le budget : Maroc 17/09, Nigeria 11/09, Tunisie 22/09, UEMOA 21/09 ;
+- CEMAC toujours en alerte de fraîcheur et à 0 % de couverture benchmark ;
+- critiques encore ouvertes : `C2` performances orphelines, `C3` performances absurdes, `C7` ruptures d'échelle, `C8` performances dérivées périmées.
+
+`AF-OPS-009` reste OPEN pour la **fiabilité du pipeline**, mais il ne faut plus prétendre que Nigeria et Tunisie sont tous deux bloqués au 28/08. Aucun backfill n'est justifié sur ce seul motif.
+
+### Prochaine action gouvernée
+
+1. laisser le sampler collecter les compteurs **pendant** les étapes 3 et 4 du prochain daily/Nigeria ;
+2. départager `recalc_eur_usd_daily_rate` et `recalc_vl_ajuste` ;
+3. vérifier si `Prepared_stmt_count / Com_stmt_prepare` explose pendant les SQL dynamiques ;
+4. seulement après preuve, construire une correction ciblée et testée (sans modifier les résultats financiers) ;
+5. conserver `AF-OPS-007/008/009` et le programme Allocation dans la même queue canonique, sans collision.
+
+---
+
+
 ## POINT DE REPRISE COURANT — 2026-09-13 17:59 UTC — AF-TASK-011 clôturée
 
 **Projet :** AfricaFunds — `CS-AFRICAFUNDS-001`  
