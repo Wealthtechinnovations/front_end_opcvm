@@ -6590,3 +6590,29 @@ Commit API de materialisation de la queue : `0eed7c532d9fcf0e7fb7fd72d51a3606160
 - Prochaine action Allocation : `AF-TASK-012` — cartographier et prouver le chemin runtime reel avant toute modification quantitative.
 - Prochaine action operationnelle globale : conservee selon `NEXT_ACTION.md` / `AF-OPS-003`.
 
+### AF-TASK-012 — CARTOGRAPHIE RUNTIME ALLOCATION CERTIFIEE (2026-09-22)
+
+Audit GitHub + observation S2 read-only terminés. Preuve runtime : workflow `OPS — observer S2 read-only` run `35781935658`, conclusion `success`, artefact `10718462823` digest `sha256:b3dc6765039e50f7c7d597797aa90f7db7a7d9c0ce7be97d668edb288d4b3a74`. Aucun write S2, aucune mutation DB, aucun restart.
+
+Constats prouvés :
+- S2 exécute `api-monolith` sur 3005 et `fundafrique-frontend`; aucun `analytics-service` AfricaFunds n'est actif.
+- Le `app.js` exact déployé ne monte ni `routes_vl_robotadvisor.js` ni `apigestionrobotadvisor.js`.
+- Le frontend déployé contient encore les chemins historiques `/api/robotadvisor/fonds` et `/python/efficient-frontier`.
+- Les fichiers runtime frontend pointent `NEXT_PUBLIC_PYTHON_API_URL` vers `https://africafunds.chainsolutions.fr/python`.
+- Aucun process n'écoute sur 5000. Le GET public `/python/efficient-frontier` retourne 404.
+- Les deux listeners Python observés ne sont pas AfricaFunds : 5001 = `/opt/pdfsvc`/uvicorn ; 7001 = `/opt/xlsconv/app`/gunicorn.
+- Le vhost Nginx AfricaFunds proxifie `/api/` vers 3005 mais aucune location/proxy `/python` n'a été trouvée.
+- Le frontend Frontière Efficiente envoie `fund_data/param_data/constraint_data`, alors que `efficient_frontier.py` attend l'ancien contrat plat `returns/period/minReturn/.../fundDetails`.
+- Le handler frontend Minweight n'envoie pas `ids` alors que l'ancien moteur Node l'exige.
+- Conclusion : aucun moteur d'allocation historique n'est une autorité runtime fonctionnelle actuellement. Le sous-système doit être réconcilié, pas simplement réactivé.
+
+Classification :
+- `src/routes/routes_vl_robotadvisor.js` = `LEGACY_INACTIVE`.
+- `services/analytics/routes.js` = `LEGACY_INACTIVE`.
+- `src/routes/efficient_frontier.py` = `LEGACY_INACTIVE`.
+- `src/routes/effi.py` = `PROTOTYPE`.
+- `src/classes/advisor.js` = `PROTOTYPE`.
+- pages frontend Robot Advisor = `LEGACY_ACTIVE` au niveau source déployée, mais avec intégration backend/optimiseur cassée ; activité individuelle du bundle de route non affirmée sans preuve supplémentaire.
+
+Décision de non-régression : aucun moteur existant n'est promu canonique tel quel. Ne pas réactiver aveuglément les routes legacy ou le Flask historique. La suite est `AF-TASK-013` : contrat API canonique backward-compatible + validation/auth/ownership, puis seulement raccordement progressif du moteur.
+
