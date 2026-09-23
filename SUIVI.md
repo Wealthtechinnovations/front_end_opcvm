@@ -6,10 +6,10 @@
 - project_uid: `CS-AFRICAFUNDS-001`
 - operational_priority: `AF-OPS-003`
 - operational_phase: `POST_FIX_VALIDATION`
-- programme_task: `AF-TASK-026`
-- programme_phase: `WRITEBACK_GATE_PREFLIGHT`
-- active_claims: `AF-TASK-017, AF-TASK-026`
-- latest_programme_evidence: `AF-EVD-066`
+- programme_task: `AF-TASK-027`
+- programme_phase: `WRITEBACK_ENGINE_DRY_RUN`
+- active_claims: `AF-TASK-017, AF-TASK-027`
+- latest_programme_evidence: `AF-EVD-067`
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
