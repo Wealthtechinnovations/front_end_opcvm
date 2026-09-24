@@ -2583,6 +2583,113 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BJ — 2026-09-24 : LA MEMOIRE MARIADB REMONTE, ET L ECART AVEC SA PROPRE COMPTABILITE TIENT
+
+**MESURE, PAS SUPPOSITION.** Run `36032082920` (« DIAG — MariaDB RSS time series »,
+lecture seule, `mutation=NONE`), echantillon du **2026-09-24 17:07:27 UTC** :
+
+| Grandeur | Valeur | Lecture |
+|---|---|---|
+| `process_uptime_s` | 211 346 s | **58 h 42 min** — demarrage ~2026-09-22 06:25 UTC |
+| `rss_kb` | 6 134 112 | **5,85 Go** resident |
+| `rssanon_kb` | 6 120 136 | 5,84 Go, soit **99,8 % d anonyme** |
+| `private_dirty_kb` | 6 120 420 | quasi tout le RSS est prive sale — non liberable |
+| `swap_kb` | 248 128 | **242 Mo deja en swap** |
+| `cgroup_memory_bytes` | 6 326 738 944 | 5,89 Go |
+| `mariadb_memory_used_bytes` | 480 450 096 | **458 Mo** comptabilises par MariaDB |
+
+**L ecart du lot BG n etait pas un accident de mesure : il se reproduit.**
+5,85 Go residents contre 458 Mo comptabilises = **facteur 13**. Le lot BG mesurait
+un facteur 15 sur un autre cycle de vie du processus. Deux cycles, deux PID, meme
+ordre de grandeur : ce n est pas un artefact.
+
+**DEUX SIGNAUX NOUVEAUX, absents des echantillons precedents** :
+
+1. `connections_total=15567` sur 58,7 h = **265 connexions/heure**, pour
+   `threads_connected=9` a l instant de la mesure. Le serveur ouvre et referme
+   des connexions en continu. Chaque thread puise dans une arene malloc ; la
+   granularite de 64 Mio relevee au lot BG est exactement celle des arenes
+   glibc non principales.
+2. `tmp_disk_tables=40684` sur `tmp_tables=75075` = **54 % des tables temporaires
+   partent sur disque**. Une table temporaire ne bascule sur disque qu apres avoir
+   ete allouee en memoire jusqu a `tmp_table_size` / `max_heap_table_size`. Ces
+   allocations-la passent par malloc avant d etre relachees.
+
+**CE QUE CELA N ETABLIT PAS.** Une coexistence n est pas un mecanisme. Ces deux
+signaux sont compatibles avec une fragmentation d arenes glibc ; ils ne la
+prouvent pas. Ce qui la prouverait : `MALLOC_ARENA_MAX=2` sur un cycle complet,
+compare a un cycle temoin de meme duree et de meme charge — comparaison
+froid-contre-froid, jamais deux phases d un meme processus (methodologie du
+lot BG). Ce chantier appartient a la session parallele ; je fournis la mesure.
+
+**CE QUE CELA ETABLIT.** La croissance est monotone et rapide. De ~0,24 Go a
+froid (mesure du lot BG a 01:09 d uptime) a 5,85 Go a 58,7 h, la pente lineaire
+est de **~96 Mo/h**. Extrapolee — et ce n est qu une extrapolation lineaire sur
+deux points d un seul cycle, pas une prediction — elle atteint les ~14,9 Go du
+troisieme OOM en **environ quatre jours**. Le swap a deja commence.
+
+**CONSEQUENCE OPERATIONNELLE INCHANGEE ET RENFORCEE.** `Restart=on-failure` +
+`RestartSec=10` sur `mariadb.service` reste l action numero un. Depuis le lot BI
+je ne peux plus declencher `ops-mariadb-recover.yml` : un quatrieme OOM resterait
+en l etat jusqu a ce qu un humain le voie, comme les 3 h 56 du lot BE.
+
+---
+
+**CI — ETAT MESURE LE 2026-09-24 17:10 UTC**
+
+`api_opcv` PR #1 : `state=open`, `head=31bb9ba`, `mergeable_state=clean`. Un seul
+check-run sur ce SHA (`31bb9ba` porte `[skip ci]`) : « Sample MariaDB RSS without
+mutation » = `success`. Rien a corriger sur la PR.
+
+Dernier verdict **par workflow** (regle du lot AT : un verdict par workflow, pas
+le dernier run tous workflows confondus) — un seul echec :
+
+```
+failure  2026-09-24T15:17:54Z  AfricaFunds Programme Director  (run 36019134577)
+```
+
+Etape en echec : **9 — « Enforce human projection alignment fail-closed »**.
+`projection_drift_count=2`, `machine_drift_count=0`, `integrity=FAIL`.
+Les deux derives sont le **meme token manquant** :
+
+| Projection | Fichier | Token absent |
+|---|---|---|
+| `STATUS` | `api_opcv/STATUS.md` | `AF-TASK-028` |
+| `GLOBAL_SUIVI` | `front_end_opcvm/SUIVI.md` | `AF-TASK-028` |
+
+**LE DETECTEUR A RAISON, ET JE N Y TOUCHE PAS.** `AF-TASK-028` est `IN_PROGRESS`
+dans `.governance/loop/task-queue.json` — chantier de la session parallele, en
+vol. La file a avance vers 028 avant que les vues humaines ne le projettent :
+c est precisement ce que le detecteur fail-closed est la pour dire. Ecrire
+`AF-TASK-028` dans ces deux fichiers maintenant reviendrait a produire la
+projection d une tache dont je ne suis pas l auteur, contre l invariant
+`single writer` et contre la regle « une seule autorite par sujet ». La
+correction appartient a la cloture de AF-TASK-028.
+
+**Regle appliquee** : « corriger la production, ou corriger le document — jamais
+desactiver le controle. » Ici ni l un ni l autre ne m appartient : je consigne.
+
+**Fichiers modifies dans ce lot** : `front_end_opcvm/SUIVI.md` (ce bloc, hors
+marqueurs geres `PROGRAMME_DIRECTOR` — l ajout est en dehors du bloc gere et ne
+perturbe donc pas le moteur de write-back, dont le contrat garantit
+`all_outside_content_preserved=true`).
+
+**Commandes executees** : lecture seule — `git log`, `git status`, API GitHub
+(PR, check-runs, runs, jobs, logs), lecture de `docs/ETAT_PRODUCTION_VERIFIE.md`
+et de `.governance/loop/task-queue.json`. **Aucune mutation de production.**
+
+**Prochaine action recommandee** : les deux actions proprietaire, inchangees et
+dans cet ordre — (1) `Restart=on-failure` + `RestartSec=10` sur
+`mariadb.service` ; (2) `ops-fix-segments-naira` en `execute`,
+`recalculer: false`, phrase `VALIDER CORRECTION SEGMENTS NAIRA` (157 VL /
+30 fonds, perimetre inchange depuis le 1er septembre).
+
+**A ne pas faire a la reprise** : ne pas ecrire `AF-TASK-028` dans `STATUS.md`
+ni dans `SUIVI.md` pour faire passer le Programme Director au vert — la tache
+est en cours chez la session parallele ; ne pas desactiver l etape 9.
+
+---
+
 ### LOT BI — 2026-09-16 : LE DECLENCHEMENT DE WORKFLOW N EST PLUS AUTORISE DEPUIS CETTE SESSION
 
 **CONSTAT VERIFIE, PAS SUPPOSE.** Un `POST .../workflows/<fichier>/dispatches`
