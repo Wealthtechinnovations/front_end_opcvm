@@ -2664,8 +2664,33 @@ prevois. A rearbitrer par le proprietaire sur un cycle complet.
 **Commandes** : lecture seule (git log/show sur l historique de
 `ETAT_PRODUCTION_VERIFIE.md`, calculs locaux) + `node --check`. Aucune mutation
 de production, aucune requete base.
-**Tests** : `node --check` OK. **C9 non execute contre la base** — non testable
-depuis cette session.
+**Tests** : `node --check` OK, puis **C9 execute contre la production** — le
+push a declenche le workflow `Controle derive prod/doc` (run 36142982495,
+conclusion `success`), qui a fait tourner le script modifie contre la base. Je
+l avais annonce « non testable depuis cette session » : c etait vrai au moment
+du commit, faux quinze minutes plus tard. Verdict mesure :
+
+```
+[OK    ] C6.MAROC     97.9 % (11532 VL sans benchmark sur 562398)
+[ALERTE] C9.MAROC      0.0 % (7676 VL sans benchmark sur 7676 entrees en 30 j)
+[OK    ] C9.NIGERIA  100.0 % (0 VL sans benchmark sur 69 entrees en 30 j)
+[OK    ] C9.TUNISIE  100.0 % (0 VL sans benchmark sur 2520 entrees en 30 j)
+[OK    ] C9.UEMOA    100.0 % (0 VL sans benchmark sur 420 entrees en 30 j)
+```
+
+**Zero sur 7 676.** La derivation faite depuis l historique commite est
+confirmee par une mesure directe en base, avec un chiffre independant
+(7 676 VL sur 30 jours glissants, contre 8 609 sur 34 jours derives).
+
+**ET LE CONTRASTE TRANCHE LA QUESTION DU PERIMETRE** : Tunisie 100 % sur
+2 520 VL, UEMOA 100 % sur 420, Nigeria 100 % sur 69. Le rattachement du
+benchmark fonctionne partout **sauf au Maroc**. Ce n est donc pas la logique
+`indRef` partagee qui est en cause, mais le chemin d import marocain (ASFIM).
+Cela restreint fortement le perimetre a instruire — sans le trancher.
+
+Le job reste `success` : C9 est un AVERTISSEMENT, il n a pas vocation a rougir
+la CI, et la ligne C6.MAROC reste [OK] a cote de lui — l angle mort est
+desormais visible sans qu aucun controle existant ait ete modifie.
 **Prochaine action recommandee** : inchangee — (1) `Restart=on-failure` +
 `RestartSec=10` sur `mariadb.service` ; (2) `ops-fix-segments-naira` en
 `execute`, `recalculer: false`, phrase `VALIDER CORRECTION SEGMENTS NAIRA`.
