@@ -2583,6 +2583,99 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BL — 2026-09-25 : LE BENCHMARK MAROCAIN EST CASSE DEPUIS 34 JOURS, ET LE CONTROLE NE POUVAIT PAS LE VOIR
+
+**MESURE, TIREE DE L HISTORIQUE COMMITE DE LA SOURCE DE VERITE N°1.**
+Aucun acces production n a ete necessaire : `docs/ETAT_PRODUCTION_VERIFIE.md`
+conserve, commit apres commit, le couple (VL marocaines sans benchmark / VL
+marocaines totales). En derivant cette serie :
+
+| Periode | VL entrees | Sans benchmark | Part |
+|---|---|---|---|
+| 22/08 -> 28/08 | 1 256 | 1 256 | **100,0 %** |
+| 28/08 -> 01/09 | 627 | 627 | **100,0 %** |
+| 01/09 -> 10/09 | 2 564 | 2 564 | **100,0 %** |
+| 10/09 -> 11/09 | 313 | 313 | **100,0 %** |
+| 11/09 -> 15/09 | 961 | 961 | **100,0 %** |
+| 15/09 -> 18/09 | 969 | 969 | **100,0 %** |
+| 18/09 -> 22/09 | 1 211 | 1 211 | **100,0 %** |
+| 22/09 -> 25/09 | 708 | 708 | **100,0 %** |
+| **CUMUL 22/08 -> 25/09** | **8 609** | **8 609** | **100,0 %** |
+
+**Treize intervalles releves, treize fois 100,0 %, pas une exception.** Et le
+compte de VL sans benchmark ne decroit jamais : **aucun rattrapage a posteriori**
+n a eu lieu non plus. Depuis au moins le 22 aout, **pas une seule VL marocaine
+neuve ne recoit d indRef**.
+
+**CE N EST PAS UNE DERIVE, C EST UN ARRET.** Le lot precedent parlait d une
+« derive marocaine, ~323 VL/jour sans benchmark ». Le mot est trop faible : le
+rattachement du benchmark aux VL marocaines neuves ne fonctionne plus du tout.
+
+**POURQUOI LE CONTROLE NE LE DIT PAS.** `C6.MAROC` lit **[OK] 97,9 %**. Il
+calcule la couverture sur **tout l historique** — `GROUP BY f.pays` sans aucune
+fenetre temporelle, seuil `pct >= 95` (`check_doc_drift.js`). Avec 562 398 VL au
+denominateur, 8 609 VL cassees pesent 1,5 point. Pendant 34 jours l indicateur
+est passe de 98,3 % a 97,9 % : il a **baisse de 0,4 point pendant qu un pipeline
+tombait a zero**. Pour atteindre le seuil de 95 % il faut encore ~17 500 VL
+cassees, soit **~54 jours** au rythme actuel. Total : un pipeline integralement
+casse serait reste invisible **~88 jours** au controle cense le voir. Et C6 est
+un AVERTISSEMENT : meme en se declenchant il n aurait pas rougi la CI.
+
+**C EST LA TROISIEME FOIS.** Seuils de fraicheur C4, perimetre C2 comptant
+50 150 faux positifs, et maintenant le denominateur de C6. Meme famille de
+defaut, deja nommee dans CLAUDE.md : « un invariant non confronte aux donnees
+reelles n est qu une affirmation de plus. » Ici l invariant etait bon, le
+perimetre de mesure etait faux.
+
+**CORRECTION APPORTEE — additive, aucun controle existant modifie.**
+Ajout de **C9** dans `scripts/diag/check_doc_drift.js` : meme colonne `indRef`,
+meme seuil de 95 %, mais sur une **fenetre de 30 jours**, par pays, avec un
+plancher de 30 VL pour ne pas conclure sur un echantillon vide. Severite
+**AVERTISSEMENT**, alignee sur C6 — c est une qualite de donnee, pas une
+indisponibilite, et cela ne rougira pas la CI. Enveloppe dans un `try/catch`
+pour la raison etablie au lot BF : un controle de second rang ne doit jamais
+pouvoir empecher les controles CRITIQUE de rendre leur verdict. Le commentaire
+du script porte la mesure qui le justifie, conformement a la regle « le corriger
+et documenter pourquoi dans le script ».
+
+**CE QUE JE N AI PAS FAIT, ET POURQUOI.** Je n ai pas touche a C6, pas modifie
+son seuil, pas desactive quoi que ce soit. Je n ai pas non plus corrige le
+pipeline marocain lui-meme : la cause reste a etablir (import ASFIM, table
+`devisedechanges`, jointure indRef — non tranche), et c est une tache sensible au
+sens de CLAUDE.md §8, donc diagnostic d abord. **Le controle C9 n est pas teste
+contre la base** : je n ai pas d acces production depuis cette session, seul
+`node --check` a ete passe. Le `try/catch` existe precisement pour que, s il
+echouait, il degrade en avertissement au lieu de casser la source de verite n°1.
+
+**AUTRE OBSERVATION DU JOUR — C4.NIGERIA est exactement a son budget.**
+Derniere VL vendredi 11 septembre, **14 jours, budget 14**. Il franchira le
+seuil demain. Ce n est pas une panne : l historique montre que le cron
+hebdomadaire du lundi **a bien tourne le 22 septembre** (derniere VL passee de
+Fri Aug 28 a Fri Sep 11). Mais un import hebdomadaire de donnees deja vieilles
+de 11 jours fait courir l age de 11 a 18 jours sur le cycle : le budget de 14 j
+est structurellement intenable les trois ou quatre derniers jours de chaque
+semaine. **Je ne touche pas au seuil.** Un controle qui se declenche est une
+donnee ; je prefere le laisser se declencher et documenter la prediction avant
+l evenement plutot que d ajuster un seuil pour empecher une alerte que je
+prevois. A rearbitrer par le proprietaire sur un cycle complet.
+
+**Fichiers modifies** : `api_opcv/scripts/diag/check_doc_drift.js` (ajout C9),
+`front_end_opcvm/SUIVI.md` (ce bloc).
+**Commandes** : lecture seule (git log/show sur l historique de
+`ETAT_PRODUCTION_VERIFIE.md`, calculs locaux) + `node --check`. Aucune mutation
+de production, aucune requete base.
+**Tests** : `node --check` OK. **C9 non execute contre la base** — non testable
+depuis cette session.
+**Prochaine action recommandee** : inchangee — (1) `Restart=on-failure` +
+`RestartSec=10` sur `mariadb.service` ; (2) `ops-fix-segments-naira` en
+`execute`, `recalculer: false`, phrase `VALIDER CORRECTION SEGMENTS NAIRA`.
+Puis, nouveau : instruire la cause du benchmark marocain.
+**A ne pas faire a la reprise** : ne pas « corriger » C6 en abaissant son seuil ;
+ne pas supprimer les 8 609 VL sans benchmark — elles sont la trace du defaut ;
+ne pas conclure sur la cause du pipeline marocain sans diagnostic.
+
+---
+
 ### LOT BK — 2026-09-25 : RECTIFICATION DU LOT BJ — MA PENTE MEMOIRE ETAIT FAUSSE D UN FACTEUR 20
 
 **J AI PUBLIE UN CHIFFRE FAUX IL Y A HUIT HEURES. Je le corrige ici.**
