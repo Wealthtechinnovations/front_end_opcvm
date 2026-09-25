@@ -1,14 +1,15 @@
 "use client";
-import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/app/constants";
+import { useUserId } from '@/hooks/useUserId';
+import { urlconstant, urlstableconstant, API_KEY_STABLECOIN } from "@/lib/constants";
 
 import React, { useState, useEffect, Fragment } from 'react';
 import { useRouter } from "next/navigation";
 import Swal from 'sweetalert2';
 //import ProgressBar from 'react-bootstrap/ProgressBar';
-import ProgressBar from '../../../ProgressBar';
+import ProgressBar from '@/components/common/ProgressBar';
 
 import 'react-step-progress-bar/styles.css'; // Assurez-vous d'importer les styles CSS si nécessaire
-import Header from "@/app/Header";
+import Header from '@/components/layout/Header';
 import Link from "next/link";
 import { Dropdown } from "react-bootstrap";
 
@@ -29,11 +30,11 @@ interface QuizMifidOfUser {
   userId: string;
   // Autres propriétés...
 }
-export default function Profile(props: PageProps): JSX.Element {
+export default function Profile(): JSX.Element {
   // Variable de l'url de l'api
   const API_URL = process.env.NEXT_PUBLIC_URL_API;
   const router = useRouter();
-  let id = props.searchParams.id;
+  const id = useUserId();
 
   // États pour gérer l'état du formulaire
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -84,7 +85,6 @@ export default function Profile(props: PageProps): JSX.Element {
     newSelectedOptions[questionIndex] = selectedOption;
     setSelectedOptions(newSelectedOptions);
   };
-
 
 
   // Fonction pour gérer la mise à jour des données de la partie 1
@@ -169,113 +169,7 @@ export default function Profile(props: PageProps): JSX.Element {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  const [menuOpen, setMenuOpen] = useState(false);
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
-
-  const handleLinksociete = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/Fundmanager/recherche`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovered, setIsHovered] = useState(false);
-
-
-  const handleMouseEnters = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaves = () => {
-    setIsHovered(false);
-  };
-  const handleLinkaccueil = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/accueil`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-  const [isHovereda, setIsHovereda] = useState(false);
-
-
-  const handleMouseEntersa = () => {
-    setIsHovereda(true);
-  };
-
-  const handleMouseLeavesa = () => {
-    setIsHovereda(false);
-  };
   const [userConnected, setUserConnected] = useState<number | null>(null);
-  const handleLinkClick = () => {
-
-    if (userConnected !== null) {
-      setTimeout(() => {
-        const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-        router.push(redirectUrl);
-      }, 5);
-
-    } else {
-      setTimeout(() => {
-        // const redirectUrl = `/panel/portefeuille/home?id=${userConnected}`;
-
-        router.push('/portefeuille/login');
-      }, 5);
-    }
-  };
-
-  const [isHoveredaa, setIsHoveredaa] = useState(false);
-
-  const handleMouseEnteraa = () => {
-    setIsHoveredaa(true);
-  };
-
-  const handleMouseLeaveaa = () => {
-    setIsHoveredaa(false);
-  };
-  const handleLinkactualite = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/actualite`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
-
-  const [isHoveredp, setIsHoveredp] = useState(false);
-
-  const handleMouseEnterp = () => {
-    setIsHoveredp(true);
-  };
-
-  const handleMouseLeavep = () => {
-    setIsHoveredp(false);
-  };
-  const handleLinkpays = () => {
-
-
-    setTimeout(() => {
-      const redirectUrl = `/pays`;
-
-      router.push(redirectUrl);
-    }, 1);
-
-
-  };
   return (
     <>
       < Fragment >

@@ -31,7 +31,7 @@ File: scss
 .light-skin .main-header .navbar .nav>li>a:active,
 .light-skin .main-header .navbar .nav>li>a:focus {
   background-color: rgba(0, 0, 0, 0.03);
-  color: #3b82f6;
+  color: #1B3A5C;
 }
 
 .light-skin .main-header .navbar .nav .open>a {
@@ -1281,7 +1281,7 @@ body.dark-skin .d-light {
 
 .dark-skin .nav-pills.file-nav>li>a:hover,
 .dark-skin .nav-pills.file-nav>li>a:focus {
-  color: #3b82f6 !important;
+  color: #1B3A5C !important;
 }
 
 .dark-skin .nav-tabs-inverse-mode .nav-link.active {
@@ -2291,25 +2291,25 @@ body.dark-skin .d-light {
 }
 
 .dark-skin .fontawesome-icon-list .fa-hover:hover {
-  color: #3b82f6;
+  color: #1B3A5C;
 }
 
 .dark-skin .fontawesome-icon-list .fa-hover:hover i {
-  color: #3b82f6;
+  color: #1B3A5C;
 }
 
 .dark-skin .bs-glyphicons li:hover {
-  color: #3b82f6;
+  color: #1B3A5C;
 }
 
 .dark-skin .icons-list-demo .col-md-4:hover,
 .dark-skin .icons-list-demo .col-3:hover {
-  color: #3b82f6;
+  color: #1B3A5C;
 }
 
 .dark-skin .icons-list-demo .col-md-4:hover i,
 .dark-skin .icons-list-demo .col-3:hover i {
-  color: #3b82f6;
+  color: #1B3A5C;
 }
 
 .dark-skin .testimonial-widget .testimonial-content {

@@ -1,4 +1,4 @@
-import { urlconstant } from '@/app/constants';
+import { urlconstant } from '@/lib/constants';
 
 /**
  * Client API centralisé avec gestion du token JWT
@@ -106,7 +106,7 @@ function handleUnauthorized() {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
     // Rediriger vers la page de login
-    window.location.href = '/payspanel/login';
+    window.location.href = '/country-panel/login';
   }
 }
 
@@ -127,6 +127,6 @@ export function logout() {
     localStorage.removeItem('tokenEnCours');
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userId');
-    window.location.href = '/payspanel/login';
+    window.location.href = '/country-panel/login';
   }
 }
