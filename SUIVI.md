@@ -2583,7 +2583,92 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BK — 2026-09-25 : RECTIFICATION DU LOT BJ — MA PENTE MEMOIRE ETAIT FAUSSE D UN FACTEUR 20
+
+**J AI PUBLIE UN CHIFFRE FAUX IL Y A HUIT HEURES. Je le corrige ici.**
+
+Le lot BJ annonce une pente de **~96 Mo/h** et une extrapolation « les ~14,9 Go du
+troisieme OOM en environ quatre jours ». Quatre echantillons supplementaires,
+tous sur **le meme PID 3041009**, mesurent la pente reelle :
+
+| Heure UTC | Uptime | RSS | Δ depuis 17:07 | Pente du segment |
+|---|---|---|---|---|
+| 17:07:27 | 58,71 h | 5,850 Go | — | — |
+| 20:29:13 | 62,07 h | 5,872 Go | +23,0 Mo | 6,85 Mo/h |
+| 22:44:37 | 64,33 h | 5,881 Go | +32,2 Mo | 4,07 Mo/h |
+| 23:04:53 | 64,66 h | 5,882 Go | +32,4 Mo | 0,51 Mo/h |
+| 23:52:16 | 65,45 h | 5,882 Go | +32,4 Mo | **0,00 Mo/h** |
+
+**Pente mesuree : 4,80 Mo/h sur 6,75 h — contre 96 Mo/h annonces. Facteur 20.**
+Et les trois derniers echantillons sont **strictement identiques** (6 167 276 kB) :
+la croissance ne ralentit pas, elle s arrete.
+
+**D OU VIENT MON ERREUR.** J ai divise le RSS total (5,85 Go) par l uptime total
+(58,7 h). Ce n est pas une pente, c est une **moyenne depuis le demarrage**, qui
+inclut la rampe initiale. Une moyenne sur une periode contenant une montee raide
+n est pas la pente courante. L erreur etait dans la methode, pas dans les nombres.
+
+**CE QUE CELA CHANGE POUR L ECHEANCE.** A 4,80 Mo/h, atteindre ~14,9 Go demande
+**~80 jours**, pas quatre. Il n y a pas de compte a rebours de quatre jours. Je
+l ai ecrit, c etait faux, et cela a exagere l urgence que j ai transmise.
+
+**CE QUE CELA CHANGE POUR LE MECANISME — mes deux hypotheses sont affaiblies.**
+Sur le segment plat 22:44 → 23:52 (1,13 h), pendant que le RSS ne bouge pas :
+
+```
+  RSS                 : +0,17 Mo   (nul a l arrondi kB pres)
+  connexions cumulees : +173
+  tables temporaires  : +461  (dont disque +248)
+```
+
+Les deux signaux que le lot BJ presentait comme « compatibles avec une
+fragmentation d arenes glibc » **continuent de s accumuler pendant une phase de
+croissance nulle**. Une cause dont l effet est absent quand elle est presente
+n est pas la cause. Ni le rythme de connexions ni les tables temporaires ne
+pilotent ce RSS. Je retire ces deux pistes telles que je les avais posees.
+
+**CE QUI RESTE VRAI DU LOT BJ, et qui est confirme par ces quatre echantillons** :
+l ecart entre le resident et la comptabilite propre de MariaDB. A 23:52,
+6 167 276 kB residents contre `mariadb_memory_used_bytes=482 135 472`, soit
+**facteur 13**, stable sur toute la serie. Le RSS reste anonyme prive sale a
+99,8 %. Le swap est fige a 248 524 kB. Cette anomalie-la tient.
+
+**MODELE PLUS FIDELE, et qu il reste a tester.** La croissance suit les segments
+de charge, pas l horloge : +6,85 Mo/h sur la fenetre qui couvre les crons de
+18:30 a 20:00, +4,07 Mo/h sur celle du cron 21:30, **zero** ensuite. Le RSS
+monterait donc **par paliers a chaque batch lourd**, puis stagnerait — ce qui
+cadre avec la correlation Nigeria du lot BH (cron hebdomadaire du lundi) bien
+mieux qu une derive continue. A confronter aux batchs les plus lourds, que cette
+serie de six heures creuses ne couvre pas.
+
+**CE QUE CELA NE CHANGE PAS.** `Restart=on-failure` + `RestartSec=10` sur
+`mariadb.service` reste justifie — non par un compte a rebours que je viens de
+retirer, mais par ce qui est etabli : **trois OOM ont eu lieu**, le dernier a
+laisse la base morte **3 h 56 sans que personne en soit averti** (lot BE), et
+depuis le lot BI je ne peux plus relancer la base moi-meme. La justification est
+historique et operationnelle, pas predictive. Elle etait deja suffisante sans le
+chiffre errone.
+
+**Fichiers modifies** : `front_end_opcvm/SUIVI.md` (ce bloc).
+**Commandes** : lecture seule — API GitHub (logs des runs 36055168395,
+36069108164, 36070875201, 36074849515), calculs locaux. Aucune mutation.
+**Prochaine action recommandee** : inchangee — (1) `Restart=on-failure` ;
+(2) `ops-fix-segments-naira` en `execute`, `recalculer: false`, phrase
+`VALIDER CORRECTION SEGMENTS NAIRA`.
+**A ne pas faire a la reprise** : ne pas reutiliser la pente de 96 Mo/h ni
+l echeance de quatre jours du lot BJ ; ne pas deduire une pente d un RSS divise
+par un uptime.
+
+---
+
 ### LOT BJ — 2026-09-24 : LA MEMOIRE MARIADB REMONTE, ET L ECART AVEC SA PROPRE COMPTABILITE TIENT
+
+> **RECTIFIE PAR LE LOT BK (2026-09-25).** La pente de ~96 Mo/h et l echeance de
+> « environ quatre jours » annoncees plus bas sont **fausses** : pente reelle
+> 4,80 Mo/h, echeance ~80 jours, et croissance nulle sur les derniers
+> echantillons. Les deux pistes de mecanisme (connexions, tables temporaires)
+> sont egalement retirees. L ecart de facteur 13 entre RSS et comptabilite
+> MariaDB, lui, est confirme. Lire le lot BK avant ce qui suit.
 
 **MESURE, PAS SUPPOSITION.** Run `36032082920` (« DIAG — MariaDB RSS time series »,
 lecture seule, `mutation=NONE`), echantillon du **2026-09-24 17:07:27 UTC** :
