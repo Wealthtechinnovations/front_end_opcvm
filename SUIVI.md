@@ -2583,6 +2583,83 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BM — 2026-10-01 : TROIS JOURS DE RETARD RELEVES, ET UNE PREDICTION A RETIRER
+
+**1. CORRECTION — LE NIGERIA N EST PAS REVENU AU VERT, CONTRAIREMENT A CE QUE
+J AI ANNONCE.** Le lot BL predisait : « le cron hebdomadaire de demain lundi 28
+devrait le ramener au vert ». **Faux.** Serie mesuree, prise dans l historique
+de `ETAT_PRODUCTION_VERIFIE.md` :
+
+| Rapport | Derniere VL Nigeria | Age |
+|---|---|---|
+| 2026-09-26 11:09 | Fri Sep 11 | 15 j |
+| 2026-09-27 11:48 | Fri Sep 11 | 16 j |
+| **2026-09-28 13:29** | **Fri Sep 11** | **17 j** |
+| 2026-09-29 12:33 | Fri Sep 11 | 18 j |
+| 2026-10-01 12:52 | Fri Sep 11 | **20 j** |
+
+**Le point decisif est celui du 28 septembre a 13:29 UTC** : il est posterieur au
+cron hebdomadaire de 10:00, et la derniere VL n a pas bouge. **Le cron du lundi
+28 n a donc rien importe.** Ce n est plus un probleme de calibrage de budget :
+c est une anomalie d import. Deux causes possibles, que je ne peux pas separer
+sans acces serveur — soit `cron_nigeria_weekly.sh` a echoue, soit la SEC Nigeria
+n a rien publie de neuf. `diag_import_nigeria.js` tranchera.
+
+Ce que je retire : l idee que C4.NIGERIA soit seulement « structurellement
+intenable en fin de cycle ». Cette lecture valait pour le cycle du 22 septembre,
+qui avait bien importe (Aug 28 -> Sep 11). Elle ne couvre pas 20 jours sans le
+moindre import. **Ne pas toucher au seuil : le controle dit vrai.**
+
+**2. UN TROU D UN JOUR DANS LA SOURCE DE VERITE N°1, ET SA CAUSE.**
+Le 2026-09-30 a 12:18 UTC, le workflow `Controle derive prod/doc` a echoue — non
+a la mesure, mais a l **etape 8, « Consigner le rapport dans le depot »** :
+
+```
+remote: fatal error in commit_refs
+ ! [remote rejected] HEAD -> claude/code-review-improvements-ikvuj (failure)
+error: failed to push some refs
+```
+
+Erreur **serveur GitHub**, pas un non-fast-forward : le rebase prealable avait
+fonctionne. Consequence verifiee dans `git log` : aucun rapport entre celui du
+29/09 12:33 et celui du 01/10 12:52. **La production avait ete mesuree ce
+jour-la, et la mesure a ete perdue a la publication** — on paie le cout du
+controle sans en garder la trace.
+
+**Correction livree** (`6dce0cb`) : boucle de 4 tentatives, attente 2/4/8/16 s,
+rebase avant chacune. Si les quatre echouent, l etape sort en erreur en disant
+que le fichier garde sa date precedente, pour que la perte reste visible au lieu
+d etre silencieuse. La mesure, les seuils et les controles ne sont pas touches.
+Validation : le YAML parse (`yaml.safe_load`, un job `drift`). **Non teste en
+execution** : le prochain cycle quotidien le fera tourner.
+
+**3. CE QUI N A PAS CHANGE EN TROIS JOURS.**
+- `C9.MAROC` : **0,0 %**, septieme jour consecutif — 8 031 VL sur 8 031 entrees
+  en 30 jours, toujours pas une seule avec benchmark. `C6.MAROC` continue de
+  glisser : 97,9 % -> **97,7 %** (13 160 VL sans benchmark sur 564 026).
+  Le controle C9 fait son travail tous les jours ; la cause reste a instruire.
+- Programme Director : **vingt-neuvieme echec consecutif**, toujours
+  `projection_drift_count=2` sur le seul token `AF-TASK-028`, toujours
+  `IN_PROGRESS` dans la file. Deja commente une fois sur la PR, pas de second
+  commentaire.
+- Bilan mesure au 01/10 12:52 : **5 echecs, 3 alertes** — stable depuis le 26/09.
+
+**Fichiers modifies** : `api_opcv/.github/workflows/doc-drift.yml` (reprise du
+push), `front_end_opcvm/SUIVI.md` (ce bloc).
+**Commandes** : lecture seule (API GitHub : runs, jobs, logs ; git log/show sur
+l historique du rapport) + `yaml.safe_load`. Aucune mutation de production.
+**Prochaine action recommandee** : inchangee dans l ordre — (1)
+`Restart=on-failure` + `RestartSec=10` sur `mariadb.service` ; (2)
+`ops-fix-segments-naira` en `execute`, `recalculer: false`, phrase
+`VALIDER CORRECTION SEGMENTS NAIRA`. Puis deux instructions a mener :
+**l import Nigeria** (nouveau, 20 jours sans donnee) et **le benchmark
+marocain**.
+**A ne pas faire a la reprise** : ne pas reutiliser la prediction du lot BL sur
+le retour au vert du Nigeria ; ne pas relever le budget C4.NIGERIA pour faire
+taire l alerte — l import est en cause, pas le seuil.
+
+---
+
 ### LOT BL — 2026-09-25 : LE BENCHMARK MAROCAIN EST CASSE DEPUIS 34 JOURS, ET LE CONTROLE NE POUVAIT PAS LE VOIR
 
 **MESURE, TIREE DE L HISTORIQUE COMMITE DE LA SOURCE DE VERITE N°1.**
