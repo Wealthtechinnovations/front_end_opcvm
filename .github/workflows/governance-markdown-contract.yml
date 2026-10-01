@@ -1,0 +1,58 @@
+name: AfricaFunds Frontend Markdown Contract
+
+on:
+  push:
+    branches:
+      - claude/code-review-improvements-ikvuj
+    paths:
+      - '*.md'
+      - '**/*.md'
+      - '.github/workflows/governance-markdown-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: africafunds-frontend-markdown-contract
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout frontend canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/code-review-improvements-ikvuj
+          path: frontend
+          fetch-depth: 1
+
+      - name: Checkout central API governance
+        uses: actions/checkout@v4
+        with:
+          repository: Wealthtechinnovations/api_opcv
+          ref: claude/code-review-improvements-ikvuj
+          path: api
+          fetch-depth: 1
+          token: ${{ github.token }}
+
+      - name: Audit all Markdown against the central engine
+        run: |
+          mkdir -p out
+          python3 api/scripts/governance/audit_markdown.py \
+            --api-root api \
+            --frontend-root frontend \
+            --output out/markdown-registry-candidate.json \
+            --summary out/markdown-audit-summary.txt
+
+      - name: Publish read-only peer evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: africafunds-frontend-markdown-audit
+          path: |
+            out/markdown-registry-candidate.json
+            out/markdown-audit-summary.txt
+          if-no-files-found: error
+          retention-days: 14

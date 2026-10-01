@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { urlsite } from "@/app/constants";
+import { urlsite } from "@/lib/constants";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,12 +9,18 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         disallow: [
           "/panel/admin",
+          "/panel/investor",
+          "/panel/management",
+          "/panel/distributor",
+          "/panel/data-requester",
+          "/panel/institutional",
+          "/panel/portfolio",
           "/panel/portefeuille",
-          "/panel/societegestionpanel",
+          "/country-panel",
           "/api",
+          "/api/",
           "/auth",
           "/callback",
-          "/testpanel",
         ],
       },
     ],
