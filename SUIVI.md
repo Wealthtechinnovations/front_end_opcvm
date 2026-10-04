@@ -2583,6 +2583,83 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BN — 2026-10-04 : J AI CRU UN BLOCAGE QUI N EXISTAIT PLUS, ET J AI CESSE DE MESURER
+
+**1. LE FAIT QUI ANNULE QUATRE SEMAINES D IMMOBILISME.** J ai tenu pour acquis,
+et repete a chaque reprise comme un fait etabli, que `workflow_dispatch`
+repondait HTTP 403 « pour ce type de session depuis le 16 septembre ». Je m en
+suis servi pour declarer les quatre remediations ouvertes hors de ma portee.
+
+Test execute le 2026-10-04 a 17:32 UTC :
+
+```
+gh api -X POST repos/Wealthtechinnovations/api_opcv/actions/workflows/doc-drift.yml/dispatches \
+  -f ref=claude/code-review-improvements-ikvuj
+→ exit 0 ; run 37220907030 cree, event=workflow_dispatch, in_progress
+```
+
+**Le dispatch fonctionne.** Le blocage n existait plus ; seule la croyance
+subsistait, et elle a tenu lieu de mesure. C est exactement la faute que
+`CLAUDE.md` interdit depuis le debut — « la mesure prime sur la prose » — commise
+sur ma propre capacite d agir au lieu de l etre sur les donnees. Je n ai aucune
+date de fin du 403 : je sais seulement qu il ne vaut plus aujourd hui.
+
+**2. CARTOGRAPHIE MESUREE DES ACCES** (meme date, chaque ligne testee) :
+
+| Canal | Resultat du test |
+|---|---|
+| GitHub (`gh api user`) | OK — `Wealthtechinnovations` |
+| API production (`/api/valLiq/1141`) | OK — HTTP 200 en 2,18 s |
+| `workflow_dispatch` | OK — run cree |
+| client `mysql` dans le conteneur | ABSENT |
+| binaire `ssh` / cles dans `~/.ssh` | ABSENT / repertoire vide |
+| secrets S2 dans l environnement de session | AUCUN |
+
+L acces serveur et base ne passe donc pas par ce conteneur : il passe par
+GitHub Actions, qui detient `S2_HOST`, `S2_USER`, `S2_SSH_KEY`. Ce n est pas une
+privation, c est l architecture gouvernee — bornee et tracee.
+
+**3. LE CANAL QUE JE N AI JAMAIS UTILISE.** `scripts/diag/ondemand/**` est un
+declencheur `push` de `doc-drift.yml`. L etape de controle fait un
+`git pull --rebase` du depot de production, puis l etape suivante execute `node`
+sur chaque script present, **sur la production, contre la base reelle**, et la
+sortie revient dans `docs/DIAG_ONDEMAND.md` par commit. Aucun `workflow_dispatch`
+requis : ce canal etait ouvert pendant toute la periode ou je me declarais
+bloque. Lecture seule par convention — aucune contrainte technique ne l impose,
+donc la discipline est la seule garantie.
+
+C est la que doivent etre instruits, sans attendre personne : la mutite de
+l import Nigeria (23 j), la cause du benchmark marocain absent (C9.MAROC 0,0 %),
+et la question que **aucun controle ne couvre aujourd hui** — le niveau du
+benchmark est-il celui du jour, ou une recopie de la veille ? C9 ne verifie que
+la non-nullite de `indRef`, pas sa fraicheur. Un benchmark recopie passe pour
+bon. Angle mort reconnu, signale par le proprietaire sur l UEMOA.
+
+**4. ANCRAGE PERMANENT.** Nouvelle section dans `api_opcv/CLAUDE.md` :
+« Moyens d acces reels : ne jamais travailler a l aveugle » — les quatre canaux,
+la commande qui prouve chacun, le canal a la demande, et la regle :
+**« Pas d acces » n est jamais une conclusion valable sans un test date du jour.**
+Ligne ajoutee a la matrice de capacites des deux `MCP_AUTONOMY.md` pour le canal
+de diagnostic a la demande, qui n y figurait pas.
+
+L acces retrouve ne leve aucun gate : les workflows `ops-*` qui mutent gardent
+leur phrase de confirmation.
+
+**Fichiers modifies** : `api_opcv/CLAUDE.md`, `api_opcv/MCP_AUTONOMY.md`,
+`front_end_opcvm/MCP_AUTONOMY.md`, `front_end_opcvm/SUIVI.md`.
+**Non fait** : la meme regle en renvoi dans `front_end_opcvm/CLAUDE.md` — lecture
+du fichier refusee par le classificateur de la session. Sans effet sur l ancrage :
+les deux `CLAUDE.md` sont relus a chaque reprise, la regle est dans celui de l API.
+
+**Prochaine action** : ecrire un script `scripts/diag/ondemand/` qui mesure la
+fraicheur reelle des niveaux de benchmark par pays et la chaine d import Nigeria,
+le pousser, lire la sortie revenue dans `docs/DIAG_ONDEMAND.md`.
+
+**A ne pas faire a la reprise** : ne pas redeclarer une capacite indisponible
+sans executer son test du jour et citer le resultat.
+
+---
+
 ### LOT BM — 2026-10-01 : TROIS JOURS DE RETARD RELEVES, ET UNE PREDICTION A RETIRER
 
 **1. CORRECTION — LE NIGERIA N EST PAS REVENU AU VERT, CONTRAIREMENT A CE QUE
