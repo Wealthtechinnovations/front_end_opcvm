@@ -2583,6 +2583,116 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BP — 2026-10-04 : LA SOURCE MASI EST MORTE, UNE SOURCE DE REMPLACEMENT EST MESUREE — LE CHOIX REVIENT AU PROPRIETAIRE
+
+Suite directe du lot BO, qui avait date la rupture du benchmark marocain au
+2026-08-06 et designe `MASI` absent de `indice_references` depuis le 31 juillet.
+
+**1. LA CAUSE EST FERMEE, ET CE N EST PAS NOTRE CODE.**
+
+`scrapeMASI` interroge `medias24.com/content/api?method=getMasiHistory`.
+Mesure depuis S2 (`diag_source_masi.js`) :
+
+| client | resultat |
+|---|---|
+| https de Node — celui qu emploie le scraper | HTTP 403, interstitielle Cloudflare |
+| curl — le contournement deja employe ici pour bkam.ma | HTTP 403, interstitielle Cloudflare |
+
+Changer de client HTTP ne corrigera rien. medias24 a ferme l API derriere
+Cloudflare. Le chainage complet est etabli : plus de MASI dans la table source →
+`propagateIndRef`, qui apparie une date de VL a une date d indice a +/- 7 jours,
+n a plus rien a quoi se raccrocher → `indRef` NULL sur toutes les VL marocaines
+posterieures au 06/08. Le 31/07 + 7 jours tombe exactement sur cette date : la
+fenetre de propagation explique le decalage de six jours au jour pres.
+
+**2. CARTOGRAPHIE DES SOURCES, MESUREE DEPUIS S2.**
+
+| source | resultat |
+|---|---|
+| casablanca-bourse.com (officiel) | aucune reponse — timeout 18,7 s, identique en IPv4 force |
+| ammc.ma (regulateur) | aucune reponse — timeout 25 s |
+| bkam.ma (banque centrale) | HTTP 403 de WAF, meme avec le Referer que le depot emploie deja |
+| Yahoo Finance (MASI.CS et ^MASI) | HTTP 429, bride |
+| Stooq | HTTP 200 mais 796 o et aucune date — symbole inconnu |
+| **African Markets** | **HTTP 200, 557 932 o, date du 02-Oct-2026** |
+| medias24 (temoin) | HTTP 403 Cloudflare |
+
+Les deux sources les plus autoritatives — la bourse de Casablanca et l AMMC —
+ne repondent pas du tout depuis ce serveur. Ce n est pas un probleme marocain
+generique : bkam.ma repond, lui, mais en 403.
+
+**3. COHERENCE DE LA SOURCE DE REMPLACEMENT — LE CHIFFRE QUI COMPTE.**
+
+| | date | valeur |
+|---|---|---|
+| notre serie stockee | 2026-07-31 | 17 843,70 |
+| African Markets | 2026-10-02 | 17 303,69 |
+
+Soit **-3,03 %** sur deux mois, quand la page affiche elle-meme **-5,44 % sur
+3 mois** et -6,56 % sur 1 mois. Meme ordre de grandeur, meme echelle : les deux
+series se raccordent sans rupture. C etait la verification indispensable —
+brancher une source d une autre echelle aurait produit un benchmark faux que
+nul controle n aurait signale, exactement le danger decrit en C10.
+
+**4. CE QUI RESTE OUVERT, ET POURQUOI JE NE TRANCHE PAS.**
+
+- **Provenance.** African Markets est un agregateur, pas la bourse de
+  Casablanca. Le choix de la source de reference d un benchmark est une decision
+  de gouvernance financiere, pas un detail technique. Je ne la prends pas.
+- **Historique.** La page donne le DERNIER niveau, pas une serie. Le
+  fonctionnement quotidien est couvert — `scrape_indices_daily.js` scrape par
+  date cible, comme pour Tunindex et BRVM. Le rattrapage du 06/08 au 02/10
+  demande en revanche un historique, qu il reste a trouver sur ce site ou
+  ailleurs.
+- **Ecriture.** Repeupler deux mois de `valorisations.indRef` marocains est une
+  mutation de donnees financieres. `propagate_indref_range.js` existe, est en
+  dry-run par defaut et exige `--since` : l outil est pret, l autorisation non.
+
+**5. QUATRE DEFAUTS D INSTRUMENT, TOUS DE LA MEME FAMILLE.** Cette sonde a menti
+quatre fois avant de dire vrai, et chaque mensonge ressemblait a une mesure :
+
+1. `execFileSync` leve sur code de sortie non nul : quatre candidats sur six ont
+   rendu « Command failed », avalant le code curl et stderr — donc la cause.
+2. Un `-w` commencant par `@` fait lire un FICHIER a curl : l option sortait en
+   erreur 26, stdout vide, et la sonde affichait « ECHEC code 0 » pour les deux
+   hotes qui repondaient vraiment. C est ma correction precedente qui l avait
+   introduit.
+3. Le detecteur Cloudflare cherchait `challenge-platform` n importe ou — or
+   Cloudflare injecte ce script dans les pages LEGITIMES. African Markets, 200 et
+   558 Ko de HTML reel, a ete classe « interstitielle inutilisable » : la seule
+   piste joignable ecartee par l outil, pas par la mesure.
+4. L extracteur ne cherchait le nombre qu APRES le mot et refusait tout chiffre
+   intercalaire. La page ecrit « 17,303.69 -276.00 ( -1.57% ) MASI INDEX » :
+   « aucun candidat » sur la seule page portant la donnee.
+
+Les quatre ont ete corriges puis **verifies sur un cas connu** avant d etre crus
+sur un cas inconnu — l API de production pour le marqueur curl, les deux formes
+de page pour le detecteur, le texte reel de la page pour l extracteur. C est la
+regle a retenir de ce lot.
+
+**Fichiers** : `api_opcv/scripts/diag/ondemand/diag_source_masi.js` (nouveau),
+`diag_sources_masi_alternatives.js` (nouveau, quatre corrections),
+`diag_benchmark_fraicheur.js` (valeur de la derniere observation ajoutee),
+`front_end_opcvm/SUIVI.md`.
+**Commits** : `7b1c792`, `e462965`, `f74f202`, `059e6ad`, `cdbdbb8`, `e80f330`,
+`ab65ede`, `82c87bb`.
+**Verification** : runs doc-drift 37224036487, 37224706957, 37224968303,
+37225207983, 37239850432 — tous **success**, sorties lues dans
+`docs/DIAG_ONDEMAND.md`.
+
+**Prochaine action** : attendre la decision du proprietaire sur la source de
+reference MASI. Ensuite seulement : brancher `scrapeMASI` sur la source retenue
+avec un ancrage serre — le motif « MASI INDEX | As of <date> », pas une fenetre
+large qui ramasse les indices voisins — puis chercher l historique pour le
+rattrapage, et ne proposer `propagate_indref_range.js` qu en dry-run d abord.
+
+**A ne pas faire a la reprise** : ne pas ecrire de valeur MASI deduite d un
+pourcentage affiche ; ne pas brancher une source sans avoir verifie son echelle
+contre les 17 843,70 du 31/07 ; ne pas lancer le rattrapage sans autorisation
+explicite.
+
+---
+
 ### LOT BO — 2026-10-04 : LE CANAL OUVERT A REPONDU EN TROIS MINUTES A CE QUE J ATTENDAIS DEPUIS DES SEMAINES
 
 Script `scripts/diag/ondemand/diag_benchmark_fraicheur.js` ecrit, pousse,
