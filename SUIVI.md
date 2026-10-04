@@ -2583,6 +2583,121 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BO — 2026-10-04 : LE CANAL OUVERT A REPONDU EN TROIS MINUTES A CE QUE J ATTENDAIS DEPUIS DES SEMAINES
+
+Script `scripts/diag/ondemand/diag_benchmark_fraicheur.js` ecrit, pousse,
+execute sur la production par `doc-drift.yml` (run 37221459493), sortie revenue
+dans `docs/DIAG_ONDEMAND.md`. Delai total : trois minutes. Lecture seule.
+
+**1. LE NIGERIA N EST PAS UNE PANNE D IMPORT. LA SOURCE NE PUBLIE PLUS.**
+
+J ai ecrit pendant des semaines « l import Nigeria est muet » et reclame
+l execution de `diag_import_nigeria.js` sur S2. Ce script **tournait tous les
+jours** et sa sortie etait dans le depot : je ne l avais jamais lue. Elle dit
+que le cron hebdomadaire s execute normalement (journaux jusqu au 28/09) et que
+l extraction produit bien `sec_ng_latest.csv`, 8 170 lignes, le 28/09 a 10:00.
+
+Mesure nouvelle, decisive — plage de dates reellement publiee dans ce fichier :
+
+```
+Plage de dates publiee : 2026-01-02 → 2026-09-11
+Derniere VL Nigeria en base : 2026-09-11
+VERDICT : le fichier ne contient AUCUNE date posterieure a la base.
+```
+
+Les douze dernieres dates du fichier s arretent au 11/09, par pas hebdomadaire
+regulier de 222 a 227 lignes. **La chaine d import n a rien a inserer.** La SEC
+Nigeria n a rien publie depuis le 11 septembre. Il n y a donc rien a corriger
+dans l importeur, et le budget de 14 j de `C4.NIGERIA` est mal calibre pour la
+cadence reelle de la source — ou la SEC a cesse de publier, ce qui est une
+question a poser a la SEC, pas au code.
+
+**Tache retiree du backlog** : « instruire l import Nigeria ». Elle reposait sur
+un diagnostic que je n avais pas lu.
+
+**2. LE BENCHMARK MAROCAIN : CAUSE RACINE MESUREE, EN AMONT DES VL.**
+
+| Semaine du | VL | avec benchmark | couverture |
+|---|---|---|---|
+| 2026-07-27 | 1 592 | 1 592 | 100,0 % |
+| 2026-08-03 | 1 919 | 1 238 | **64,5 %** |
+| 2026-08-10 | 1 292 | 0 | **0,0 %** |
+| … jusqu au 28/09 | 1 295 | 0 | 0,0 % |
+
+Bascule nette la semaine du 3 aout. Et la cause est en amont, dans la table
+source `indice_references` :
+
+| indice | derniere valeur | age | lignes/30 j |
+|---|---|---|---|
+| Tunindex | 2026-10-02 | 3 j | 21 |
+| BRVM Composite | 2026-10-02 | 3 j | 21 |
+| NSE All Share | 2026-09-30 | 5 j | 19 |
+| **MASI** | **2026-07-31** | **66 j** | **0** |
+| MONIA | 2026-05-14 | 144 j | 0 |
+
+`MASI` — l indice de reference marocain, scrape depuis casablanca-bourse.com
+par `scrape_indices_daily.js` — n est plus alimente depuis le 31 juillet. Les VL
+marocaines cessent de porter un benchmark six jours plus tard. Tunindex, BRVM et
+NSE sont frais : la panne est circonscrite au scraping marocain, pas a la
+logique `indRef` partagee.
+
+**Et le cron le disait.** `diag_crons_journaux.js` rend pour
+`cron_indices_daily` : `OK (reserve : Echecs scraping: 24)`. Un cron qui compte
+24 echecs et se declare **OK** est la meme faute que celle du 14 septembre, ou
+un controle incapable de mesurer s est declare satisfait et a laisse la base
+morte 3 h 56. C est le prochain correctif a instruire — sur le verdict du cron,
+pas sur le scraper seul.
+
+Ce que je ne sais pas encore et ne dois pas affirmer : le chemin d ecriture
+exact de `indRef` pour le Maroc. `import_vl_maroc.js` insere `indRef = 0`, pas
+NULL, alors que C9 mesure des NULL : une seconde passe renseigne donc l indice
+(`propagate_indref_range.js`, `indref_admin.js`) et c est elle qu il faut lire.
+Correlation de dates tres forte, chaine d appel non encore prouvee.
+
+**3. L UEMOA EST SAINE — CONTRAIREMENT A CE QUE JE CRAIGNAIS.**
+
+Le proprietaire signalait un doute sur les benchmarks UEMOA. Mesure :
+
+| pays | derniere VL | dernier benchmark | retard | fonds a indice variable |
+|---|---|---|---|---|
+| UEMOA | 2026-10-01 | 2026-10-01 | 0 j | 73 / 80 |
+| TUNISIE | 2026-10-02 | 2026-10-02 | 0 j | 126 / 126 |
+| NIGERIA | 2026-09-11 | 2026-09-11 | 0 j | 23 / 229 |
+| MAROC | 2026-10-01 | **2026-08-06** | **56 j** | 627 / 627 |
+| CEMAC | 2024-12-12 | — | JAMAIS AUCUN | — |
+
+Zero fonds « indice fige » au sens du controle (une seule valeur sur cinq dates
+ou plus) : la ou le benchmark est ecrit, il varie. Le doute etait legitime —
+aucun controle ne le verifiait — mais la mesure l ecarte pour l UEMOA. Deux
+faits nouveaux en revanche : le Maroc porte un benchmark vieux de 56 jours sur
+des VL du 1er octobre, et la CEMAC n a **jamais** eu un seul benchmark.
+
+**4. CONTROLE C10 LIVRE.** `check_doc_drift.js` : fraicheur de chaque indice
+vivant d `indice_references`, seuil 8 jours, severite AVERTISSEMENT, limite aux
+indices alimentes dans les 400 derniers jours pour ne pas crier sur les series
+arretees depuis 2023. C est le controle qui aurait rendu la mort de MASI visible
+le 8 aout au lieu du 4 octobre. Additif : aucun controle existant touche, aucun
+seuil desactive.
+
+**Fichiers** : `api_opcv/scripts/diag/ondemand/diag_benchmark_fraicheur.js`
+(nouveau), `api_opcv/scripts/diag/check_doc_drift.js` (C10 ajoute),
+`front_end_opcvm/SUIVI.md`.
+**Commits** : `4b3350e` (script), `d62ba49` (C10).
+**Verification** : run 37221459493 **success**, sortie lue dans
+`docs/DIAG_ONDEMAND.md` au 2026-10-04 17:41:52 UTC.
+
+**Prochaine action** : lire `propagate_indref_range.js` et `scrape_indices_daily.js`
+pour etablir la chaine MASI → `indRef` marocain, puis proposer le correctif du
+verdict de `cron_indices_daily.sh` — un cron qui compte 24 echecs ne doit pas
+rendre OK. Script cron = tache sensible : diagnostic d abord, modification
+ensuite.
+
+**A ne pas faire a la reprise** : ne pas reclamer l execution d un diagnostic
+sans avoir lu `docs/DIAG_ONDEMAND.md`, qui contient quatorze sorties mises a
+jour chaque jour. Ne pas corriger l importeur Nigeria : il n a rien a inserer.
+
+---
+
 ### LOT BN — 2026-10-04 : J AI CRU UN BLOCAGE QUI N EXISTAIT PLUS, ET J AI CESSE DE MESURER
 
 **1. LE FAIT QUI ANNULE QUATRE SEMAINES D IMMOBILISME.** J ai tenu pour acquis,
