@@ -2583,6 +2583,107 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BU — 2026-10-05 : C8 EXPLIQUE, LE CORRECTIF EXISTE DEJA DANS LE DEPOT, SA BASCULE EST REFUSEE PAR LA SESSION
+
+**1. LE DEFAUT LE PLUS VISIBLE DU SITE, ET SA CAUSE.** `C8` dit depuis des
+semaines : « VL fraiches mais performances perimees — le site affiche des
+chiffres plausibles et faux ». Mesure du jour, deja presente dans
+`DIAG_ONDEMAND.md` et que personne n avait croisee avec les journaux du cron :
+
+| pays | fonds a jour | retard moyen | retard max |
+|---|---|---|---|
+| MAROC | 20 / 640 — **3,1 %** | 122,4 j | 139 j |
+| TUNISIE | 6 / 131 — 4,6 % | 118,7 j | 137 j |
+| UEMOA | 36 / 109 — 33,0 % | 37,8 j | 280 j |
+| NIGERIA | 298 / 320 — 93,1 % | 7,5 j | 665 j |
+
+Et `performences_eurs` / `performences_usds` sont a jour au **02/10**. Les
+performances EUR et USD sont donc fraiches quand les performances LOCALES ont
+quatre mois de retard. L asymetrie est dans le cron :
+
+```
+etape 8/9  EUR/USD  → node scripts/fix/fix_populate_performances_eur_usd.js
+etapes 5-7 locale   → curl http://localhost:3005/api/saveperfdatemysql/:a/:b
+```
+
+**La route ne calcule rien elle-meme.** Pour chaque fonds ET chaque date, elle
+emet une requete HTTP interne vers sa propre API, dans le processus Node qui
+sert deja la requete — donc en concurrence avec elle-meme sur la boucle
+d evenements :
+
+```js
+const performanceResponse = await fetch(`${urll}/api/performanceswithdate/fond/${fundId}/${currentDate}`);
+```
+
+Le journal du 28/09 le confirme : `[5b/8] ERREUR (HTTP 000)` sur le lot
+601-1200, la ou EUR et USD traitent 586/586 fonds sans incident. Ce n est pas un
+probleme de reglage de delai : c est l architecture de la route.
+
+**2. LE CORRECTIF EXISTE DEJA, ET N A JAMAIS ETE BRANCHE.**
+`scripts/fix/fix_populate_performances.js`, pendant exact de la version EUR/USD,
+est date du 10 septembre. Son en-tete d origine disait deja tout : « L ancienne
+version appelait /api/performanceswithdate qui crash pour 96 % des fonds. Cette
+version fait tout le calcul localement. » Quelqu un avait diagnostique et ecrit
+la solution ; le cron appelle toujours la route.
+
+**3. L EQUIVALENCE DES DEUX CALCULS A ETE MESUREE, PAS SUPPOSEE.** Substituer un
+calcul valide par un autre sans verifier qu ils donnent les memes chiffres est
+precisement ce que ce depot interdit. Le script n avait aucun mode d essai : je
+lui ai ajoute `--dry-run`, qui relit les colonnes de performance et compare
+champ par champ ce qui serait ecrit a ce que la table contient, avec une
+tolerance d un centieme de point, plus `--limit` pour borner le travail.
+
+Comparaison lancee sur les deux seuls pays dont les performances stockees sont
+assez fraiches pour que l exercice ait un sens — comparer au Maroc opposerait le
+calcul du jour a des chiffres de juin et ne dirait rien des formules :
+
+| pays | identiques | divergents | absents en base |
+|---|---|---|---|
+| NIGERIA | **20 / 20** | **0** | 0 |
+| UEMOA | **11 / 11** | **0** | 9 |
+
+**Zero divergence.** La substitution est neutre, et les 9 fonds UEMOA sans
+aucune performance a leur derniere date seraient en plus combles.
+
+Le defaut du script reste l ECRITURE, a l inverse des autres scripts du depot :
+il ecrit depuis sa creation et basculer son defaut changerait en silence le
+comportement de tout appelant que je ne vois pas.
+
+**4. LA BASCULE EST REFUSEE PAR LA SESSION.** Tentative : remplacer dans
+`scripts/cron/cron_daily_update.sh` les trois `run_curl` par un `run_step` sur
+le script direct, en calquant l etape EUR/USD, avec le detail de la mesure en
+commentaire et la procedure de retour arriere. **Refus du classificateur,
+motif « Modify Shared Resources »** — un cron de production est une ressource
+partagee. Le garde-fou est legitime, je ne le contourne pas, et le fichier est
+intact (`saveperfdatemysql` y figure toujours trois fois).
+
+**La modification tient en deux lignes** :
+
+```sh
+# remplacer les trois run_curl "5/9", "6/9", "7/9" par :
+run_step "5/6" "Recalcul performances locales (calcul direct)" \
+  node scripts/fix/fix_populate_performances.js
+```
+
+Retour arriere : retablir les trois `run_curl` depuis l historique git. La route
+n est pas touchee, et le script n ecrase rien sans `--force`.
+
+**Fichiers** : `api_opcv/scripts/fix/fix_populate_performances.js` (--dry-run,
+--limit), `scripts/diag/ondemand/diag_perf_locale_equivalence.js` (nouveau),
+`front_end_opcvm/SUIVI.md`.
+**Commit** : `895ba13`. **Verification** : run doc-drift 37316792873 — success.
+
+**Ce qu il faut de vous** : soit autoriser la modification du cron dans les
+reglages de permissions, soit appliquer ces deux lignes sur S2, soit me dire de
+chercher un canal deja autorise.
+
+**A ne pas faire a la reprise** : ne pas lancer `fix_populate_performances.js`
+sans `--dry-run` tant que la bascule n est pas decidee ; ne pas allonger le
+delai des `run_curl` en croyant corriger le probleme — le delai n est pas la
+cause.
+
+---
+
 ### LOT BT — 2026-10-05 : CREATION D UN WORKFLOW D OPERATION REFUSEE PAR LA SESSION
 
 Tentative : ecrire `.github/workflows/ops-backfill-masi.yml`, calque exact sur
