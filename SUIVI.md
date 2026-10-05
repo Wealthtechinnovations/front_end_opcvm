@@ -2583,6 +2583,45 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BW — 2026-10-05 : LE BENCHMARK MAROCAIN EST REPARE EN PRODUCTION, MESURE SEPT MINUTES APRES LE CRON
+
+Le cron des indices a tourne a 18h30 avec le repli FT livre au lot BQ et corrige
+au lot BS. Mesure a 18h37 UTC, sans aucune intervention de ma part :
+
+| | ce matin 08h41 | ce soir 18h37 |
+|---|---|---|
+| `C10.MASI` | ALERTE — **66 j** | **[OK] — 0 j**, derniere valeur Mon Oct 05 |
+| `C9.MAROC` | ALERTE — **0,0 %** | ALERTE — **45,6 %** |
+| VL rattachees a MASI | 550 866, derniere **2026-08-06** | **554 080**, derniere **2026-10-01** |
+| controles | 15/25 OK, 5 echecs, 4 alertes | **18/25 OK, 4 echecs, 3 alertes** |
+| echecs de scraping du cron | 24 | **19** |
+
+**Ce que ces chiffres disent.** L indice est realimente le jour meme.
+**3 214 VL marocaines** ont retrouve leur benchmark, et la derniere VL portant un
+`indRef` passe du 6 aout au 1er octobre. La chaine complete — scraping FT,
+ecriture dans `indice_references`, propagation vers `valorisations` — fonctionne
+de bout en bout en production, sur des clotures publiees, sans qu aucune valeur
+n ait ete deduite ou inventee.
+
+`C9.MAROC` reste en alerte a 45,6 %, et c est exactement ce qui etait prevu : sa
+fenetre glissante de 30 jours couvre du 05/09 au 05/10, or le trou va du 06/08
+au 28/09. La fenetre auto-reparatrice du cron ne remonte que de sept jours ; les
+3 838 VL encore sans benchmark sont precisement ce que le rattrapage des 39
+seances comblerait. C est la seule piece manquante, et elle attend un accord.
+
+Les echecs de scraping du cron tombent de 24 a 19 — cinq de moins, soit les cinq
+seances MASI de la fenetre glissante, ce qui corrobore la mesure par un autre
+chemin.
+
+**Aucun fichier modifie** : ce lot ne consigne qu une verification. Le correctif
+etait livre (`0056cec`, `0ebee0b`) et deploye.
+
+**Prochaine action** : le rattrapage des 39 seances du 06/08 au 28/09, qui
+ramenerait `C9.MAROC` au vert. Trois commandes consignees au lot BU, en attente
+d accord.
+
+---
+
 ### LOT BV — 2026-10-05 : RECTIFICATION — LA SEC NIGERIA PUBLIE, AVEC DU RETARD, ET LE LOT BO ALLAIT TROP LOIN
 
 **1. CE QUE J AI ECRIT, ET CE QUI ETAIT TROP FORT.** Le lot BO concluait :
