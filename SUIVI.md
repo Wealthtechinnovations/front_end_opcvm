@@ -2583,6 +2583,56 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BY — 2026-10-06 : RECTIFICATION DU LOT BX — HTTP 000 NE PROUVE PAS QUE LE CLASSEMENT N A PAS ETE RECALCULE
+
+**Ce que le lot BX affirme de trop.** Il ecrit : « `classementmysql` ne termine
+pas, donc le classement local affiche n est pas recalcule ». Ce « donc » n est
+pas etabli, et le depot me contredisait deja par ecrit.
+
+`cron_daily_update.sh` porte ce commentaire, ecrit precisement pour eviter cette
+erreur : « HTTP 000 ne dit PAS que le serveur a echoue : il dit que le client a
+cesse d attendre. » Et `scripts/fix/trigger_classement_recompute.js` l explicite
+pour les classements : « le recompute peut durer plusieurs minutes. Le process
+node continue cote serveur meme si l appelant coupe l ecoute a 60 s. »
+
+Donc `[9a/9] ERREUR (HTTP 000)` signifie que curl a abandonne au bout de 1 800 s.
+Le serveur a pu terminer la reconstruction apres. Je l ai lu comme un echec de
+calcul : c est une inference, pas une mesure.
+
+**Ce qui reste vrai du lot BX, et qui est mesure :**
+- l etape 8/9, performances EUR/USD par script direct, reussit — 39 546 et
+  39 779 lignes sur 1 245 fonds ;
+- l etape 9a, classement local par route HTTP, rend HTTP 000 quand 9b, EUR, rend
+  200, dans la meme execution et avec le meme delai ;
+- les classements DIVERGENT des performances stockees : ACTIONS MAROC 7 fonds
+  sur 122 au bon rang, rho 0,474 ; DIVERSIFIE MAROC 18/141, rho 0,210.
+
+**Ce qui redevient une question ouverte.** La cause de cette divergence. Deux
+explications tiennent encore, et rien dans ce que j ai mesure ne permet de
+choisir :
+1. la reconstruction du classement local ne se fait effectivement pas ;
+2. elle se fait, mais sur une entree ou selon une logique differentes de celles
+   que le comparateur de `diag_classements` suppose — auquel cas c est le
+   comparateur qu il faut lire avant d accuser la route.
+
+**Pourquoi c est difficile a trancher, et c est le fait le plus utile du lot.**
+`diag_classements` le dit en une ligne : `classementfonds` — « aucune colonne de
+date ». Les trois tables de classement ne portent aucun horodatage. Il est donc
+**impossible de savoir quand un classement a ete reconstruit pour la derniere
+fois**. C est la raison de fond pour laquelle personne n a pu trancher, moi
+compris, et c est un manque structurel : une table dont on ne peut pas dater le
+contenu ne peut pas etre surveillee. Ajouter une colonne d horodatage de
+reconstruction est une evolution additive, non destructive, et c est le
+prerequis de tout controle sur ce sujet.
+
+**A ne pas faire** : ne pas conclure d un HTTP 000 qu un traitement serveur a
+echoue — ni ici, ni ailleurs dans ce projet. C est la deuxieme fois que je
+transforme un signal en cause ; la premiere etait le lot BO sur la SEC Nigeria.
+
+**Aucun fichier modifie hors SUIVI.md.**
+
+---
+
 ### LOT BX — 2026-10-05 soir : LA MEME ASYMETRIE SE REPETE SUR LES CLASSEMENTS, ET ELLE EXPLIQUE « DIVERGE »
 
 Relevé du cron `cron_daily_update` de 20h00 ce soir, journal
