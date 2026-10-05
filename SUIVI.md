@@ -2583,6 +2583,93 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BQ — 2026-10-05 : LE BENCHMARK MAROCAIN EST REPARE, VERIFIE EN PRODUCTION EN DRY-RUN
+
+Suite de BP, qui avait ferme la cause et mesure les sources joignables.
+
+**1. LA SERIE HISTORIQUE EST ACCESSIBLE DEPUIS S2.** La fiche FT
+`markets.ft.com/data/indices/tearsheet/historical?s=MASI:CAS` repond HTTP 200,
+son identifiant interne est extractible de la page, et son point d acces
+historique rend **43 clotures datees** couvrant exactement la fenetre manquante.
+
+**2. LA COLONNE DE CLOTURE N A PAS ETE DEVINEE.** Le premier tour affichait
+« Fri, Oct 02, 2026 17,579.17 17,698.72 » et il aurait ete facile d y lire une
+cloture. La cloture du 02/10 vaut 17 303,69 ; 17 579,17 est l ouverture. Prendre
+la premiere colonne venue faussait le benchmark de **+1,6 %** — un ecart
+credible, donc invisible pour tous les controles, y compris C10. La colonne a
+donc ete identifiee par un cas connu de deux sources independantes, et le code
+livre verifie en plus a l execution l invariant « ouverture du jour J = cloture
+du jour J-1 ». Structure non confirmee → aucune valeur retenue.
+
+**3. LE TEST DE JONCTION, ET C EST LUI QUI DECIDE TOUT.**
+
+| | date | valeur |
+|---|---|---|
+| cloture FT | 2026-07-31 | **17 843,70** |
+| valeur stockee par nous | 2026-07-31 | **17 843,70** |
+| ecart | | **0,00 (0,0000 %)** |
+
+FT publie **la serie que nous suivions deja**. Le remplacement n est pas un
+raccord entre deux sources d echelles possiblement differentes : c est une
+continuation. Cela retire l essentiel du risque de la question de provenance.
+
+**4. CORRECTIF LIVRE, STRICTEMENT ADDITIF.** `scrape_indices_daily.js` :
+l ancien corps devient `scrapeMASIviaMedias24` et reste **essaye en premier** —
+si medias24 redevient accessible, il reprend la main sans qu aucun code ne
+change. `scrapeMASIviaFT` n est qu un repli. Aucun autre indice, aucune autre
+chaine touches. L identifiant FT est lu dans la page, jamais code en dur : un
+identifiant fournisseur perime pointerait vers un autre instrument en silence.
+
+**5. VERIFIE EN PRODUCTION, EN DRY-RUN, SUR TROIS CAS.**
+
+| date | attendu | obtenu |
+|---|---|---|
+| 2026-10-02 | 17 303,69 (connu de deux sources) | **17 303,69** |
+| 2026-09-30 | 17 733,06 | **17 733,06** |
+| 2026-10-04 (dimanche) | refus, surtout pas la veille | **« pas de seance (jour non ouvre ?) »** |
+
+Le journal montre `[MASI] medias24 : ERROR HTTP 403` puis
+`[MASI] SUCCESS via FT markets MASI:CAS`, et
+`[MASI] DRY-RUN: insererait 17303.69 pour 2026-10-02`.
+
+**6. CE QUI SE PASSERA SEUL, ET QU IL FAUT SAVOIR.** `cron_indices_daily.sh`
+tourne a 18h30 du lundi au vendredi avec `--execute --backfill-days 7`, et le
+depot de production est rafraichi par le `git pull --rebase` de chaque run
+doc-drift. Le correctif est donc **deja sur le serveur** : des le prochain
+passage du cron, MASI sera insere pour les sept derniers jours ouvres et
+propage aux VL marocaines correspondantes. Aucun deploiement a faire, et rien a
+lancer a la main. Ce sont des clotures publiees, un INSERT idempotent, et le
+retour au comportement voulu du cron — pas une mutation de masse.
+
+**7. CE QUI RESTE, ET QUI DEMANDE UNE AUTORISATION.** La fenetre du 06/08 au
+~28/09 restera vide apres ce soir : la fenetre glissante du cron ne couvre que
+sept jours. Le rattrapage demande (a) de peupler `indice_references` sur la
+periode depuis la serie FT, puis (b) `propagate_indref_range.js --since
+2026-08-06` — en dry-run d abord. Ce sont environ **huit semaines de VL
+marocaines** a doter d un benchmark : une mutation de donnees financieres, donc
+soumise a accord explicite.
+
+**8. DECOUVERTE LATERALE.** Le meme journal montre `[MONIA] ERROR curl failed`
+sur bkam.ma, ce qui explique MONIA fige depuis 144 jours. Panne distincte, non
+traitee ici, a instruire separement.
+
+**Fichiers** : `api_opcv/scripts/scraper/scrape_indices_daily.js` (repli MASI),
+`scripts/diag/ondemand/diag_masi_historique_ft.js` (nouveau),
+`diag_test_masi_ft_dryrun.js` (nouveau), `front_end_opcvm/SUIVI.md`.
+**Commits** : `4d120a5`, `640b043`, `c85f2df`, `0056cec`.
+**Verification** : runs doc-drift 37259235883, 37259505167, 37259796657,
+37260187422 — tous **success**.
+
+**Prochaine action** : accord du proprietaire sur le rattrapage des huit
+semaines. Puis dry-run de `propagate_indref_range.js --since 2026-08-06`, lecture
+du dry-run, et seulement ensuite `--execute`.
+
+**A ne pas faire a la reprise** : ne pas lancer le rattrapage sans accord ; ne
+pas toucher au repli MONIA en meme temps que celui de MASI ; ne jamais ecrire
+une valeur d indice deduite d un pourcentage affiche.
+
+---
+
 ### LOT BP — 2026-10-04 : LA SOURCE MASI EST MORTE, UNE SOURCE DE REMPLACEMENT EST MESUREE — LE CHOIX REVIENT AU PROPRIETAIRE
 
 Suite directe du lot BO, qui avait date la rupture du benchmark marocain au
