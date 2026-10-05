@@ -2583,6 +2583,92 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BS — 2026-10-05 : MON GARDE-FOU PRENAIT UNE HEURISTIQUE POUR UN INVARIANT, ET LE RATTRAPAGE EST CHIFFRE
+
+**1. LE DEFAUT QUE J AI INTRODUIT, ET QUE LA MESURE A REVELE.** Le repli FT
+livre au lot BQ verifiait la position de la colonne de cloture par l invariant
+« ouverture du jour J = cloture du jour J-1 », exige sur **trois paires sur
+trois**. Sur la fenetre de dix jours du test, il tenait : 3/3. Je l ai cru
+general.
+
+Mesure sur quarante seances, le 2026-10-05 : **29 paires sur 39**. Un quart des
+seances ouvre a un autre niveau que la cloture precedente — c est un **gap
+d ouverture**, le comportement normal d un marche apres un week-end, un jour
+ferie ou une nouvelle. Mon invariant n etait qu une heuristique.
+
+Consequence chiffree : avec 74 % de paires coherentes, exiger l unanimite sur
+trois paires revenait a refuser la valeur **environ six fois sur dix**, en
+silence, avec l apparence de proteger la donnee. Le cron de ce soir avait une
+chance sur deux de ne rien ecrire. C est exactement la faute que ce depot
+documente ailleurs : un controle qui echoue sans le dire est pire qu une absence
+de controle.
+
+**2. CORRIGE PAR UN VRAI INVARIANT, VERIFIE AVANT COMMIT.** Deux controles
+desormais :
+
+- **invariant OHLC**, independant des gaps : dans une ligne, le bas borne
+  l ouverture et la cloture, le haut les majore. Il valide la position des
+  quatre colonnes, et une disposition permutee echoue. Teste avant commit sur
+  les lignes reelles du 30/09 au 02/10 (3/3) et sur une permutation
+  artificielle, correctement rejetee (0/1).
+- **orientation en majorite**, jamais a l unanimite : la part d ouvertures
+  egales a la cloture precedente doit atteindre 60 %, contre 74 % mesure, et
+  seulement a partir de cinq paires.
+
+Verifie en production apres correction. Le journal dit :
+`[MASI] FT : colonnes confirmees — OHLC 9/9, enchainement 7/8` puis
+`SUCCESS ... 17303.69`. **Ce 7/8 aurait ete refuse par l ancienne regle.**
+
+**3. L IDENTIFIANT FT EST MIS EN CACHE.** Le repli redemandait la fiche de 80 Ko
+a chaque date : un rattrapage de soixante jours aurait fait soixante requetes
+inutiles et invite au bridage. Cache de portee processus, verifie dans le
+journal — « identifiant interne 601207 (mis en cache pour cette execution) ».
+
+**4. LE RATTRAPAGE EST CHIFFRE, EN UNE SEULE REQUETE.**
+
+| mesure | valeur |
+|---|---|
+| seances publiees du 31/07 au 02/10 | **40** |
+| deja presentes dans `indice_references` | 1 (le 31/07) |
+| **seances a inserer** | **39** |
+| jonction au 31/07 : base / FT | 17 843,7021 / 17 843,70 — **ecart 0,00** |
+| plus grande variation entre deux seances | 2,27 % (18/09 → 21/09) |
+| rupture d echelle | **aucune** |
+
+Premieres valeurs qui seraient ecrites : 03/08 17 876,25 · 04/08 18 063,39 ·
+05/08 18 329,91 · 06/08 18 479,44 · 07/08 18 864,02.
+
+**5. UNE LIMITE DU CANAL A LA DEMANDE, APPRISE A MES FRAIS.** La premiere
+version de cette mesure lancait le scraper en dry-run sur soixante-sept dates.
+Le rapport porte le resultat : `client_loop: send disconnect: Broken pipe`. Le
+canal passe par une session SSH unique et n est pas fait pour dix minutes de
+travail. Et ma methode etait de toute facon mauvaise : le point d acces
+historique de FT rend une plage entiere en UNE requete. Soixante-sept requetes
+pour ce qu une seule donne.
+
+**6. UNE AUTRE LIMITE UTILE.** Modifier `scripts/scraper/*` ne declenche PAS
+`doc-drift.yml` : son filtre de chemins ne couvre que `check_doc_drift.js`,
+`scripts/diag/ondemand/**` et son propre fichier. Or c est le `git pull` de ce
+workflow qui rafraichit le depot de production. Un correctif de scraper pousse
+seul n arrive donc pas sur S2 : il faut declencher le workflow, ce que le
+dispatch permet a nouveau depuis le lot BN.
+
+**Fichiers** : `api_opcv/scripts/scraper/scrape_indices_daily.js` (garde-fou,
+cache), `scripts/diag/ondemand/diag_rattrapage_masi_dryrun.js` (reecrit),
+`front_end_opcvm/SUIVI.md`.
+**Commits** : `dc97d44`, `6160e57`, `0ebee0b`.
+**Verification** : runs 37283284864 et 37284887825 — **success**, journaux lus
+dans `DIAG_ONDEMAND.md`.
+
+**Prochaine action** : apres le cron de 18h30, verifier `C10.MASI` et
+`C9.MAROC`. Le rattrapage des 39 seances reste suspendu a un accord explicite.
+
+**A ne pas faire a la reprise** : ne pas reintroduire d invariant non confronte
+a une serie longue ; ne pas lancer de script de plusieurs minutes par le canal a
+la demande ; ne pas croire qu un correctif de scraper pousse seul est deploye.
+
+---
+
 ### LOT BR — 2026-10-05 : MONIA EST UNE FAUSSE ALERTE, ET C10 LE DIT MAINTENANT SANS MENTIR
 
 **1. L ENJEU MESURE AVANT L EFFORT.** Le dry-run du repli MASI avait fait
