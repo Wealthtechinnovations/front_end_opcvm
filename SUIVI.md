@@ -2583,6 +2583,98 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BR — 2026-10-05 : MONIA EST UNE FAUSSE ALERTE, ET C10 LE DIT MAINTENANT SANS MENTIR
+
+**1. L ENJEU MESURE AVANT L EFFORT.** Le dry-run du repli MASI avait fait
+apparaitre `[MONIA] ERROR curl failed`, et C10 mettait MONIA en alerte — fige
+depuis 144 jours. Avant de chercher une source de remplacement, mesure :
+
+- aucun fonds ne declare MONIA comme reference ;
+- **zero** VL ne porte cet indice ;
+- et `propagate_indref_range.js` le disait deja en clair, ligne 54 :
+  « MONIA exclu (pays: []) : c est un taux, non propage aux fonds ».
+
+MONIA est le taux interbancaire au jour le jour marocain, collecte pour
+information. Sa peremption ne prive aucun fonds de benchmark. **Aucun correctif
+de source n etait justifie** — et j aurais pu passer des heures a lui chercher
+un remplacant sans que personne y gagne quoi que ce soit.
+
+**2. LA SOURCE REFUSE PAR ADRESSE, PAS PAR EN-TETE.** Mesure depuis S2 : les
+deux pages MONIA et la racine `bkam.ma` rendent **HTTP 403, 919 octets, page de
+blocage**, depuis trois IP CloudFront differentes. Ce n est pas un defaut
+d en-tete : aucun bricolage de `User-Agent` ou de `Referer` ne le resoudra. Si
+MONIA devait un jour servir, il faudrait un accord d acces ou une autre source.
+
+**3. C10 AVAIT UN PERIMETRE TROP LARGE, ET JE L AI CORRIGE SANS LE DESACTIVER.**
+Un controle de fraicheur applique a une statistique que rien ne consomme produit
+une alerte permanente sans enjeu — et une alerte permanente finit par etre
+ignoree, y compris le jour ou elle porte sur un vrai benchmark. C est la regle
+de `CLAUDE.md` : « quand un controle se revele mal calibre, le corriger et
+documenter pourquoi dans le script », jamais le faire taire.
+
+Le critere n est ni une liste d exceptions, ni une troisieme copie du mapping
+pays → indice (il en existe deja deux dans le code) : il est **pris dans les
+donnees**. Un indice est juge s il est porte par au moins 100 VL. Mesure du
+jour sur `valorisations` :
+
+| libelle porte par la VL | VL | derniere VL |
+|---|---|---|
+| MASI | 550 866 | 2026-08-06 |
+| Tunindex | 311 089 | 2026-10-02 |
+| (aucun) | 76 485 | 2026-10-01 |
+| NSE All Share | 54 069 | 2026-09-11 |
+| BRVM Composite | 45 102 | 2026-09-30 |
+| MONIA | **absent** | — |
+
+Les 550 866 VL rattachees a MASI s arretent au **06/08** : la rupture de BO se
+lit aussi de ce cote. Et les 76 485 VL sans aucun libelle d indice contiennent le
+trou marocain.
+
+**4. RESULTAT EN PRODUCTION.** C10 dit desormais :
+
+```
+[OK   ] C10.MONIA   derniere valeur le Thu May 14, soit 144 j — non juge :
+                    aucune VL ne porte cet indice, ce n est pas un benchmark
+                    de fonds mais une statistique.
+[ALERTE] C10.MASI   derniere valeur le Fri Jul 31, soit 66 j (porte par 550866 VL)
+[OK   ] C10.Tunindex / NSE All Share / BRVM Composite — 3 a 5 j, avec leur compte de VL
+```
+
+Rien n est cache : MONIA reste affiche avec son age, et le detail dit pourquoi
+il n est pas juge. L alerte restante est celle qui compte, et elle porte
+desormais son enjeu — 550 866 VL. Bilan : 4 alertes au lieu de 5.
+
+**5. DEUX GARDE-FOUS AJOUTES.** Un indice mourant garde son historique de VL,
+donc reste juge : le critere ne cree pas d angle mort sur une serie qui
+s arrete. Et si le critere devenait vide, C10 echoue au lieu de se declarer
+satisfait — un controle qui ne juge plus rien ne doit pas pouvoir passer pour
+vert. Limite assumee et ecrite dans le script : un indice tout neuf, pas encore
+propage, ne serait pas juge tant qu aucune VL ne le porte.
+
+**6. UNE ERREUR A SIGNALER.** Ma premiere version du diagnostic MONIA
+interrogeait `f.actif`, colonne qui n existe pas — le modele declare `active`.
+Le script est tombe en « Unknown column » et n a rien mesure. J avais repris le
+libelle d affichage « actif=1 » d un autre diagnostic pour un nom de champ.
+Corrige en une passe.
+
+**Fichiers** : `api_opcv/scripts/diag/check_doc_drift.js` (perimetre C10),
+`scripts/diag/ondemand/diag_source_monia.js` (nouveau),
+`diag_benchmark_fraicheur.js` (rattachement reel des VL).
+**Commits** : `1e7d093`, `a24ce9e`, `c9e3ef7`, `d3cafae`.
+**Verification** : runs doc-drift 37260624101, 37260888357, 37261196674,
+37261491445 — tous **success**, verdicts C10 lus dans
+`ETAT_PRODUCTION_VERIFIE.md`.
+
+**Prochaine action** : apres le passage du cron de 18h30, verifier que
+`C10.MASI` et `C9.MAROC` passent au vert sur les sept derniers jours. Puis,
+sous reserve d accord, le rattrapage du 06/08 au 28/09.
+
+**A ne pas faire a la reprise** : ne pas chercher de source MONIA, c est du
+travail sans beneficiaire ; ne pas elargir C10 a nouveau sans mesurer ce que les
+VL portent.
+
+---
+
 ### LOT BQ — 2026-10-05 : LE BENCHMARK MAROCAIN EST REPARE, VERIFIE EN PRODUCTION EN DRY-RUN
 
 Suite de BP, qui avait ferme la cause et mesure les sources joignables.
