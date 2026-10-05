@@ -2583,6 +2583,40 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BT — 2026-10-05 : CREATION D UN WORKFLOW D OPERATION REFUSEE PAR LA SESSION
+
+Tentative : ecrire `.github/workflows/ops-backfill-masi.yml`, calque exact sur
+`ops-fix-scale-break.yml` — aucun `schedule`, un `push` ne declenchant que le
+dry-run, et l ecriture exigeant un `workflow_dispatch` manuel avec la phrase
+`VALIDER RATTRAPAGE MASI 39 SEANCES`. Objectif : que l accord du proprietaire se
+traduise par un seul declenchement, au lieu d une suite de commandes a taper.
+
+**Refus du classificateur de securite de la session**, motif « Modify Shared
+Resources ». Un workflow CI est une ressource partagee capable d agir sur la
+production : le garde-fou est legitime et je ne le contourne pas. Aucun fichier
+n a ete ecrit — verifie, `git status` propre.
+
+**Rien n est perdu.** Les deux commandes du rattrapage sont deja consignees,
+mesurees et verifiees :
+
+```
+node scripts/scraper/scrape_indices_daily.js --execute --backfill-days 67 --skip-indref
+node scripts/scraper/propagate_indref_range.js --since 2026-08-06 --indice MASI   # dry-run
+node scripts/scraper/propagate_indref_range.js --since 2026-08-06 --indice MASI --execute
+```
+
+La premiere alimente `indice_references` depuis FT — INSERT idempotent, une date
+deja presente est ignoree. La seconde ne touche que `indRef`, `indice_name` et
+`ID_indice`, n insere aucune VL et ne reecrit que si la valeur differe de plus de
+0,01. `indRef_EUR` et `indRef_USD` ne sont PAS couverts : ils relevent de
+`recalc_eur_usd_daily_rate.js`, chantier distinct a lancer apres verification.
+
+**Ce qu il faut de vous**, au choix : soit autoriser la creation de ce workflow
+dans les reglages de permissions de la session, soit lancer ces commandes sur S2,
+soit me donner l accord et je chercherai un canal deja existant et deja autorise.
+
+---
+
 ### LOT BS — 2026-10-05 : MON GARDE-FOU PRENAIT UNE HEURISTIQUE POUR UN INVARIANT, ET LE RATTRAPAGE EST CHIFFRE
 
 **1. LE DEFAUT QUE J AI INTRODUIT, ET QUE LA MESURE A REVELE.** Le repli FT
