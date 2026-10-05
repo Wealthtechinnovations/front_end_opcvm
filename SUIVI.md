@@ -2583,6 +2583,62 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BX — 2026-10-05 soir : LA MEME ASYMETRIE SE REPETE SUR LES CLASSEMENTS, ET ELLE EXPLIQUE « DIVERGE »
+
+Relevé du cron `cron_daily_update` de 20h00 ce soir, journal
+`africafunds_daily_20261005.log`, dans `DIAG_ONDEMAND.md` :
+
+```
+[8/9] OK                         ← performances EUR/USD, script direct
+      performences_eurs: 39 546 lignes, 1 245 fonds
+      performences_usds: 39 779 lignes, 1 245 fonds
+[9a/9] Classement local...  ERREUR (HTTP 000)
+[9b/9] Classement EUR...    OK (HTTP 200)
+```
+
+**Le classement LOCAL echoue quand le classement EUR passe**, dans la meme
+execution, a la meme seconde, avec le meme delai de 1 800 s. Ce n est pas une
+question de budget de temps : c est la meme asymetrie que celle etablie au lot
+BU sur les performances, un etage plus haut.
+
+**Et cela explique un constat qui restait sans cause.** `diag_classements`
+mesure depuis des semaines que les classements DIVERGENT des performances
+stockees — ACTIONS MAROC 7 fonds sur 122 au bon rang (5,7 %), rho 0,474 ;
+DIVERSIFIE MAROC 18/141, rho 0,210. On en cherchait l origine du cote du calcul
+de rang. Elle est ailleurs : `classementmysql` ne termine pas, donc le
+classement local affiche n est pas recalcule, et il ne peut pas refleter des
+performances qui, elles aussi, ne sont pas recalculees. Deux etages de
+peremption empiles.
+
+Le site affiche donc, pour un fonds marocain : une VL fraiche du 1er octobre, une
+performance de juin, et un rang qui ne correspond meme pas a cette performance
+de juin.
+
+**Ce que cela change pour la correction proposee au lot BU.** La bascule du cron
+vers le calcul direct traite le premier etage. Le second — le classement local —
+reste a instruire : il faut verifier s il existe, comme pour les performances, un
+equivalent direct deja ecrit dans le depot et jamais branche. Je ne l ai pas
+encore cherche ; je le note pour ne pas le perdre.
+
+**Etat mesure a 23h18 UTC, apres les crons du soir** : 18/25 controles OK,
+4 echecs, 3 alertes. `C10.MASI` tient au vert, `C4` au vert partout sauf CEMAC,
+`C8` toujours en echec — conforme a la prevision, la bascule du cron etant
+refusee. `C9.MAROC` reste en alerte et remontera seule a mesure que le trou du
+06/08 au 28/09 sortira de la fenetre de 30 jours, vers le 28 octobre.
+
+**Observation de contexte, sans action de ma part** : la session parallele a
+pousse 65 commits ce soir, dont treize nouveaux scripts `ondemand` w1/w2.
+Aucun de mes fichiers n est touche, et le rapport n est pas tronque — verifie,
+mes quatre diagnostics y figurent toujours. Mais le canal execute desormais
+35 scripts dans UNE session SSH, et c est precisement ce qui a casse le tunnel
+au lot BS. Le risque n est pas theorique : si la sortie se tronque, ce sont les
+derniers scripts qui disparaissent en silence, et la source de verite n°1
+deviendrait partiellement muette sans le dire. A surveiller.
+
+**Aucun fichier modifie hors SUIVI.md** : ce lot consigne une mesure.
+
+---
+
 ### LOT BW — 2026-10-05 : LE BENCHMARK MAROCAIN EST REPARE EN PRODUCTION, MESURE SEPT MINUTES APRES LE CRON
 
 Le cron des indices a tourne a 18h30 avec le repli FT livre au lot BQ et corrige
