@@ -2583,6 +2583,63 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BV — 2026-10-05 : RECTIFICATION — LA SEC NIGERIA PUBLIE, AVEC DU RETARD, ET LE LOT BO ALLAIT TROP LOIN
+
+**1. CE QUE J AI ECRIT, ET CE QUI ETAIT TROP FORT.** Le lot BO concluait :
+« La SEC Nigeria n a rien publie depuis le 11 septembre » et « il n y a rien a
+corriger dans l importeur ». La premiere affirmation etait une extrapolation.
+
+Ce que la mesure disait reellement : le fichier `sec_ng_latest.csv` du 28/09
+s arretait au 11/09. C est exact, et ca le reste. Ce que j en ai deduit — que la
+source avait cesse de publier — ne s ensuivait pas.
+
+**2. CE QUE LA MESURE DIT AUJOURD HUI.** Le cron hebdomadaire a tourne ce matin,
+lundi 5 octobre a 10h09, et `C4.NIGERIA` est repasse **[OK]** :
+
+| rapport | derniere VL Nigeria | age | verdict |
+|---|---|---|---|
+| 2026-10-05 08:41 | Fri Sep 11 | 24 j | ECHEC |
+| 2026-10-05 14:12 | **Fri Sep 25** | **10 j** | **OK** |
+
+La chaine d import fonctionne. La SEC publie, avec un decalage d environ dix
+jours, et le cron hebdomadaire les ramasse. Le compte des echecs critiques passe
+de 5 a 4.
+
+**3. CE QUE CELA APPREND SUR LE BUDGET DE C4.NIGERIA.** Un import hebdomadaire
+plus un retard de publication d environ dix jours donnent un age qui oscille
+entre ~10 et ~17 jours selon le jour ou l on mesure. Le budget de 14 jours tombe
+au milieu de cette plage : le controle passera donc du vert au rouge et
+inversement sans qu aucune panne ne se produise. C est un seuil mal calibre pour
+la cadence reelle, et le lot BM en avait deja l intuition — « a 20+ jours c est
+une anomalie d import, pas une mauvaise calibration » — en se trompant de cote.
+
+Je ne touche pas au seuil : la decision appartient au proprietaire, et un
+controle qui clignote reste preferable a un controle qu on relache a l aveugle.
+Mais la plage est desormais mesuree et consignee, ce qui permet de la trancher
+sur des chiffres.
+
+**4. CE QUI RESTE VRAI DU LOT BO.** Le chainage du benchmark marocain, la cause
+Cloudflare, la jonction FT a 0,00 d ecart, et le fait que
+`diag_import_nigeria.js` tournait chaque jour sans que je le lise. Seule la
+conclusion « la source ne publie plus » est retiree.
+
+**5. LA LECON, ET ELLE EST LA MEME QUE CELLE DU LOT BK.** Un fichier d extraction
+qui s arrete a une date dit ce que contient CE fichier, a CETTE date. Il ne dit
+rien de ce que la source publiera la semaine suivante. J ai, une fois de plus,
+transforme un instantane en tendance. La regle a retenir : une absence observee
+sur un seul releve n est pas un arret ; il faut deux releves pour une pente et
+trois pour une tendance.
+
+**Fichiers** : `front_end_opcvm/SUIVI.md` uniquement — aucun code modifie, c est
+une rectification de constat.
+**Source** : `docs/ETAT_PRODUCTION_VERIFIE.md` du 2026-10-05 14:12 UTC et
+`docs/DIAG_ONDEMAND.md`, journal `africafunds_nigeria_20261005.log`.
+
+**Prochaine action** : relever le resultat du cron des indices de 18h30 sur
+`C10.MASI` et `C9.MAROC`.
+
+---
+
 ### LOT BU — 2026-10-05 : C8 EXPLIQUE, LE CORRECTIF EXISTE DEJA DANS LE DEPOT, SA BASCULE EST REFUSEE PAR LA SESSION
 
 **1. LE DEFAUT LE PLUS VISIBLE DU SITE, ET SA CAUSE.** `C8` dit depuis des
