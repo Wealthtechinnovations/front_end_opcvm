@@ -1,0 +1,76 @@
+name: Contrat package-lock / Node engine
+
+on:
+  push:
+    branches:
+      - claude/code-review-improvements-ikvuj
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/package-lock-engine-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: package-lock-engine-contract
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    name: Verifier package.json et package-lock.json
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout du HEAD canonique
+        uses: actions/checkout@v4
+        with:
+          ref: claude/code-review-improvements-ikvuj
+          fetch-depth: 1
+
+      - name: Verifier ou reconciler le Node engine racine
+        env:
+          BOOTSTRAP_MESSAGE: 'ci(governance): fix package-lock engines reconciliation'
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+          EXPECTED_SHA: ${{ github.sha }}
+          BRANCH: claude/code-review-improvements-ikvuj
+        run: |
+          set -euo pipefail
+
+          STATUS="$(node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));const l=JSON.parse(fs.readFileSync('package-lock.json','utf8'));const a=l.packages&&l.packages['']?(l.packages[''].engines||null):null;process.stdout.write(JSON.stringify(p.engines||null)===JSON.stringify(a)?'MATCH':'MISMATCH')")"
+
+          if [ "$STATUS" = 'MATCH' ]; then
+            echo 'package.json et package-lock.json portent le meme engines racine.'
+            exit 0
+          fi
+
+          echo 'MISMATCH: package-lock.json ne reflete pas package.json.'
+
+          if [ "${HEAD_MESSAGE:-}" != "$BOOTSTRAP_MESSAGE" ]; then
+            echo '::error::Contrat package-lock en echec. Regenerer/reconcilier explicitement le lockfile.'
+            exit 1
+          fi
+
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));const l=JSON.parse(fs.readFileSync('package-lock.json','utf8'));if(!l.packages||!l.packages[''])throw new Error('package-lock v3 root package missing');l.packages[''].engines=p.engines;fs.writeFileSync('package-lock.json',JSON.stringify(l,null,2)+'\\n')"
+
+          git diff -- package-lock.json
+
+          CHANGED="$(git status --porcelain --untracked-files=no | awk '{print $2}')"
+          if [ "$CHANGED" != 'package-lock.json' ]; then
+            echo "::error::Le bootstrap a touche un fichier inattendu: $CHANGED"
+            exit 1
+          fi
+
+          REMOTE_SHA="$(git ls-remote origin "refs/heads/$BRANCH" | awk '{print $1}')"
+          if [ "$REMOTE_SHA" != "$EXPECTED_SHA" ]; then
+            echo "::error::HEAD canonique a bouge ($EXPECTED_SHA -> $REMOTE_SHA). Reconciliation requise, aucun push."
+            exit 1
+          fi
+
+          git config user.name 'FundAfrica Governance Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add package-lock.json
+          git commit -m 'chore(frontend): align package-lock Node engine'
+          git push origin "HEAD:$BRANCH"
