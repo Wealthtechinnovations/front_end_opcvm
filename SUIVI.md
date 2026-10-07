@@ -2583,6 +2583,142 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT BZ — 2026-10-07 : LE PLAN DE REMEDIATION DE C8 EST ENGAGE — MESURE, RATIOS, HORODATAGE, DEUX CONTROLES
+
+**Dernier etat stable.** `api_opcv` sur `claude/code-review-improvements-ikvuj`
+a `209e5a4`, pousse, working tree propre. `front_end_opcvm` a `840678a` plus ce
+lot. Aucune ecriture en production, aucune migration appliquee, aucun cron
+modifie.
+
+**Objet du lot.** Executer la part du plan de remediation de `C8` qui m incombe
+et qui ne touche pas la production : la mesure (L0), la mise en equivalence
+reelle du calcul direct (L1), l horodatage des classements (L2), l extraction du
+calcul de rang (L2-bis), la garde manquante (L7) et les deux controles absents
+(L8). Les lots d ecriture — rattrapage des performances, bascule du cron,
+reconstruction des classements — restent au proprietaire et n ont pas ete
+engages.
+
+**La rectification qui commande tout le lot.** J ai ecrit le 2026-10-06, apres
+un dry-run concluant, que la substitution de la route `saveperfdatemysql` par
+`scripts/fix/fix_populate_performances.js` etait « neutre, equivalence
+verifiee ». **C etait faux en portee**, et le dry-run ne pouvait pas le voir :
+
+| | colonnes ecrites |
+|---|---|
+| route `saveperfdatemysql` | ≈ 84, dont **63 de ratios** via `/api/ratiosnewithdate/{1,3,5}` |
+| `fix_populate_performances.js`, avant ce jour | **15**, et **aucun ratio** |
+| mon dry-run du 2026-10-06 | **10 champs compares** |
+
+Or `src/services/ranking.service.js:9-15` lit dix de ces ratios
+(`volatility3an`, `ratiosharpe3an`, `pertemax3an`, `sortino3an`, `info3an`,
+`calamar3an`, `var953an`, `betabaissier3an`, `omega3an`, `dsr3an`), et le script
+**insere** une ligne a la derniere date de VL : elle devient la ligne
+`MAX(date)`, celle que lisent le classement, les moyennes de categorie
+(`apigestionperformance.js:2272`) et les tableaux pays. **Brancher le script tel
+quel, comme je le recommandais la veille, aurait gueri le retard des
+performances en vidant les rangs de risque** — « chiffres justes et colonnes
+vides » au lieu de « chiffres plausibles et faux », sur un perimetre plus large
+que le defaut initial.
+
+**Ce que la lecture du code a encore corrige dans le plan.** Deux points :
+
+1. Le plan demandait d ecrire `lastdatepreviousmonth`. Verification faite,
+   `src/models/performence.js` **ne declare pas** cette colonne et Sequelize
+   ignore silencieusement un attribut non declare : la route ne l ecrit donc
+   jamais malgre les apparences (`apigestionsavequotidien.js:1439`). L ecrire
+   **creerait** une divergence au lieu d en supprimer une. Non fait, et
+   `diag_perf_colonnes_manquantes.js` verifie en base si la colonne existe.
+2. L explosion du nombre d appels internes de la route est **bien plus grande**
+   que les 330 000 estimes : `processFundmysql` boucle sur **toutes les dates de
+   VL depuis 2020 plus les jours ouvres manquants reconstitues**
+   (`apigestionsavequotidien.js:1330-1348`), soit ≈ 1 700 dates par fonds et non
+   66. Ordre de grandeur reel : ≈ 1 245 × 1 700 × 4 ≈ **8,5 millions** d appels
+   HTTP internes par run.
+
+**Fichiers modifies — `api_opcv` uniquement.**
+
+| Fichier | Lot | Nature |
+|---|---|---|
+| `scripts/diag/ondemand/diag_perf_colonnes_manquantes.js` | L0.a | nouveau, lecture seule |
+| `scripts/diag/ondemand/diag_classement_index_plan.js` | L0.b | nouveau, lecture seule |
+| `scripts/diag/ondemand/diag_classement_vs_perf.js` | L0.c | nouveau, lecture seule |
+| `scripts/diag/ondemand/diag_perf_locale_equivalence.js` | L1 | perimetre 20 → 10 fonds par pays |
+| `scripts/fix/fix_populate_performances.js` | L1 | ratios + dry-run etendu + `--sans-ratios` |
+| `src/db/migrations/20261007000001-add-rebuild-timestamps-classementfonds.js` | L2 | nouveau, **non applique** |
+| `src/services/ranking.pure.js` | L2-bis | nouveau, deplacement pur |
+| `src/services/ranking.service.js` | L2-bis, L7 | `require` du module pur + garde `if (!category)` |
+| `scripts/diag/check_doc_drift.js` | L8 | C11 et C12, en `AVERTISSEMENT` |
+
+**Trois decisions de conception, et la raison de chacune.**
+
+1. **Les ratios ne sont pas recalcules en SQL.** Le script appelle le MEME
+   endpoint que la route. Recalculer serait substituer un calcul neuf a un
+   calcul valide. Le vice de la route n est pas « elle fait du HTTP », c est
+   « par fonds **et par date**, sur toutes les dates depuis 2020, dans le
+   processus qui sert deja la requete ». Un appel par fonds et par derniere date
+   est le motif que `fix_populate_performances_eur_usd.js:28-66` tient en
+   production depuis septembre.
+2. **Une periode dont l appel echoue n est pas ecrite du tout.** La route, elle,
+   ecrit `'-'` (`getRatioDataFields`), ce qui en `UPDATE` **ecrase** des ratios
+   valides des que l API ne repond pas. Omettre la colonne preserve l existant :
+   plus sur que la route, jamais destructeur.
+3. **La garde `if (!category)` est sans effet numerique, et c est dit ainsi.**
+   `calculateRankNational` et `calculateRankRegional` passent par du SQL brut
+   avec `replacements` : `categorie_nationale = NULL` n est jamais vrai, le jeu
+   de resultats est vide et l erreur rendue est deja la meme. La garde evite une
+   analyse complete de `performences` par fonds sans categorie, a chaque run.
+   Ce n est pas une correction, c est une economie.
+
+**Commandes executees.** `node --check` sur les six fichiers JavaScript
+modifies ou crees ; `git add`/`commit` ; `git fetch`/`pull --rebase`/`push` sur
+`claude/code-review-improvements-ikvuj`.
+
+**Tests realises, et leur resultat.** `node --check` : OK sur tous. Le
+dry-run etendu **n a pas encore tourne** : le conteneur de session n a pas de
+`node_modules`, donc le script ne peut y etre execute. Il tournera dans le canal
+a la demande, ou `diag_perf_locale_equivalence.js` le lance deja en
+`--dry-run --limit 10` sur NIGERIA puis UEMOA. **Le « 0 divergence sur N
+colonnes » n est donc pas encore acquis : c est la prochaine chose a lire.**
+
+**Incident d outillage, date.** Le canal `git push` a repondu **HTTP 500
+« Internal Server Error »** de 15:08 a 15:16 UTC, sur la branche visee comme sur
+une branche temporaire et meme pour un commit vide — donc cote GitHub, et non du
+fait du contenu. L ecriture par l API Git (`/git/blobs`) est refusee par le
+mandataire de session par conception (`403`, « Write access to this GitHub API
+path is not permitted »). La lecture, elle, fonctionnait (`gh api user` →
+`Wealthtechinnovations`). Le push a repris seul a 15:16. **Aucune capacite n a
+ete declaree indisponible sans test date** ; les quatre canaux de
+`CLAUDE.md > Moyens d acces reels` restent ouverts.
+
+**Erreurs restantes.** `C8` inchange (le rattrapage n est pas engage), `C2`,
+`C3`, `C7` inchanges. La migration L2 n est **pas** appliquee, donc `C11` dira
+pour l instant « colonne `created_at` absente » — degradation voulue, pas un
+defaut.
+
+**Tache en cours.** Attente du rapport `docs/DIAG_ONDEMAND.md` du run
+`doc-drift` declenche par le push de `209e5a4`, pour lire les six chiffres de L0.
+
+**Prochaine action recommandee.** Lire `docs/DIAG_ONDEMAND.md`, puis dans cet
+ordre : (1) verifier le « 0 divergence » du dry-run etendu ; (2) selon L0.b,
+ecrire ou abandonner la migration d index composites (L6) ; (3) selon L0.c,
+decider si le correctif des rangs est le departage deterministe des ex aequo
+plutot qu une reconstruction. **Ne pas engager le rattrapage des performances
+avant que le zero divergence soit imprime.**
+
+**Risques connus.** Le canal a la demande execute **tous** les scripts de
+`scripts/diag/ondemand/` dans une **session SSH unique**, sans delai par
+script ; ils sont quarante. L ajout d appels HTTP de ratios au dry-run est la
+raison du passage de 20 a 10 fonds par pays : un script de dix minutes casse le
+tunnel.
+
+**A ne pas faire a la reprise.** Ne pas appliquer la migration L2 avant d avoir
+lu la presence de `DB_SYNC_ALTER` dans L0.a — un `sync({ alter: true })` au
+demarrage peut supprimer une colonne absente des modeles. Ne pas basculer les
+modeles `classementfonds*` en `timestamps: true`. Ne pas brancher le cron sur le
+calcul direct avant le zero divergence.
+
+---
+
 ### LOT BY — 2026-10-06 : RECTIFICATION DU LOT BX — HTTP 000 NE PROUVE PAS QUE LE CLASSEMENT N A PAS ETE RECALCULE
 
 **Ce que le lot BX affirme de trop.** Il ecrit : « `classementmysql` ne termine
