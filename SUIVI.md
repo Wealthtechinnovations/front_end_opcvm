@@ -2583,6 +2583,122 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT CB — 2026-10-15 : LE MECANISME EST DEMONTRE PAR LES DONNEES, ET UN CHIFFRE QUE J AI DONNE DOIT ETRE CORRIGE
+
+**Dernier etat stable.** `api_opcv` a `417ab9c`, pousse, working tree propre.
+`front_end_opcvm` a ce lot. Aucune ecriture en production, aucune migration
+appliquee, aucun cron modifie.
+
+**L0.d a tourne sur la production (2026-10-15 18:44 UTC) et le mecanisme est
+demontre, non plus deduit.**
+
+Le type REEL des colonnes, lu dans `information_schema` :
+
+| colonne | type en base | type declare par le modele |
+|---|---|---|
+| `performences.ytd` | **varchar(255)** | DOUBLE |
+| `performences.perf3m` | **varchar(255)** | DOUBLE |
+| `performences.perf6m` | **varchar(255)** | DOUBLE |
+| `classementfonds.rank1erJanvier` | **varchar(255)** | INTEGER |
+| `classementfonds.rank1erJanviertotal` | **varchar(255)** | INTEGER |
+
+Et la demonstration par les donnees, pas par le schema — les cinq plus grands
+`ytd` selon chacun des deux tris SQL :
+
+```
+ORDER BY ytd DESC                  : 97.8408163265306 | ...
+ORDER BY CAST(ytd AS DECIMAL) DESC : 559855.7227256253 | ...
+```
+
+« 97.8 » passe devant « 559855.7 » parce que le caractere « 9 » est apres le
+caractere « 5 ». Le tri etait alphabetique.
+
+Les trois ordres attendus, juges contre les rangs stockes :
+
+| categorie | A. `ORDER BY ytd` | B. `ORDER BY CAST` | C. production (`rankFundInList`) |
+|---|---|---|---|
+| OBLIGATIONS MAROC | 109/300 — 36,3 % | 298/300 — 99,3 % | **300/300 — 100 %** |
+| DIVERSIFIE MAROC | 19/141 — 13,5 % | 140/141 — 99,3 % | **140/141 — 99,3 %** |
+| ACTIONS MAROC | 7/122 — 5,7 % | 122/122 — 100 % | **122/122 — 100 %** |
+| OBLIGATIONS NIGERIA | 15/87 — 17,2 % | 84/87 — 96,6 % | **87/87 — 100 %** |
+| DIVERSIFIE TUNISIE | 3/70 — 4,3 % | 70/70 — 100 % | **70/70 — 100 %** |
+
+Et l egalite STRICTE (`===`) vaut **0 partout, dans les trois colonnes** : le
+rang stocke est une chaine, donc `"5" === 5` est faux. C est la preuve directe
+du compteur casse de `diag_classement_vs_perf.js`.
+
+**CORRECTION D UN CHIFFRE QUE J AI DONNE.** J ai ecrit dans le lot CA, et dans
+le chat, « **720 fonds sur 720** au bon rang ». C etait exact au 2026-10-07.
+La mesure du 2026-10-15 donne **719 sur 720** : DIVERSIFIE MAROC est passe de
+141/141 a **140/141**. Un fonds est decale d un rang (ecart max = 1), et le tri
+force numerique donne le meme 140/141 — ce n est donc pas un artefact de
+comparateur. C12 le voit et reste `[OK]` parce que son seuil est a 90 %.
+
+**Ce residu est a instruire, pas a balayer.** Un fonds decale d exactement un
+rang, sur la seule categorie ou `B` et `C` concordent a 140/141, ressemble a un
+departage d ex aequo : le SQL de `ranking.service.js:87-100` n a pas d
+`ORDER BY`, donc l ordre entre deux valeurs egales n est pas deterministe. Ce
+n est pas une raison de reconstruire les trois tables — 719 sur 720 reste la
+mesure — mais c est une raison de regarder ce fonds. **A faire : un diagnostic
+a la demande qui nomme le fonds et compare son `ytd` a celui de son voisin de
+rang.**
+
+**La conclusion du lot CA tient donc, avec cette nuance :** il n y a qu un etage
+de peremption, celui des performances (MAROC 9/644 a jour, 126,9 j), et la
+reconstruction des classements reste sans justification.
+
+**Fichiers livres dans ce lot — `api_opcv`.**
+
+| Fichier | Lot | Nature |
+|---|---|---|
+| `src/db/migrations/20261015000001-add-category-composite-indexes.js` | L6 | **nouveau**, neuf index composites, **non applique** |
+| `scripts/scraper/masi_ft.js` | L9 | **nouveau** : source FT + validation des colonnes ecrite une seule fois |
+| `scripts/scraper/fix_index_tail.js` | L9 | `--source ft|medias24`, medias24 restant le **defaut** |
+
+**L6 est justifie par la mesure, pas par l intuition.** `EXPLAIN` sur la
+sous-requete reelle : `type=index key=idx_perf_fond_id rows=64739`, 400 ms en
+moyenne, soit **24,9 min de SQL seul** pour 1 245 fonds x 3 niveaux — contre un
+`--max-time 1800`. **L absence d index est la cause mesuree du `HTTP 000`** des
+etapes 9a-9c, et non un symptome a masquer en rallongeant le delai. C est aussi
+la seule modification du chantier dont on puisse affirmer qu elle n a aucun
+effet numerique : un index ne change qu un plan d execution, et `DROP INDEX` est
+un retour arriere instantane.
+
+**L9 : dette assumee et ecrite.** `scrape_indices_daily.js` garde sa propre
+copie de la logique de validation. Elle tourne depuis le 2026-10-05 et vient de
+reparer le benchmark marocain (`C10.MASI` 66 j → 0 j, 3 214 VL reparees) ; la
+brancher sur le module neuf dans le meme lot que sa creation ferait dependre une
+chaine fraichement reparee d un code non eprouve. **L unification est un lot a
+part.** Ancre de non-regression pour l execution : la cloture FT du 31/07/2026
+vaut 17 843,70, exactement la valeur en base ce jour-la.
+
+**Etat des controles au 2026-10-15 18:44 UTC :** 23/33 OK, 4 echecs (`C2`, `C3`,
+`C7`, `C8`), 6 alertes. `C11` dit toujours « colonne `created_at` absente » : la
+migration d horodatage n est pas appliquee, degradation voulue.
+
+**Tache en cours.** Le second run `doc-drift` (`d019fb5`) execute le dry-run au
+nouveau critere a quatre classes. **Son verdict n est pas encore lu : le
+« DIVERGENT = 0 et PERDU = 0 » n est donc pas acquis**, et le rattrapage des
+performances ne demarre pas avant.
+
+**Prochaine action recommandee.** Lire le bloc
+`diag_perf_locale_equivalence.js` du prochain `DIAG_ONDEMAND.md` et verifier les
+deux zeros. Puis le diagnostic du fonds decale de DIVERSIFIE MAROC.
+
+**A faire par le proprietaire, dans cet ordre.**
+1. `npx sequelize-cli db:migrate` — applique L6 (neuf index) et L2
+   (horodatage). Hors fenetre du cron de 20 h. Aucun effet numerique.
+2. Verifier : rejouer `diag_classement_index_plan.js`, l `EXPLAIN` doit passer
+   de `type=index rows=64739` a `type=ref`.
+3. Le rattrapage des performances (871 fonds, ≈ 0,43 h) **seulement apres** les
+   deux zeros du dry-run.
+
+**A ne pas faire a la reprise.** Ne pas reconstruire les classements. Ne pas
+brancher le cron sur le calcul direct avant les deux zeros. Ne pas unifier
+`scrape_indices_daily.js` sur `masi_ft.js` dans le meme lot qu autre chose.
+
+---
+
 ### LOT CA — 2026-10-15 : LE DEUXIEME ETAGE DE PEREMPTION N EXISTE PAS, ET LE CRITERE DE BASCULE ETAIT INATTEIGNABLE
 
 **Dernier etat stable.** `api_opcv` sur `claude/code-review-improvements-ikvuj`
