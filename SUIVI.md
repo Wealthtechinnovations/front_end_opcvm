@@ -2583,6 +2583,121 @@ grep -rA3 "<logger>" /etc/clickhouse-server/config.xml 2>/dev/null | head -20
 
 ## POINT DE REPRISE COURANT
 
+### LOT CA — 2026-10-15 : LE DEUXIEME ETAGE DE PEREMPTION N EXISTE PAS, ET LE CRITERE DE BASCULE ETAIT INATTEIGNABLE
+
+**Dernier etat stable.** `api_opcv` sur `claude/code-review-improvements-ikvuj`
+a `d019fb5`, pousse, working tree propre. `front_end_opcvm` a `0035b11` plus ce
+lot. Aucune ecriture en production, aucune migration appliquee, aucun cron
+modifie.
+
+**Renversement n°1 — les rangs suivent bien les performances.** `C12`, le
+controle livre le 2026-10-07, utilise le tri de la **production**
+(`rankFundInList`, importe de `src/services/ranking.pure.js`) et une comparaison
+numerique. Verdict sur les cinq plus grosses categories nationales :
+
+| categorie | fonds au bon rang |
+|---|---|
+| OBLIGATIONS MAROC | **300/300 — 100,0 %** |
+| DIVERSIFIE MAROC | **141/141 — 100,0 %** |
+| ACTIONS MAROC | **122/122 — 100,0 %** |
+| OBLIGATIONS NIGERIA | **87/87 — 100,0 %** |
+| DIVERSIFIE TUNISIE | **70/70 — 100,0 %** |
+
+**720 fonds sur 720.** Le « ACTIONS MAROC 7 sur 122, rho 0,474 » que j ai repris
+dans les lots BX et BY et dans le plan de remediation comme un fait etabli
+venait de `diag_classements.js:155`, qui construisait l ordre attendu par
+`ORDER BY p.ytd DESC` — un tri **SQL** sur une colonne dont les voisines
+(`volatility3an`, `ratiosharpe3an`, `perfannu3an`) sont des `varchar(255)` en
+base alors que `src/models/performence.js` les declare DOUBLE. Un `ORDER BY` sur
+du texte trie « 9.5 » avant « 10.2 ».
+
+**Consequence : la reconstruction des trois tables `classementfonds*` est
+supprimee du plan.** Elle n avait aucune justification, et elle etait sur le
+point de vous etre recommandee. Il n y a **qu un** etage de peremption, celui
+des performances elles-memes, qui reste reel et mesure (MAROC 9/644 a jour,
+126,9 j de retard).
+
+**Renversement n°2 — le critere de bascule etait inatteignable par
+construction.** Le plan exigeait « 0 divergence sur 84 colonnes » avant de
+brancher le calcul direct. Le dry-run etendu a tourne : « 10 divergents » sur
+NIGERIA, « 6 divergents, 2 absents » sur UEMOA. En lisant les ecarts, **aucun
+n etait un desaccord de valeur** — tous de la forme
+`calcule=4,06 / stocke=null`, c est-a-dire des colonnes de ratios que le script
+remplit desormais et que la table n a pas. Le critere condamnait l amelioration
+en meme temps que le defaut.
+
+Le dry-run classe maintenant chaque colonne en quatre classes :
+
+| classe | sens | exigence |
+|---|---|---|
+| `IDENTIQUE` | les deux cotes ont une valeur, ecart sous tolerance | — |
+| `DIVERGENT` | les deux cotes ont une valeur, ecart au-dessus | **0** |
+| `COMBLE` | le script a une valeur, la table est vide | attendu |
+| `PERDU` | la table a une valeur, le script n en a pas | **0** |
+
+`PERDU = 0` est la garantie de non-destruction, et c est elle qui manquait :
+l ancien compteur ne distinguait pas une colonne **comblee** d une colonne
+**perdue**.
+
+**Perte a signaler.** Le conteneur de session a ete recycle dans la nuit du
+2026-10-09 au 10. Le checkout local est revenu a `b484f3a`, sans `CLAUDE.md` ni
+`scripts/`, et le fichier de plan avait disparu. **Les trois fichiers prepares
+le 2026-10-07 avant le passage en mode plan ont ete perdus** — le mode plan
+interdisant toute ecriture, ils n avaient pas pu etre commites. Verifie par
+`git merge-base --is-ancestor` : les trois commits pousses (`3fef20b`,
+`7fb7bb8`, `209e5a4`) et le lot BZ etaient intacts sur le distant. **Rien de
+pousse n a ete perdu.** Les trois fichiers ont ete reecrits dans ce lot.
+**Lecon : commiter chaque fichier de diagnostic des qu il compile**, sans
+attendre la fin du lot — le canal a la demande ne s execute de toute facon
+qu au push.
+
+**Fichiers modifies — `api_opcv` uniquement.**
+
+| Fichier | Nature |
+|---|---|
+| `scripts/diag/ondemand/diag_classement_tri_texte.js` | **nouveau** (L0.d), lecture seule : type reel de `ytd`, les deux tris SQL cote a cote, trois ordres attendus juges contre les rangs stockes |
+| `scripts/diag/ondemand/diag_classements.js` | `ORDER BY p.ytd DESC` → `ORDER BY CAST(p.ytd AS DECIMAL(30,10)) DESC`, comparaison par `Number()` |
+| `scripts/diag/ondemand/diag_classement_vs_perf.js` | **mon propre compteur casse** : il comparait par `===`, or la colonne peut etre du texte |
+| `scripts/fix/fix_populate_performances.js` | critere a quatre classes, decompte par colonne dedouble, verdict a deux zeros |
+| `scripts/diag/ondemand/diag_perf_locale_equivalence.js` | filtre de sortie adapte |
+
+**Le controle est corrige, jamais desactive** — regle du depot — et la raison
+est ecrite dans chaque script.
+
+**Commandes executees.** `git fetch` / `reset --hard origin/...` sur les deux
+depots (le local etait tres en retard, pas divergent) ; `node --check` sur les
+cinq fichiers ; `git add` / `commit` / `pull --rebase` / `push`.
+
+**Tests realises, et leur resultat.** `node --check` : OK sur tous. Les deux
+runs `doc-drift` declenches par les pushes `cc14c79` et `d019fb5` executent
+L0.d et le nouveau dry-run **sur la production** ; leur sortie arrive dans
+`api_opcv/docs/DIAG_ONDEMAND.md`. **Au moment d ecrire ce lot, ils n ont pas
+encore rendu leur verdict** : le « DIVERGENT = 0 et PERDU = 0 » n est donc pas
+acquis, et le rattrapage des performances ne demarre pas avant.
+
+**Tache en cours.** Attente des deux rapports `DIAG_ONDEMAND.md`.
+
+**Prochaine action recommandee.** Lire les deux sorties, dans cet ordre :
+(1) L0.d — le type reel de `performences.ytd` et la concordance des trois ordres
+attendus ; (2) le dry-run etendu — `DIVERGENT` et `PERDU`. Puis, et seulement
+ensuite, ecrire la migration des trois index composites (L6), justifiee par le
+`EXPLAIN` de L0.b : `type=index key=idx_perf_fond_id rows=64739`, 400 ms par
+sous-requete, soit **24,9 min de SQL seul** pour un `--max-time` de 1 800 s —
+l absence d index est la cause mesuree du `HTTP 000` des classements.
+
+**Risques connus.** Le canal a la demande execute les **quarante et un**
+scripts de `scripts/diag/ondemand/` dans une **session SSH unique**, sans delai
+par script ; un script de dix minutes casse le tunnel. Le dry-run etendu appelle
+l endpoint de ratios jusqu a trois fois par fonds, d ou le plafond de dix fonds
+par pays.
+
+**A ne pas faire a la reprise.** Ne pas reconstruire les classements : 720/720
+au bon rang, c est mesure. Ne pas appliquer la migration d horodatage sans avoir
+relu la presence de `DB_SYNC_ALTER` (mesure L0.a : **absente**, donc sans
+risque). Ne pas brancher le cron sur le calcul direct avant les deux zeros.
+
+---
+
 ### LOT BZ — 2026-10-07 : LE PLAN DE REMEDIATION DE C8 EST ENGAGE — MESURE, RATIOS, HORODATAGE, DEUX CONTROLES
 
 **Dernier etat stable.** `api_opcv` sur `claude/code-review-improvements-ikvuj`
