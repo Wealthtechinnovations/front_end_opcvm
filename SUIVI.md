@@ -13,6 +13,81 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-21 — Lot CC : le juge du rattrapage savait pas compter
+
+**Dernier état stable :** api_opcv `fa02f31` poussé sur `claude/code-review-improvements-ikvuj`, working tree clean, build non concerné (aucun fichier frontend touché).
+
+### Correction d'une affirmation que j'ai faite
+
+J'ai rapporté « NIGERIA : DIVERGENT 0, PERDU 0 → critère atteint ». **Ce verdict ne valait rien.**
+Le même rapport affichait simultanément « Fonds avec desaccord : 8 » et quatre classes à zéro :
+les deux énoncés ne peuvent pas être vrais ensemble.
+
+Cause, dans `api_opcv/scripts/fix/fix_populate_performances.js` : la branche de comparaison de
+chaînes passait **avant** la classification. Or la base stocke en `varchar(255)` la plupart des
+colonnes de performance (`perf3ans`, `perf5ans`, tous les `*m`, `volatility3an`, `ratiosharpe3an`,
+`perfannu3an` ; `perf8ans` et `perf10ans`, eux, sont `double`). Dès que la valeur stockée était une
+chaîne non vide, l'écart partait dans la liste et n'était compté dans **aucune** classe. Les quatre
+compteurs sous-comptaient donc sur la majorité des colonnes.
+
+### Lot traité
+
+- **Objectif :** rendre le juge du dry-run capable de compter, avant d'autoriser quoi que ce soit.
+- **Fichiers modifiés :**
+  - `api_opcv/scripts/fix/fix_populate_performances.js` — ordre des branches : vides → COMBLE →
+    REFUSE/PERDU → chaînes → numérique ; un désaccord de chaîne compte en DIVERGENT ; deux écritures
+    du même nombre (`'12.50'` / `'12.5'`) ne sont plus un désaccord, les deux côtés numériques sont
+    tranchés avec les tolérances **existantes** ; PERDU compté par compteur et non par un filtre sur
+    le texte ; ajout de l'invariant imprimé **avant** le verdict, et verdict explicitement SUSPENDU
+    si l'invariant est violé.
+  - `api_opcv/scripts/diag/ondemand/diag_perf_locale_equivalence.js` — motif de la relecture
+    documenté, filtre de sortie étendu pour retenir les lignes de l'invariant.
+- **Aucune tolérance, aucun seuil, aucune route, aucune table modifiés.** Changement limité au juge.
+- **Commandes exécutées :** `node --check` sur les deux fichiers (OK) ; `git pull --rebase` ;
+  `git push -u origin claude/code-review-improvements-ikvuj` → `a463130..fa02f31`.
+- **Tests réalisés :** contrôle syntaxique uniquement en local — le conteneur de session n'a ni
+  client `mysql` ni accès direct à la base. La mesure réelle passe par le canal à la demande
+  (`scripts/diag/ondemand/**` est un déclencheur `push` de `doc-drift.yml`), déclenché par ce push.
+- **Résultat :** NON ENCORE MESURÉ. L'invariant doit s'imprimer et être vrai dans
+  `api_opcv/docs/DIAG_ONDEMAND.md` avant toute lecture du critère.
+
+### Invariant désormais imprimé à chaque exécution
+
+```
+DIVERGENT + PERDU + COMBLE + REFUSE = désaccords constatés
+```
+
+Tant que cette égalité n'est pas imprimée **et** vraie, aucun verdict n'est recevable.
+
+### Prochaine action recommandée
+
+Lire `api_opcv/docs/DIAG_ONDEMAND.md` (bloc `PERFORMANCES LOCALES — EQUIVALENCE`) dès que le
+workflow a committé sa sortie, et dans cet ordre : (1) l'invariant est-il VÉRIFIÉ ? (2) seulement
+ensuite, que valent DIVERGENT et PERDU sur NIGERIA et UEMOA ? Les dix-neuf écarts jusqu'ici non
+classés se répartiront entre REFUSE (horizon non couvert — attendu, c'est la garde qui refuse
+d'inventer) et PERDU (vrai défaut). **La proportion n'est pas devinable et ne sera pas devinée.**
+
+### Risques connus
+
+- `sync_production.sh` committe automatiquement sur la même branche : rebaser avant chaque push
+  (déjà rencontré sur ce lot, `a463130` était arrivé entre-temps).
+- Le canal à la demande exécute les ~45 scripts dans **une seule** session SSH : ne rien y ajouter
+  sans nécessité, un script long casse le tunnel.
+- L'angle mort reste ouvert : `diag_rangs_permutation_invalide.js` rend « 0 catégorie d'au moins
+  5 fonds → toutes propres » sur `classementfonds_eurs` et `_usds`, qui comptent ~3 639 lignes
+  chacune. Zéro catégorie jugée ≠ zéro défaut : le critère est **vide**, pas vert.
+
+### À ne pas faire à la reprise
+
+- Ne pas lancer le rattrapage des 871 fonds : il reste bloqué, et pour une meilleure raison
+  qu'avant — non parce qu'une divergence subsiste, mais parce que le juge vient d'être réparé et
+  n'a pas encore rendu de mesure.
+- Ne pas reconstruire les classements : `C12` a mesuré 719/720 rangs corrects ; le résidu est une
+  numérotation invalide (rang 80 vacant, 81 doublé) sur 1 catégorie de 22, pas un décalage de fond.
+- Ne pas relire le verdict du 2026-10-15 : il est périmé par construction.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-09-22 — Programme Directeur actif / AF-OPS-003 POST_FIX_VALIDATION
 
 **Projet :** AfricaFunds — `CS-AFRICAFUNDS-001`  
