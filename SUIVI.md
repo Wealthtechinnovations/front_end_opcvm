@@ -13,6 +13,77 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-21 20:15 UTC — Lot CE : l'angle mort EUR/USD instruit, et il etait sain
+
+**Dernier état stable :** api_opcv `4acefd3` poussé, working tree clean. Sorties de mesure dans
+`api_opcv/docs/DIAG_ONDEMAND.md`, six passages successifs du canal entre 19:37 et 20:1x UTC.
+
+### Deux erreurs à moi, dans le même script, en sens inverse
+
+`scripts/diag/ondemand/diag_rangs_permutation_invalide.js` rendait depuis des semaines
+« 0 catégorie d'au moins 5 fonds → toutes les numérotations sont propres » sur deux tables de
+**3 643 lignes chacune**. Critère VIDE affiché en vert. Puis, une fois le périmètre rempli, il a
+affiché l'inverse — « 13 groupes sur 19 hors permutation, 233 rangs doublés, défaut STRUCTUREL ».
+**C'était faux aussi.** Un contrôle qui dort et un contrôle qui crie au loup se valent.
+
+### Conclusion mesurée
+
+| Table | Clé retenue | Groupes | Hors permutation | Doublons |
+|---|---|---|---|---|
+| `classementfonds` | `categorie_nationale` stockée (3622/3622) | 22 | **1** | 7 |
+| `classementfonds_eurs` | `JOIN fond_investissements.categorie_national` | 22 | **0** | **0** |
+| `classementfonds_usds` | idem | 22 | **0** | **0** |
+
+**Les classements EUR et USD sont des permutations propres de 1..N.** La vraie clé de regroupement
+n'est stockée dans aucune des deux tables : c'est la catégorie nationale du **fonds**.
+
+Le seul défaut de numérotation réel est en devise **locale**, sur **1 catégorie sur 22** —
+`DIVERSIFIE MAROC`, rang 80 vacant, rang 81 doublé. **Les pages EUR et USD ne sont pas touchées.**
+
+### Étapes de la mesure, pour ne pas refaire le chemin
+
+1. `categorie_nationale` est nulle **3 643/3 643** sur les deux tables devise : la colonne existe,
+   elle n'est jamais renseignée. Mon sélecteur choisissait par *présence* et tombait donc sur la
+   seule des trois colonnes qui soit vide. Il choisit désormais par *remplissage*.
+2. Colonnes réellement renseignées : `categorie` 3 590/3 643, `categorie_regionale` 3 621/3 643.
+3. Hypothèse « clé trop grossière » **écartée** : la composée `categorie + categorie_regionale`
+   fait tomber les doublons de 233 à 201 et laisse 13 groupes sur 19. Une agrégation se serait
+   effondrée en groupes propres.
+4. Clés externes essayées par jointure : seule `categorie_national` du fonds rend 0/22. Décisif.
+5. Signature à retenir pour l'avenir : `max = distincts` et **0 trou** = agrégation de plusieurs
+   groupes numérotés 1..N, donc clé trop grossière. `max = N` avec des trous = numérotation
+   réellement cassée (c'est la forme de `DIVERSIFIE MAROC` : 141 lignes, 134 distincts, max 141).
+
+### Le contrôle ne peut plus se tromper en silence
+
+- Il découvre les colonnes dans `information_schema` et choisit la catégorie par remplissage.
+- Il essaie **chaque** clé : colonnes stockées, leur composée, et les catégories du fonds par
+  jointure. Il **nomme** celle qu'il retient pour le verdict.
+- Périmètre vide → `ÉCHEC`, `CRITERE VIDE`, `exitCode 2`. Jamais du vert.
+- Le mot « défaut » n'est employé que si des groupes restent hors permutation **sous la clé la plus
+  propre existante**.
+- Il signale nommément les colonnes présentes mais jamais renseignées, au lieu de les contourner.
+
+### Prochaine action recommandée
+
+1. **Décision du propriétaire** : le rattrapage des 871 fonds, justifié par la mesure du lot CD
+   (`DIVERGENT 0`, `PERDU 0`, 90 colonnes), reste **non lancé** — il écrit en base de production.
+2. `npx sequelize-cli db:migrate` hors de la fenêtre du cron de 20 h.
+3. Reste ouvert, et c'est du gros œuvre : le mécanisme (ii) du doublon de `DIVERSIFIE MAROC` —
+   l'instantané incohérent entre les ~1 245 appels indépendants de la route de classement.
+   Mécanisme (i) définitivement écarté : 0 `ytd` non numérique sur les trois tables.
+4. Question de données, distincte : faut-il renseigner `categorie_nationale` sur les tables devise ?
+   Aujourd'hui le regroupement y est implicite, par jointure. Ça marche, mais rien ne le documente.
+
+### À ne pas faire à la reprise
+
+- Ne pas reprendre « 233 rangs doublés en EUR/USD » : **c'était mon artefact**, les tables sont saines.
+- Ne pas conclure d'un périmètre vide qu'un contrôle est vert — le script échoue maintenant, mais la
+  leçon vaut pour tous les autres.
+- Ne pas reconstruire les classements : 22 groupes sur 22 propres en devise, 21 sur 22 en local.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-21 19:30 UTC — Lot CD : critere de bascule ATTEINT et mesure
 
 **Dernier état stable :** api_opcv `037a3f0` poussé, working tree clean. Sortie de mesure dans
