@@ -13,6 +13,83 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-21 19:30 UTC — Lot CD : critere de bascule ATTEINT et mesure
+
+**Dernier état stable :** api_opcv `037a3f0` poussé, working tree clean. Sortie de mesure dans
+`api_opcv/docs/DIAG_ONDEMAND.md` au commit `bbdd968` (2026-10-21 19:30 UTC).
+
+### Le juge compte juste, et le critère est atteint
+
+Invariant **VÉRIFIÉ** sur les quatre passes, et le verdict est désormais recevable :
+
+| Passe | DIVERGENT | PERDU | COMBLE | REFUSE | Somme = constatés | Critère |
+|---|---|---|---|---|---|---|
+| NIGERIA (10 fonds) | 0 | 0 | 363 | 33 | 396 = 396 | **ATTEINT** |
+| UEMOA (10 fonds) | 0 | 0 | 179 | 43 | 222 = 222 | **ATTEINT** |
+| Fonds 1543 | 0 | 0 | 0 | 1 | 1 = 1 | **ATTEINT** |
+| Fonds 1145 | 0 | 0 | 45 | 3 | 48 = 48 | **ATTEINT** |
+
+`DIVERGENT = 0` sur **90 colonnes** comparées, pas dix : les deux calculs donnent les mêmes chiffres
+partout où les deux en ont un. `PERDU = 0` : le calcul direct ne fait perdre aucune valeur existante.
+
+### Le deuxième défaut de classificateur, trouvé en instruisant le premier
+
+La mesure de 19:22 laissait un PERDU unique : `[1145] AIICO BALANCED FUND`, `perf8ansm`
+calculé `null` contre `322.1552848087039` stocké. Cause mesurée, pas supposée :
+
+- les colonnes `*m` ancrent sur la **fin du mois précédent**, antérieure à la dernière VL : elles
+  exigent donc un peu plus d'historique ;
+- le classificateur comparait l'horizon à `years`, mesuré depuis la **dernière VL** — une autre
+  question que celle à laquelle la garde avait répondu ;
+- **fonds 1145 : historique = 8.0 ans.** Juste au-dessus de huit ans depuis la dernière VL, juste en
+  dessous depuis l'ancrage fin de mois.
+- Preuve par les chiffres, ventilation REFUSE de NIGERIA : `perf8ans` refusé sur **6** fonds,
+  `perf8ansm` sur **7**. Le septième est 1145. L'asymétrie est exactement d'un fonds, celui-là.
+
+Les deux ancrages sont alignés (`yearsFinDeMois` pour les `*m`). PERDU est passé de 1 à 0 et REFUSE
+de 32 à 33 : le `322.155` stocké était un chiffre **fabriqué** par la route en retombant sur la VL la
+plus ancienne, et le `null` est correct. La ligne PERDU porte maintenant horizon, historique, ancrage
+et date de la VL la plus ancienne, pour que le rapport s'explique sans relance.
+
+### Ce que le critère couvre, et ce qu'il ne couvre pas
+
+- Il couvre NIGERIA et UEMOA, 10 fonds chacun, plus deux passes ciblées. C'est le périmètre où la
+  comparaison a un sens : les performances stockées y sont fraîches.
+- Il **ne couvre pas MAROC**, et pas par négligence — c'est impossible par construction. Les
+  performances marocaines stockées datent de juin ; comparer le calcul du jour à des chiffres de juin
+  ferait diverger tout, et ne dirait rien des formules.
+
+### Prochaine action recommandée — décision du propriétaire
+
+Le verrou que ce chantier s'était donné est levé : invariant imprimé et vrai, `DIVERGENT = 0`,
+`PERDU = 0`. Le rattrapage des 871 fonds (UEMOA 77 → TUNISIE 125 → MAROC 635, lots de 100, ≈ 0,43 h,
+**sans** `--force`, rollback = `DELETE` des lignes insérées, **pas de snapshot automatique**) est
+désormais justifié par la mesure.
+
+**Je ne le lance pas** : il écrit en base de production, donc il relève des gates de la §8 et de la
+décision du propriétaire, pas d'une session.
+
+À faire aussi, indépendamment : `npx sequelize-cli db:migrate` hors de la fenêtre du cron de 20 h
+(neuf index composites + horodatage), aucun effet numérique, `DROP INDEX` comme retour arrière.
+
+### Risques connus
+
+- `sync_production.sh` committe sur la même branche : rebaser avant chaque push (deux fois nécessaire
+  sur ces deux lots).
+- Angle mort toujours ouvert : `diag_rangs_permutation_invalide.js` rend « 0 catégorie d'au moins
+  5 fonds » sur `classementfonds_eurs` et `_usds` (~3 639 lignes chacune). Critère **vide**, pas vert.
+- Le canal à la demande exécute ~45 scripts dans une seule session SSH.
+
+### À ne pas faire à la reprise
+
+- Ne pas relire les verdicts antérieurs au 2026-10-21 19:30 UTC : périmés par construction, les
+  compteurs sous-comptaient.
+- Ne pas étendre le critère à MAROC par cette méthode : il ne peut rien y mesurer.
+- Ne pas reconstruire les classements (`C12` : 719/720 rangs corrects ; résidu = numérotation
+  invalide sur 1 catégorie de 22).
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-21 — Lot CC : le juge du rattrapage savait pas compter
 
 **Dernier état stable :** api_opcv `fa02f31` poussé sur `claude/code-review-improvements-ikvuj`, working tree clean, build non concerné (aucun fichier frontend touché).
