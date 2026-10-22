@@ -13,6 +13,91 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-22 00:00 UTC — Lot CF : RATTRAPAGE DES PERFORMANCES EXECUTE
+
+**Autorisation :** accord explicite du propriétaire, donné après énumération des deux actions
+(migration des index + rattrapage des 871 fonds). **Exécuté en production.**
+
+### Résultat mesuré
+
+| Pays | Périmés avant | Après | Insérés | MàJ | Durée étape 1 | Étape 2 (EUR+USD) |
+|---|---|---|---|---|---|---|
+| UEMOA | 75 | **2** | 73 | 35 | 73 s | 108 lignes / devise |
+| TUNISIE | 126 | **0** | 126 | 5 | 298 s | 131 lignes / devise |
+| MAROC | 625 | **0** | 625 | 20 | 1 407 s | 645 lignes / devise |
+| **Total** | **826** | **2** | **824** | **60** | ~30 min | ~20 min |
+
+**0 erreur sur les trois pays.** MAROC : lignes `performences` 71 985 → 72 610, dernière date
+2026-10-16 → **2026-10-20**, alignée sur la dernière VL. Rapports dans `docs/OPS_RECALC_DERIVES.md`.
+
+Vérifié sur l'**API de production** (et non seulement en base) : `/api/performanceswithdate` sert les
+nouveaux chiffres pour les fonds 1141, 2547 et 1145.
+
+### Canal utilisé, et un écart avec le plan
+
+`ops-recalc-derives.yml`, `only_perf=true`, `with_classements=false`, phrase
+`VALIDER RECALCUL DERIVES`, un pays à la fois. Il lance les étapes 3-4, soit
+`fix_populate_performances.js` — le script réparé et validé au lot CD.
+
+**Écart assumé :** le workflow passe `--force` **en dur**, alors que le plan disait « sans `--force` ».
+Mesuré : sans lui, un fonds dont la perf porte déjà la date de sa dernière VL est *ignoré* ; avec lui,
+il est réécrit. Les 826 fonds périmés n'en avaient pas besoin ; les 60 « mis à jour » sont l'effet du
+`--force` sur des fonds déjà à jour. Non destructeur d'après la mesure du lot CD
+(`DIVERGENT 0`, `PERDU 0`), mais le périmètre écrit est plus large que prévu.
+
+### Migration des index : AUCUN CANAL — non exécutée
+
+Testé, pas supposé : aucun des 44 workflows ne mentionne `sequelize` ni `db:migrate`. Je n'ai pas
+fabriqué de workflow écrivant du DDL en production pour contourner. **Reste à faire sur S2 :**
+`cd /var/www/.../api && npx sequelize-cli db:migrate` (neuf index composites + horodatage, aucun
+effet numérique, `DROP INDEX` en retour arrière). C'est ce qui doit faire tomber les `HTTP 000`.
+
+### DÉCOUVERTE — `C3` est `C7`, et le correctif existe sans avoir jamais tourné
+
+Le `143 958 %` du fonds `[1141]` AFRINVEST DOLLAR FUND vient d'être **recalculé** par le script
+validé : le calcul est juste, **la donnée est fausse**. Mesuré sur la série de production :
+
+```
+2025-12-24 :        114,68      ← naira
+2026-01-02 :    165 297,52      ← dollars     facteur 1441 ≈ taux USD/NGN
+```
+
+Trois autres ruptures du même type en 2022-03, 2023-12 et 2025-12. Le YTD ancre sur le 114,68 de
+décembre face à 165 207 aujourd'hui → 143 958 %.
+
+`ops-fix-segments-naira.yml` documente déjà le défaut : **157 VL libellées en dollars dans des séries
+tenues en naira**, 41 segments, 30 fonds, **21 fonds sur 330** affichant une performance fausse
+(+143 958 % pour AFRINVEST, −99,93 % pour quinze autres). Critère externe : le prix naira publié par
+la SEC pour la date exacte, retenu si le rapport dépasse 100.
+
+**Ce correctif n'a jamais tourné qu'en dry-run** — trois fois, les 12 et 16 septembre 2026.
+
+**NON EXÉCUTÉ, et volontairement :** il réécrit des **VL**, donnée source et non dérivée, et
+l'en-tête du workflow rappelle que deux tentatives antérieures se sont trompées et ont écrasé trois
+bonnes VL. L'accord du propriétaire portait sur la migration et le rattrapage, énumérés ;
+ce n'est pas le même geste, donc pas le même accord. **Question posée, réponse attendue.**
+
+### Prochaine action recommandée
+
+1. `npx sequelize-cli db:migrate` sur S2 (propriétaire).
+2. Décision sur le correctif naira. Ordre proposé : dry-run → lecture du périmètre → `execute` →
+   puis `ops-recalc-derives` **complet** (sans `only_perf`) sur NIGERIA, car corriger `value` rend
+   `vl_ajuste`, EUR, USD et les performances faux tant qu'on ne les recalcule pas.
+3. **La bascule du cron (L4) reste le geste durable** : le cron appelle encore
+   `saveperfdatemysql`, la route qui n'effectue aucun calcul et émet un HTTP interne par fonds et par
+   date — d'où les `HTTP 000`. Sans elle, les 826 fonds redériveront. Le rattrapage de ce lot est un
+   one-shot ; il ne remplace pas la bascule.
+
+### Risques connus
+
+- Les 2 résiduels UEMOA : fonds sans historique exploitable (3 « ignorés » à l'étape 1). À vérifier,
+  pas à affirmer.
+- Les performances des 21 fonds nigérians à échelle mélangée ont été **rafraîchies** par ce lot :
+  elles étaient fausses avant, elles le restent, le défaut est en amont dans `value`.
+- `--force` élargit le périmètre écrit (voir ci-dessus).
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-21 20:15 UTC — Lot CE : l'angle mort EUR/USD instruit, et il etait sain
 
 **Dernier état stable :** api_opcv `4acefd3` poussé, working tree clean. Sorties de mesure dans
