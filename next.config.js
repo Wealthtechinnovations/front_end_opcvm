@@ -3,40 +3,32 @@
 const nextConfig = {
     reactStrictMode: true,
     swcMinify: true,
-    async rewrites() {
+    async headers() {
         return [
             {
-                source: '/portefeuille/test',
-                destination: '/portefeuille/portefeuillereconstitution/retraitcash', // Your actual page path
+                source: '/(.*)',
+                headers: [
+                    { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+                    { key: 'X-Content-Type-Options', value: 'nosniff' },
+                    { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+                    { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+                ],
             },
-            /*  {
-                  source: "/api/searchFunds",
-                  destination: "${urlconstant}/api/searchFunds",
-              },
-              {
-                  source: "/api/lastvalLiq",
-                  destination: "${urlconstant}/api/lastvalLiq",
-              },
-              {
-                  source: "/api/ratios",
-                  destination: "${urlconstant}/api/ratios",
-              },
-              {
-                  source: "/api/performances",
-                  destination: "${urlconstant}/api/performances",
-              },
-              {
-                  source: "/api/comparaison",
-                  destination: "${urlconstant}/api/comparaison",
-              },
-              {
-                  source: "/api/valLiq",
-                  destination: "${urlconstant}/api/valLiq",
-              },
-              {
-                  source: "/api/recherchefonds",
-                  destination: "${urlconstant}/api/recherchefonds",
-              },*/
+        ];
+    },
+    async redirects() {
+        return [
+            { source: '/accueil', destination: '/home', permanent: true },
+            { source: '/actualite', destination: '/news', permanent: true },
+            { source: '/comparaison', destination: '/tools/comparison', permanent: true },
+            { source: '/recherche', destination: '/tools/search', permanent: true },
+            { source: '/Opcvm/:path*', destination: '/funds/:path*', permanent: true },
+            { source: '/Fundmanager/:path*', destination: '/fund-managers/:path*', permanent: true },
+            { source: '/Outils/:path*', destination: '/tools/:path*', permanent: true },
+            { source: '/pays/:path*', destination: '/countries/:path*', permanent: true },
+            { source: '/payspanel/:path*', destination: '/country-panel/:path*', permanent: true },
+            { source: '/panel/portefeuille/:path*', destination: '/panel/portfolio/:path*', permanent: true },
+            { source: '/panel/societegestionpanel/:path*', destination: '/panel/management/:path*', permanent: true },
         ];
     },
 };

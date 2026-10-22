@@ -1,20 +1,12 @@
 "use client";
-import { urlconstant } from "@/app/constants";
+import { urlconstant } from "@/lib/constants";
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
+import { useRouter } from 'next/navigation';
 import Select from 'react-select';
-
-
-//import * as XLSX from 'xlsx';
-import HighchartsReact from "highcharts-react-official";
-import Highcharts from 'highcharts';
-//import { router } from 'next/router';
-import Header from '@/app/Header';
-import Router from 'next/router';
-import { magic } from "../../../../../magic";
-import Headermenu from "@/app/Headermenu";
-import Sidebar from "@/app/sidebaradmin";
+import Headermenu from '@/components/layout/HeaderMenu';
+import Sidebar from '@/components/layout/AdminSidebar';
 
 const options = [
   { value: 1, label: 'Option 1' },
@@ -28,14 +20,6 @@ interface Pays {
 
 }
 
-interface PageProps {
-  searchParams: {
-    selectedfund: any;
-    portefeuille: any;
-    selectedValuename: any;
-    id: any
-  };
-}
 async function getlastvl1() {
 
   const data = (
@@ -46,8 +30,13 @@ async function getlastvl1() {
 interface Option {
   value: string;
 }
-export default function Profile(props: PageProps) {
-  let id = props.searchParams.id;
+export default function Profile() {
+  const router = useRouter();
+  const [id, setId] = useState<string>('');
+  useEffect(() => {
+    const stored = localStorage.getItem('userId');
+    if (stored) setId(stored);
+  }, []);
 
   const [selectedOptions, setSelectedOptions] = useState<Option[]>([]);
   const [fundsOptions, setFundsOptions] = useState([]);
@@ -102,7 +91,6 @@ export default function Profile(props: PageProps) {
     e.preventDefault();
 
     try {
-      console.log(formData);
       // Envoyer les données du formulaire à l'API
       const response = await fetch(`${urlconstant}/api/postportefeuille`, {
         method: 'POST',
@@ -111,7 +99,6 @@ export default function Profile(props: PageProps) {
         },
         body: JSON.stringify(formData), // Convertissez votre objet formData en JSON
       });
-      console.log(response);
       // Gérer la réponse de l'API (par exemple, afficher un message de succès)
 
       if (response.status === 200) {
@@ -122,7 +109,7 @@ export default function Profile(props: PageProps) {
 
         // Redirect the user to another page after a delay (e.g., 2 seconds)
         setTimeout(() => {
-          Router.push('https://example.com/pagehome');
+          router.push('/panel/admin/dashboard');
         }, 2000);
       }
 
