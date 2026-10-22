@@ -13,6 +13,77 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-22 03:35 UTC — Lot CG : dry-run naira, et un ecart entre promesse et perimetre
+
+**Lecture seule. Aucune ecriture.** Rapport consigne par le workflow dans
+`api_opcv/docs/OPS_FIX_SEGMENTS_NAIRA.md` (commit `817b1d2`).
+
+### Perimetre mesure aujourd'hui
+
+**157 VL sur 30 fonds**, dont 145 dans des plateaux. Critere **externe** : le prix naira publie par
+la SEC pour la date exacte, retenu si le rapport a la valeur en base depasse 100.
+
+```
+fonds date          en base    ->  naira SEC   rapport  nom
+2768 2026-05-15        1,00       1 361,39      1361   FSL EUROBOND FUND
+2769 2026-07-03        1,01       1 394,74      1381   ALPHA10 DOLLAR FUND
+2770 2026-07-24      106,08     146 409,99      1380   CFG AM FIXED INCOME DOLLAR
+1239 2026-06-26        1,36       1 863,81      1370   NOVA DOLLAR FIXED INCOME
+```
+
+Les rapports (1361, 1381, 1380, 1370) sont le taux USD/NGN de chaque date : ce sont des VL en
+dollars dans une serie tenue en naira, pas des ecarts de calcul.
+
+### Correction d'une affirmation que j'ai faite
+
+J'ai ecrit au lot CF qu'il n'y avait **pas de snapshot automatique**. C'etait vrai du rattrapage des
+performances, **faux de ce correctif-ci** : il prend un instantane complet de chaque ligne avant
+ecriture, avec restauration totale ou partielle :
+
+```
+node scripts/fix/fix_segments_dollars_nigeria.js --rollback data/naira_snapshots/<f>.json
+node scripts/fix/fix_segments_dollars_nigeria.js --rollback <f>.json --ids 123,456
+```
+
+Le risque de ce correctif est donc nettement plus faible que je ne l'avais presente.
+
+### LE POINT BLOQUANT — le fonds 1141 n'est PAS dans les 157 lignes
+
+L'en-tete du workflow annonce comme consequence visible « +143 958 % pour AFRINVEST ». Or
+`grep '^ *1141 '` sur le rapport du jour ne rend **rien** : le fonds 1141 AFRINVEST DOLLAR FUND est
+absent du perimetre.
+
+Mesure du lot CF sur la serie de production de 1141 :
+```
+2025-12-24 :        114,68      ← dollars
+2026-01-02 :    165 297,52      ← naira      facteur 1441
+```
+plus trois ruptures du meme type en 2022-03, 2023-12 et 2025-12.
+
+**Donc ce correctif, tel quel, ne corrigerait pas le symptome le plus visible du site.** Deux
+hypotheses, aucune verifiee : soit la SEC n'a pas de prix pour la date fautive et la ligne tombe hors
+filtre, soit le defaut de 1141 est d'une autre nature que celui des 157 autres.
+
+### EXECUTE NON LANCE, et pour cette raison precise
+
+Pas par exces de prudence : le rollback existe et le critere est externe. Mais un correctif dont
+l'en-tete promet AFRINVEST et dont le perimetre reel ne contient pas AFRINVEST presente un ecart
+entre sa promesse et son contenu. L'executer maintenant corrigerait 157 VL reelles — ce qui est bon —
+tout en laissant croire que le symptome phare est traite.
+
+**Question posee au proprietaire**, deux options :
+1. instruire 1141 d'abord (lecture seule) pour savoir s'il releve de ce correctif ou d'un autre —
+   **recommande** ;
+2. executer sur les 157 lignes maintenant, en sachant que 1141 restera faux, et traiter 1141 a part.
+
+### Si l'execute est valide un jour : l'enchainement obligatoire
+
+Corriger `value` rend `vl_ajuste`, `value_EUR`, `value_USD` et les performances faux. Il faut donc
+enchainer `ops-recalc-derives` **complet** (sans `only_perf`) sur NIGERIA — l'option `recalculer`
+du workflow naira le fait, ou bien un dispatch separe.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-22 00:00 UTC — Lot CF : RATTRAPAGE DES PERFORMANCES EXECUTE
 
 **Autorisation :** accord explicite du propriétaire, donné après énumération des deux actions
