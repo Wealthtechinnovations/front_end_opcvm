@@ -13,6 +13,107 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-27 20:20 UTC — Lot CJ : les deux fronts Nigeria sont tranches, et aucun n'etait ou je le cherchais
+
+**Dernier etat stable** : production inchangee. Aucune ecriture. Le correctif
+naira n'est toujours **pas** lance.
+
+### Front 1 — le correctif naira ne peut rien pour 1141 ni 1196
+
+Mesure du 2026-10-27 20:07 UTC, date par date :
+
+| fonds | date | en base | `vl_price_ngn` | rapport | verdict |
+|---|---|---|---|---|---|
+| 1141 | 2025-12-24 | 114,6808 | **114,5214** | **1,0** | sous le seuil |
+| 1141 | 2023-12-15 | 109,8529 | 109,8529 | 1,0 | sous le seuil |
+| 1196 | 2026-05-08 | 1 664,54 | 159 101,71 | **95,6** | sous le seuil |
+| 1196 | 2026-04-30 | 1 654,60 | 1 654,60 | 1,0 | sous le seuil |
+
+**L'incohérence d'echelle est DANS LA SOURCE.** Aux dates suspectes de 1141, la
+SEC publie elle-meme ~114 dans sa colonne naira, et 165 297 au 2026-01-02. Nos
+VL reproduisent fidelement ce qui a ete publie. Le critere du correctif compare
+la base a une source qui dit la meme chose : aucun seuil ne corrigera cela,
+parce qu'il n'y a pas de divergence a detecter.
+
+Bilan des hypotheses que j'avais formulees sur 1141 — **les trois sont fausses** :
+(a) dates absentes de la source : FAUX ; (b) appariement par nom en echec :
+FAUX ; (d) `vl_price_ngn` vide : FAUX, **0 ligne** bloquee par ce motif.
+
+Deux faits a conserver :
+- **1141 est declare NGN**, pas USD, malgre « DOLLAR FUND » dans son nom. Mon
+  hypothese « vrai fonds dollar » n'est pas confirmee par l'etiquette.
+- **Angle mort du seuil** : 1196 au 2026-05-08, rapport **95,6**, juste sous la
+  borne de 100. Le seuil etait justifie par « aucun taux de change n'habite
+  entre 10 et 100 » ; 95,6 n'en est pas un non plus (USD/NGN ~1 441), mais le
+  critere a bien un angle mort immediatement sous sa borne.
+
+**Ce qui reste est une question de donnees amont** : quelle echelle fait
+autorite pour ces fonds, sachant que la SEC alterne les deux dans la meme
+colonne. Non arbitrable par une regle de rapport.
+
+### Front 2 — l'importeur est innocent : il n'a rien recu
+
+`sec_ng_latest.csv`, regenere le 26/10 a 10:00, porte **41 dates, de
+2026-01-02 au 2026-10-09** — exactement la derniere date en base. **ZERO ligne
+posterieure.** Base : 78 152 VL nigerianes, 336 fonds actifs.
+
+Cadence mesuree, hebdomadaire : 2026-05 → 4 dates, 06 → 4, 07 → 5, 08 → 4,
+09 → 4, **10 → 2** (le 02 et le 09). Les 16 et 23 octobre manquent a la source.
+
+Les trois causes que j'avais listees cote importeur — bornes
+`VL_MIN`/`VL_MAX`/`NAV_MAX`, appariement, `INSERT IGNORE` — sont **hors sujet**.
+Corriger l'importeur ne servirait a rien.
+
+`C4.NIGERIA` a donc raison de crier, mais il crie sur l'**extraction**, pas sur
+l'import. 18 jours restent deux semaines de publication absentes, pas un simple
+effet de calendrier hebdomadaire.
+
+**Fichiers modifies** (depot `api_opcv`) :
+- `scripts/fix/fix_segments_dollars_nigeria.js` — **instrumentation seule**, la
+  logique d'ecriture est inchangee. Il abandonnait **six** categories de lignes
+  sans aucun message (nom non apparie, date illisible, prix illisible, prix
+  negatif, VL sans prix publie, rapport sous seuil). Il imprime desormais son
+  perimetre reel et **deux invariants verifies** ; un compte qui ne se referme
+  pas se declare INCOHERENT plutot que de laisser croire a son exactitude.
+- `scripts/diag/ondemand/diag_nigeria_extraction_amont.js` (nouveau) — tranche
+  entre (A) source muette et (B) extraction en defaut, via
+  `downloaded_at_utc`, `source_url`, et la confrontation de
+  `sec_ng_downloads/` aux classeurs effectivement lus.
+
+**Tests realises** : les deux diagnostics du lot CI executes en production par
+le canal a la demande (run `doc-drift` sur `00bf4b1`, succes, 20:07-20:09 UTC).
+Resultats lus et consignes ci-dessus. Le troisieme est pousse, non encore
+execute.
+
+**Resultat** : les deux fronts sont tranches. Aucun des deux defauts n'etait
+la ou je le cherchais : ni dans l'import, ni dans l'appariement, ni dans les
+dates manquantes de la source.
+
+**Erreurs restantes** : aucune nouvelle. Le defaut de silence du correctif est
+corrige.
+
+**Tache en cours** : lecture de `diag_nigeria_extraction_amont.js`.
+
+**Prochaine action recommandee** : lire cette sortie, puis
+- si (A) : recalibrer le budget `C4.NIGERIA` sur la cadence hebdomadaire reelle
+  en documentant pourquoi **dans le script de controle** — jamais le desactiver ;
+- si (B) : reparer telechargement ou parsing, et faire COMPTER a l'etape 1/8 du
+  cron ce qu'elle n'a pas pu lire.
+
+**Risques connus** : le cron quotidien tourne depuis 20:00 UTC (~1 h 48) ; les
+diagnostics sont en lecture seule. Le correctif naira ecrit des VL : rien a
+lancer, et desormais rien a y gagner sur 1141/1196.
+
+**A ne pas faire a la reprise** :
+- ne pas lancer `fix_segments_dollars_nigeria.js --execute` en esperant
+  redresser 1141 ou 1196 : **mesure faite, il n'y a rien a y corriger** ;
+- ne pas toucher aux bornes de `import_vl_nigeria_sec.js` : hors sujet ;
+- ne pas abaisser le seuil de 100 pour attraper le rapport 95,6 sans
+  comprendre d'abord ce qu'est ce facteur — ce n'est pas un taux de change ;
+- ne pas desactiver ni relacher `C4.NIGERIA` sans justification ecrite.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-27 20:05 UTC — Lot CI : deux de mes hypotheses naira sont tombees
 
 **Dernier etat stable** : production inchangee. Aucune ecriture depuis le lot CH.
