@@ -13,6 +13,79 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-27 19:20 UTC — Lot CH : BASCULE DU CRON DEPLOYEE EN PRODUCTION
+
+**Exécuté par le propriétaire sur S2**, commande fournie par moi, sortie vérifiée ligne à ligne.
+
+### Ce qui est en production
+
+1. **Bascule du cron (L4)** — `scripts/cron/cron_daily_update.sh`. Les étapes 5, 6 et 7 appelaient
+   `saveperfdatemysql` sur 1-600 / 601-1200 / 1201-3000 : une route qui n'effectue **aucun calcul** et
+   émet une requête HTTP interne par fonds et par date, d'où le `HTTP 000` récurrent. Remplacées par
+   **une seule étape** `node scripts/fix/fix_populate_performances.js --force`, sur le modèle exact de
+   l'étape 8 EUR/USD qui réussissait déjà. Serveur à jour (`095897d9c..7f8c2e85a`), `bash -n` passe.
+   Étiquettes 6/9 et 7/9 retirées sans renumérotation : `diag_classements.js` cite littéralement
+   `[9a/9]` et les journaux de plusieurs mois portent `8/9`.
+
+2. **Migrations appliquées — QUATRE, pas deux.** Je n'en avais annoncé que deux. Les deux autres
+   n'avaient jamais été appliquées :
+   - `20260501000001-add-reset-token-to-users` (0,011 s)
+   - `20260514000001-add-societe-id-fk` (0,440 s) — **ajoute une clé étrangère**, donc une contrainte
+     sur des données existantes, pas un index. Passée sans erreur : aucune ligne ne la violait.
+   - `20261007000001-add-rebuild-timestamps-classementfonds` (0,040 s)
+   - `20261015000001-add-category-composite-indexes` (4,443 s) — les neuf index composites.
+
+3. **Dry-run post-migration**, sur la base avec les nouveaux index : `INVARIANT VERIFIE`,
+   `DIVERGENT : 0`, `PERDU : 0`, `CRITERE ATTEINT`. La bascule est donc validée sur l'état réel.
+
+4. **PM2** redémarré, quatre processus `online`.
+
+### Incident résolu — le dépôt serveur était en conflit non résolu
+
+Le `git stash pop` a laissé `logs.txt` en conflit (supprimé en amont, modifié localement), avec un
+stash conservé. **Tant que cet état persistait, tout `git pull --rebase` échouait** — y compris celui
+de `ops-recalc-derives` et du canal de diagnostic, qui n'échouent pas pour autant : ils impriment
+« AVERTISSEMENT : pull impossible » et continuent **sur du code périmé**. Panne silencieuse évitée.
+
+Résolu par `git reset -q HEAD -- logs.txt` (et non `git rm`, qui aurait laissé une suppression en
+attente de commit et bloqué le pull). Stash contrôlé avant d'être jeté : 4 946 lignes, `logs.txt`
+seul. `git pull` répond désormais `Already up to date.` Les trois dossiers d'instantanés de reprise
+arrière (`naira_snapshots`, `scale_break_snapshots`, `datejour_snapshots`) sont intacts.
+
+### Correction d'une affirmation que j'ai faite — le fuseau du serveur
+
+J'ai dit au propriétaire « le cron tourne en ce moment, ne lancez rien » alors qu'il était 20 h 02
+chez lui. **C'était faux.** Mesure : `timedatectl` rend `Local time: ... UTC` — le serveur est en
+**UTC**. Il était 19 h 02 serveur, le quotidien démarre à 20 h UTC, et `pgrep` ne trouvait
+effectivement aucun traitement. Mon alerte reposait sur une hypothèse de fuseau non vérifiée.
+
+Le crontab mesuré correspond à `CLAUDE.md` **à neuf lignes sur neuf** ; seul le fuseau manquait au
+document. Ajouté dans `api_opcv/CLAUDE.md`.
+
+**Chaîne du soir, heure de Paris :** indices 19 h 30 → Tunisie 20 h → BRVM 20 h 30 → quotidien 21 h
+→ EUR/USD 22 h 30 → santé 23 h. **Fenêtre de maintenance propre : minuit – 19 h, heure de Paris.**
+
+### Prochaine action — la vérification qui compte
+
+Le premier passage du cron patché a lieu à **20 h UTC le 2026-10-27**. À contrôler :
+
+```
+grep -nE '\[[0-9][abc]?/9\]|HTTP 000|TERMINEE' /var/log/africafunds_cron.log | tail -25
+```
+
+Attendu : `[5/9] ... OK` et **plus aucun `HTTP 000` sur les performances**. Les `HTTP 000` des
+étapes `9a-9c` (classements) peuvent subsister — les neuf index viennent d'être posés précisément
+pour les faire tomber, c'est la seconde chose que cette sortie mesurera.
+
+### Reste ouvert
+
+- **Correctif naira** : 157 VL, 30 fonds, critère externe SEC, rollback par instantané. **Non
+  exécuté** : le fonds 1141 qui porte le `143 958 %` est absent du périmètre. Arbitrage attendu.
+- **Mécanisme (ii)** du doublon `DIVERSIFIE MAROC` (~1 245 appels de la route de classement).
+- `*** System restart required ***` signalé par l'OS au login — hygiène serveur, hors de mon champ.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-22 03:35 UTC — Lot CG : dry-run naira, et un ecart entre promesse et perimetre
 
 **Lecture seule. Aucune ecriture.** Rapport consigne par le workflow dans
