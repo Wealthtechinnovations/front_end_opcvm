@@ -13,6 +13,104 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-27 20:05 UTC — Lot CI : deux de mes hypotheses naira sont tombees
+
+**Dernier etat stable** : production inchangee. Aucune ecriture depuis le lot CH.
+Le correctif naira n'est toujours **pas** lance.
+
+**Dernier lot termine** : instruction du Nigeria sur deux fronts, en lecture seule.
+
+### Front 1 — pourquoi 1141 echappe au correctif naira
+
+Deux hypotheses a moi, mesurees et **refutees** :
+
+| Hypothese | Verdict | Mesure |
+|---|---|---|
+| (a) les dates suspectes sont absentes de la source | **FAUX** | 5/5 pour 1141, 23/23 pour 1196 ont un prix publie a la date exacte |
+| (b) l'appariement par nom echoue | **FAUX** | 40 740/41 626 lignes du CSV apparient un fonds nigerian actif |
+
+Origine de (a) : j'avais deduit la couverture de la source des **17 dates du
+rapport a blanc**, qui sont les dates ou des corrections ont ete *trouvees*, pas
+celles que le CSV couvre. Le CSV porte **41 626 lignes et 238 dates**. Erreur de
+lecture corrigee dans l'en-tete du script, le message de commit, et annoncee.
+
+Restent trois causes, toutes dans le **perimetre du correctif**, aucune dans la
+source : `active <> 1` ; `vl_price_ngn` vide — `parseFloat('')` rend NaN et
+`NaN >= 100` ecarte la ligne **sans aucun message** ; ou un rapport reellement
+sous 100. `diag_1141_rapport_naira_calcul.js` imprime les trois nombres qui
+tranchent (valeur en base, cellule brute, rapport calcule), au lieu d'une
+quatrieme hypothese.
+
+**Question de fond que les deux premieres hypotheses masquaient** : 1141 et 1196
+s'appellent *Dollar Fund* et *Eurobond Fund*, et le rapport de **1 441** entre
+leurs deux echelles est l'ordre de grandeur du taux USD/NGN. Si leurs VL a la
+petite echelle sont les **justes**, les remonter en naira les **aggraverait**.
+Le sens de la correction doit etre arbitre avant toute ecriture.
+
+2743 (Apel Wealth Money Market) : 0 VL suspecte, 20 VL toutes a 100 — trou de
+dates dans la source, hors sujet du correctif.
+
+### Front 2 — pourquoi les VL nigerianes s'arretent au 2026-10-09
+
+`C4.NIGERIA` en echec : 18 jours pour un budget de 14. Trois mesures ecartent
+les causes evidentes — le cron hebdomadaire tourne (journaux jusqu'au 26/10),
+l'extraction produit (`sec_ng_latest.csv`, 11,9 Mo, 9 085 lignes, 26/10 a
+10:00), l'indice NSE All Share est frais (27/10). **Le defaut est entre le CSV
+et la base.**
+
+Filtres reels de `import_vl_nigeria_sec.js`, lus dans le code : date
+`YYYY-MM-DD`, nom non vide, `vl_price` dans `]0,0001 ; 1 000 000]`,
+`nav <= 5e12`, puis `INSERT IGNORE` — une VL deja presente est **conservee**.
+
+`diag_nigeria_csv_vers_base.js` separe les quatre causes par des chiffres :
+(1) la source n'a rien de plus recent — le defaut serait alors chez la SEC et le
+budget de 14 jours inadapte a sa cadence ; (2) l'importeur rejette ; (3) les
+lignes n'apparient aucun fonds connu et l'import **cree** des fonds au lieu de
+completer les series ; (4) elles sont ecrites ailleurs. Il imprime en outre le
+bilan que l'importeur a lui-meme ecrit a l'etape `[2/8]` du dernier journal
+hebdomadaire — seule source qui dise ce qu'il a fait, et a portee de main depuis
+le debut.
+
+**Fichiers modifies** (depot `api_opcv`, aucun fichier frontend) :
+- `scripts/diag/ondemand/diag_nigeria_csv_vers_base.js` (nouveau)
+- `scripts/diag/ondemand/diag_1141_rapport_naira_calcul.js` (nouveau)
+
+**Commandes executees** : `node --check` sur les deux scripts ; `git add`,
+`commit`, `pull --rebase`, `push` sur `claude/code-review-improvements-ikvuj`.
+
+**Tests realises** : syntaxe validee localement. Execution en production par le
+canal a la demande (`doc-drift.yml`, declencheur `push` sur
+`scripts/diag/ondemand/**`) — **resultats non encore lus**.
+
+**Resultat** : front 1 avance de deux hypotheses refutees a trois causes
+mesurables ; front 2 reduit du pipeline entier a l'intervalle CSV→base.
+
+**Erreurs restantes** : defaut de conception du correctif naira — une ligne
+ecartee pour prix non numerique est ignoree **en silence**. Elle doit etre
+comptee. A corriger separement ; un correctif qui se tait sur ce qu'il n'a pas
+pu lire laisse croire qu'il n'y avait rien a lire.
+
+**Tache en cours** : lecture des deux sorties dans `docs/DIAG_ONDEMAND.md`.
+
+**Prochaine action recommandee** : lire les deux sorties, puis (i) arbitrer le
+sens de la correction naira pour les fonds dollar, (ii) selon la cause mesuree
+du front 2, corriger l'importeur ou recalibrer le budget de fraicheur
+`C4.NIGERIA` — jamais desactiver le controle.
+
+**Risques connus** : le cron quotidien demarre a 20:00 UTC pour ~1 h 48 ; les
+deux diagnostics sont en lecture seule et ne le genent pas. Le correctif naira
+ecrit des VL : rien ne doit etre lance avant l'arbitrage du sens.
+
+**A ne pas faire a la reprise** :
+- ne pas reprendre « les dates de 1141 sont absentes de la source » : refute ;
+- ne pas reprendre « l'appariement par nom echoue » : refute ;
+- ne pas lancer `fix_segments_dollars_nigeria.js --execute` : le sens de la
+  correction n'est pas tranche pour les fonds dollar ;
+- ne pas deduire la couverture d'une source du nombre de lignes d'un rapport a
+  blanc — c'est l'erreur exacte qui a produit l'hypothese (a).
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-27 19:20 UTC — Lot CH : BASCULE DU CRON DEPLOYEE EN PRODUCTION
 
 **Exécuté par le propriétaire sur S2**, commande fournie par moi, sortie vérifiée ligne à ligne.
