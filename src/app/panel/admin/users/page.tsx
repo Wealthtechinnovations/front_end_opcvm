@@ -10,6 +10,7 @@ import Select from 'react-select';
 import Swal from "sweetalert2";
 import Headermenu from '@/components/layout/HeaderMenu';
 import Sidebar from '@/components/layout/AdminSidebar';
+import { enTetesAuth } from '@/lib/authHeaders';
 interface Funds {
   data: {
     userss: any[]; // ou un type spécifique pour les éléments du tableau 'funds'
@@ -75,6 +76,7 @@ export default function Fonds() {
         try {
           const response = await fetch(`${urlconstant}/api/activate-user/${userId}`, {
             method: 'POST',
+            headers: enTetesAuth(),
           });
 
           if (response.ok) {

@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 import Headermenu from '@/components/layout/HeaderMenu';
 import Sidebar from '@/components/layout/AdminSidebar';
 import PageHeader from "@/components/common/PageHeader";
+import { enTetesAuth } from '@/lib/authHeaders';
 
 export default function PendingAccounts() {
   const [id, setId] = useState<string>('');
@@ -48,6 +49,7 @@ export default function PendingAccounts() {
         try {
           const response = await fetch(`${urlconstant}/api/activate-user/${userId}`, {
             method: 'POST',
+            headers: enTetesAuth(),
           });
           if (response.ok) {
             Swal.fire({

@@ -10,6 +10,7 @@ import Select from 'react-select';
 import Swal from "sweetalert2";
 import Sidebar from '@/components/layout/AdminSidebar';
 import Headermenu from '@/components/layout/HeaderMenu';
+import { enTetesAuth } from '@/lib/authHeaders';
 interface Funds {
   data: {
     userss: any[]; // ou un type spécifique pour les éléments du tableau 'funds'
@@ -64,10 +65,10 @@ export default function Fonds() {
     try {
       const response = await fetch(`${urlconstant}/api/generate-api-key`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-       // 'x-api-key': `0b8e4cd779c0d6c3c464a244cd2fdf1fa10d13b8`
-        },
+        // `enTetesAuth()` porte `Content-Type: application/json` et, quand un
+        // jeton existe, `Authorization: Bearer <jeton>`. L'en-tete `x-api-key`
+        // qui traînait en commentaire contenait une cle en clair : supprime.
+        headers: enTetesAuth(),
         body: JSON.stringify({
           user_id: userId,
           duration_in_days: duration,
