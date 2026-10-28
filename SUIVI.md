@@ -13,6 +13,114 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-28 06:35 UTC — Lot CQ : S5 et S7 livres — et « cinq indices morts » etait une mauvaise priorisation, la mienne
+
+**Dernier etat stable** : production inchangee. Aucune ecriture en base. Le
+correctif de deduplication est livre en **dry-run**, non execute.
+
+### S7 — deduplication des 19 doublons : phase seche PASSEE sur la production
+
+`scripts/fix/fix_doublons_vl.js` + `diag_doublons_vl_dryrun.js`.
+Execution du **2026-10-28 05:55 UTC** contre la base de production :
+
+- **19 paires** dupliquees, fonds reels uniquement — conforme a la mesure ;
+- **19 lignes a supprimer**, toutes a `0` en regard d'une valeur reelle ;
+- **« A ARBITRER » : ZERO.** Aucune paire ne porte deux valeurs non nulles
+  differentes. Donc **aucun arbitrage financier** a rendre ;
+- verdict sur l'index : **« OUI : plus aucune paire en double entre fonds
+  reels »**.
+
+Concentration : **16 des 19** portent sur le seul fonds **2597** (FCPE FORCE
+PAD), les trois autres sur 1552, 2596, 2601, 2615.
+
+```sql
+ALTER TABLE valorisations
+  ADD UNIQUE INDEX uq_valorisations_fund_date (fund_id, date);
+-- retour arriere : DROP INDEX uq_valorisations_fund_date ON valorisations;
+```
+
+**Garde-fous du script** : dry-run par defaut, `--execute` requis ; instantane
+complet de chaque ligne dans `data/doublons_snapshots/<horodatage>.json` ;
+`--rollback <fichier>` reinsere tel quel, id compris. Et il **SORT EN ECHEC**,
+meme en mode execution, si une paire exige un arbitrage — mieux vaut un
+nettoyage interrompu qu'une valeur financiere choisie au hasard.
+
+**Defaut corrige apres lecture de sa propre sortie** : les dates s'imprimaient
+« Tue Oct 01 », **sans annee** (`SELECT *` rend un objet Date, et
+`String(date).slice(0,10)` coupe la representation JavaScript). Ce tableau est
+ce qui sert a valider une suppression en production : deux doublons du fonds
+2597 tombent un « Thu Mar » a un an d'intervalle. Formatage ISO applique.
+
+### « Cinq indices morts » : MA priorisation etait fausse
+
+J'ai signale cinq indices morts comme un chantier. La mesure du nombre de **VL
+rattachees** le reduit a **un seul** :
+
+| indice | valeurs en source | derniere | **VL rattachees** |
+|---|---|---|---|
+| **Sovereign_bond_index** | 2 609 | 2023-11-17 | **6 243** |
+| MONIA | 1 000 | 2026-05-14 | **0** |
+| indice_monetaire_maroc | 971 | 2023-11-17 | **0** |
+| masi_all_shares | **0** | — | 0 |
+| S&P Tunisia | **0** | — | 0 |
+
+**Un seul nuit a une donnee affichee** : `Sovereign_bond_index`, avec **6 243
+VL comparees a un indice fige depuis novembre 2023**. Les quatre autres sont
+des culs-de-sac sans destination — et deux n'ont meme **aucune valeur** en
+source, donc mon « 730 j » et « 971 j » les concernant portaient sur un autre
+libelle. Reparer leur source ne servirait personne aujourd'hui.
+
+**Regle a retenir** : avant de reparer la source d'un indice, lire combien de
+VL s'y rattachent. Un indice frais rattache a zero VL est aussi inutile qu'un
+indice mort.
+
+### MONIA — hypothese du lot CO CONFIRMEE
+
+1 000 valeurs en source jusqu'au 2026-05-14, et **0 VL rattachee**. Il est
+absent de `propagate_indref_range.js`, et son `pays` est un tableau **vide**
+dans les deux copies ou il figure. **Il n'est pas mort faute de source : il est
+mort faute de destination.** Le remede n'est pas de reparer un scraper qui
+fonctionne — c'est de lui donner un pays et de l'ajouter au propagateur.
+
+### `Tunindex` / `TUNINDEX` : dette, pas donnee fausse
+
+Collation mesuree : **`utf8mb3_general_ci`**, insensible a la casse. MySQL les
+confond, et chaque indice n'existe en base que sous **une seule** casse.
+L'hypothese de series parallelles est **ecartee**.
+
+### S5 — rattachabilite des 39 785 VL detachees : pousse, non execute
+
+`diag_vl_detachees_rattachables.js` cherche, pour les **21 698** qui portent un
+`fund_id` vers un fonds disparu, si cet identifiant subsiste avec un **nom**
+dans `performences`, `classementfonds` ou `performences_eurs` — auquel cas le
+fonds a ete supprime mais pas sa trace, et le rattachement est reconstituable.
+Pour les **18 087** a NULL, il balaie toutes les colonnes texte avec un critere
+explicite : moins de 20 valeurs distinctes ne peut pas identifier un fonds
+parmi 1 260.
+
+**Troisieme script mort aujourd'hui pour avoir devine un nom de colonne** :
+`datejour` (c'est `date`), puis `indice` (c'est `indice_name`). Un resolveur
+`information_schema` est desormais pose dans chaque script concerne, et le nom
+retenu est **imprime a cote du chiffre** — un compte dont on ignore la colonne
+source n'est pas verifiable.
+
+**Resultat** : les sept actions S1 a S7 sont closes ou livrees. Il ne reste au
+diagnostic que la lecture de S5.
+
+**Prochaine action recommandee** : les decisions `V1` a `V6` du plan unique.
+`V2` (dedup + index) est desormais **pret, chiffre et reversible**.
+
+**A ne pas faire a la reprise** :
+- **ne pas traiter « cinq indices morts » comme un chantier** : un seul nuit,
+  `Sovereign_bond_index` et ses 6 243 VL ;
+- ne pas reparer le scraper MONIA : il fonctionne, il n'a pas de destination ;
+- ne pas reprendre « `Tunindex` / `TUNINDEX` cree deux series » : collation
+  insensible a la casse, ecarte ;
+- ne pas lancer `fix_doublons_vl.js --execute` sans accord : il ecrit en base ;
+- ne plus deviner un nom de colonne.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-28 06:20 UTC — Lot CP : S4 — deux defauts SEO visibles en production, CORRIGES
 
 **Dernier etat stable** : correction livree et poussee, **non deployee**. Build
