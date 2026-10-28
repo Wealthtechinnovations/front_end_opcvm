@@ -13,6 +13,103 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-28 06:00 UTC — Lot CO : S3 et S6 — le frontend est invisible aux moteurs, et P2-06 chiffre
+
+**Dernier etat stable** : production inchangee. Diagnostic seul, aucune
+modification de code.
+
+### S3 — `P2-06` chiffre, et il n'etait pas ou le backlog le disait
+
+Le backlog annonçait « `INDEX_CONFIG` duplique en 3 copies non
+synchronisees » sans jamais le chiffrer. Lecture du code : **4, 5 et 5
+indices**, et deux divergences de nature differente.
+
+| # | Divergence | Portee |
+|---|---|---|
+| 1 | `id_indice: 'Tunindex'` (scraper, propagateur) contre **`'TUNINDEX'`** (import Excel) | depend de la **collation** de la colonne : insensible a la casse, inoffensif ; sensible, deux series parallelles |
+| 2 | **MONIA absent du propagateur**, et son `pays` est un tableau **VIDE** dans les deux copies ou il figure | un indice sans pays ne peut s'attacher a aucun fonds |
+
+**Hypothese forte sur MONIA** : il est l'un des cinq indices morts (167 j). S'il
+a des valeurs en source mais zero VL rattachee, alors **il n'est pas mort faute
+de source, il est mort faute de DESTINATION** — et reparer son scraper, qui
+fonctionne, ne servirait a rien. `diag_index_config_divergence.js` teste cela,
+et etend la question aux cinq indices morts avec une colonne « VL rattachees » :
+un indice frais rattache a zero VL est aussi inutile qu'un indice mort.
+
+**Echec de ma premiere mesure, a retenir** : j'ai compare les trois copies par
+expression reguliere et conclu « **0 indice divergent** ». Mais toutes mes
+cellules affichaient `?/?` — l'extraction n'avait rien capture. **Un
+comparateur qui ne lit rien trouve toujours tout identique.** Les trois blocs
+lus en entier, les deux divergences ont saute aux yeux.
+
+### S6 — inventaire frontend : le prealable au chantier de conception
+
+| | |
+|---|---|
+| pages (`page.tsx`) | **218** |
+| composants `.tsx` | **269** |
+| lignes de TSX | **116 914** |
+| fichiers > 1 000 lignes | **28** (dont 5 au-dela de 2 800) |
+
+**Quatre signaux, et le premier contredit `DIRECTIVE_TRAVAIL.md`**
+
+| Signal | Mesure | Consequence |
+|---|---|---|
+| **pages sans `metadata`** | **201 / 218 = 92 %** | la directive exige « meta tags / SEO / Schema.org ». Elle est **inappliquee a 92 %** |
+| **`'use client'`** | **233 / 269 = 87 %** | en App Router, c'est renoncer au rendu serveur. Combine au point precedent, **le site est quasi invisible aux moteurs** |
+| `: any` | **3 529** | TypeScript neutralise sur l'essentiel |
+| `<img>` au lieu de `next/image` | **272** | poids des pages, Core Web Vitals |
+| `dangerouslySetInnerHTML` | **1** | risque XSS circonscrit — a verifier, pas alarmant |
+| URL `http` en dur | **0** | **bon point** |
+
+**Duplication mesuree — l'item `#28` du backlog, enfin chiffre**
+
+Empreinte structurelle calculee apres neutralisation des segments de panel et
+de devise (`investor`/`portfolio`/`admin`…, `eur`/`usd`) :
+
+- **33 groupes de jumeaux**, **86 fichiers** concernes ;
+- **9 955 lignes en double**, soit **8,5 %** du TSX total.
+
+Les plus lourds sont des paires **litteralement identiques** :
+`panel/investor/kyc/question5` et `panel/portfolio/kyc/question5` (1 068 lignes
+chacune), `question7` (673), tout le `questionnaire/pre/` (421 + 378 + 367 +
+366 + 348), et `exportmodal.tsx` en **7 exemplaires** (86 lignes x 7).
+
+Le backlog disait « ~100 pages a factoriser ». La mesure dit **86 fichiers et
+9 955 lignes**, et donne la cible exacte : les parcours **KYC** et
+**questionnaire** dupliques entre `investor` et `portfolio`.
+
+### Ce que cela dit du chantier « concevoir le frontend »
+
+Ce n'est pas une refonte graphique qu'il faut d'abord : c'est
+- **retirer 9 955 lignes** en factorisant deux arborescences jumelles ;
+- **rendre le site visible** — `metadata` sur 201 pages et sortie du
+  `'use client'` systematique ;
+- **5 fichiers de plus de 2 800 lignes** a decouper (`FundView.tsx` 3 098,
+  `tools/search` 3 041, les deux `FundSubView` devise 3 039 et 3 037).
+
+Chacun des trois est mesurable, borne, et testable separement.
+
+**Commandes executees** : inventaire `find`/`grep` sur `src/`, comptage des
+signaux de qualite, calcul d'empreinte structurelle en Python, lecture des trois
+blocs `INDEX_CONFIG`.
+
+**Resultat** : S3 et S6 clos. Reste S4 (bundle servi), S5 (rattachabilite des
+39 785 VL detachees), S7 (dedup des 19 doublons en dry-run).
+
+**Prochaine action recommandee** : lire la sortie de
+`diag_index_config_divergence.js`, puis S5 et S7.
+
+**A ne pas faire a la reprise** :
+- ne pas reprendre « 0 indice divergent » : c'etait un artefact d'extraction ;
+- ne pas reparer le scraper MONIA avant d'avoir verifie s'il a une destination ;
+- ne pas lancer une refonte graphique avant la factorisation : on dupliquerait
+  le travail sur 86 fichiers jumeaux ;
+- ne pas ajouter `metadata` a une page restee `'use client'` sans verifier que
+  le rendu serveur la prend en compte.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-28 05:45 UTC — Lot CN : S1 et S2 instruits — P1-03 resolu, P2-02 bien plus grave
 
 **Dernier etat stable** : production inchangee. Aucune ecriture, aucune
