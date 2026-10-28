@@ -13,6 +13,85 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-28 06:55 UTC — Lot CS : les cinq indices morts ne nuisent a RIEN, et les deux chantiers n'en font qu'un
+
+**Dernier etat stable** : production inchangee. Aucune ecriture.
+
+### Mon alerte « cinq indices morts » est annulee — en entier
+
+J'avais signale cinq indices morts comme un chantier. Au lot CQ je l'ai reduit a
+**un seul** par le compte des VL rattachees. Ce lot-ci montre que **ce dernier
+ne nuit a rien non plus**.
+
+| Verification sur `Sovereign_bond_index` | Resultat |
+|---|---|
+| age des 6 243 VL | **2011 → 2018**, la plus recente a **3 172 jours** |
+| fonds concernes | **0** — la jointure sur `fond_investissements` ne rend rien |
+| `indRef` reellement propage | **732 valeurs distinctes**, 109,02 → 138,72 — **il VARIE** |
+| VL recentes (90 j) portant cet indice | **0** |
+
+Mon constat « indice fige » portait sur la **table source**, jamais sur ce qui
+est affiche. Les VL concernees portent un indRef qui varie normalement, et elles
+ont huit ans. **Aucune page en ligne n'est fausse de ce fait.**
+
+Sur les cinq : deux n'ont **aucune valeur** en source (`masi_all_shares`,
+`S&P Tunisia`), deux ont **zero VL rattachee** (MONIA, `indice_monetaire_maroc`),
+et le cinquieme ne porte que des VL detachees et anciennes. **Le chantier
+« indices morts » n'existe pas.**
+
+Ce qui reste reel du cote benchmark, et qui n'est pas cela : **73 637 VL sans
+aucun libelle d'indice**, et **CEMAC a 0 % de couverture**.
+
+### LES DEUX CHANTIERS N'EN FONT QU'UN
+
+Les 6 243 VL portant `Sovereign_bond_index` ne se rattachent a **aucun** fonds :
+elles font donc partie des **39 785 detachees** du lot CR. Et elles s'arretent
+le **2018-02-20**, exactement comme les dix-sept series.
+
+Un meme jeu de donnees historique — series de fonds **et** historiques
+d'indices, 2011 a 2018 — a ete charge dans `valorisations` avec des
+identifiants qui ne pointent nulle part, et son alimentation a cesse le meme
+jour. Ce n'est pas deux defauts, c'est un seul, et il a une date.
+
+### NOS CONTROLES AVAIENT RAISON
+
+`C6` et `C9` cherchent les indices figes sur une fenetre de **90 jours**. Zero
+VL recente ne porte celui-ci : il sort **legitimement** de leur perimetre, et
+leur `[OK]` est exact. Ce n'est **pas** un controle mal calibre — c'est une
+**limite de perimetre**, a ecrire dans le script plutot que de laisser croire a
+une couverture complete.
+
+### Bilan de mes propres faux signalements, aujourd'hui
+
+Sept, tous refutes par la mesure avant d'avoir coute une action :
+
+| Ce que j'affirmais | Realite mesuree |
+|---|---|
+| 233 rangs doubles en EUR/USD | artefact de ma cle de regroupement |
+| 523 classeurs « non parses » | artefact de perimetre (cache multi-annuel vs CSV mono-annuel) |
+| 1 909 doublons de VL a arbitrer | **19**, tous `0` contre une valeur reelle |
+| 63 153 performances orphelines | **65** |
+| cadence hebdomadaire hors budget | **10 j** pour un budget de 14 |
+| cinq indices morts | **aucun** ne nuit a une donnee affichee |
+| 17/17 identifiants retrouves | test sur cle **primaire** : mesurait la taille des tables |
+
+Ce qui a tenu, lui, etait mesure : le trou d'extraction Nigeria, les 35 routes
+sans authentification, les deux defauts SEO, les 39 785 VL detachees, CEMAC a
+685 jours.
+
+**Prochaine action recommandee** : les decisions `V1` a `V6`. Et **retirer du
+backlog** le chantier « indices morts », qui n'a pas d'objet.
+
+**A ne pas faire a la reprise** :
+- **ne pas traiter les « cinq indices morts »** : mesure faite, aucun ne nuit ;
+- ne pas « corriger » `C6`/`C9` : leur `[OK]` est exact, leur perimetre est
+  simplement borne a 90 jours — l'ecrire, ne pas elargir a l'aveugle ;
+- ne pas traiter les 6 243 VL de `Sovereign_bond_index` separement des 39 785
+  detachees : c'est le meme jeu de donnees ;
+- ne pas deduire « fige » de la table source sans verifier l'`indRef` propage.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-28 06:45 UTC — Lot CR : S5 clos — 39 785 VL archivables, et un test a moi qui ne mesurait rien
 
 **Dernier etat stable** : production inchangee. Aucune ecriture. **S1 a S7 sont
