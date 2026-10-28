@@ -13,6 +13,102 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-28 06:20 UTC — Lot CP : S4 — deux defauts SEO visibles en production, CORRIGES
+
+**Dernier etat stable** : correction livree et poussee, **non deployee**. Build
+verifie. Aucune donnee, aucun calcul touche.
+
+### Ce que S4 cherchait, et ce qu'il a trouve a la place
+
+L'objectif etait de mesurer le bundle servi (`P1-04`). La production rend
+HTTP 200, un `cache-control: s-maxage=31536000`, et des metadonnees bien
+formees sur l'accueil (`<title>`, meta description, `ld+json` presents). Mais
+la fiche fonds — **la page centrale de la plateforme** — rendait ceci :
+
+```
+<title>AFRINVEST DOLLAR FUND NGN null NIGERIA - Synthèse OPCVM Afrique
+       | Fundafrique | Fundafrique</title>
+```
+
+**Deux defauts, visibles par l'utilisateur et indexes tels quels.**
+
+| # | Defaut | Cause exacte | Portee mesuree |
+|---|---|---|---|
+| 1 | **`null`** affiche a la place de l'ISIN | `${code_ISIN}` interpole directement : vide, JavaScript ecrit la chaine « null » | **451 fonds / 1 260 = 35,8 %** (321 Nigeria, 107 UEMOA, 7 Tunisie). 10 fiches sur 12 testees. Le mot sortait aussi **deux fois** dans la meta description |
+| 2 | **`\| Fundafrique \| Fundafrique`** | `layout.tsx:15` applique `template: "%s \| Fundafrique"`, et le titre de page le portait deja | **100 %** des fiches — 12/12 sur l'echantillon. Les titres de repli aussi |
+
+### La correction factorise au lieu de recopier
+
+`generateMetadata` etait duplique **a l'identique dans sept** `page.server.ts` :
+fiche locale, EUR, USD, historique, portefeuille, documents, export VL. Les
+deux defauts s'y trouvaient donc en sept exemplaires.
+
+**Corriger sept fichiers aurait reproduit la faute qu'ils portent.** La
+duplication du frontend est mesuree a 9 955 lignes (lot CO) : chaque correction
+doit la reduire.
+
+- **Nouveau** : `src/lib/fundMetadata.ts` — unique implementation, avec
+  `presents()` qui ecarte `null`, `undefined`, la chaine vide **et** les
+  chaines litterales « null » / « undefined » (une interpolation fautive en
+  amont a pu les figer en base).
+- Les **sept** pages passent de ~28 a 18 lignes et ne declarent plus que ce qui
+  leur est propre : segment d'URL, suffixe de titre, titre de repli, trois
+  gabarits de texte.
+- Bilan du diff : **208 insertions, 182 suppressions** sur 8 fichiers — la
+  logique n'existe plus qu'une fois.
+- `openGraph.title` garde son « | Fundafrique » : il **echappe** au gabarit du
+  layout, le suffixe y est volontaire.
+
+**Fichiers modifies** : `src/lib/fundMetadata.ts` (nouveau) +
+`src/app/funds/{[fondId],summary-eur/[fondId],summary-usd/[fondId],history/[fondId],portfolio/[fondId],documents/[fondId],download-nav/[fondId]}/page.server.ts`
+
+**Commandes executees** : `curl` sur l'accueil, `/home`, et 12 fiches fonds en
+production ; comptage des fonds sans ISIN depuis le JSON de `/api/listeopcvm` ;
+`npm ci` (925 paquets — `next` etait absent du conteneur) ; `npx tsc --noEmit` ;
+`npm run build`.
+
+**Resultat des tests** : `tsc` — aucune erreur sur les fichiers touches, seules
+deux deprecations preexistantes de `tsconfig.json`. `npm run build` —
+**« ✓ Compiled successfully »**, 218 routes generees. Les avertissements
+`react-hooks/exhaustive-deps` sont preexistants et portent sur les pages KYC
+dupliquees.
+
+**Erreurs restantes** : le fonds **2844 porte le nom litteral « 3 »** — defaut
+de **donnee**, pas d'affichage. Non traite : releve de la base, donc du
+proprietaire.
+
+**Prochaine action recommandee** : deployer le frontend (c'est `D5`, deja
+tranchee « OUI » le 2026-07-14), puis verifier un titre de fiche en production.
+Reste S5 (rattachabilite des 39 785 VL detachees) et S7 (dedup des 19 doublons
+en dry-run).
+
+```bash
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/frontend \
+  && git stash && git pull --rebase origin claude/code-review-improvements-ikvuj \
+  && git stash pop && npm run build && pm2 restart fundafrique-frontend
+```
+
+Puis, pour verifier :
+
+```bash
+curl -s https://africafunds.chainsolutions.fr/funds/1141 | grep -oE '<title>[^<]*</title>'
+```
+
+Attendu : **aucun « null »**, et **un seul** « | Fundafrique ».
+
+**Risques connus** : aucun sur les donnees ni les calculs — seul l'affichage des
+metadonnees change. Risque de deploiement standard (`pm2 restart`).
+
+**A ne pas faire a la reprise** :
+- ne pas recorriger les sept `page.server.ts` un par un : ils delèguent
+  desormais a `@/lib/fundMetadata` ;
+- ne pas retirer le « | Fundafrique » de `openGraph.title` : il n'est pas
+  redondant, openGraph echappe au gabarit ;
+- ne pas confondre le nom « 3 » du fonds 2844 avec ce defaut d'affichage :
+  c'est la donnee qui est fausse.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-28 06:00 UTC — Lot CO : S3 et S6 — le frontend est invisible aux moteurs, et P2-06 chiffre
 
 **Dernier etat stable** : production inchangee. Diagnostic seul, aucune
