@@ -1,29 +1,18 @@
-import { urlconstant, urlsite } from "@/lib/constants";
+import { metadonneesFiche } from "@/lib/fundMetadata";
 
+/**
+ * Les metadonnees de cette fiche sont construites par `@/lib/fundMetadata`,
+ * commun aux sept fiches fonds. Ce module documente les deux defauts qu'il
+ * corrige — le « null » affiche a la place d'un ISIN absent (451 fonds sur
+ * 1 260) et le suffixe « | Fundafrique » ecrit deux fois.
+ */
 export async function generateMetadata({ params }: { params: { fondId: string } }) {
-    try {
-        const response = await fetch(`${urlconstant}/api/getfondbyidmeta/${params.fondId}`);
-        if (!response.ok) return { title: 'Synthèse USD - Fundafrique - OPCVM Afrique' };
-        const fund = await response.json();
-        if (!fund?.funds) return { title: 'Synthèse USD - Fundafrique - OPCVM Afrique' };
-
-        const { nom_fond, devise, code_ISIN, pays, societe_gestion, slug } = fund.funds;
-        const fundSlug = slug || params.fondId;
-
-        return {
-            title: `${nom_fond} ${devise} ${code_ISIN} ${pays} - Synthèse USD OPCVM Afrique | Fundafrique`,
-            description: `Synthèse en USD du fonds OPCVM ${nom_fond} (${code_ISIN}) du ${pays}, géré par ${societe_gestion} : VL, performances et ratios de risque convertis en dollars sur Fundafrique.`,
-            alternates: {
-                canonical: `${urlsite}/funds/summary-usd/${fundSlug}`,
-            },
-            openGraph: {
-                title: `${nom_fond} - Synthèse USD OPCVM ${pays} | Fundafrique`,
-                description: `Synthèse en USD du fonds ${nom_fond} (${code_ISIN}) : valeur liquidative, performances et ratios de risque.`,
-                url: `${urlsite}/funds/summary-usd/${fundSlug}`,
-                type: 'website',
-            },
-        };
-    } catch {
-        return { title: 'Synthèse USD - Fundafrique - OPCVM Afrique' };
-    }
+    return metadonneesFiche(params.fondId, {
+        chemin: 'summary-usd',
+        suffixeTitre: 'Synthèse USD OPCVM Afrique',
+        repli: 'Synthèse USD',
+        description: f => `Synthèse en USD du fonds OPCVM ${f.nom_fond}${f.avecIsin} du ${f.pays}${f.parGestion} : VL, performances et ratios de risque convertis en dollars sur Fundafrique.`,
+        ogTitre: f => `${f.nom_fond} - Synthèse USD OPCVM ${f.pays} | Fundafrique`,
+        ogDescription: f => `Synthèse en USD du fonds ${f.nom_fond}${f.avecIsin} : valeur liquidative, performances et ratios de risque.`,
+    });
 }

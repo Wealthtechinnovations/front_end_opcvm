@@ -1,29 +1,18 @@
-import { urlconstant, urlsite } from "@/lib/constants";
+import { metadonneesFiche } from "@/lib/fundMetadata";
 
+/**
+ * Les metadonnees de cette fiche sont construites par `@/lib/fundMetadata`,
+ * commun aux sept fiches fonds. Ce module documente les deux defauts qu'il
+ * corrige — le « null » affiche a la place d'un ISIN absent (451 fonds sur
+ * 1 260) et le suffixe « | Fundafrique » ecrit deux fois.
+ */
 export async function generateMetadata({ params }: { params: { fondId: string } }) {
-    try {
-        const response = await fetch(`${urlconstant}/api/getfondbyidmeta/${params.fondId}`);
-        if (!response.ok) return { title: 'Documents - Fundafrique - OPCVM Afrique' };
-        const fund = await response.json();
-        if (!fund?.funds) return { title: 'Documents - Fundafrique - OPCVM Afrique' };
-
-        const { nom_fond, devise, code_ISIN, pays, societe_gestion, slug } = fund.funds;
-        const fundSlug = slug || params.fondId;
-
-        return {
-            title: `${nom_fond} ${devise} ${code_ISIN} ${pays} - Documents OPCVM Afrique | Fundafrique`,
-            description: `Documents du fonds OPCVM ${nom_fond} (${code_ISIN}) du ${pays}, géré par ${societe_gestion} : reporting mensuel, prospectus, rapports annuels et semestriels sur Fundafrique.`,
-            alternates: {
-                canonical: `${urlsite}/funds/documents/${fundSlug}`,
-            },
-            openGraph: {
-                title: `${nom_fond} - Documents OPCVM ${pays} | Fundafrique`,
-                description: `Documents du fonds ${nom_fond} (${code_ISIN}) : reporting mensuel, prospectus, rapports annuels et semestriels.`,
-                url: `${urlsite}/funds/documents/${fundSlug}`,
-                type: 'website',
-            },
-        };
-    } catch {
-        return { title: 'Documents - Fundafrique - OPCVM Afrique' };
-    }
+    return metadonneesFiche(params.fondId, {
+        chemin: 'documents',
+        suffixeTitre: 'Documents OPCVM Afrique',
+        repli: 'Documents du fonds',
+        description: f => `Documents du fonds OPCVM ${f.nom_fond}${f.avecIsin} du ${f.pays}${f.parGestion} : notice d'information, rapports et documents réglementaires sur Fundafrique.`,
+        ogTitre: f => `${f.nom_fond} - Documents OPCVM ${f.pays} | Fundafrique`,
+        ogDescription: f => `Documents réglementaires du fonds ${f.nom_fond}${f.avecIsin}.`,
+    });
 }

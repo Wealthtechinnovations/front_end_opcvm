@@ -1,29 +1,18 @@
-import { urlconstant, urlsite } from "@/lib/constants";
+import { metadonneesFiche } from "@/lib/fundMetadata";
 
+/**
+ * Les metadonnees de cette fiche sont construites par `@/lib/fundMetadata`,
+ * commun aux sept fiches fonds. Ce module documente les deux defauts qu'il
+ * corrige — le « null » affiche a la place d'un ISIN absent (451 fonds sur
+ * 1 260) et le suffixe « | Fundafrique » ecrit deux fois.
+ */
 export async function generateMetadata({ params }: { params: { fondId: string } }) {
-    try {
-        const response = await fetch(`${urlconstant}/api/getfondbyidmeta/${params.fondId}`);
-        if (!response.ok) return { title: 'Historique VL - Fundafrique - OPCVM Afrique' };
-        const fund = await response.json();
-        if (!fund?.funds) return { title: 'Historique VL - Fundafrique - OPCVM Afrique' };
-
-        const { nom_fond, devise, code_ISIN, pays, societe_gestion, slug } = fund.funds;
-        const fundSlug = slug || params.fondId;
-
-        return {
-            title: `${nom_fond} ${devise} ${code_ISIN} ${pays} - Historique VL OPCVM Afrique | Fundafrique`,
-            description: `Historique des valeurs liquidatives du fonds OPCVM ${nom_fond} (${code_ISIN}) du ${pays}, géré par ${societe_gestion} : courbe base 100, performances mensuelles et annuelles sur Fundafrique.`,
-            alternates: {
-                canonical: `${urlsite}/funds/history/${fundSlug}`,
-            },
-            openGraph: {
-                title: `${nom_fond} - Historique VL OPCVM ${pays} | Fundafrique`,
-                description: `Historique complet du fonds ${nom_fond} (${code_ISIN}) : courbe base 100, performances mensuelles et annuelles.`,
-                url: `${urlsite}/funds/history/${fundSlug}`,
-                type: 'website',
-            },
-        };
-    } catch {
-        return { title: 'Historique VL - Fundafrique - OPCVM Afrique' };
-    }
+    return metadonneesFiche(params.fondId, {
+        chemin: 'history',
+        suffixeTitre: 'Historique VL OPCVM Afrique',
+        repli: 'Historique VL',
+        description: f => `Historique des valeurs liquidatives du fonds OPCVM ${f.nom_fond}${f.avecIsin} du ${f.pays}${f.parGestion} : courbe base 100, performances mensuelles et annuelles sur Fundafrique.`,
+        ogTitre: f => `${f.nom_fond} - Historique VL OPCVM ${f.pays} | Fundafrique`,
+        ogDescription: f => `Historique complet du fonds ${f.nom_fond}${f.avecIsin} : courbe base 100, performances mensuelles et annuelles.`,
+    });
 }
