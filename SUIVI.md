@@ -13,6 +13,89 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-28 06:45 UTC — Lot CR : S5 clos — 39 785 VL archivables, et un test a moi qui ne mesurait rien
+
+**Dernier etat stable** : production inchangee. Aucune ecriture. **S1 a S7 sont
+tous clos.**
+
+### S5 — verdict : (A) ARCHIVABLES, les deux formes
+
+**Les 18 087 a `fund_id IS NULL`** — toutes les colonnes texte balayees :
+
+| colonne | rempli | verdict |
+|---|---|---|
+| `code_ISIN` | 18 015 | **14** valeurs distinctes, et ce sont des dates Excel abimees |
+| `fund_name`, `libelle_fond`, `classification`, `indice_name`, `ID_indice`, `currency_code`, `source_url`, `sec_document_id`, `data_quality`, `correction_batch`, + 6 autres | **0** | vides |
+
+Aucune colonne ne porte de quoi identifier un fonds parmi 1 260. Origine
+**irrecuperable**. La signature reste lisible : un import tableur aux colonnes
+**desalignees** — la date s'est ecrite dans la colonne ISIN, et le fonds s'est
+perdu dans le meme decalage.
+
+**Les 21 698 avec un `fund_id` disparu** : 17 identifiants, **aucune trace
+nommee** dans `performences`, `classementfonds` ni `performences_eurs` via
+`fond_id`. Archivables egalement.
+
+### DEUX ERREURS A MOI, dans le meme lot
+
+**1. J'ai annonce « chacun porte 1 548 VL, identique a l'unite ».** Faux :
+j'avais generalise depuis les dix premieres lignes du tableau. Il y a **six**
+comptages distincts — 1 548, 1 547, 1 546, 643, 238, 53. La regularite que je
+croyais voir n'existe pas sous cette forme.
+
+**2. Mon test « ces identifiants existent-ils ailleurs ? » ne mesurait rien.**
+J'interrogeais `id IN (...)`, donc la **cle primaire** de chaque table. Toute
+table de plus de 1 443 lignes a des cles primaires dans la plage 1418-1443 : le
+test rendait « 17/17 » pour `performences`, `performences_eurs` et
+`sec_ng_corrections_audit` sans qu'aucune ne rattache quoi que ce soit. **Il
+mesurait la taille des tables.** Le bon test porte sur une cle **etrangere**, et
+`diag_vl_detachees_rattachables.js` le faisait correctement : **0 retrouve**.
+
+Defaut annexe : mon repli de recherche `/nom|libel|titre/` attrapait la colonne
+**`anomalie`** — qui contient la sous-chaine « nom » — et imprimait dix-sept
+`null` en guise de noms. Candidats rendus explicites.
+
+### CE QUI TIENT, ET QUI RESTE A INSTRUIRE
+
+Les **dix-sept** series s'arretent toutes exactement le **2018-02-20** — une
+seule date de fin pour dix-sept series commencees a **cinq** dates
+differentes. Ce n'est donc pas un import unique : c'est un **ARRET unique**.
+Quelque chose a cesse d'alimenter ces dix-sept series le meme jour.
+
+Et **2018-02-20** est aussi la derniere VL de `Sovereign_bond_index`, qui porte
+6 243 VL rattachees. L'hypothese « ce sont des indices » reste donc ouverte,
+mais elle devra etre testee par la bonne requete.
+
+### Bilan des sept actions sans decision
+
+| # | Objet | Etat |
+|---|---|---|
+| S1 | `/api/listeopcvm` | **RESOLU** — HTTP 200, 2,2 Mo |
+| S2 | routes POST sans auth | **35 routes**, ordre de correctif etabli |
+| S3 | `INDEX_CONFIG` x3 | dette de maintenance, **pas** donnee fausse |
+| S4 | bundle servi | a trouve **deux defauts SEO, corriges** |
+| S5 | 39 785 VL detachees | **ARCHIVABLES**, les deux formes |
+| S6 | inventaire frontend | 9 955 lignes dupliquees, 92 % sans `metadata` |
+| S7 | dedup 19 doublons | **livre**, phase seche passee, index creable |
+
+**Resultat** : il ne reste plus aucune action qui ne demande une decision.
+
+**Prochaine action recommandee** : les decisions `V1` a `V6` du plan unique.
+Trois sont pretes, chiffrees et reversibles — `V2` (dedup + index), le
+deploiement frontend (`D5`, deja tranchee), et le premier lot court
+d'authentification sur les deux routes les plus graves.
+
+**A ne pas faire a la reprise** :
+- ne pas reprendre « 1 548 VL identique a l'unite » : six comptages distincts ;
+- ne pas reprendre « 17/17 identifiants retrouves » : test invalide, cle
+  primaire au lieu de cle etrangere ;
+- ne pas supprimer les 39 785 lignes : archivables ne veut pas dire
+  supprimables, et elles portent onze ans de valeurs reelles ;
+- ne pas tester un rattachement par `id IN (...)` : seule une cle etrangere
+  rattache quelque chose.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-28 06:35 UTC — Lot CQ : S5 et S7 livres — et « cinq indices morts » etait une mauvaise priorisation, la mienne
 
 **Dernier etat stable** : production inchangee. Aucune ecriture en base. Le
