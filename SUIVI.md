@@ -13,6 +13,110 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-28 00:15 UTC — Lot CK : la source nigeriane n'est pas muette, c'est la cadence qui ne tient pas
+
+**Dernier etat stable** : production inchangee. Aucune ecriture.
+
+### Source primaire : la SEC a bien publie
+
+Page d'index lue le **2026-10-28** (`sec.gov.ng/.../2026-weekly-nav-for-cis/`) :
+
+> « Net Asset Value and Unit Price as at **16th October 2026** », document
+> **1537**, mis en ligne le **25 octobre 2026**.
+
+Notre cron hebdomadaire a tourne le **lundi 26 octobre a 10:00** et n'a
+telecharge **aucun** fichier. Le 1537 etait disponible. **La piste (A) « la SEC
+n'a rien publie » est FAUSSE.**
+
+### Cinq de mes pistes sont ecartees par la mesure
+
+| Piste | Verdict |
+|---|---|
+| bornes `VL_MIN`/`VL_MAX`/`NAV_MAX` de l'importeur | hors sujet — zero ligne posterieure au 09/10 dans le CSV |
+| appariement par nom a l'import | hors sujet, meme raison |
+| `INSERT IGNORE` conserve l'ancien | hors sujet, meme raison |
+| `fetch_year_links` s'arrete au premier fichier connu | **FAUX** — il parcourt tous les liens `.xlsx`, sans limite ni `break` |
+| « 523 classeurs telecharges absents du CSV = parsing en echec » | **MON erreur de perimetre**, corrigee |
+
+**Controle mal calibre, corrige et documente dans le script** : je comparais
+tout le cache (`sec_ng_downloads/`, millesimes depuis 2022) a un CSV extrait
+avec `--years $YEAR`, donc limite a l'annee courante. Les 523 « orphelins »
+etaient des annees anterieures, legitimement absentes. Comparaison desormais a
+perimetre egal.
+
+### La conclusion structurelle, qui ne depend d'aucune piste restante
+
+Delais publication - valorisation releves **sur la page** :
+
+| valorisation | mise en ligne | delai |
+|---|---|---|
+| 2026-09-25 | 2026-10-02 | 7 j |
+| 2026-10-02 | 2026-10-09 | 7 j |
+| 2026-10-09 | 2026-10-16 | 7 j |
+| 2026-10-16 | **2026-10-25** | **9 j** |
+
+La SEC publie a **sept a dix jours**, a des **jours variables** de la semaine.
+Un cron **hebdomadaire du lundi** contre cette source donne une fraicheur de
+**14 a 24 jours** selon ou tombe la mise en ligne.
+
+**Le budget de 14 jours de `C4.NIGERIA` est donc inatteignable par
+construction.** Ce n'est pas le budget qui est mal choisi : c'est la
+**frequence d'extraction**. Le fichier du 16/10 n'arrivera qu'au cron du
+**2 novembre**, soit **24 jours** apres sa date de valorisation.
+
+### DECISION QUI REVIENT AU PROPRIETAIRE
+
+Passer l'extraction + import Nigeria d'**hebdomadaire a quotidien**. Le cron
+`0 10 * * 1` deviendrait `0 10 * * *` — pour les deux premieres etapes
+seulement ; les recalculs lourds peuvent rester hebdomadaires, le cron
+quotidien general les couvrant deja depuis le lot CH.
+
+Cout quasi nul, mesure dans le code : `download_file` sort des que le fichier
+est en cache et depasse 1 Ko, et l'import est en `INSERT IGNORE`. Une
+execution a vide ne fait qu'une requete HTTP sur la page d'index.
+
+**Non execute** : le crontab de production est un fichier sensible.
+
+**Fichiers modifies** (depot `api_opcv`) :
+- `scripts/diag/ondemand/diag_nigeria_extraction_amont.js` — controle de
+  perimetre corrige, erreur documentee dans le script
+- `scripts/diag/ondemand/diag_nigeria_cadence_extraction.js` (nouveau) —
+  etablit delai reel, age a l'arrivee hebdomadaire contre quotidien, et
+  presence du 1537 en cache
+
+**Tests realises** : page d'index de la SEC lue en direct (source primaire,
+HTTP 200) ; `fetch_year_links` et `download_file` relus dans
+`sec_ng_nav_extractor_v6.py` ; `node --check` sur les deux scripts. Le
+diagnostic de cadence est pousse, non encore execute.
+
+**Resultat** : la premiere des trois observations du proprietaire — « les VL
+nigerianes ne sont pas a jour » — est **entierement instruite**. Cause :
+frequence d'extraction inadaptee au rythme de publication de la SEC. Ni
+l'import, ni l'appariement, ni les seuils, ni un silence de la source.
+
+**Erreurs restantes** : il reste a distinguer (B1) la page ne listait pas
+encore le 1537 le 26/10 a 10:00, de (B2) elle le listait et l'extraction a
+echoue sans le dire. La trace de l'etape `[1/8]` le dira. **Cette distinction
+ne change pas la decision de cadence** : en quotidien, les deux cas se
+rattrapent le lendemain.
+
+**Prochaine action recommandee** : lire `diag_nigeria_cadence_extraction.js`,
+puis soumettre la decision de cadence. Si (B2) se confirme, instrumenter
+l'etape `[1/8]` pour qu'elle COMPTE les liens vus, telecharges et ecartes.
+
+**Risques connus** : aucun introduit. Le passage en quotidien est additif et
+reversible (une ligne de crontab) ; il n'augmente pas la charge de recalcul.
+
+**A ne pas faire a la reprise** :
+- ne pas rouvrir les cinq pistes du tableau ci-dessus : mesurees, ecartees ;
+- ne pas desactiver ni relacher `C4.NIGERIA` : le controle a raison de crier,
+  il faut corriger la production, pas eteindre l'alerte ;
+- ne pas modifier le crontab de production sans l'accord du proprietaire ;
+- ne pas deduire la couverture d'une source d'un cache multi-annuel compare a
+  un CSV mono-annuel : c'est l'erreur exacte de ma mesure precedente.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-27 20:20 UTC — Lot CJ : les deux fronts Nigeria sont tranches, et aucun n'etait ou je le cherchais
 
 **Dernier etat stable** : production inchangee. Aucune ecriture. Le correctif
