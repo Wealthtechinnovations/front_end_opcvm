@@ -13,6 +13,96 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-28 00:35 UTC — Lot CL : CORRECTION DU LOT CK — la cadence n'est pas le defaut
+
+**Dernier etat stable** : production inchangee. Aucune ecriture.
+
+### Le lot CK ci-dessous contient une conclusion FAUSSE. La voici corrigee.
+
+J'ai ecrit dans CK : « la cadence hebdomadaire donne 14 a 24 jours, le budget de
+14 jours de `C4.NIGERIA` est inatteignable par construction, c'est la frequence
+qu'il faut corriger ». **C'est faux**, et c'est le script que j'avais ecrit pour
+etayer cette these qui l'a refutee a sa premiere execution :
+
+| valorisation | en ligne | 1er lundi apres | age a l'arrivee |
+|---|---|---|---|
+| 2026-10-02 | 2026-10-09 | 2026-10-12 | 10 j |
+| 2026-10-09 | 2026-10-16 | 2026-10-19 | 10 j |
+| 2026-10-16 | **2026-10-25** | **2026-10-26** | **10 j** |
+
+Age moyen **10,0 j**, pire cas **10 j**, budget 14 j : **la cadence
+hebdomadaire tient le budget.** Je raisonnais sur l'ecart entre la date de
+valorisation et aujourd'hui en l'imputant a la frequence, sans jamais calculer
+ce que la frequence produit.
+
+L'en-tete du script conserve le raisonnement faux, marque comme tel : un
+document qui efface ses erreurs ne previent plus personne de les refaire.
+
+### LE DEFAUT REEL, mesure a la ligne pres
+
+Le journal `africafunds_nigeria_20261026.log` liste les 41 classeurs lus par
+ordre **alphabetique** et passe de `16th_January_2026` directement a
+`17th_April_2026`. **`16th_October_2026` n'y figure nulle part.**
+
+L'extracteur ne l'a pas ecarte, ni mal lu : **il ne l'a pas VU.**
+
+Trois mesures qui ferment les autres explications :
+- le classeur est **absent du cache** (`sec_ng_downloads/`) ;
+- les **41 classeurs 2026 en cache** correspondent exactement aux **41 lus** —
+  donc **aucun echec de parsing** ;
+- la page d'index, lue le 2026-10-28, **le porte bien** (document 1537, mis en
+  ligne le 25 octobre).
+
+### CORRECTIF RECOMMANDE, et la cadence n'est plus premiere
+
+1. **Instrumenter l'etape `[1/8]`** — imprimer les liens **VUS** sur la page,
+   **TELECHARGES**, **DEJA EN CACHE**. Aujourd'hui elle n'imprime que les
+   fichiers lus : un lien manquant a la page est donc indistinguable d'un lien
+   manquant a notre lecture. **C'est precisement ce qui a rendu ce trou
+   invisible pendant trois semaines.** C'est le correctif de fond.
+2. **Faire ECHOUER l'etape** quand la page offre une valorisation plus recente
+   que la derniere importee : un fichier vu et non pris doit etre une erreur,
+   pas un `OK`.
+3. **Cadence quotidienne** — filet utile (un rate se rattrape le lendemain au
+   lieu de la semaine suivante), mais **pas le correctif**.
+
+**Fichiers modifies** (depot `api_opcv`) :
+- `scripts/diag/ondemand/diag_nigeria_cadence_extraction.js` — en-tete corrige,
+  raisonnement faux conserve et marque
+- `scripts/diag/ondemand/diag_nigeria_liens_vus.js` (nouveau) — interroge depuis
+  le serveur la page que le cron lit, en reproduisant **exactement** les filtres
+  de `fetch_year_links` (extension, libelle, exclusion `weekly-nav-for-cis`,
+  dedoublonnage par URL) ; une regle differente repondrait a une autre question
+
+**Tests realises** : `diag_nigeria_cadence_extraction.js` execute en production
+(2026-10-28 00:24 UTC) — c'est lui qui a refute ma these. `diag_nigeria_liens_vus.js`
+pousse, non encore execute.
+
+**Resultat** : cause reelle identifiee — un fichier disponible non vu par
+l'extraction, dans un etape qui ne compte pas ce qu'elle voit. La cadence est
+disculpee.
+
+**Erreurs restantes** : reste a separer (B2a) la page ne listait pas encore le
+1537 le 26/10 a 10:00, de (B2b) elle le listait et notre lecture ne l'a pas
+rendu. **Cette distinction ne change pas le correctif n°1** : dans les deux cas,
+l'etape doit compter les liens vus.
+
+**Prochaine action recommandee** : lire `diag_nigeria_liens_vus.js`, puis
+soumettre le correctif n°1 (instrumentation de l'etape `[1/8]`) — additif, sans
+effet sur les donnees.
+
+**A ne pas faire a la reprise** :
+- **ne pas reprendre « la cadence hebdomadaire ne tient pas le budget »** :
+  refute par la mesure, 10 j contre un budget de 14 j ;
+- ne pas modifier le crontab en croyant corriger ce defaut : ce serait un filet
+  pose sur une cause non reparee ;
+- ne pas rouvrir les pistes import / appariement / seuils / parsing : mesurees,
+  ecartees ;
+- ne pas desactiver ni relacher `C4.NIGERIA` : il a correctement signale un
+  trou reel.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-28 00:15 UTC — Lot CK : la source nigeriane n'est pas muette, c'est la cadence qui ne tient pas
 
 **Dernier etat stable** : production inchangee. Aucune ecriture.
