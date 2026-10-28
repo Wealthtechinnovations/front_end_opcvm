@@ -13,6 +13,110 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## PLAN UNIQUE MESURE — 2026-10-28 05:30 UTC — remplace le backlog du 2026-08-12
+
+> **Ce plan remplace la priorisation de « BACKLOG CONSOLIDE UNIQUE » (ligne ~1293),
+> dont les preuves datent du 2026-08-12.** Le backlog reste en place comme archive ;
+> ses CHIFFRES ne font plus foi. Chaque ligne ci-dessous porte une mesure du
+> 2026-10-28, obtenue par le canal a la demande contre la base de production.
+
+### Pourquoi ce plan existe
+
+Le backlog d'aout explique lui-meme pourquoi ses chantiers n'avancent pas :
+« le vrai blocage de D2/D3/D5 n'est pas une decision : c'est l'acces MCP/DB ».
+**Cette premisse est morte** : le canal a la demande a lu 1 053 006 lignes de
+production cette nuit, et le pont SSH repond (`wealthtech_ssh_bridge_ok`,
+2026-10-28). Le blocage etait devenu une croyance.
+
+### A. MES PROPRES CHIFFRES, REFUTES PAR LA MESURE
+
+Deux items du backlog etaient **surevalues d'un facteur 100 et 1 000**, par mes
+definitions et non par les donnees. Les corriger les rend faisables.
+
+| Item | Ce que j'annonçais | **Mesure du 28/10** | Effet |
+|---|---|---|---|
+| **P2-03** doublons de VL | 1 909 paires, 16 144 lignes, « arbitrage financier » | **19 paires**, 19 lignes — et **toutes** sont `0` contre une valeur reelle | Devient **19 suppressions mecaniques**. Une VL de zero n'est pas une valorisation : aucun arbitrage |
+| **P2-04** perfs orphelines | 63 153 lignes | **65 lignes** ne reposent sur AUCUNE VL, ni a leur date ni avant | Les 63 088 autres reposent sur une VL anterieure : ma definition par egalite stricte etait trop dure |
+
+**Cause de l'erreur P2-03, a retenir** : `GROUP BY fund_id, date` regroupait
+toutes les lignes a `fund_id = NULL` tombant a la meme date. Et `NULL = NULL`
+etant inconnu, ma requete d'exemples ne rendait **rien** — une requete muette
+doit faire soupçonner sa propre jointure avant de conclure a l'absence de
+donnees.
+
+### B. DEFAUT MAJEUR JAMAIS NOMME DANS AUCUN DOCUMENT
+
+| Forme | Lignes | Nature |
+|---|---|---|
+| `fund_id IS NULL` | **18 087** | n'ont jamais eu de fonds — **2012 → 2024**, ~2 000/an depuis 2017 |
+| `fund_id` vers un fonds **inexistant** | **21 698** | en ont perdu un |
+| **Total detache** | **39 785** | **3,78 %** de `valorisations` |
+
+- Valeurs **reelles** (1,038 → 10 981), **aucune** ligne vide.
+- Impact **affichage : NUL** — toute jointure sur `fond_investissements` les exclut.
+- Impact **volumetrie : REEL** — tout chiffre de volume cite dans un document
+  les inclut sans le dire.
+- **Origine lisible** : `code_ISIN` porte 14 valeurs distinctes qui sont des
+  dates Excel abimees (« févr-03 », « mai-14 », « juil-14 ») — signature d'un
+  import tableur aux colonnes desalignees.
+- Etalement sur **11 ans** : ce n'est pas un incident, c'est un chemin
+  d'ecriture qui laisse passer des lignes sans fonds depuis 2012.
+
+### C. CE QUI RESTE VRAI, ET AGGRAVE
+
+| Item | Aout | **28/10** |
+|---|---|---|
+| **P2-01** CEMAC | 243 j sans VL | **685 j**, 0 % indRef sur 2 134 VL, 34 fonds actifs |
+| **P1-02** fonds 2825 | YTD 239,20 % | **toujours 239,20 %** — 59 VL de 2021-10-08 a 2026-07-10, **0 VL** dans la fenetre 2022-11 → 2026-05 |
+| Indices morts | non mesure | MONIA 167 j, masi_all_shares 730 j, Indice_monetaire_maroc 733 j, Sovereign_bond_index 733 j, S&P Tunisia 971 j |
+| VL sans libelle d'indice | non mesure | **73 637** |
+
+### D. CE QUE JE PEUX FAIRE SEUL — aucune decision requise
+
+| # | Action | Risque | Prealable |
+|---|---|---|---|
+| S1 | Instruire `P1-03` : appeler `/api/listeopcvm` en production et nommer les colonnes manquantes | nul (lecture) | aucun |
+| S2 | Instruire `P2-02` : lister les routes POST sans `authenticate` | nul (lecture) | aucun |
+| S3 | Instruire `P2-06` : diff des 3 copies d'`INDEX_CONFIG` | nul (lecture) | aucun |
+| S4 | Mesurer l'etat reel du bundle frontend servi (`P1-04`) | nul (lecture) | aucun |
+| S5 | Rattachabilite des 39 785 VL detachees : les 14 `code_ISIN` permettent-ils d'identifier un fonds ? | nul (lecture) | aucun |
+| S6 | Inventaire des pages frontend et de leurs manques — **prealable indispensable** a « concevoir le frontend » | nul (lecture) | aucun |
+| S7 | Ecrire le script de deduplication des 19 doublons **en dry-run**, avec instantane de rollback | nul (dry-run) | aucun |
+
+### E. CE QUI ATTEND UN MOT DE VOUS — et seulement cela
+
+| # | Decision | Pourquoi vous |
+|---|---|---|
+| V1 | **Import du classeur SEC du 16 octobre** (doc 1537) | ecrit des VL en production |
+| V2 | **Supprimer les 19 lignes a `0`** puis creer l'index UNIQUE `(fund_id, date)` | suppression en base, meme triviale |
+| V3 | **Sort des 39 785 VL detachees** : rattacher, archiver, ou laisser | donnee financiere, 11 ans d'historique |
+| V4 | **Nigeria phases B et C** — phrases exactes `VALIDER CORRECTIONS NIGERIA` puis `VALIDER DEPLOIEMENT NIGERIA` | gate contractuelle |
+| V5 | **Le frontend** : ce que vous voulez concevoir | aucun plan n'existe nulle part |
+| V6 | Cadence du cron Nigeria (hebdo → quotidien) | crontab de production — **filet, pas correctif** |
+
+**Deja tranche le 2026-07-14, a NE PAS vous reposer** : D1 benchmarks Afrique
+(proxy synthetique maison), D2 CEMAC (debloque, scraper livre), D3 fonds
+dormants (diagnostic, pas desactivation), D4 priorite F4 par couche, D5 build
+frontend (oui). Et le chantier benchmarks 3 couches, decide le 2026-07-09,
+sequence F1→F5 dans `ROADMAP.md` — F1/F2/F3 ont produit leurs documents,
+**F4 et F5 n'ont jamais ete executes**.
+
+### F. ORDRE RECOMMANDE
+
+1. **S1 a S7** — tout le diagnostic restant, sans aucune decision a prendre.
+2. **V2** puis **V1** — les deux plus petits gestes a effet immediat.
+3. **F4** du chantier benchmarks — il est decide depuis juillet et porte les
+   indices morts et les 73 637 VL sans libelle.
+4. **S6 puis V5** — le frontend, inventaire d'abord, conception ensuite.
+5. **P2-01 CEMAC** — 685 jours, le scraper BVMAC est livre depuis juillet.
+
+**A ne pas faire** : reprendre « 1 909 doublons a arbitrer » (c'est 19),
+« 63 153 orphelines » (c'est 65), « la cadence hebdomadaire ne tient pas le
+budget » (10 j contre 14), « l'acces MCP/DB bloque » (le pont repond), ni
+reposer les decisions D1 a D5.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-28 00:45 UTC — Lot CM : le correctif est ecrit, teste, et attend le deploiement
 
 **Dernier etat stable** : production inchangee. Aucune ecriture en base. Le
