@@ -13,6 +13,86 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-28 13:20 UTC — Lot CT : DEPLOYE ET VERIFIE — deux routes fermees, deux defauts SEO corriges
+
+**Dernier etat stable** : **deploye en production et verifie par mesure.**
+Frontend et API a jour sur `claude/code-review-improvements-ikvuj`.
+
+### Verifications en production, apres deploiement
+
+| Test | Attendu | **Obtenu** |
+|---|---|---|
+| `<title>` de `/funds/1141` | aucun `null`, un seul `\| Fundafrique` | **`AFRINVEST DOLLAR FUND NGN NIGERIA - Synthèse OPCVM Afrique \| Fundafrique`** ✔ |
+| `POST /api/activate-user/999999` sans jeton | 401 | **401** ✔ |
+| `POST /api/generate-api-key` sans jeton | 401 | **401** ✔ |
+| Temoin `GET /api/valLiq/1141` | 200 | **200** ✔ |
+
+Identifiant `999999` choisi deliberement : aucun compte reel ne pouvait etre
+touche, quel que soit le resultat du test.
+
+### Ce qui a ete ferme
+
+**`POST /api/activate-user/:id`** prenait un identifiant dans l'URL et faisait
+`user.update({ active: 1 })` — elle **activait n'importe quel compte**.
+**`POST /api/generate-api-key`** prenait un `user_id` dans le corps et creait la
+cle — elle **emettait une cle d'API pour n'importe qui**.
+
+Aucune attenuation n'existait : ni `router.use()`, ni garde global dans
+`app.js` (le plafond de debit de 200 req/15 min n'est pas de
+l'authentification), ni controle dans le corps des gestionnaires.
+
+### L'ordre a ete respecte, et il etait obligatoire
+
+1. **Frontend** — `src/lib/authHeaders.ts` + 3 sites d'appel. **Additif et sans
+   effet** tant que le serveur ignore l'en-tete, donc deployable seul.
+2. **API** — `authenticate` sur les deux routes.
+
+Mesure qui imposait cet ordre : le frontend **detenait** un jeton
+(`tokenEnCours`, 131 usages, 74 fichiers avec `Authorization`), mais sur 20 des
+routes concernees **2 seulement** le portaient. L'inverse aurait casse 18
+parcours sur 20.
+
+**Chaine d'authentification verifiee, non supposee** : les logins de panel
+(`admin`, `investor`, `management`, `distributor`) et `country-panel` appellent
+`POST /api/userlogin` → `generateToken` (JWT) → stocke en `tokenEnCours` →
+`authenticate` le verifie par `verifyJwt` avec `Authorization: Bearer`.
+
+**Trois controles de non-regression au demarrage** : `jsonwebtoken` declare
+(`^9.0.2`) ; `middleware/auth` deja requis par `routes_vl.js:2`, donc charge
+bien avant ce lot ; `JWT_SECRET` lu **paresseusement** dans
+`getCurrentSecret()`, donc incapable d'empecher le boot.
+
+### Parti dans le meme deploiement — `D5` et les deux defauts SEO
+
+`<title>` des fiches fonds : le `null` (451 fonds sur 1 260 sans ISIN, 35,8 %)
+et le `| Fundafrique` en double (100 % des fiches) sont **corriges en
+production**. La logique vit une seule fois dans `src/lib/fundMetadata.ts`, les
+sept `page.server.ts` delèguent.
+
+Une cle d'API en clair, commentee dans `api-management/page.tsx`, a ete
+supprimee.
+
+### CE QUI RESTE OUVERT — a ne pas croire resolu
+
+| Objet | Etat |
+|---|---|
+| `generate-api-key` | exige un appelant **authentifie**, mais **pas** que le `user_id` demande soit le sien. Un utilisateur connecte peut encore demander une cle pour autrui. Restreindre au proprietaire ou a l'admin change le **comportement**, pas l'acces : lot distinct, signale dans le code |
+| `reject-user`, `renew-api-key` | voisines immediates, **meme gravite**, **toujours ouvertes**. Hors du perimetre valide. Une ligne chacune |
+| 31 autres routes mutantes | sans authentification |
+| `src/app/auth/login/page.tsx` | **casse ou orphelin** : seul appelant de `POST /api/login` (gestionnaire Magic), et il lit `data.data.userExists` que ce point d'entree ne renvoie pas. Les vrais logins passent par `/api/userlogin`. Defaut distinct, non traite |
+| fonds 2844 | nom litteral « 3 » — defaut de **donnee** |
+
+**Prochaine action recommandee** : `reject-user` et `renew-api-key`, meme
+methode, meme ordre. Puis `V2` (dedup + index UNIQUE), prete depuis le lot CQ.
+
+**A ne pas faire a la reprise** :
+- ne pas croire `generate-api-key` entierement protegee : l'autorisation par
+  proprietaire manque ;
+- ne pas proteger une route serveur avant d'avoir envoye l'en-tete cote client ;
+- ne pas ajouter `authenticate` aux 31 routes restantes d'un coup.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-28 06:55 UTC — Lot CS : les cinq indices morts ne nuisent a RIEN, et les deux chantiers n'en font qu'un
 
 **Dernier etat stable** : production inchangee. Aucune ecriture.
