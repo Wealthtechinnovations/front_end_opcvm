@@ -13,6 +13,95 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-28 05:45 UTC — Lot CN : S1 et S2 instruits — P1-03 resolu, P2-02 bien plus grave
+
+**Dernier etat stable** : production inchangee. Aucune ecriture, aucune
+modification de code. Diagnostic seul.
+
+### S1 — `P1-03` est RESOLU, et sa description etait fausse
+
+`POST /api/listeopcvm` rend **HTTP 200, 2 213 870 octets en 1,63 s**, donnees de
+fonds completes. La mention « cassee (colonnes DB manquantes) » n'est plus
+vraie. **Sort du backlog.**
+
+Erreur de methode a noter : mon premier test etait un **GET**, qui a rendu 404
+« Route non trouvee ». La route est en **POST**. Un 404 de methode non
+autorisee est indistinguable d'une route absente — j'ai failli conclure a la
+disparition d'une route qui fonctionne.
+
+### S2 — `P2-02` : le backlog nommait 4 routes, il y en a **35**
+
+Classification faite sur le CORPS de chaque gestionnaire, pas sur le verbe
+HTTP : ce projet utilise POST pour des lectures (`listeopcvm` en est la preuve),
+donc compter les POST surevaluerait le risque.
+
+| | |
+|---|---|
+| routes qui **mutent** reellement (`INSERT`/`UPDATE`/`DELETE`/`create`/`destroy`) | **39** |
+| dont **sans aucune authentification** | **35** |
+| POST qui ne mutent pas (lecture deguisee) | 15 — hors sujet |
+
+**Atténuations recherchées, toutes absentes** :
+- aucun `router.use()` au niveau des routeurs concernes ;
+- **aucun garde global** dans `app.js` — seulement un plafond de debit
+  (200 req/15 min), qui n'est pas de l'authentification ;
+- seuls deux middlewares d'autorisation existent dans tout le code
+  (`authenticate`, `isAdmin`) ;
+- aucun controle dans le corps des gestionnaires : verifie ligne a ligne sur
+  les deux plus graves.
+
+**Les deux plus graves, lus dans le code** :
+- `app.post('/api/activate-user/:id')` — `routes_vl_admin.js:77` : prend un id,
+  fait `user.update({ active: 1 })`. **Active n'importe quel compte.**
+- `router.post('/api/generate-api-key')` — `apigestionapikey.js:86` : prend un
+  `user_id` du corps, cree la cle. **Emet une cle d'API pour n'importe qui.**
+
+Egalement sans authentification : `/api/ajoutVL/:id`, `/api/uploadsfilevl/:id`,
+`/api/updateValues/:id`, `/api/postfond`, `/api/updatefond/:id`,
+`/api/reject-user/:id`, `/api/renew-api-key`, `/api/addSociete`,
+`/api/updateSociete`, et 26 autres.
+
+### L'ORDRE DU CORRECTIF EST L'INVERSE DE L'INTUITION
+
+Mesure qui l'etablit : le frontend **possede** un jeton (`tokenEnCours`, 131
+usages) et **74 fichiers** envoient deja un en-tete `Authorization`. Mais sur un
+echantillon de 20 des routes concernees, **2 seulement** portent le jeton dans
+leur fenetre d'appel.
+
+**Proteger le serveur d'abord casserait 18 parcours sur 20.** L'ordre sur
+lequel la regle de zero regression oblige :
+
+1. **Frontend d'abord** : ajouter `Authorization: Bearer ${tokenEnCours}` a
+   chaque site d'appel. **Purement additif et sans effet** tant que le serveur
+   ignore l'en-tete — donc deployable seul, sans risque.
+2. **Serveur ensuite** : ajouter `authenticate` route par route, en verifiant
+   chacune. Jamais les 35 d'un coup.
+
+**Commandes executees** : `curl` GET puis POST sur `/api/listeopcvm` en
+production ; `curl` temoin sur `valLiq/1141` (HTTP 200) ; classification des
+gestionnaires par analyse du corps ; recherche de gardes globaux et de
+middlewares alternatifs ; lecture des deux gestionnaires les plus graves ;
+audit des sites d'appel frontend.
+
+**Resultat** : S1 clos (resolu). S2 instruit, avec un ordre de correctif qui ne
+casse rien. **Aucune modification faite** — l'authentification est une tache
+sensible, et modifier 35 routes depasse le cadre d'un lot court.
+
+**Prochaine action recommandee** : lot court n°1 du correctif — les **deux**
+routes les plus graves seulement (`activate-user`, `generate-api-key`), en
+suivant l'ordre frontend puis serveur, verifiees en production avant d'etendre.
+
+**Risques connus** : aucun introduit par ce lot. Le risque est celui qui existe
+deja en production.
+
+**A ne pas faire a la reprise** :
+- **ne pas ajouter `authenticate` aux 35 routes d'un coup** : 18 parcours sur 20
+  tombent immediatement ;
+- ne pas tester une route en GET avant d'avoir verifie son verbe ;
+- ne pas reprendre « `/api/listeopcvm` est cassee » : elle rend 200.
+
+---
+
 ## PLAN UNIQUE MESURE — 2026-10-28 05:30 UTC — remplace le backlog du 2026-08-12
 
 > **Ce plan remplace la priorisation de « BACKLOG CONSOLIDE UNIQUE » (ligne ~1293),
