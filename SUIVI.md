@@ -13,6 +13,99 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-28 00:45 UTC — Lot CM : le correctif est ecrit, teste, et attend le deploiement
+
+**Dernier etat stable** : production inchangee. Aucune ecriture en base. Le
+correctif est dans le depot, **pas encore deploye**.
+
+### Mesure qui ferme l'instruction
+
+Depuis le serveur, 2026-10-28 00:32 UTC : la page d'index de la SEC rend
+**HTTP 200**, et **nos propres filtres y retiennent 42 classeurs**, dont le
+document **1537**. Le cron du 26 octobre n'en avait lu que **41**.
+
+Je ne peux pas etablir si la page le livrait le 26 a 10:00 — **et c'est
+exactement le defaut** : rien ne l'enregistre. Dans les deux cas le correctif
+est le meme.
+
+### Correctif livre : `[1b/8]` controle de couverture
+
+**Nouveau** : `api_opcv/scripts/diag/check_sec_ng_coverage.js`
+**Cable dans** : `api_opcv/scripts/cron/cron_nigeria_weekly.sh`, apres `[1/8] OK`
+
+Le `OK` de l'etape `[1/8]` ne prouvait qu'une chose : un CSV existe et fait
+plus d'une ligne. Il ne disait **rien** de ce que la page offrait. Le controle
+compare ce que la page **OFFRE** a ce que le CSV **CONTIENT** et nomme l'ecart
+par date et par URL.
+
+- Sortie non nulle quand la plus recente manque → le compteur d'erreurs du cron
+  s'incremente, le rapport final dit « TERMINEE AVEC N ERREUR(S) » au lieu d'un
+  `OK` trompeur.
+- Il ne telecharge aucun classeur, ne touche pas a la base, ne relance pas
+  l'extraction, **et ne bloque pas les etapes suivantes** — un recalcul sur les
+  donnees presentes reste utile.
+- **Memes filtres, mot pour mot**, que `fetch_year_links` : une regle plus large
+  signalerait comme manquants des fichiers que l'extracteur ecarte a juste
+  titre, et le controle deviendrait une alarme qu'on apprend a ignorer.
+
+### Defaut trouve par mon propre test, avant mise en service
+
+Ma premiere version sortait **0** devant un CSV **totalement vide** face a 42
+classeurs offerts : `plusRecentNonPris` exigeait `maxCsv` non nul, donc un CSV
+vide tombait dans la branche « manques anciens, simple avertissement ». **Un
+controle qui rend OK devant une extraction vide est pire que pas de controle :
+il certifie le silence.** Corrige, et le pourquoi est consigne dans le script.
+
+### Trois scenarios verifies
+
+| scenario | attendu | obtenu |
+|---|---|---|
+| CSV vide, 42 offerts | sortie 1 | **1** |
+| CSV complet, 42 dates | sortie 0 | **0** — « tout ce que la page offre est dans le CSV » |
+| CSV arrete au 09/10, comme le 26 octobre | sortie 1 | **1**, nommant `documents/1537/..._16th_October_2026.xlsx` |
+
+Le troisieme est le **cas reel** : le controle aurait crie le jour meme.
+
+**Commandes executees** : `node --check`, `bash -n`, trois executions du
+controle contre des CSV simules (`/dev/null`, 42 dates, 41 dates) ; `git add`,
+`commit`, `pull --rebase`, `push`.
+
+**Resultat** : correctif de fond ecrit et teste. La cadence reste **inchangee**,
+deliberement — c'est un filet, pas la reparation, et il ne doit pas etre pose
+sur une cause non reparee.
+
+**Tache en cours** : aucune. Lot termine, etat stable.
+
+**Prochaine action recommandee** : **deployer** sur S2, puis verifier au
+prochain cron Nigeria (lundi 2 novembre 10:00 UTC) que `[1b/8]` apparait. Il
+devrait **ECHOUER** tant que le 1537 n'est pas importe — ce qui est le
+comportement voulu, et la preuve que le controle fonctionne.
+
+```bash
+cd /var/www/vhosts/chainsolutions.fr/africafunds.chainsolutions.fr/api \
+  && git pull --rebase origin claude/code-review-improvements-ikvuj \
+  && bash -n scripts/cron/cron_nigeria_weekly.sh \
+  && node scripts/diag/check_sec_ng_coverage.js --annee 2026 --csv sec_ng_latest.csv
+```
+
+La derniere commande doit sortir **1** et nommer le classeur du 16 octobre.
+Aucun `pm2 restart` : un script de cron n'est pas charge par le processus API.
+
+**Risques connus** : aucun introduit. Le controle est en lecture seule et
+n'interrompt pas la chaine. Seul effet : le cron Nigeria rapportera une erreur
+de plus tant que l'ecart subsiste — **c'est le but**.
+
+**A ne pas faire a la reprise** :
+- **ne pas reprendre « la cadence hebdomadaire ne tient pas le budget »** :
+  refute, 10 j contre 14 ;
+- ne pas assouplir ni retirer `[1b/8]` s'il echoue : son echec signale un ecart
+  reel, et l'eteindre ramenerait l'angle mort exact qui a coute trois semaines ;
+- ne pas rouvrir les pistes import / appariement / seuils / parsing / source
+  muette : toutes mesurees et ecartees ;
+- ne pas lancer le correctif naira sur 1141 ou 1196 : rien a y corriger.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-28 00:35 UTC — Lot CL : CORRECTION DU LOT CK — la cadence n'est pas le defaut
 
 **Dernier etat stable** : production inchangee. Aucune ecriture.
