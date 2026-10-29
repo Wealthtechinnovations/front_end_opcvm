@@ -114,9 +114,7 @@ export default function Fonds() {
         try {
             const response = await fetch(`${urlconstant}/api/renew-api-key`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: enTetesAuth(),
                 body: JSON.stringify({
                     api_key: apiKey,
                     renewal_token: renew,

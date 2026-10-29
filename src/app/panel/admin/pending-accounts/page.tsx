@@ -87,6 +87,7 @@ export default function PendingAccounts() {
         try {
           const response = await fetch(`${urlconstant}/api/reject-user/${userId}`, {
             method: 'POST',
+            headers: enTetesAuth(),
           });
           if (response.ok) {
             Swal.fire({
