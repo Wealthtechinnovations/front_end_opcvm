@@ -13,6 +13,85 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-29 23:30 UTC — Lot CW : `ratiosnew` n'est pas lente, elle ATTEND — cinq hypotheses a moi refutees
+
+**Dernier etat stable** : production inchangee depuis le lot CU. Diagnostic
+seul.
+
+### CE QUI EST ETABLI, ET PAR QUELLE MESURE
+
+| Mesure | Resultat |
+|---|---|
+| `PROCESSLIST` pendant que la route pend | **0 requete active** sur 20 echantillons d'1 s |
+| profil CPU, 16 245 echantillons sur 18,1 s | **82,5 % `(idle)`** |
+
+**La route ne calcule pas : elle attend.** Un `await` ne revient pas.
+
+**Cinq de mes hypotheses sont donc refutees, toutes par la mesure :**
+
+| Hypothese | Refutee par |
+|---|---|
+| le volume de donnees | un fonds a 20 VL pend autant qu'un fonds a 311 |
+| l'index `uq_valorisations_fund_date` | 4 routes lisant `valorisations` repondent en 0,5 a 3,2 s |
+| N+1 sur les requetes `tsr` | 2,2 ms l'appel, ~53 800 iterations necessaires, **et** gardees par `if (year === "1")` |
+| boucle infinie dans le comblement | `currentDate.add(1, 'days')` avance bien |
+| **CPU JavaScript** | **82,5 % `(idle)`** — le profil lui-meme |
+
+### ANGLE MORT QUE J'AI CREE, A LEVER EN PRIORITE
+
+Ma mesure de la base filtrait **`COMMAND <> 'Sleep'`**. Elle ne pouvait donc pas
+voir des connexions **detenues mais inactives**. « Base au repos » et « pool de
+connexions epuise » rendent **exactement le meme resultat** sous ce filtre, et
+appellent des corrections opposees.
+
+**La mesure suivante doit compter TOUTES les connexions, `Sleep` comprises, et
+les comparer a la taille du pool configure.** C'est aujourd'hui l'hypothese la
+plus plausible, et je ne l'ai pas encore testee.
+
+**Reserve honnete** : la sonde a reproduit un blocage dans un processus **neuf**
+— donc deterministe, dans le chemin de code. Mais rien ne prouve que ce soit le
+**meme** blocage que celui de production : une sonde et `api-monolith` ne
+partagent ni leur pool ni leur etat.
+
+### TROIS DEFAUTS DANS MES PROPRES OUTILS, CORRIGES
+
+| Defaut | Consequence |
+|---|---|
+| sonde ecrite dans `/tmp` | `Cannot find module 'dotenv'` — Node resout hors du projet |
+| **garde-fou absent** | le profileur a rendu un **VERDICT** sur un profil ne contenant que le demarrage de Node |
+| `.replace()` non asserte | une substitution a echoue **en silence**, et j'ai pousse un fichier que je croyais modifie |
+| **logique de verdict** | designait des lignes a 0,1 % comme « le point chaud » alors que `(idle)` pesait 82,5 % |
+
+**Troisieme logique de verdict a moi qui conclut de travers** — apres le
+comparateur d'`INDEX_CONFIG` (« 0 divergent » sur une extraction vide) et le
+premier profileur. Le motif commun n'est pas la distraction : **j'ecris la
+conclusion avant d'avoir prevu le cas ou la mesure ne dit rien.** Les trois
+outils exigent desormais une preuve que la mesure a eu lieu.
+
+### FAIT D'INFRASTRUCTURE DECOUVERT EN ECHOUANT
+
+Les `node` des chemins standards de S2 sont en **v14.16.0** et **v12.22.9**.
+Seul l'interpreteur **nvm v20.20.2** permet de charger les modules de
+l'application (prefixe `node:`). Or `doc-drift.yml` lance `node "$f"` : **le
+canal a la demande tourne donc sur Node 14, pas sur celui de la production.**
+
+Les ~50 diagnostics existants ne chargent que `mysql2` et `dotenv` — c'est
+pourquoi personne ne l'avait vu. Le premier a vouloir monter du code applicatif
+l'a decouvert. **A corriger dans `doc-drift.yml`, independamment de `ratiosnew`.**
+
+**Prochaine action recommandee** :
+1. **compter toutes les connexions MySQL, `Sleep` comprises**, et les comparer
+   au pool configure — l'hypothese non testee la plus plausible ;
+2. corriger `doc-drift.yml` pour qu'il utilise le Node de la production.
+
+**A ne pas faire a la reprise** :
+- ne pas reprendre les cinq hypotheses du tableau : toutes refutees ;
+- **ne pas conclure « base au repos » depuis une mesure filtrant `Sleep`** ;
+- ne pas corriger les 1 729 lignes : le temps n'y est pas passe a calculer ;
+- ne pas supposer que le blocage de la sonde est celui de la production.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-29 22:30 UTC — Lot CV : `ratiosnew` instruit — quatre hypotheses a moi refutees, et un taux sans risque perime partout
 
 **Dernier etat stable** : production inchangee depuis le lot CU. Diagnostic
