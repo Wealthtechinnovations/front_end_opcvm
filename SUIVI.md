@@ -13,6 +13,134 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-29 18:40 UTC — Lot CU : V2 EXECUTE, 4 routes fermees, le canal de deploiement REPARE, et `ratiosnew` est mort depuis juin
+
+**Dernier etat stable** : tout deploye et verifie par mesure en production.
+
+### 1. `V2` EXECUTE — 19 lignes supprimees, index UNIQUE pose
+
+Par le canal gouverné : nouveau workflow `ops-dedup-doublons-vl.yml`, phrase
+`VALIDER DEDUPLICATION DOUBLONS VL`, deux verrous (un `push` ne declenche que
+le dry-run ; la phrase est comparee sans normalisation avant toute connexion).
+
+| Etape | Resultat |
+|---|---|
+| dry-run de controle | **19 paires**, identiques a la mesure du 28/10, **0 a arbitrer** |
+| suppression | instantane `data/doublons_snapshots/2026-10-29T18-10-05.json` (19 lignes), **19 lignes supprimees** |
+| relance d'idempotence | **0 paire** → « Rien a faire » |
+| index UNIQUE | **`uq_valorisations_fund_date` cree** |
+
+Retour arriere disponible :
+`node scripts/fix/fix_doublons_vl.js --rollback data/doublons_snapshots/2026-10-29T18-10-05.json`
+et `DROP INDEX uq_valorisations_fund_date ON valorisations;`
+
+L'index a ete une **entree separee**, par defaut a false : la suppression est
+reversible par instantane, la creation d'un index modifie le **schema**. Verifie
+avant de l'ecrire : le cron quotidien et l'import Nigeria utilisent
+`INSERT IGNORE`, compatible avec une contrainte UNIQUE.
+
+### 2. Les quatre routes sont fermees
+
+| Route | Code sans jeton |
+|---|---|
+| `activate-user` | **401** |
+| `reject-user` | **401** |
+| `generate-api-key` | **401** |
+| `renew-api-key` | **401** |
+
+**Correction d'une de mes affirmations** : j'avais range `renew-api-key` parmi
+les routes « grandes ouvertes ». **Faux.** Elle exigeait le couple `api_key` +
+`renewal_token` et rendait 403 sinon — une protection par **possession de
+jeton**. `authenticate` y est une couche supplementaire, pas un trou bouche. Mon
+decompte de 35 routes reste exact sur le critere « pas de middleware », mais il
+melait des gravites tres differentes : **chaque route restante doit etre LUE
+avant d'etre classee.**
+
+### 3. LE CANAL DE DEPLOIEMENT GOUVERNE ETAIT ROMPU — et je l'ai repare
+
+`ops-deploy-frontend.yml` en mode `deploy` echouait au code **127** alors que le
+build REUSSISSAIT — les 218 routes s'affichaient, puis 127.
+
+**Cause, a la colonne pres** : dans un bloc YAML `run: |`, l'indentation commune
+est retiree avant que bash ne lise le script. Base = 10 ; le terminateur
+`REMOTE` etait a **12**. Apres retrait, il restait `  REMOTE` avec deux espaces,
+et bash n'accepte un delimiteur `<<'WORD'` que si la ligne porte le mot **seul**.
+Le heredoc ne se fermait jamais : la ligne partait au bash distant **comme une
+commande**.
+
+Audit des seize workflows `ops-*` :
+
+| Fichier | Terminateurs | Etat |
+|---|---|---|
+| `ops-deploy-frontend.yml` | 2 a l'indent 12 | **casses** |
+| `ops-deploy-api.yml` | 1 a l'indent 12 | **casse** |
+| les quatorze autres | indent 10 | corrects |
+
+**Seuls les deux workflows de DEPLOIEMENT portaient le defaut.** D'ou le fait que
+naira, scale-break, recalc, mariadb et les extractions fonctionnaient, tandis
+que **tout deploiement gouverne echouait**.
+
+**Consequence retrospective** : `D5` — decidee le 2026-07-14 — n'a jamais pu
+s'executer. Le backlog l'imputait a l'absence d'acces MCP. Cette premisse etait
+deja morte, mais la vraie cause etait **aussi** ailleurs : le chemin etait rompu.
+**Deux explications fausses se sont additionnees** pour immobiliser une decision
+prise il y a trois mois et demi. Corrige, puis frontend et API deployes par ce
+canal, tous deux en succes.
+
+### 4. RISQUE QUE J'AI CREE, ET CORRIGE DANS LE MEME LOT
+
+Le workflow de deduplication fait un `git pull` du code API **sans redemarrer
+PM2**. Le disque portait donc mes deux `authenticate` pendant que le processus
+tournait sur l'ancien code, et le frontend correspondant n'etait pas deploye.
+Un redemarrage pour n'importe quelle raison aurait casse deux pages
+d'administration. Resolu en deployant le frontend **puis** l'API, dans cet ordre.
+
+**A retenir** : un workflow qui met a jour le code sans le charger laisse la
+production dans un etat intermediaire silencieux.
+
+### 5. DEFAUT MAJEUR TROUVE EN VERIFIANT — `ratiosnew` EST MORT DEPUIS JUIN
+
+En controlant la non-regression, `api/ratiosnew/2026/1141` rend **HTTP 504 apres
+120 s**. Mesures d'isolation :
+
+| Test | Resultat | Ce qu'il elimine |
+|---|---|---|
+| trois fonds, dont un a tres peu de VL | **504 a 120 s chacun** | ni le volume, ni un fonds |
+| `valLiq`, `valLiqdev`, `classementquartilemysql`, `performancesdev` | **200 en 0,5 a 3,2 s** | les lectures de `valorisations` sont saines → **mon index n'est pas en cause** |
+| `ratiosnewithdate` | **400 en 0,7 s** | le fichier et le routeur fonctionnent |
+| `ratiosnewdev` | **504 a 120 s** | le defaut touche la famille `ratiosnew*` |
+| `git log` sur `apigestionratios.js` | dernier commit **2026-06-20** | **jamais touche par moi** — defaut anterieur de quatre mois |
+
+**Ce n'est donc pas une regression de ce lot.** Mais c'est grave : les ratios de
+risque — Sharpe, Sortino, Calmar, VAR, tracking error, volatilite — **ne
+s'affichent sur aucune fiche fonds**, et personne ne l'avait mesure.
+
+**Forme de la cause** : route de **1 729 lignes**, **85 boucles**, et des
+requetes `await` **a l'interieur** des boucles — `tsr.max('date', …)` et
+`tsr.findOne(…)` repetes. N+1 classique, aggravé par le comblement des trous en
+jours calendaires avant de boucler : quelques VL etalees sur des mois deviennent
+des centaines d'iterations, chacune avec plusieurs allers-retours en base.
+
+**Non corrige** : c'est une route de calcul financier de 1 729 lignes. Tache
+sensible — diagnostic d'abord, et sa refonte merite sa propre decision.
+
+**Prochaine action recommandee** : instruire `ratiosnew` — compter les requetes
+reellement emises pour un fonds, et mesurer ou passent les 120 s. Puis decider
+entre sortir les requetes `tsr` des boucles (gain probablement suffisant, risque
+faible) et une refonte.
+
+**A ne pas faire a la reprise** :
+- **ne pas imputer le 504 de `ratiosnew` a l'index UNIQUE** : quatre routes
+  lisant `valorisations` repondent en moins de 3,2 s, et le fichier n'a pas
+  bouge depuis juin ;
+- ne pas annuler l'index : mesure faite, il ne nuit pas ;
+- ne pas reprendre « `renew-api-key` etait grande ouverte » : elle exigeait un
+  couple cle/jeton valide ;
+- ne pas classer les 31 routes restantes sans les lire : les gravites diffèrent ;
+- ne pas lancer un workflow qui `git pull` l'API sans prevoir le redemarrage.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-28 13:20 UTC — Lot CT : DEPLOYE ET VERIFIE — deux routes fermees, deux defauts SEO corriges
 
 **Dernier etat stable** : **deploye en production et verifie par mesure.**
