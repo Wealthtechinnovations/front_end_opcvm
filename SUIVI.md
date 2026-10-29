@@ -13,6 +13,87 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-29 22:30 UTC — Lot CV : `ratiosnew` instruit — quatre hypotheses a moi refutees, et un taux sans risque perime partout
+
+**Dernier etat stable** : production inchangee depuis le lot CU. Diagnostic
+seul, aucune modification de code applicatif.
+
+### QUATRE HYPOTHESES A MOI, TOUTES REFUTEES PAR LA MESURE
+
+| Mon hypothese | Verdict |
+|---|---|
+| le volume de donnees | **FAUX** — un fonds a 20 VL pend autant qu'un fonds a 311 |
+| l'index `uq_valorisations_fund_date` pose le 29/10 | **FAUX** — `valLiq`, `valLiqdev`, `classementquartilemysql`, `performancesdev` repondent en 0,5 a 3,2 s |
+| N+1 sur les requetes `tsr` dans les boucles | **FAUX, trois fois** : 2,2 ms par appel, il faudrait **~53 800** iterations pour 120 s quand le fonds 1141 n'en produit que ~2 172 — **et** ces requetes sont gardees par `if (year === "1")`, donc elles ne s'executent **meme pas** pour `ratiosnew/2026/…` |
+| boucle infinie dans le comblement des trous | **FAUX** — `currentDate.add(1, 'days')` avance bien |
+
+**L'origine des 120 s n'est donc PAS trouvee.** Et je ne la trouverai pas en
+continuant a lire 1 729 lignes en formulant des hypotheses : j'en ai formule
+quatre aujourd'hui, la mesure les a toutes renversees. **La suite est
+l'instrumentation ou le profilage, pas la lecture.**
+
+### CE QUE L'INSTRUCTION A TROUVE A LA PLACE — et c'est plus grave
+
+**`taux_sans_risques` (modele `tsr`) est VIDE** : 0 ligne, un seul index sur la
+cle primaire.
+
+**`tsrhistos` n'est pas vide, mais aucun pays n'a de taux a jour :**
+
+| pays | lignes | dernier taux | age |
+|---|---|---|---|
+| **Maroc** | 7 191 | 2024-06-07 | **874 j** |
+| UEMOA | 137 | 2026-05-01 | 181 j |
+| CEMAC | 137 | 2026-05-01 | 181 j |
+| NIGERIA | 137 | 2026-05-01 | 181 j |
+| TUNISIE | 137 | 2026-05-01 | 181 j |
+
+**Sharpe, Sortino et Calmar reposent donc sur des taux vieux de six mois a deux
+ans et demi**, et le Maroc — 644 fonds, le plus grand marche — est le pire.
+Silencieusement : rien dans l'affichage ne signale l'age du taux employe.
+
+**Alarme que je retire.** J'avais souligne `TSR_DEFAULTS` — des taux ECRITS EN
+DUR (MAROC 2,75 %, NIGERIA 27,5 %, TUNISIE 8 %, UEMOA 3,5 %, CEMAC 5 %, utilises
+sept fois). Comme `tsrhistos` porte des lignes et que la requete cherche un taux
+a une date **anterieure**, elle en trouve toujours un : **le repli en dur ne
+s'applique probablement pas**. Mon inquietude etait exageree. Le defaut reel
+n'est pas la fabrication d'un taux, c'est sa **peremption**.
+
+Un taux perime employe comme s'il etait courant est plus trompeur qu'un repli
+affiche : le second se voit, le premier non.
+
+### Pourquoi cela n'avait jamais ete vu
+
+`ratiosnew` rend 504 : la page n'affiche **rien**. Un ratio absent ne se signale
+pas comme faux — et personne ne verifie l'age d'un taux qui ne s'affiche nulle
+part. Les deux defauts se cachaient l'un l'autre.
+
+**Fichiers modifies** (depot `api_opcv`, diagnostics seulement) :
+`scripts/diag/ondemand/diag_ratiosnew_504.js`
+
+**Quatrieme supposition de schema de ce cycle, corrigee** : le script est mort
+sur `Table 'fund_opcvm.tsr' doesn't exist`. `tsr` n'est pas une table — c'est un
+ALIAS de code (`const tsr = taux`) vers `sequelize.define('taux_sans_risques')`.
+Precedentes : `datejour` (c'est `date`), `indice` (c'est `indice_name`), et une
+comparaison sur cle primaire au lieu de cle etrangere. **Meme mecanisme chaque
+fois : prendre le vocabulaire du code pour celui de la base.** Un resolveur
+`information_schema` est desormais pose, et le nom retenu est imprime a cote des
+chiffres.
+
+**Prochaine action recommandee**, deux chantiers distincts :
+1. **Le taux sans risque** — alimenter `tsrhistos`, le Maroc d'abord (874 j).
+   C'est une donnee de marche, pas du code : ne jamais l'inventer.
+2. **Le 504** — instrumenter la route pour voir ou passent les 120 s. Ne plus
+   emettre d'hypothese sans mesure.
+
+**A ne pas faire a la reprise** :
+- ne pas reprendre les quatre hypotheses du tableau : toutes refutees ;
+- **ne pas accuser `TSR_DEFAULTS`** : `tsrhistos` porte des lignes, le repli ne
+  s'applique probablement pas ;
+- ne pas corriger les 1 729 lignes avant de savoir ou passe le temps ;
+- ne pas inventer un taux sans risque pour combler les 874 jours du Maroc.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-29 18:40 UTC — Lot CU : V2 EXECUTE, 4 routes fermees, le canal de deploiement REPARE, et `ratiosnew` est mort depuis juin
 
 **Dernier etat stable** : tout deploye et verifie par mesure en production.
