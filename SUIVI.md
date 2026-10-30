@@ -13,6 +13,85 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 — Lot DJ : les canoniques des fiches fonds designent des pages SANS DONNEES
+
+**Dernier etat stable** : `front_end_opcvm` build `✓ Compiled successfully`,
+`tsc --noEmit` muet, 218 routes. `api_opcv` inchange. **Non deploye** — le
+deploiement reste au proprietaire.
+
+### Le resultat principal n'est pas celui que j'allais chercher
+
+Objectif du lot : donner des metadonnees a `/funds/performance/[fondId]`, la
+derniere page fonds publique a rendre le titre generique « Fundafrique -
+Plateforme OPCVM Africains » sur **une URL par fonds**.
+
+Avant de reprendre le motif partage, j'ai verifie **ou pointait sa canonique**.
+Rendu navigateur sur `afrinvest-dollar-fund-1141` :
+
+| URL | appels `NaN` | nom du fonds | caracteres |
+|---|---|---|---|
+| `/funds/<slug>` | 0 / 7 | **present** | 4 077 |
+| `/funds/summary-eur/<slug>` | **4 / 5** | absent | 2 565 |
+| `/funds/history/<slug>` | **5 / 7** | absent | **857** |
+| `/funds/performance/<slug>` | `/api/valLiq/NaN` | absent | 1 627 |
+
+Ces vues font `Number(params.fondId)`, qui vaut **`NaN`** sur un slug. **Seule
+la fiche en devise locale tolere le slug.** Les autres annoncent donc a Google
+que la **version canonique** de la page est une URL qui n'affiche **aucune
+donnee**.
+
+**C'est un defaut de production ANTERIEUR a ce lot**, qu'il n'a fait que
+reveler. Il porte sur six fiches x 1 260 fonds.
+
+### Ce que j'en ai fait, et ce que je n'en ai pas fait
+
+Emettre la canonique a slug sur la page qui s'ajoute aurait designe une page
+sans donnees — **pire que l'absence de metadonnee** que le lot corrige. Elle
+emet donc une canonique **numerique**, via un reglage `slugDansUrl` dont le
+**defaut reste `true`** : les sept canoniques deja en production **ne changent
+pas d'un caractere**. Les modifier serait toucher a du SEO vivant, ce qui ne se
+decide pas dans un lot d'ajout.
+
+**Correctif de fond propose, pour un lot distinct** : rendre les vues tolerantes
+au slug en extrayant l'**identifiant numerique terminal** (`…-1141` → `1141`).
+Le slug se terminant toujours par l'identifiant, c'est strictement **plus
+permissif** — les URL numeriques continuent de fonctionner a l'identique, et les
+URL a slug cessent d'appeler `NaN`. Il touche la recuperation de donnees de six
+pages de production : diagnostic d'abord, fait ; modification ensuite, avec sa
+propre verification navigateur.
+
+### Pourquoi la page Performances avait ete oubliee
+
+Les sept autres fiches separaient deja un obus serveur d'un composant client.
+Celle-ci etait **elle-meme `"use client"`** sur 1 151 lignes, et un composant
+client **ne peut pas** exporter `generateMetadata`. C'est une raison technique,
+pas une negligence. Composant deplace par `git mv` dans `PerformanceView.tsx` —
+**enregistre par git comme un renommage, donc identique a l'octet**, et sans
+aucun import relatif. `page.tsx` devient l'obus mince des quatre autres fiches.
+
+**Fichiers** : `src/app/funds/performance/[fondId]/{page.tsx, page.server.ts,
+PerformanceView.tsx}`, `src/lib/fundMetadata.ts` (reglage `slugDansUrl`, defaut
+inchange).
+
+### Correction d'un chiffre a moi
+
+J'annoncais « 201 pages sur 218 sans metadonnees ». Mesure : **26 pages
+PUBLIQUES** seulement ; les **172** autres sont des panels authentifies ou une
+balise SEO ne sert a rien. Compter les panels comme un manque etait trompeur.
+Des 26 restantes : 22 etapes de `/questionnaire/*` — dont l'indexation des
+etapes intermediaires serait **nuisible**, un `noindex` y vaut mieux qu'une
+metadonnee riche —, 3 pages `/tools/*` et la racine.
+
+**Prochaine action recommandee** : **au proprietaire** — appliquer M1 (bloque
+M2) ; deployer le frontend si souhaite (build verifie) ; trancher le correctif
+de tolerance au slug, qui corrige un defaut SEO vivant sur six fiches.
+
+**A ne pas faire a la reprise** : ne pas passer `slugDansUrl` a `true` sur la
+page Performances avant que les vues tolerent le slug ; ne pas changer les sept
+canoniques existantes sans decision explicite — c'est du SEO vivant ; ne pas
+donner de metadonnees riches aux etapes du questionnaire ; ne pas compter les
+172 panels comme un manque de metadonnees.
+
 ## POINT DE REPRISE COURANT — 2026-10-30 — Lot DI : 402 classeurs UMOA-Titres ouverts, et deux conventions opposees dans la MEME zone
 
 **Dernier etat stable** : les deux depots propres, HEAD local = HEAD distant.
