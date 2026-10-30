@@ -13,6 +13,109 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 — Lot DP : le 26 octobre marocain ne s'est pas auto-corrige, et la file gouvernee MCP ne concerne PAS ce chantier
+
+**Dernier etat stable** : les deux depots propres, HEAD local = HEAD distant.
+Lot **de diagnostic seul** : aucune ecriture en base, aucun deploiement.
+
+**Moyen nouveau** : le pont MCP est revenu, et `run_sql_readonly_s2` permet des
+SELECT directs sur la base OPCVM. Ce qui demandait **neuf minutes par question**
+par le canal `doc-drift` se tranche desormais en quelques requetes.
+
+### La file de taches gouvernee MCP ne porte AUCUNE tache de ce chantier
+
+Mesure du contexte gouverne, 2026-10-30 17:28 UTC :
+
+| champ | valeur |
+|---|---|
+| `repository` | **`Patricked-code/MCP`** |
+| `governedBranch` | `mcp/regulatory-s1-governed-admission-20261023` |
+| `workQueue` | 21 taches — 14 DONE, 3 READY, 4 SUPERSEDED (storeRevision 244) |
+| `firstExecutableTask` | `TASK-20260929-001` — « W3 A3.2 Add bounded OAuth attempt correlation » |
+| `gate.mode` | `shadow`, decision `context_unacknowledged` |
+| `bootstrap.status` | **`EXPIRED`** |
+
+**Aucune des 21 taches ne cible `api_opcv` ni `front_end_opcvm`** : ces deux
+depots n'apparaissent que dans l'inventaire des projets deployes sur S2, jamais
+comme depot d'une tache. Le systeme gouverne le **pont MCP lui-meme** — OAuth,
+sous-domaines Plesk, admission reglementaire.
+
+**Donc : pour AfricaFunds, les taches ne sont PAS creees automatiquement par ce
+systeme.** La gouvernance qui s'applique est celle des deux `CLAUDE.md` : lots
+courts, POINT DE REPRISE dans `SUIVI.md`, `DECISIONS.md`, `doc-drift.yml`, le
+canal a la demande et les workflows `ops-*` a phrase de confirmation. C'est ce
+qui est suivi depuis le debut.
+
+**Et reclamer la tache suivante serait une faute** : cela entrainerait dans
+`Patricked-code/MCP`, que le mandat du 2026-10-30 exclut explicitement et que
+vous avez demande d'abandonner. Les blocages du contexte le disent eux-memes :
+« generic claim-next unsafe due unrelated higher-priority OAuth ».
+
+### Hypothese de reaffectation entre fonds : REFUTEE par un temoin
+
+Le test resserre a 0,05 % donnait **six appariements uniques sur sept** fonds et
+une chaine `953 ← 1092 ← 1112`. Mais le meme test sur les huit seances du 19 au
+28 octobre donne, par jour, le nombre de fonds marocains a appariement unique :
+
+```
+19 oct 59 | 20 oct 58 | 21 oct 52 | 22 oct 51
+23 oct 102 | 26 oct 56 | 27 oct 44 | 28 oct 62
+```
+
+**Le 26 octobre est au milieu de la plage normale.** Une cinquantaine de fonds
+portent chaque jour, par hasard, une valeur a 0,05 % pres de la VL precedente
+d'un autre. Les six appariements « uniques » ne sont que ce **taux de base**.
+**Sans ce temoin j'aurais annonce un import desaligne.**
+
+### Ce qui est etabli, et qui tient
+
+Depuis le 2026-08-01, **trois dates seulement** portent des variations > ×3 chez
+les fonds marocains : **19 oct (6 fonds), 23 oct (6), 26 oct (7)**. Les 1er et
+2 octobre en portent un chacun ; tous les autres jours, **zero**.
+
+**Le 19 et le 23 sont le MEME evenement** — les six fonds du 19 sont ceux du 23,
+et ils **reviennent a leur valeur d'origine** :
+
+| fonds | 19 oct | 23 oct |
+|---|---|---|
+| 636 SICAV MAROC CROISSANCE | 4 840,88 → 143,02 | → **4 836,23** |
+| 834 FCP CAM INVESTISSEMENT | 4 313,25 → 128,38 | → **4 314,17** |
+| 757 FCP MAROC CREANCES | 152,42 → 1 053,20 | → **152,07** |
+
+**Seul le 19 est fautif ; le 23 est le retour a la normale.** Ses six
+« anomalies » n'en sont pas, et les corriger **abimerait des valeurs saines**.
+Sur les 19 lignes signalees, **six ne sont pas des erreurs**.
+
+**Le 26 octobre, lui, ne s'est PAS auto-corrige** — quatre jours plus tard. Les
+16 et 23 sont stables, le 26 decroche, rien ne le rattrape : **ces valeurs
+fausses sont ce que le site sert aujourd'hui.**
+
+| fonds | 16 oct | 23 oct | **26 oct** |
+|---|---|---|---|
+| 949 CDG-SECUR | 4 326,77 | 4 314,85 | **1 121,63** |
+| 953 CDG SOLIDARITE | 177,58 | 177,08 | **2 328,10** |
+| 1113 AL BARID ISTITMAR | 149,30 | 148,93 | **3 080,32** |
+
+**Cas a part** : le fonds **963 CDG OBLIG PLUS** porte **208 220 puis 207 575
+avant** le 26 — implausibles pour une VL en MAD, et **stables sur deux dates**.
+Ce n'est donc pas l'evenement du 26 mais une echelle ancienne. Examen separe, et
+surtout **ne pas le traiter avec les six autres**.
+
+**Fichiers** : `api_opcv/scripts/diag/ondemand/diag_echelle_devise_nigeria.js` —
+la section 5bis ne tourne plus, son en-tete porte le constat. Relancer un test
+refute ferait perdre du temps a la prochaine session.
+
+**Prochaine action recommandee** : **au proprietaire** — corriger les **6** VL
+marocaines du 26 octobre (pas 7 : le fonds 963 releve d'autre chose) et la
+**1** du 19 octobre restante ; trancher les 182 lignes nigeriannes ; appliquer
+M1 ; deployer le frontend.
+
+**A ne pas faire a la reprise** : ne **jamais** corriger les six lignes du
+23 octobre — ce sont des retours a la normale ; ne pas traiter le fonds 963 avec
+les six autres ; ne pas relancer le test d'appariement, il est refute ; ne pas
+reclamer de tache dans la file gouvernee MCP, elle concerne `Patricked-code/MCP`
+et non ce chantier ; ne pas conclure d'un appariement sans taux de base.
+
 ## POINT DE REPRISE COURANT — 2026-10-30 — Lot DO : le facteur de contamination EST le taux publie, a 0,18 % pres
 
 **Dernier etat stable** : les deux depots propres, HEAD local = HEAD distant.
