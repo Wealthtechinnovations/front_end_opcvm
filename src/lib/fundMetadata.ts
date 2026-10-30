@@ -56,6 +56,31 @@ export type GabaritFiche = {
     chemin: string;
     /** Fin du titre, sans « | Fundafrique » : le layout l'ajoute. */
     suffixeTitre: string;
+    /**
+     * Mettre le `slug` dans l'URL canonique. **Defaut `true`, pour preserver a
+     * l'identique les canoniques des sept fiches deja en production** — les
+     * changer serait une modification de SEO vivant, qui ne se decide pas dans
+     * un lot d'ajout.
+     *
+     * MESURE DU 2026-10-30, qui explique pourquoi ce reglage existe. Les URL a
+     * slug ne fonctionnent PAS partout. Rendu navigateur sur
+     * `afrinvest-dollar-fund-1141` :
+     *
+     *   /funds/<slug>              0 appel `NaN` sur 7, nom du fonds PRESENT
+     *   /funds/summary-eur/<slug>  **4 appels `NaN` sur 5**, nom ABSENT
+     *   /funds/history/<slug>      **5 appels `NaN` sur 7**, nom ABSENT
+     *
+     * Cause : ces vues font `Number(params.fondId)`, qui vaut `NaN` sur un
+     * slug. **Seule la fiche en devise locale tolere le slug.** Les autres
+     * annoncent donc comme canonique une URL qui n'affiche aucune donnee.
+     *
+     * C'est un defaut de production anterieur, consigne au lot DJ de `SUIVI.md`
+     * et a corriger a la racine — en rendant les vues tolerantes au slug, ce
+     * qui est strictement plus permissif et ne peut pas casser les URL
+     * numeriques. En attendant, une page qui s'ajoute ne doit pas se doter
+     * d'une canonique cassee : elle passe `slugDansUrl: false`.
+     */
+    slugDansUrl?: boolean;
     /** Titre affiche quand le fonds est introuvable, sans « Fundafrique ». */
     repli: string;
     description: (f: ChampsFonds) => string;
@@ -82,7 +107,8 @@ export async function metadonneesFiche(fondId: string, g: GabaritFiche) {
             avecIsin: isin ? ` (${isin})` : '',
             parGestion: presents(societe_gestion) ? `, géré par ${presents(societe_gestion)}` : '',
         };
-        const url = `${urlsite}/funds/${g.chemin ? `${g.chemin}/` : ''}${fundSlug}`;
+        const segment = g.slugDansUrl === false ? fondId : fundSlug;
+        const url = `${urlsite}/funds/${g.chemin ? `${g.chemin}/` : ''}${segment}`;
 
         return {
             title: `${presents(f.nom_fond, f.devise, f.isin, f.pays)} - ${g.suffixeTitre}`,
