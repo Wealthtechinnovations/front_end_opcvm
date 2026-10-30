@@ -13,6 +13,67 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 — Lot DH : la regle de date de MONIA est insatisfiable, pas trop stricte
+
+**Dernier etat stable** : les deux depots propres, HEAD local = HEAD distant.
+Lot **de diagnostic seul** : aucun script d'import modifie, aucune ecriture en
+base, aucun deploiement.
+
+### MONIA — ce que la page offre reellement, lu le 30 octobre
+
+| date de reference | date de publication | MONIA |
+|---|---|---|
+| **28/10/2026** | 29/10/2026 | 2,171 % |
+| 27/10/2026 | 28/10/2026 | 2,198 % |
+| **23/10/2026** (vendredi) | **26/10/2026** (lundi) | 2,177 % |
+
+**La reference la plus recente est le 28, lue le 30.** Un collecteur lance avec
+`targetDate = aujourd'hui` ne peut donc **jamais** trouver de ligne : la
+condition `iso === targetDate` n'est pas un seuil trop severe a assouplir, elle
+est **insatisfiable par construction**. La nuance change le correctif — on ne
+detend pas un reglage, on remplace une regle.
+
+**Et « J-1 » ne suffit pas non plus** : vendredi 23/10 est publie le lundi
+26/10, donc un lundi `targetDate = J-1` tombe sur un dimanche et echoue a son
+tour. **Seule « derniere reference ≤ date cible » aboutit** — celle que F3/M2 a
+retenue, et cette mesure en est la justification chiffree.
+
+**Point favorable, contrairement a la BCEAO** : la page porte les **deux** dates
+cote a cote. `publication_date` est donc reellement disponible pour MONIA, et
+l'exigence du mandat y est atteignable sans approximation. La BCEAO, elle, ne
+publie plus la sienne depuis 2018.
+
+### Pourquoi RIEN n'est modifie dans ce lot
+
+`parseMoniaHtml()` ne rend aujourd'hui que la **valeur** : la date de reference
+lue est jetee avant d'atteindre l'appelant, qui insere sous la date demandee.
+Relacher la comparaison sans faire remonter cette date ecrirait une valeur sous
+une date qui n'est pas la sienne — **l'interdit explicite du mandat**. Le
+correctif est structurel : rendre
+`{ valeur, date_de_reference, date_de_publication }` et inserer sous la date de
+reference. Il touche un script d'import en production : diagnostic d'abord.
+
+### BDEMF retestee — toujours 502
+
+Le registre demandait ce retest en rappelant qu'un 502 est un etat, pas une
+propriete. Resultat : **HTTP 502**, 174 octets, zero lien, zero table, zero
+iframe. Deux mesures le meme jour ecartent un incident momentane ; elles
+n'ecartent **pas** une panne de plusieurs jours, et c'est consigne ainsi plutot
+que surinterprete. La CEMAC reste sans source vivante.
+
+**Fichiers** : `api_opcv/docs/REGISTRE_SOURCES_MARCHE.md` uniquement.
+
+**Prochaine action recommandee** : **au proprietaire** — appliquer M1
+(`npx sequelize-cli db:migrate`), seul point bloquant ; puis trancher si le
+correctif MONIA se fait dans `scrape_indices_daily.js` (ecrit dans les tables
+existantes, donc sensible) ou via `benchmark_series` sous
+`BENCHMARKS_V2_ENABLED` (additif, sans risque de regression).
+
+**A ne pas faire a la reprise** : ne **jamais** lever `iso !== targetDate` seul ;
+ne pas viser « J-1 », qui echoue le lundi ; ne pas declarer la CEMAC morte sur
+deux mesures du meme jour ; ne pas supposer que la BCEAO fournit une date de
+publication — elle ne la publie plus.
+
 ## POINT DE REPRISE COURANT — 2026-10-30 — Lot DG : le proxy sans risque UEMOA tranche par la mesure (DEC-AF-009)
 
 **Dernier etat stable** : `api_opcv` et `front_end_opcvm` propres, HEAD local =
