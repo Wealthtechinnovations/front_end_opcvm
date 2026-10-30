@@ -13,6 +13,98 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 00:00 UTC — Lot CX : pool refute, Node du canal corrige, et la route attend un SOCKET
+
+**Dernier etat stable** : production inchangee depuis le lot CU. Diagnostic
+seul. Les deux correctifs de ce lot portent sur l'outillage, pas sur
+l'application.
+
+### 1. Le Node du canal est corrige
+
+`doc-drift.yml` lançait `node "$f"` et heritait du PATH de la session SSH. Les
+chemins standards de S2 portent **v14.16.0** et **v12.22.9** ; la production
+tourne sous Node 22. Le canal choisit desormais un Node ≥ 16 et **imprime
+lequel** — il a retenu **v18.20.8**. Un resultat obtenu sous un autre
+interpreteur que la production doit etre pondere par son lecteur.
+
+### 2. Le pool de connexions est REFUTE — c'etait mon hypothese
+
+| Mesure | Valeur |
+|---|---|
+| connexions `fund_opcvm` | **8** (7 `Sleep`, 1 `Query`) |
+| pool declare | **max 20**, min 5 |
+| **`acquire`** | **30 000 ms** |
+| `max_connections` serveur | 151 |
+
+**Le detail qui tranche** : `acquire: 30000`. Une saturation du pool leverait
+une erreur d'acquisition apres **30 s** — pas un blocage de **120 s**. Le
+symptome ne correspond pas.
+
+*(A surveiller par ailleurs : quatre connexions dorment depuis 42 a 99 minutes.
+Ce n'est pas la cause du 504, mais c'est une retention.)*
+
+### 3. SEPT HYPOTHESES REFUTEES, TOUTES PAR LA MESURE
+
+| Hypothese | Refutee par |
+|---|---|
+| volume de donnees | un fonds a 20 VL pend autant qu'un fonds a 311 |
+| index `uq_valorisations_fund_date` | 4 routes sur `valorisations` en 0,5 a 3,2 s |
+| N+1 sur `tsr` | 2,2 ms l'appel, et garde par `if (year === "1")` |
+| boucle infinie | `currentDate.add(1, 'days')` avance bien |
+| CPU JavaScript | **83,2 % `(idle)`** |
+| requete SQL lente | 0 requete active |
+| **pool epuise** | **8/20, et `acquire` plafonne a 30 s** |
+
+### 4. CE QUE LA SONDE A FINALEMENT REPONDU
+
+`getActiveResourcesInfo()` au moment du blocage :
+
+```
+{"PipeWrap":3,"TCPServerWrap":1,"TCPSocketWrap":3,"Timeout":2}
+```
+
+**Et voici la borne honnete de ce que cela prouve.** Sur ces trois
+`TCPSocketWrap`, **deux sont la requete HTTP de la sonde vers elle-meme** —
+cote client et cote serveur. Le `TCPServerWrap` est son propre serveur
+d'ecoute, les `PipeWrap` sont ses trois flux standards. Il reste donc **un
+socket non explique**, et **deux minuteries**.
+
+`getActiveResourcesInfo()` ne rend que des **types**, pas les adresses des
+pairs. **Cela resserre, cela ne tranche pas.**
+
+**La mesure suivante, et elle est precise** : nommer le pair de chaque socket
+du processus bloque — par `/proc/<pid>/net/tcp` ou `ss -tnp` sur
+`api-monolith` pendant qu'une requete `ratiosnew` pend. Un pair sur le port
+3306 designe une connexion a la base jamais rendue ; un pair externe designe un
+appel sortant sans delai d'expiration. Deux causes, deux corrections.
+
+### 5. QUATRE DEFAUTS DANS MON PROPRE OUTILLAGE, DANS CE SEUL LOT
+
+| Defaut | Consequence |
+|---|---|
+| sonde ecrite dans `/tmp` | modules introuvables |
+| garde-fou absent | **verdict rendu sur un profil vide** |
+| `.replace()` non asserte | substitution echouee **en silence** |
+| logique de verdict | « point chaud » a 0,1 % avec 83 % d'inactivite |
+| accents graves dans un commentaire **a l'interieur** d'un littéral de gabarit | **syntaxe du fichier cassee** — un commentaire place dans un littéral n'est pas un commentaire du fichier, il en fait partie |
+
+Les trois premiers partagent un motif : **j'ecris la conclusion avant d'avoir
+prevu le cas ou la mesure ne dit rien.** Les outils exigent desormais une
+preuve que la mesure a eu lieu, et les substitutions sont assertees.
+
+**Prochaine action recommandee** : nommer les pairs des sockets du processus
+bloque. C'est la seule mesure qui separe encore les deux causes restantes.
+
+**A ne pas faire a la reprise** :
+- ne pas reprendre les sept hypotheses du tableau : toutes refutees ;
+- **ne pas conclure « attente reseau » depuis les trois sockets** : deux sont
+  ceux de la sonde elle-meme ;
+- ne pas elargir `acquire` pour « laisser le temps » : cela allongerait
+  l'attente au lieu de la supprimer ;
+- ne pas toucher aux 1 729 lignes : le temps n'y est pas passe a calculer.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-29 23:30 UTC — Lot CW : `ratiosnew` n'est pas lente, elle ATTEND — cinq hypotheses a moi refutees
 
 **Dernier etat stable** : production inchangee depuis le lot CU. Diagnostic
