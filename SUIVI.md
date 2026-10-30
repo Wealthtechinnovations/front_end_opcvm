@@ -13,6 +13,77 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 — Lot DG : le proxy sans risque UEMOA tranche par la mesure (DEC-AF-009)
+
+**Dernier etat stable** : `api_opcv` et `front_end_opcvm` propres, HEAD local =
+HEAD distant sur les deux. Lecture seule : aucune ecriture en base, aucun
+deploiement, flag `BENCHMARKS_V2_ENABLED` toujours desactive.
+
+**Dernier lot termine** : extraction des **388 documents BCEAO exploitables**
+(3 104 points, 379 semaines) et decision du proxy sans risque UEMOA.
+
+### La couverture par maturite tranche a elle seule
+
+| maturite | semaines cotees | couverture |
+|---|---|---|
+| **1 jour / 1 sem. / 2 sem. / 1 mois** | 379 | **100 %** |
+| 3 mois | 370 | 97,6 % |
+| 6 mois | 264 | 69,7 % |
+| 9 mois | 95 | 25,1 % |
+| **12 mois** | **25** | **6,6 %** |
+
+**Un proxy adosse au 12 mois aurait ete absent 93 % du temps** — et son absence
+serait passee pour un trou de donnees imputable a la source, non pour une erreur
+de conception. Aucun raisonnement a priori ne disait cela ; la mesure l a dit.
+
+**Retenu — `DEC-AF-009`, statut PROPOSEE** : le **taux moyen pondere au jour le
+jour** (100 %, et **meme convention que MONIA au Maroc**, donc comparabilite
+entre zones — la plateforme comparant les fonds en EUR et USD, un 1 mois UEMOA
+face a un MONIA au jour le jour introduirait un ecart de convention dans un
+classement presente comme homogene). Le **1 mois** est retenu separement comme
+benchmark monetaire ; il ne remplace pas le taux sans risque.
+
+**Ce que le choix coute, et c'est consigne** : le 1 jour est **88 points de base
+sous** le 1 mois en mediane (4,42 % contre 5,30 %) et plus volatil. **Un Sharpe
+calcule dessus est structurellement plus eleve.** Le choix n'est pas neutre sur
+les ratios affiches et doit etre documente a l'affichage, pas seulement dans le
+registre.
+
+**Deux reserves de nature** : le taux publie est une **moyenne hebdomadaire
+ponderee par les volumes**, pas un jour-le-jour quotidien — l'`indicator_name`
+doit le dire ; et la serie n'etant pas continue, la regle « derniere valeur
+≤ date cible » peut servir un taux vieux de **49 jours**.
+
+### Les trois defauts du recenseur portes dans l'extracteur
+
+Les deux scripts partageaient les memes defauts. Les corriger dans le seul
+diagnostic aurait laisse le futur collecteur de **production** perdre les memes
+11 documents, **en silence** — le pire des cas. Portes et verifies en
+non-regression, dont la forme de 2017 qui porte encore une date de publication
+(`as_of_date` 2017-11-06, `publication_date` 2017-11-10, distinctes).
+
+**Fichiers** : `api_opcv/scripts/extract/extract_bceao_interbancaire.py`
+(correctifs + options `--liste` / `--tsv` / `--max-docs 0`) ;
+`api_opcv/docs/DECISIONS.md` (DEC-AF-009) ;
+`api_opcv/docs/REGISTRE_SOURCES_MARCHE.md`.
+
+**Tests** : 391 URL traitees, 3 104 lignes produites, 3 echecs — les 3 liens
+morts deja identifies, rapportes comme `HTTP_404_LIEN_MORT` et non comme des
+documents illisibles ; non-regression verifiee sur les cinq formes de date
+reellement rencontrees.
+
+**Prochaine action recommandee** : **au proprietaire** — appliquer M1
+(`npx sequelize-cli db:migrate`) ; M2 ne peut rien ecrire avant, et c'est le
+seul point bloquant. Confirmer ou corriger `DEC-AF-009` (statut PROPOSEE,
+revisable sans cout tant que rien n'est ecrit) et valider les codes
+`UMOA_INTERBANK_WAR_*`, non canoniques.
+
+**A ne pas faire a la reprise** : ne pas retenir le 12 mois comme taux annuel
+sans risque (6,6 %) ni le 9 mois (25 %) ; ne pas confondre le benchmark
+monetaire 1 mois avec le taux sans risque ; ne pas presenter le taux comme un
+jour-le-jour quotidien ; ne pas absorber l'anciennete du taux dans l'affichage ;
+ne pas lever le dry-run avant M1.
+
 ## POINT DE REPRISE COURANT — 2026-10-30 — Lot DF : la serie UEMOA recensee document par document, et elle n'est PAS continue
 
 **Dernier etat stable** : `api_opcv` a `6799ae1`, arbre propre, HEAD local =
