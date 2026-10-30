@@ -13,6 +13,108 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 01:20 UTC — Lot CZ : **RETRACTATION** — `ratiosnew` n'a jamais ete morte, c'etait MA requete
+
+**Dernier etat stable** : correctif deploye et verifie. Les cinq routes a `:year`
+sont protegees.
+
+### JE RETIRE CE QUE LES LOTS CU, CV, CW ET CX AFFIRMENT
+
+J'ai ecrit que `ratiosnew` etait « morte depuis juin » et que « les ratios de
+risque — Sharpe, Sortino, Calmar, VAR, tracking error, volatilite — ne
+s'affichent sur **aucune** fiche fonds ». **C'est FAUX.**
+
+| Appel | Resultat |
+|---|---|
+| `ratiosnew/1/1141` | **200 en 1,09 s** |
+| `ratiosnew/3/1141` | **200 en 1,05 s** |
+| `ratiosnew/5/1141` | **200 en 0,89 s** |
+| `ratiosnew/origine/1141` | **200 en 0,83 s** |
+| `ratiosnew/`**`2026`**`/1141` | 504 en 120 s ← **ma requete** |
+
+**`:year` est un HORIZON** — `'1'`, `'3'`, `'5'`, `'8'`, `'10'`, `'12'`,
+`'origine'` — **et non une annee calendaire.** J'appelais
+`/api/ratiosnew/2026/1141`. Aucune branche ne correspondait. **Le 504 etait
+fabrique par ma propre requete.**
+
+### CE QUE CETTE ERREUR A COUTE
+
+**Huit hypotheses eliminees** pour un symptome dont j'etais l'auteur : volume,
+index `uq_valorisations_fund_date`, N+1 sur `tsr`, boucle infinie, CPU
+JavaScript, requete SQL lente, pool de connexions, attente reseau. Chacune
+refutee par une mesure juste — sur une question qui n'existait pas.
+
+**La faute d'origine est de methode** : j'ai teste une route sans lire la
+signification de son parametre. `/api/ratiosnew/:year/:id` : j'ai lu « year »,
+j'ai ecrit 2026. Le code nommait pourtant ses sept valeurs acceptees.
+
+C'est la meme faute que mes quatre suppositions de schema de cette session —
+`datejour`, `indice`, `tsr`, cle primaire contre cle etrangere : **prendre le
+vocabulaire pour la chose.**
+
+### CE QUI RESTE VRAI, ET QUI EST REEL
+
+**Le defaut qui m'a egare existe, et il etait partout.** Aucune des cinq routes
+a `:year` n'avait de branche finale : une valeur inconnue traversait 1 700
+lignes sans qu'une seule reponse soit emise, et la requete restait ouverte
+jusqu'au delai de la passerelle.
+
+**Un parametre invalide qui PEND est bien pire qu'un parametre invalide qui
+ECHOUE** : l'echec se lit en une seconde, l'attente se lit comme une panne — et
+c'est exactement comme cela que je l'ai lue.
+
+| Route | Avant | Apres |
+|---|---|---|
+| `/api/ratiosnew/:year/:id` | 504 / 120 s | **400 / 0,43 s** |
+| `/api/ratiosnewdev/:year/:id/:devise` | 504 / 120 s | **400 / 0,48 s** |
+| `/api/ratiosnewithdate/:year/:id/:date` | 504 / 120 s | **400 / 0,66 s** |
+| `/api/ratiosnewdevwithdate/…` | 504 / 120 s | **400 / 0,43 s** |
+| `/api/ratiosnewithdate1/…` | 504 / 120 s | protegee |
+
+La reponse 400 porte la liste des horizons acceptes **et** la valeur recue, pour
+que l'erreur se comprenne du premier coup d'oeil.
+
+**Non-regression verifiee apres deploiement** : les sept horizons valides de
+`ratiosnew` rendent 200 en 0,80 a 1,09 s ; `ratiosnewdev/3`, `ratiosnewithdate/3`
+et `ratiosnew/origine` rendent 200 ; temoins `valLiq`,
+`classementquartilemysql` et `performancesdev` inchanges.
+
+**Deux precautions de conception, delibérees** :
+- la garde est **en entree** de chaque gestionnaire. Ma premiere version posait
+  un fall-through `if (!res.headersSent)` en fin de route : les branches
+  repondant depuis des callbacks, une reponse **en vol** aurait laisse
+  `headersSent` a faux, et la garde serait partie **par-dessus** une reponse en
+  cours. Retiree avant la poussee ;
+- chaque insertion est **assertee** — motif exigé exactement une fois, echec
+  sinon. Lecon du `.replace()` muet de cette session.
+
+### CE QUI RESTE VRAI DES LOTS CV-CX, ET QU'IL NE FAUT PAS JETER
+
+Ces lots contiennent des mesures justes, independantes de `ratiosnew` :
+
+| Constat | Etat |
+|---|---|
+| **taux sans risque perimes** — Maroc **874 j**, 4 autres pays **181 j** | **REEL**, a traiter |
+| `taux_sans_risques` vide (le modele `tsr`) | **REEL** |
+| canal de diagnostic sur Node **v14** quand la production est en 22 | **CORRIGE** |
+| les deux workflows de deploiement casses (heredoc, code 127) | **CORRIGE** |
+| regle `PRODUCTION_STATE.json` pointant un fichier fige 89 j | **CORRIGE** |
+| 4 connexions MySQL dormant 42 a 99 min | a surveiller |
+
+**Prochaine action recommandee** : les taux sans risque perimes — c'est le seul
+constat de cette serie qui touche une valeur financiere affichee, et il demande
+vos sources de marche.
+
+**A ne pas faire a la reprise** :
+- **ne pas reprendre « `ratiosnew` est morte »** : elle repond en moins d'une
+  seconde ;
+- **ne pas reprendre les huit hypotheses des lots CU-CX** : elles portaient sur
+  un symptome inexistant ;
+- ne pas appeler une route sans lire la signification de ses parametres ;
+- ne pas deplacer la garde en fin de route : elle ecraserait une reponse en vol.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-30 00:50 UTC — Lot CY : la regle du snapshot production designait un fichier mort depuis 89 jours
 
 **Dernier etat stable** : correction documentaire livree dans les **deux**
