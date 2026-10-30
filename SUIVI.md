@@ -13,6 +13,76 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 — Lot DI : 402 classeurs UMOA-Titres ouverts, et deux conventions opposees dans la MEME zone
+
+**Dernier etat stable** : les deux depots propres, HEAD local = HEAD distant.
+Lecture seule : aucune ecriture en base, aucun deploiement.
+
+**Dernier lot termine** : structure des courbes de taux UMOA-Titres.
+**402 classeurs ouverts sur 402, zero echec.** Le registre affirmait « un seul
+parseur suffit » sur la base de **neuf** fichiers — 2 % de la population.
+
+### Le resultat le plus lourd : des FRACTIONS, a l'oppose de la BCEAO
+
+Sur **80 410 valeurs, 100 % sont inferieures a 1** : `0,0597` vaut **5,97 %**.
+Les PDF hebdomadaires de la BCEAO, **dans la meme zone**, publient `4,21` pour
+4,21 %. Le registre ne notait cette divergence qu'entre **BCEAO et BEAC** ; elle
+existe aussi **entre deux sources de l'UEMOA**.
+
+Un collecteur commun se tromperait d'un **facteur 100** — et une telle erreur
+sur un taux sans risque **ne se verrait pas forcement dans un Sharpe**, qui
+resterait un nombre d'apparence normale. C'est ce qui rend ce piege dangereux.
+
+### Quatre orthographes pour la Cote d'Ivoire
+
+| feuille | classeurs |
+|---|---|
+| `Cote d'ivoire` | **220** |
+| `Côte d'Ivoire` | **170** |
+| `Cote d'Ivoire` | **11** |
+| `Côte d'ivoire` | **1** |
+
+Total 402. Six pays sont presents partout ; la Guinee-Bissau a aussi deux formes
+(trait d'union 401, **espace** 1). **Un parseur cale sur un nom exact perdrait
+silencieusement la premiere economie de l'UEMOA** sur 182 a 401 classeurs — et
+la perte n'aurait pas l'air d'un bogue, seulement d'un pays absent. Selection a
+faire sur un nom **normalise**.
+
+Deux autres points non documentes : une **seconde forme d'en-tete**
+(`Maturité | ZC | NSS`, 16 feuilles) et le tableau situe en **colonne 11**, pas
+en colonne A.
+
+**Maturites reellement cotees** : noyau ferme **3 mois a 7 ans** ; le **1 mois
+n'existe que dans 43 %** des feuilles ; au-dela de 15 ans, **3 occurrences**.
+« 1 mois a 17 ans » decrivait l'enveloppe des maturites vues, pas une couverture.
+
+### Deux defauts de mon propre script, corriges
+
+1. **Lecture en colonne 0** — le tableau etant en colonne 11, j'ai obtenu
+   « 0 maturite » sur les 402 classeurs. Resultat manifestement faux, mais qui
+   aurait pu passer pour une propriete de la source si le registre n'avait pas
+   deja vu des maturites.
+2. **Fausse alerte de zeros fabriques** — ma sortie annoncait `min 0.000000`,
+   que j'ai lu comme des absences ecrites en zero. Verification sur 9 944
+   points : **aucune valeur nulle**, le vrai minimum etant 0,34 %. Le zero
+   venait de mon format `.6f`. Corrige en `.8g`.
+
+**Fichiers** : `api_opcv/scripts/diag/structure_umoatitres_courbes.py` (cree) ;
+`api_opcv/docs/REGISTRE_SOURCES_MARCHE.md`.
+
+**Note d'outillage** : le script depend d'`openpyxl`, non garantie sur S2. Il
+reste donc dans `scripts/diag/` et **ne doit pas aller dans
+`scripts/diag/ondemand/`**, ou il echouerait a l'import et casserait le tunnel
+partage des diagnostics.
+
+**Prochaine action recommandee** : **au proprietaire** — appliquer M1, seul
+point bloquant de M2.
+
+**A ne pas faire a la reprise** : ne **jamais** ecrire un collecteur UEMOA
+commun aux deux sources sans conversion explicite — facteur 100 ; ne pas
+selectionner les feuilles par nom exact ; ne pas annoncer une couverture
+« 1 mois a 17 ans » ; ne pas deplacer ce script dans `ondemand/`.
+
 ## POINT DE REPRISE COURANT — 2026-10-30 — Lot DH : la regle de date de MONIA est insatisfiable, pas trop stricte
 
 **Dernier etat stable** : les deux depots propres, HEAD local = HEAD distant.
