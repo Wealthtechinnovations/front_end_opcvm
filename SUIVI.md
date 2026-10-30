@@ -13,6 +13,112 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 00:50 UTC — Lot CY : la regle du snapshot production designait un fichier mort depuis 89 jours
+
+**Dernier etat stable** : correction documentaire livree dans les **deux**
+depots, et voie de lecture du snapshot vivant ouverte. Aucune ecriture en base,
+aucun changement de conception.
+
+### LE DEFAUT
+
+Les deux `CLAUDE.md` ordonnaient a chaque session de lire
+`PRODUCTION_STATE.json` **du depot** et de le tenir pour « la source de verite
+sur l'etat de production », generee par un cron horaire — **en premier, avant
+toute action**.
+
+Mesure : cette copie porte `generated_at: 2026-08-02T14:00:01.894Z`, soit
+**89 jours**. Une session obeissant a la regle prenait des donnees d'aout pour
+l'etat du jour.
+
+### MON PREMIER DIAGNOSTIC ETAIT FAUX, ET LE CODE L'A RETOURNE
+
+J'ai d'abord conclu a un **cron casse**. C'est l'inverse : la production n'est
+pas en panne, elle a **change de conception** le 2026-09-10.
+`scripts/deploy/sync_production.sh` declare qu'il « n'effectue AUCUN git add,
+commit, push » et ecrit le snapshot **hors du working tree**, dans
+`/var/lib/fundafrica/runtime/`.
+
+C'est le remede de **GOV-006** — l'incident ou les commits automatiques de S2
+provenaient precisement de ce snapshot horaire, 854 snapshots classes.
+**Restaurer le commit aurait recree l'incident resolu.**
+
+Cas d'ecole de la regle du projet : « corriger la production **OU** corriger le
+document ». Ici la production est juste, le document est faux. **Seul le
+document a change.**
+
+### LE SNAPSHOT VIVANT EST FRAIS — ET IL CONFIRME DEUX CONSTATS
+
+`diag_runtime_state_vivant.js`, execute sur S2 :
+`generated_at: 2026-10-30T00:00:01.729Z` — **0,7 h**. Le cron horaire tourne.
+
+| pays | fonds | VL | derniere VL |
+|---|---|---|---|
+| MAROC | 649 | 572 088 | 2026-10-28 |
+| TUNISIE | 131 | 313 353 | 2026-10-29 |
+| UEMOA | 111 | 43 720 | 2026-10-28 |
+| **NIGERIA** | 335 | 77 905 | **2026-10-09** |
+| **CEMAC** | 34 | 2 134 | **2024-12-12** |
+
+Source **independante** confirmant le blocage nigerian au 9 octobre (lots CJ-CL)
+et CEMAC a 685 jours (lot CJ).
+
+### CE QUI A CHANGE
+
+**`api_opcv/CLAUDE.md`** et **`front_end_opcvm/CLAUDE.md`** — regle corrigee dans
+les deux. Une regle dupliquee doit etre corrigee partout, sinon la version fausse
+continue d'etre lue par la moitie des reprises. Ordre de lecture reel :
+1. `docs/ETAT_PRODUCTION_VERIFIE.md` (source de verite n°1, quotidienne) ;
+2. `docs/DIAG_ONDEMAND.md` ;
+3. l'API en direct.
+
+La copie du depot est nommee pour ce qu'elle est : **fallback documentaire
+HISTORIQUE**, a ne jamais citer comme l'etat courant, sa date interne a lire
+avant toute citation. **Non supprimee** — elle garde une valeur d'archive.
+
+La ligne du crontab dans `CLAUDE.md` devient « Snapshot horaire **HORS GIT**
+(`/var/lib/fundafrica/runtime/`) ».
+
+**`scripts/diag/ondemand/diag_runtime_state_vivant.js`** (nouveau) — comble le
+trou que la correction laissait : la regle corrigee pointait vers un fichier
+qu'**aucune session ne pouvait voir**, puisqu'il vit sur S2 hors de Git. Il le
+lit par le canal et en ramene la substance. **Lire n'est pas commiter** : le
+snapshot reste hors du depot, et les commits du canal sont faits par le workflow
+GitHub, pas par S2 — GOV-006 n'est pas recree.
+
+Il imprime l'**age avant le contenu**, deliberement : un snapshot de six heures
+et un de trois mois se lisent pareil et ne valent pas pareil. C'est exactement
+ce qui a laisse la copie du depot mentir 89 jours. Il compare aussi la date
+declaree a la date d'ecriture — un ecart signale une ecriture interrompue — et
+refuse de conclure si le fichier est absent ou illisible.
+
+### TROISIEME REGLE DE CETTE SESSION POINTANT VERS QUELQUE CHOSE DE MORT
+
+| Regle | Realite |
+|---|---|
+| « le blocage de D2/D3/D5 est l'acces MCP/DB » | le pont repond, le canal lit la base |
+| les deux workflows de deploiement | heredoc casse, code 127 — `D5` immobilisee depuis juillet |
+| « `PRODUCTION_STATE.json` est la source de verite » | fige depuis 89 jours, par conception |
+
+**Motif constant** : une conception evolue, le document qui la decrit ne suit
+pas, et chaque reprise repart du document.
+
+### Hygiene relevee au passage
+
+`pm2_status` porte : « In-memory PM2 is out-of-date, do: `pm2 update` »
+(memoire 6.0.14, local 6.0.13). Non traite — ce n'est pas un defaut de donnee.
+
+**Prochaine action recommandee** : nommer les pairs des sockets du processus
+bloque sur `ratiosnew` (lot CX), seule mesure separant encore les deux causes
+restantes.
+
+**A ne pas faire a la reprise** :
+- **ne jamais restaurer le commit de `PRODUCTION_STATE.json` depuis S2** : ce
+  serait recreer GOV-006 ;
+- ne pas citer la copie du depot comme l'etat courant ;
+- ne pas supprimer cette copie : valeur d'archive.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-30 00:00 UTC — Lot CX : pool refute, Node du canal corrige, et la route attend un SOCKET
 
 **Dernier etat stable** : production inchangee depuis le lot CU. Diagnostic
