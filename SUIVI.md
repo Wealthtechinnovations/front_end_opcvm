@@ -13,6 +13,92 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 — Lot DO : le facteur de contamination EST le taux publie, a 0,18 % pres
+
+**Dernier etat stable** : les deux depots propres, HEAD local = HEAD distant.
+Lot **de diagnostic seul** : aucune ecriture en base, aucun deploiement, aucune
+correction de donnee engagee.
+
+### La validation decisive — et elle n'est pas uniforme
+
+| date | taux **publie** (`devisedechanges`) | taux **implicite** (deduit des series) | ecart |
+|---|---|---|---|
+| **2026-07-10** | **1 376,22** | 1 378,7 | **0,18 %** |
+| 2026-07-24 | 1 362,76 | 1 378,7 | 1,2 % |
+| 2026-10-09 | 1 328,39 | — | — |
+| 2022-03-25 | 415,25 | 425,6 | 2,5 % |
+| **2023-12-15** | **790,50** | **997,0** | **26 %** |
+
+Sur la date la mieux echantillonnee, l'accord est a **0,18 %** : le facteur de
+contamination des VL nigeriannes **est** le taux USD/NGN publie. La paire existe
+en base — **5 982 points, du 2003-12-01 au 2026-10-29** — donc la correction peut
+s'appuyer sur un taux **publie** et non sur une constante deduite, ce que le
+mandat exige.
+
+**Mais decembre 2023 s'ecarte de 26 %**, et il faut le dire : mon implicite n'y
+reposait que sur **deux** frontieres, contre douze fonds en mai 2026. **La
+correction doit donc se faire date par date avec le taux publie, jamais avec un
+facteur unique**, et chaque ligne doit etre verifiee individuellement.
+
+### La table de taux porte elle-meme des valeurs fausses
+
+`USD/NGN` compte **11 valeurs sous 100** et **une a 1,00 ou moins**. Le naira n'a
+jamais valu moins de 100 par dollar sur 2003-2026. **Un taux a 1,00 rend toute
+conversion silencieusement neutre** — c'est exactement le genre de valeur qui
+cree le defaut qu'on cherche a corriger. A instruire avant de se servir de cette
+table.
+
+### Les zeros, mesures sans plafond
+
+**585 lignes sur 162 fonds** : **584 au Nigeria sur 161 fonds**, 1 en UEMOA. Mon
+plafond de 25 en montrait 25 — la realite est **23 fois plus grande**. Seules
+**21** sont dans les 400 derniers jours : le defaut est largement **historique**,
+ce qui change sa priorite sans l'effacer, ces 585 valeurs nulles etant servies
+aux graphiques.
+
+### Le 26 octobre marocain : sept fonds, et DEUX limites de controle
+
+| fonds | avant → apres | sens |
+|---|---|---|
+| 1113 AL BARID | 148,93 → 3 080,32 | **monte** (x20,7) |
+| 953 CDG SOLIDARITE | 177,08 → 2 328,10 | **monte** (x13,1) |
+| 1092 ATLANTA | 2 327,26 → 752,37 | descend |
+| 967 CDG IZDIHAR | 3 818,34 → 1 098,56 | descend |
+| 975 CDG BARID | 3 631,61 → 1 212,80 | descend |
+| 949 CDG-SECUR | 4 314,85 → 1 121,63 | descend |
+| 963 CDG OBLIG PLUS | 207 575,22 → 1 149,93 | descend |
+
+**C3 est unilateral** : il ne teste que « au-dela de 500 % », signale les **deux**
+fonds qui montent et manque les **cinq** qui descendent. Ce n'est pas un seuil a
+ajuster, c'est **un signe qui manque** — cinq fonds faux sont invisibles a la
+boucle de controle.
+
+**Et un cas inverse** : la valeur **precedente** du fonds 963 etait
+**207 575,22**, implausible pour une VL en MAD quand les fonds CDG tournent entre
+1 000 et 4 300. Pour celui-la, c'est le 26 octobre qui **corrige**. Traiter les
+sept lignes uniformement l'abimerait.
+
+**Hypothese en test, non affirmee** : la valeur d'arrivee de 953 (2 328,10) est
+la valeur de **depart** de 1092 (2 327,26), a **0,04 %** pres — ce qui suggere des
+VL **reaffectees entre fonds**, une erreur d'**identite** et non d'echelle. Si
+elle se confirme, aucune correction par facteur ne convient : il faudra
+**re-apparier**. Section 5bis, mesure en cours.
+
+**Fichiers** : `api_opcv/scripts/diag/ondemand/diag_echelle_devise_nigeria.js`.
+
+**Prochaine action recommandee** : lire la section 5bis au prochain passage ; puis
+**au proprietaire** — trancher l'arbitrage des 182 lignes nigeriannes (le sens
+differe selon la devise declaree, et le taux doit etre pris date par date), et
+decider du traitement des 7 lignes marocaines. Puis M1 et le deploiement
+frontend.
+
+**A ne pas faire a la reprise** : ne **jamais** corriger avec un facteur unique —
+decembre 2023 s'ecarte de 26 % ; ne pas se servir de `devisedechanges` sans
+ecarter ses 11 valeurs sous 100 et celle a 1,00 ; ne pas traiter les 7 lignes
+marocaines uniformement — pour le fonds 963 c'est la valeur **anterieure** qui
+est fausse ; ne pas lire la liste de C3 comme complete, elle est unilaterale ;
+ne pas lire celle de C7 comme exhaustive, elle est plafonnee a 15.
+
 ## POINT DE REPRISE COURANT — 2026-10-30 — Lot DN : la base renverse mon analyse — 10 des 14 fonds sont declares en USD
 
 **Dernier etat stable** : les deux depots propres, HEAD local = HEAD distant.
