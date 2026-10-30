@@ -13,6 +13,73 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 — Lot DF : la serie UEMOA recensee document par document, et elle n'est PAS continue
+
+**Dernier etat stable** : `api_opcv` a `6799ae1`, arbre propre, HEAD local =
+HEAD distant. Lecture seule de bout en bout : aucune ecriture en base, aucun
+deploiement.
+
+**Dernier lot termine** : recensement de la serie hebdomadaire BCEAO. Les
+**391 documents ouverts un par un**, date de reference lue dans le contenu.
+
+### Ce qu'il faut retenir, et cela corrige le registre
+
+| Grandeur | Affirme avant | **Mesure** |
+|---|---|---|
+| documents | ≈ 531 | **391** (extrapolation surestimant de 26 %) |
+| semaines distinctes | — | **379** sur ~465 attendues → **18 % manquantes** |
+| couverture | 2017-10 → 2026-10 | **2017-11-06 → 2026-10-19**, mais 2017 ne compte **qu'une semaine** |
+| debut reellement continu | — | **2018-02-19** (trou de 105 jours avant) |
+| trous > 14 jours | — | **15**, le plus long **49 jours (7 semaines)** |
+| liens morts | — | **3 en HTTP 404** |
+| doublons de semaine | — | **9** |
+
+**Consequence financiere, structurelle** : la regle « derniere valeur a une date
+≤ date cible » reste la bonne — ces trous en sont la justification chiffree. Mais
+ils en fixent le **budget de peremption** : un taux sans risque UEMOA peut etre
+vieux de **49 jours** et rester le dernier publie. Un Sharpe ou un Sortino
+calcule dessus herite de cette anciennete, qui doit etre **portee jusqu'a
+l'affichage** (`as_of_date`, `OK_PREVIOUS_AVAILABLE_DATE`) et non absorbee en
+silence. Un taux de sept semaines presente comme celui du jour serait une donnee
+faussement datee.
+
+### Trois defauts de mon propre recenseur, trouves en l'executant
+
+1. **« fevriérr », « juillet2019 », « au12 janvier »** — une faute de l'emetteur
+   et deux espaces manquants. La correspondance exacte rejetait **11 documents**,
+   dont quatre semaines consecutives de fevrier 2025 : la forme exacte d'un faux
+   trou d'un mois, **cree par ma lecture et non par la source**. Tolerance
+   ajoutee, bornee, verifiee sur les huit formes reellement rencontrees.
+2. **Le code HTTP n'etait pas verifie** — je rendais `returncode == 0` de `curl`,
+   qui vaut VRAI sur un 404. Trois `.pdf` rendent 404 avec une page HTML et
+   etaient classes `PDF_ILLISIBLE` : un diagnostic qui envoie chercher un
+   probleme d'OCR inexistant. Ces 404 confirment au passage qu'**aucun OCR n'est
+   necessaire** — le seul cas illisible sur 391 n'etait pas un PDF.
+3. **La distribution par nom de fichier ne vaut rien** — 330 des 391 noms (84 %)
+   ne portent aucune annee. Les noms affichaient « 2020, 2021, 2023 absentes » ;
+   ces annees comptent en realite 42, 48 et 40 semaines. Le script refuse de
+   conclure dans ce cas au lieu de publier ce faux resultat.
+
+**Fichiers** : `api_opcv/scripts/diag/recensement_bceao_interbancaire.py` (cree,
+recensement + dates par contenu reprenables + bilan de continuite) ;
+`api_opcv/docs/REGISTRE_SOURCES_MARCHE.md` (391 au lieu de 531, pieges 6 et 7,
+section de continuite).
+
+**Tests** : 27 pages parcourues ; 391 documents telecharges et ouverts ;
+3 reprises ciblees apres correctifs, chacune verifiee contre les chaines qui
+echouaient reellement ; etat final **388 SERIE / 3 HTTP 404**.
+
+**Prochaine action recommandee** : **au proprietaire** — appliquer M1
+(`npx sequelize-cli db:migrate`) ; M2 ne peut pas ecrire avant. Cote session,
+sans dependre de M1 : decider le proxy sans risque UEMOA (1 jour ou autre
+maturite) et valider les codes `UMOA_INTERBANK_WAR_*`, non canoniques.
+
+**A ne pas faire a la reprise** : ne pas citer « ≈531 documents » ni
+« profondeur depuis 2017-10 » — les deux sont corriges ; ne pas conclure que les
+86 semaines absentes n'ont jamais ete publiees, la mesure ne le dit pas ; ne pas
+absorber l'anciennete du taux dans l'affichage ; ne pas lever le dry-run de
+l'extracteur avant M1.
+
 ## POINT DE REPRISE COURANT — 2026-10-30 — Lot DE : extracteur UEMOA livre en dry-run, et la date de publication a disparu de la source
 
 **Dernier etat stable** : `api_opcv` a `269276e`, arbre propre, HEAD local =
