@@ -13,6 +13,106 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 02:10 UTC — Lot DB : MANDAT DU 2026-10-30 — reconciliation faite, livrable 1 livre, deux blocages renvoyes
+
+**Dernier etat stable** : livrable 1 du mandat livre et pousse. Aucune ecriture
+en base, aucun developpement engage avant la reconciliation — conformement a
+l'instruction finale du mandat.
+
+### MANDAT RECU — quatre decisions
+
+| # | Objet | Decision |
+|---|---|---|
+| 1 | sources UEMOA / CEMAC | **VALIDEE** — collecte, historique, normalisation, series |
+| 2 | **F4 / M2 pilote Maroc** | autorisation fonctionnelle accordee |
+| 3 | frontend | perimetre valide — depot cible `chainsolutions-wealthtech/front` |
+| 4 | methode commune | reutiliser `Patricked-code/africafunds-market-data-pipeline` |
+
+Instruction finale : « poursuivre en **reconciliant d'abord l'etat reel des
+depots** », « ne creez pas de referentiel concurrent », « ne declarez pas
+acheve ce qui n'a pas ete verifie ».
+
+### LA RECONCILIATION D'ABORD — et elle a trouve deux blocages
+
+**1. Le depot cible du frontend est VIDE.**
+`chainsolutions-wealthtech/front` attache et clone : **1 seul fichier**, un
+README, **1 commit du 2026-07-08**. Son propre texte : « Statut au 2026-07-08 :
+depot cible **prepare pour recevoir** la migration frontend OPCVM », et une
+regle de migration en six etapes dont la premiere est « verifier l'etat du
+projet source ».
+
+**La migration n'a jamais eu lieu.** La production tourne depuis
+`Wealthtechinnovations/front_end_opcvm` — 218 pages, 116 914 lignes, deploye et
+verifie cette nuit (lots CP, CT).
+
+**Consequence** : integrer dans le depot vide equivaudrait a abandonner le code
+vivant. Le mandat interdit precisement de « remplacer les composants
+existants ». Le travail frontend continue donc dans `front_end_opcvm`, et la
+migration est une **decision distincte** — un transfert de depot avec
+preservation d'historique, pas un chantier fonctionnel.
+
+**2. Le depot pipeline est INACCESSIBLE.**
+`Patricked-code/africafunds-market-data-pipeline` → **« you don't have
+access »**. Or la decision 4 en fait le prealable obligatoire : « examiner les
+composants avant tout nouveau developpement ». Sans acces, la reconciliation
+ordonnee est impossible — et developper sans elle creerait exactement le
+referentiel concurrent que le mandat interdit.
+
+### LIVRABLE 1 LIVRE — registre des sources, mesure
+
+`scripts/diag/registre_sources_marche.py` (rejouable) +
+`docs/REGISTRE_SOURCES_MARCHE.md` (la mesure du jour).
+
+**23 sources sur 25 repondent 200.** Quatre constats changent l'approche :
+
+| Constat | Mesure | Consequence |
+|---|---|---|
+| **UMOA-Titres « Courbe des taux »** | **702 liens CSV/XLS** | l'obligataire UEMOA **n'exige pas** l'extraction de PDF que le mandat prevoyait en secours |
+| **BRVM `bfin`** | 33 tableaux, **2000-2026** | historique profond — **et deja utilise** par `scrape_indices_daily.js` pour le BRVM Composite : ne pas reconstruire |
+| **BEAC** | 11 + 10 liens CSV, mais page d'acces BDEMF a **1 349 octets** | CSV exploitables ; l'acces a la base reste **a instruire** |
+| **Casablanca Bourse** | **000** sur les 2 URL | seul blocage, et **deja contourne** : le MASI est collecte via FT markets |
+
+**Statut de collecte releve dans le code, non suppose** : MASI, Tunindex, NSE
+All Share et BRVM Composite sont tous a **J-1**. **MONIA est le seul en panne**
+(2026-05-14), cause etablie au lot DA.
+
+**Ce que le registre ne prouve pas, et il le dit** : un 200 prouve
+l'accessibilite, pas la presence des donnees ; le comptage de tableaux et de
+liens mesure la **structure offerte**, pas la profondeur extractible ; la plage
+d'annees vient des dates visibles dans le HTML. La profondeur par serie releve
+du livrable 2.
+
+**A rejouer depuis S2** : `BENCHMARKS_F3_MAPPING_SCHEMA.md` note deja une source
+« injoignable datacenter ».
+
+**Fichiers crees** (depot `api_opcv`) :
+`scripts/diag/registre_sources_marche.py`, `docs/REGISTRE_SOURCES_MARCHE.md`
+
+**Commandes executees** : `add_repo` + `git clone` de
+`chainsolutions-wealthtech/front` ; `add_repo` refuse sur le pipeline ; 25
+requetes HTTP sur les portails institutionnels ; `ast.parse` ; commit, push.
+
+**Prochaine action recommandee**, et elle ne demande rien :
+1. rejouer le registre **depuis S2** par le canal a la demande ;
+2. instruire la **profondeur d'historique** d'UMOA-Titres et de `bfin` — les
+   deux sources les plus prometteuses du registre ;
+3. instruire les conditions d'acces reelles a la **BDEMF**.
+
+**Ce qui attend le proprietaire** :
+- **acces au depot pipeline** — prealable de la decision 4 ;
+- **confirmer si la migration frontend doit etre engagee**, sachant que le
+  depot cible est vide et la production ailleurs.
+
+**A ne pas faire a la reprise** :
+- **ne pas developper dans `chainsolutions-wealthtech/front`** : il est vide, et
+  la production vit ailleurs ;
+- **ne pas reconstruire un collecteur BRVM ou MASI** : ils existent et sont a J-1 ;
+- ne pas annoncer la BDEMF exploitable : sa page d'acces rend 1 349 octets ;
+- ne pas conclure qu'une source est morte parce qu'elle echoue depuis une
+  session : rejouer depuis S2 avant de trancher.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-30 01:40 UTC — Lot DA : la chaine complete du taux sans risque marocain, et pourquoi le correctif evident fabriquerait une donnee
 
 **Dernier etat stable** : production inchangee depuis le lot CZ. **Diagnostic
