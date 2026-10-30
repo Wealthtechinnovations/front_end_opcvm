@@ -13,6 +13,102 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 — Lot DL : pages outils documentees, et le sitemap de production est FIGE
+
+**Dernier etat stable** : `front_end_opcvm` build `✓ Compiled successfully`,
+arbre propre, HEAD local = HEAD distant. `api_opcv` inchange. **NON DEPLOYE**.
+
+### Le resultat qui depasse le lot : le sitemap de production est fige
+
+En mesurant la composition du sitemap pour situer les pages outils, un ecart est
+apparu. **Structure identique entre production et instance locale ; seuls les
+volumes diffèrent** :
+
+| famille d'URL | production | instance locale (meme code, meme API) |
+|---|---|---|
+| `/funds/<slug>` | **854** | **1 260** |
+| `/fund-managers/**` | **85** | **157** |
+| `/countries/**` | 31 | 31 |
+| `/tools`, `/news`, `/home`, `/contact` | 5 | 5 |
+| **total** | **976** | **1 454** |
+
+**406 fonds sur 1 260 (32 %) ne sont pas soumis a l'indexation**, ni 72 societes
+de gestion sur 157.
+
+**Ce que la mesure etablit** : `/api/searchFunds` rend bien **1 260 fonds, tous
+avec un slug, zero doublon** ; le code genere bien les 1 260 — verifie en
+lançant l'instance construite contre **l'API de production** ; les en-tetes de
+production donnent `cache-control: max-age=0, must-revalidate` et le module
+porte `force-dynamic`, donc **aucun cache HTTP** n'est en cause ; les
+identifiants absents (min 1141, mediane 2735) chevauchent les presents (min 569,
+mediane 1011), donc **pas de seuil d'identifiant**.
+
+**Hypothese dominante, et son fondement** : les donnees sont figees **a la
+construction** d'un deploiement ancien. Deux familles figees a **deux ratios
+differents** (67,8 % et 54,1 %) excluent une troncature uniforme et s'expliquent
+bien par deux volumes captures au meme instant passe. Cela concorde avec un fait
+deja etabli : **les workflows de deploiement gouvernes n'avaient jamais pu
+aboutir** avant leur reparation — le build en service peut donc avoir des mois.
+
+**Ce n'est pas prouve** : je ne peux pas lire le bundle deploye depuis cette
+session. Mais la consequence pratique est nette — **deployer le frontend
+restaure a lui seul 406 URL de fonds et 72 de societes au sitemap**, en plus des
+corrections des lots DJ, DK et DL.
+
+### Observation distincte, pour un lot a venir
+
+**Une seule page par fonds est soumise** : `/funds/<slug>`. Les fiches EUR, USD,
+performances, historique, portefeuille et documents ne sont **pas au sitemap du
+tout**. Maintenant qu'elles portent des metadonnees (lot DJ) et tolerent le slug
+(lot DK), leur soumission devient defendable — mais c'est une decision SEO a
+part entiere : multiplier le sitemap par sept demande de juger si ces pages ont
+une valeur de recherche propre.
+
+### Le lot proprement dit
+
+**Deux pages outils etaient soumises au sitemap sans rien qui les decrive** :
+`/tools/comparison` et `/tools/search` figurent dans les 976 URL tout en rendant
+le titre generique. Meme cause que la page Performances — elles etaient
+elles-memes `"use client"`. Composants deplaces par `git mv` (renommages, donc
+identiques a l'octet, aucun import relatif), obus serveur minces porteurs des
+metadonnees.
+
+`/tools/comparison/comparison-view` passe en **`noindex, follow`** : son contenu
+depend de la selection faite a l'etape precedente, et sans selection elle
+n'affiche aucune comparaison. L'indexer ferait capter des requetes par une page
+vide, au detriment du comparateur.
+
+**22 etapes de questionnaire exclues de l'exploration** via `robots.ts`.
+`/questionnaire` et `/questionnaire/profile` restent explorables — l'entree est
+une page d'atterrissage legitime. Un `Disallow` plutot que 22 balises `noindex` :
+ces pages sont toutes `"use client"`, et y poser une metadonnee exigerait de
+scinder 22 fichiers pour un resultat identique cote exploration.
+
+**Verifie sur instance construite** : trois titres avec **un seul** suffixe
+« | Fundafrique », `rel="canonical"` correcte, `<meta name="robots"
+content="noindex, follow">` sur la vue de resultat, `Disallow:
+/questionnaire/questionnaire` present dans `robots.txt`.
+
+**Fichiers** : `src/app/tools/{comparison,search,comparison/comparison-view}/`
+(3 `git mv` + 3 obus), `src/app/robots.ts`.
+
+### Correction d'un de mes chiffres, de nouveau
+
+J'annonçais 26 pages publiques sans metadonnees. La racine `src/app/page.tsx`
+est une **simple redirection** vers `/home` : elle ne rend jamais, une
+metadonnee y est sans objet. Elle n'aurait pas du etre comptee.
+
+**Prochaine action recommandee** : **au proprietaire** — appliquer M1 (bloque
+M2) ; **deployer le frontend**, qui porte desormais quatre corrections verifiees
+et restaurerait 478 URL au sitemap. Puis trancher la soumission des sept autres
+pages fonds.
+
+**A ne pas faire a la reprise** : ne pas chercher un cache HTTP pour expliquer
+le sitemap — il n'y en a pas, c'est mesure ; ne pas conclure a un seuil
+d'identifiant, les plages se chevauchent ; ne pas affirmer que le code du
+sitemap est fautif, il genere bien les 1 260 ; ne pas soumettre les sept pages
+fonds par fonds sans decision explicite.
+
 ## POINT DE REPRISE COURANT — 2026-10-30 — Lot DK : les sept fiches fonds tolerent le slug, plus aucun appel NaN
 
 **Dernier etat stable** : `front_end_opcvm` build `✓ Compiled successfully`,
