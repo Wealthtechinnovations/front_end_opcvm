@@ -13,6 +13,104 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 06:00 UTC — Lot DD : D1 qualifiee sur les trois zones — et les trois sont tres inegales
+
+**Dernier etat stable** : qualification des sources terminee pour les trois
+zones, consignee dans `api_opcv/docs/REGISTRE_SOURCES_MARCHE.md`. Aucune
+ecriture en base, aucun deploiement, aucun developpement d'extracteur engage.
+
+### SYNTHESE — la seule chose a retenir pour decider
+
+| Zone | Source du taux sans risque | Profondeur **mesuree** | Etat |
+|---|---|---|---|
+| **UEMOA** | BCEAO, PDF hebdomadaires « Operations par maturite » | **2017-10 → 2026-10**, 9 ans, ≈531 docs | **EXPLOITABLE** |
+| **UEMOA** (obligataire) | UMOA-Titres, courbes `.xlsx` | **fin 2018 → 2026**, 8 ans, 402 fichiers | **EXPLOITABLE** |
+| **MAROC** | BKAM / MONIA | source **vivante** (page a J-1) | collecteur **en panne** (lot DA) |
+| **CEMAC** | BEAC | **la plus recente s'arrete 2020-09** | **AUCUN canal ne fonctionne** |
+
+**Conclusion pour l'investissement d'effort** : l'UEMOA est prete, le Maroc
+demande une reparation deja diagnostiquee, la **CEMAC n'a aucune source
+vivante**. Construire un adapteur CEMAC aujourd'hui ne produirait rien.
+
+### UEMOA / BCEAO — le meilleur etat des trois
+
+Deux pages a ne pas confondre : « **Evolution** » ne porte que des **rapports
+annuels** ; « **Operations** » porte la serie hebdomadaire.
+
+Contenu d'un document (semaine du 07 au 13 juillet 2026), via
+`pdftotext -layout` — **aucun OCR necessaire** :
+
+| | 1 JOUR | 1 SEM | 2 SEM | 1 MOIS | 3 MOIS | 6/9/12 M |
+|---|---|---|---|---|---|---|
+| **Taux moyen pondere** | **4,21 %** | 3,94 | 3,95 | 5,12 | 5,03 | **–** |
+| minimum / maximum | 3,00 / 6,00 | 3,00 / 6,50 | 3,05 / 7,00 | 4,00 / 6,75 | 4,75 / 5,50 | – |
+
+Les huit maturites correspondent **mot pour mot** a la liste du mandat. Plus les
+volumes prets/emprunts par pays pour les huit Etats.
+
+**Le taux moyen pondere au jour le jour est le candidat naturel** — mais c'est
+une moyenne de **transactions**, ni un taux directeur ni un rendement souverain.
+Le mandat interdit de les confondre : le choix devra etre documente.
+
+### CEMAC / BEAC — rien ne fonctionne, et c'est mesure
+
+| Canal | Etat |
+|---|---|
+| TIMP 7 jours (la serie que le mandat nomme) | **2018-06 → 2020-09** |
+| `dctimp.xlsx` | **annee 2010** |
+| `dcrdbmm.xlsx` | nov. 2008 → nov. 2010 |
+| taux d'intervention BEAC | 2000 → 2009 |
+| XLSX titres publics | **2015-2017** |
+| portail **BDEMF** | **HTTP 502** — « upstream request failed » |
+| VL des fonds CEMAC en base | **2024-12-12** |
+| couverture benchmark CEMAC | **0 %** |
+
+La BDEMF a ete testee **en deux temps**, comme le mandat le demandait : `curl`
+rend 1 349 octets (coquille JavaScript de portail IBM Cognos), puis un
+**navigateur sans interface** rend **502**, zero lien, zero tableau. **A
+retester** — un 502 est un etat, pas une propriete.
+
+### CINQ PIEGES D'EXTRACTION, tous mesures
+
+| # | Piege | Consequence si ignore |
+|---|---|---|
+| 1 | **55 liens UMOA-Titres sont protocole-relatifs** (`//…`) et portent **toute l'annee 2019** | perte de l'annee la plus ancienne. **L'erreur que j'ai commise** avant de voir le `//` |
+| 2 | Les noms de fichiers BCEAO ne portent **ni la date ni le type reel** — les anciens s'appellent `05-Situation des Prets…` alors que leur contenu est « Operations par maturite » | date et nature doivent etre lues **dans le contenu** |
+| 3 | Le **« – »** signifie **aucune transaction**, jamais zero | un `0` serait une **valeur financiere inventee** — interdiction explicite du mandat |
+| 4 | **Conventions numeriques opposees** : BCEAO en pourcentages a virgule (`4,21`), BEAC en **fractions** (`0.0325`) | **erreur d'un facteur 100** |
+| 5 | Tailles UMOA-Titres de 156 Ko a 1,8 Mo, **facteur 11** | un seuil de taille rejetterait des fichiers valides |
+
+### Mes propres chiffres corriges dans ce lot
+
+| Ce que j'avais dit | Realite mesuree |
+|---|---|
+| UMOA-Titres : « 702 fichiers » | **402** — 702 etait le nombre d'**occurrences `href`**, doublons compris |
+| « 185 a 210 fichiers par an » | **51 a 53** — publication **hebdomadaire** |
+| « 2019 inaccessible » | **accessible** — mes URL manquaient le schema `https:` |
+
+**Fichiers modifies** (depot `api_opcv`) :
+`docs/REGISTRE_SOURCES_MARCHE.md`, `scripts/diag/registre_sources_marche.py`
+
+**Commandes executees** : 25 sondes HTTP sur les portails ; telechargement et
+ouverture de **9** fichiers UMOA-Titres, **5** XLSX BEAC, **4** PDF BCEAO ;
+sonde Playwright sur la BDEMF ; `pdftotext -layout`.
+
+**Prochaine action recommandee** :
+1. **appliquer M1** (proprietaire) — `npx sequelize-cli db:migrate`. M2 ne peut
+   pas demarrer avant : il ecrit dans `benchmark_series` ;
+2. en attendant, ecrire l'extracteur UEMOA **en dry-run** (aucune ecriture),
+   puisque la source est qualifiee et que les cinq pieges sont connus ;
+3. rejouer le registre **depuis S2**.
+
+**A ne pas faire a la reprise** :
+- **ne pas engager d'adapteur CEMAC** : aucune source vivante, rien a collecter ;
+- ne pas declarer la BDEMF morte : 502 mesure a un instant, **a retester** ;
+- ne pas ecrire `0` a la place d'un `–` ;
+- ne pas utiliser `dctimp.xlsx` comme « le TIMP » : il porte **2010** ;
+- ne pas melanger les deux conventions numeriques des deux zones.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-30 02:10 UTC — Lot DB : MANDAT DU 2026-10-30 — reconciliation faite, livrable 1 livre, deux blocages renvoyes
 
 **Dernier etat stable** : livrable 1 du mandat livre et pousse. Aucune ecriture
