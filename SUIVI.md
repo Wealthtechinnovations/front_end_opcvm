@@ -13,6 +13,62 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 — Lot DE : extracteur UEMOA livre en dry-run, et la date de publication a disparu de la source
+
+**Dernier etat stable** : `api_opcv` a `269276e`, arbre propre, HEAD local =
+HEAD distant. Aucune ecriture en base, aucun deploiement. Le lot est strictement
+additif : un script nouveau, un document mis a jour.
+
+**Dernier lot termine** : M2/UEMOA en **dry-run**. Le script lit le portail
+BCEAO, parse les tableaux « Operations par maturite » et **imprime** les lignes
+qu'il insererait dans `benchmark_series` — il n'ecrit rien. Raison : M1 est
+livree (`20261030000001`) mais **non appliquee**, donc la table n'existe pas.
+Le dry-run valide parsing, dates, conventions numeriques et statuts **avant**
+l'existence de la table, separant les erreurs de LECTURE des erreurs d'ECRITURE.
+
+**Resultat mesure** : 5 documents, **40 lignes**, 26 avec valeur, 14 en
+`NO_VALUE_MARKET_CLOSED`. Semaine du 07-13 juillet 2026 : 1 jour 4,21 %,
+1 semaine 3,94 %, 1 mois 5,12 % ; 6, 9 et 12 mois sans transaction.
+
+**Le constat qui compte** — la date de **publication** n'existe plus dans la
+source. Le document de 2017 porte `Dakar, le 10 novembre 2017` ; celui de 2026 a
+**zero** occurrence de « Dakar ». Le format et la direction emettrice ont change.
+Le mandat exige des « dates d'observation et de publication distinctes » : quand
+la seconde n'est pas publiee, `publication_date` vaut `NULL`. Elle n'est **pas**
+deduite du chemin `/sites/default/files/2026-07/` de l'URL, qui porte un mois et
+dit ou le fichier est range, pas quand il fut publie — l'inscrire serait donner
+a une valeur une date que la source n'a jamais donnee.
+
+**Deux defauts de mon propre script, trouves a la premiere execution** :
+1. filtre de contenu trop large — j'acceptais tout PDF contenant
+   « interbancaire », donc les « Rapport sur la politique monetaire » de la barre
+   laterale passaient et echouaient ensuite sur la date : **5 echecs, 0 ligne**.
+   Le filtre porte desormais sur la signature du document. Ces rapports
+   expliquent au passage pourquoi « 2022 » et « 2023 » apparaissaient sur toutes
+   les pages du listing lors de la mesure du lot DD ;
+2. ordre alphabetique arbitraire — un classement par pertinence est applique,
+   sans s'y fier : le contenu reste seul juge.
+
+**Fichiers** : `api_opcv/scripts/extract/extract_bceao_interbancaire.py` (cree) ;
+`api_opcv/docs/REGISTRE_SOURCES_MARCHE.md` (5e piege + section extracteur).
+
+**Tests** : `ast.parse` OK ; deux executions reelles contre le portail (la
+premiere a echoue et a revele le defaut 1) ; `publication_date` instrumentee
+plutot que laissee a `None` silencieux.
+
+**Prochaine action recommandee** : **au proprietaire** — appliquer M1
+(`npx sequelize-cli db:migrate`, deux `CREATE TABLE` sur tables vides, aucun
+verrou sur la production). M2 ne peut pas ecrire avant. Cote session, sans
+dependre de M1 : valider les codes d'indicateur proposes
+(`UMOA_INTERBANK_WAR_*`, non canoniques — F3 n'en nomme aucun), parcourir les
+27 pages du listing, et decider le proxy sans risque retenu pour l'UEMOA.
+
+**A ne pas faire a la reprise** : ne pas lever le dry-run avant M1 ; ne pas
+inventer une `publication_date` pour les semaines recentes ; ne pas reutiliser
+l'extracteur UEMOA pour la BEAC sans traiter la convention numerique opposee
+(virgule decimale contre fractions — facteur 100) ; ne pas construire
+d'adapteur CEMAC, aucune source n'y est vivante.
+
 ## POINT DE REPRISE COURANT — 2026-10-30 06:00 UTC — Lot DD : D1 qualifiee sur les trois zones — et les trois sont tres inegales
 
 **Dernier etat stable** : qualification des sources terminee pour les trois
