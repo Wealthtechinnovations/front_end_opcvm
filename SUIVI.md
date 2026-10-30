@@ -13,6 +13,91 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 01:40 UTC — Lot DA : la chaine complete du taux sans risque marocain, et pourquoi le correctif evident fabriquerait une donnee
+
+**Dernier etat stable** : production inchangee depuis le lot CZ. **Diagnostic
+seul — j'ai delibere ment arrete avant de corriger**, et la raison est au bout.
+
+### LA CHAINE, MAILLON PAR MAILLON
+
+| # | Constat | Mesure |
+|---|---|---|
+| 1 | `tsrhistos` Maroc perime | **874 jours** (dernier taux 2024-06-07) |
+| 2 | **aucun cron ne les alimente** | `scripts/cron/*.sh` : zero reference au TSR. Peuples par un script **ponctuel**, `fix_tsr_per_country.js` — d'ou les 181 j des quatre autres pays, date du dernier passage manuel |
+| 3 | la source marocaine **est decidee** | `BENCHMARKS_F3_MAPPING_SCHEMA.md` : Maroc = **MONIA** (bkam), Tunisie = TM/TMM (BCT), Nigeria = NOFR (CBN). **UEMOA/CEMAC = BCEAO/BEAC, « a sourcer »** — seul point reellement ouvert |
+| 4 | MONIA **est deja scrape** | `scrape_indices_daily.js`, fonction `scrapeMONIA` |
+| 5 | MONIA s'arrete au **2026-05-14** | 1 000 valeurs dans `indice_references`, 167 j |
+| 6 | **la source est vivante** | bkam : HTTP 200, 328 Ko, dates jusqu'au **29/10/2026** |
+| 7 | **le parseur exige une egalite STRICTE** | `if (iso !== targetDate) continue` |
+
+### POURQUOI LE MAILLON 7 CASSE TOUT
+
+La ligne de bkam porte **deux** dates :
+
+```html
+<td>2.171 %</td> <td>15467</td> <td>28/10/2026</td> <td>29/10/2026</td>
+```
+
+Date de **reference** (28/10) et date de **publication** (29/10). MONIA du jour
+J n'est jamais publie le jour J. Un cron qui demande la valeur du jour ne la
+trouvera donc **jamais**.
+
+C'est precisement le defaut que `CLAUDE.md` interdit — « **jamais
+`date==today` strict** (derniere valeur <= date cible avec tolerance par type
+de serie) » — et que F3/M2 prescrit de corriger : « regle « derniere valeur <=
+date cible » (**remplace `date==today`**) ».
+
+### ET POURQUOI JE N'AI PAS APPLIQUE CE CORRECTIF
+
+L'insertion est indexee sur **`checkExisting(conn, id, targetDate)`** : la date
+**demandee au cron**, pas celle a laquelle la valeur appartient.
+
+Relacher l'egalite sans toucher a l'insertion ecrirait donc le MONIA du **28/10
+sous la date du 29/10** — **un point de donnee que bkam n'a jamais publie**.
+C'est exactement ce que la regle du projet interdit : « ne jamais inventer un
+taux ».
+
+**Le correctif juste exige donc deux choses, pas une** :
+1. que le parseur rende la valeur **avec sa date de reference reelle** ;
+2. que l'insertion ecrive **sous cette date**, non sous `targetDate`.
+
+Or le point 2 touche le **contrat d'insertion partage par les cinq scrapers**.
+C'est le chantier **F4 / M2** du `ROADMAP.md` — « un adapter par source avec
+statuts structures + regle « derniere valeur <= date cible » », ecrivant dans
+`benchmark_series` — decide le 2026-07-14 et jamais execute.
+
+**Un correctif d'une ligne ici fabriquerait une donnee financiere. Je m'arrete.**
+
+### UN SECOND TROU, INDEPENDANT
+
+Meme alimente, MONIA n'atteindrait **aucun fonds** : lot CO, il est **absent de
+`propagate_indref_range.js`** et son `pays` est un tableau **vide** dans les
+deux copies ou il figure — **0 VL rattachee** (lot CS). Deux trous distincts a
+fermer : la fraicheur **et** la destination.
+
+### CE QUI VOUS REVIENT, ET C'EST COURT
+
+| Objet | Etat |
+|---|---|
+| sources Maroc / Tunisie / Nigeria | **deja decidees** (F3) — rien a demander |
+| **RFR UEMOA / CEMAC** | **« a sourcer »** — seul point ouvert, et c'est une donnee de marche |
+| **F4 / M2** | decide le 2026-07-14, jamais execute. Correctif structurel, merite sa propre decision |
+
+**Prochaine action recommandee** : engager **F4 / M2** pour le seul Maroc en
+pilote — parseur rendant sa date reelle, insertion sous cette date, statuts
+structures — puis etendre. C'est la plus petite tranche qui corrige sans
+fabriquer.
+
+**A ne pas faire a la reprise** :
+- **ne jamais relacher `iso !== targetDate` seul** : la valeur serait ecrite
+  sous une date ou la source n'a rien publie ;
+- ne pas croire la source morte : bkam rend 200 avec des donnees d'hier ;
+- ne pas chercher un cron de TSR : il n'y en a jamais eu ;
+- ne pas reparer la fraicheur de MONIA sans lui donner un `pays` et l'ajouter
+  au propagateur — sans quoi il restera a 0 VL rattachee.
+
+---
+
 ## POINT DE REPRISE COURANT — 2026-10-30 01:20 UTC — Lot CZ : **RETRACTATION** — `ratiosnew` n'a jamais ete morte, c'etait MA requete
 
 **Dernier etat stable** : correctif deploye et verifie. Les cinq routes a `:year`
