@@ -13,6 +13,77 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 — Lot DK : les sept fiches fonds tolerent le slug, plus aucun appel NaN
+
+**Dernier etat stable** : `front_end_opcvm` build `✓ Compiled successfully`,
+arbre propre, HEAD local = HEAD distant. `api_opcv` inchange. **NON DEPLOYE** —
+le deploiement reste au proprietaire.
+
+**Objectif du lot** : corriger a la racine le defaut mesure au lot DJ — six
+fiches sur sept appelaient `/api/.../NaN` sous une URL a slug, alors que leur
+canonique designait precisement cette URL.
+
+### La correction ne cree rien : elle reutilise l'existant
+
+L'assistant existait deja — `extractIdFromSlug` de `src/lib/utils.ts`, employe
+par `funds/[fondId]/FundView.tsx`. **C'est exactement pourquoi cette fiche-la
+etait la seule a tolerer le slug.** L'expression est reprise **caractere pour
+caractere** de la ligne deja en production :
+
+```ts
+const id = Number(extractIdFromSlug(params.fondId as string) || params.fondId);
+```
+
+Strictement **plus permissif** : `'1141'` rend 1141 comme avant, un slug rend
+son identifiant terminal, une chaine non numerique retombe sur le parametre
+brut — le comportement actuel. **Aucune URL qui fonctionnait ne peut cesser de
+fonctionner.**
+
+### Verifie, et non suppose
+
+Instance **construite et lancee dans le conteneur** contre l'API de production,
+8 fiches x 2 formes d'URL :
+
+```
+LES 16 COMBINAISONS ENVOIENT L IDENTIFIANT 1141, AUCUN NaN
+```
+
+Metadonnees verifiees sous URL a slug : « AFRINVEST DOLLAR FUND NGN NIGERIA -
+Performances OPCVM Afrique | Fundafrique ». La canonique de la page
+Performances, provisoirement numerique au lot DJ, **repasse au slug**.
+
+### Deux defauts de mon propre harnais
+
+1. Sans `.env.local`, `NEXT_PUBLIC_API_URL` retombe sur `localhost:3005` ou rien
+   n'ecoute — aucun appel n'aboutissait.
+2. Meme pointe sur l'API de production, une instance locale voit ses requetes
+   **navigateur** bloquees par le **CORS**. Un harnais qui juge le **contenu**
+   en local rapporte donc un echec **identique** pour une page saine et pour une
+   page cassee : il ne mesure que lui-meme. Ma premiere version annonçait
+   « 16 combinaisons en echec », **y compris sur `/funds/1141` qui fonctionne en
+   production**. Un test qui echoue autant sur le cas connu-bon que sur le cas
+   repare ne prouve rien.
+
+Le harnais mesure donc l'**identifiant envoye a l'API**, lu sur les requetes
+reellement emises. La limite est ecrite dans son en-tete, avec la commande pour
+juger le contenu depuis une instance de meme origine.
+
+**Fichiers** : les 7 vues (`summary-eur`, `summary-usd`, `history`, `portfolio`,
+`documents`, `download-nav`, `performance`), `performance/page.server.ts`,
+et `scripts/verif_slug_fiches_fonds.js` (cree, conserve contre la regression).
+
+**Prochaine action recommandee** : **au proprietaire** — appliquer M1 (bloque
+M2) ; deployer le frontend, qui porte maintenant deux corrections verifiees (les
+metadonnees de la page Performances et la tolerance au slug des sept fiches).
+Apres deploiement, rejouer `BASE=https://africafunds.chainsolutions.fr node
+scripts/verif_slug_fiches_fonds.js` — de meme origine, il jugera aussi le
+contenu.
+
+**A ne pas faire a la reprise** : ne pas juger le CONTENU avec ce harnais en
+local, le CORS le rend aveugle ; ne pas remplacer `extractIdFromSlug` par une
+variante — l'expression reprise est celle deja eprouvee en production ; ne pas
+considerer le defaut corrige en production avant deploiement.
+
 ## POINT DE REPRISE COURANT — 2026-10-30 — Lot DJ : les canoniques des fiches fonds designent des pages SANS DONNEES
 
 **Dernier etat stable** : `front_end_opcvm` build `✓ Compiled successfully`,
