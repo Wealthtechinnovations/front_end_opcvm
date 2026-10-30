@@ -13,6 +13,96 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 — Lot DM : la performance de 143 958 % affichee EST le taux de change
+
+**Dernier etat stable** : les deux depots propres, HEAD local = HEAD distant.
+Lot **de diagnostic seul** : aucune ecriture en base, aucun script d'import
+modifie, aucun deploiement.
+
+**Point de depart** : le diagnostic quotidien de **12:39 UTC**
+(`docs/ETAT_PRODUCTION_VERIFIE.md`, source de verite n°1) donne **4 echecs
+critiques**. Deux d'entre eux — C3 et C7 — nomment **le meme fonds** :
+
+```
+C3  [1141] AFRINVEST DOLLAR FUND (NIGERIA) YTD 143958 %
+C7  [1141] AFRINVEST DOLLAR FUND (NIGERIA/NGN) 1467x [114.47 .. 167885]
+```
+
+### Les deux echecs critiques n'en font qu'UN
+
+Une serie de VL melangeant deux echelles **produit mecaniquement** une
+performance absurde. Verification arithmetique : **165 207 / 114,47 = 1 443**,
+soit exactement le rapport des deux echelles. **Le YTD affiche aux investisseurs
+EST le taux de change.** Ce n'est pas une erreur de formule.
+
+### Preuve par coherence interne, sans donnee exterieure
+
+A chaque frontiere entre un point bas et un point haut voisins, le rapport des
+deux valeurs est le taux implicite a cette date. Si c'est un taux de change, des
+fonds **differents** doivent donner la **meme** valeur aux **memes** dates :
+
+| mois | fonds | mediane | dispersion |
+|---|---|---|---|
+| 2026-05 | **12** | **1 374,9** | **4,2 %** |
+| 2026-06 | 10 | 1 369,3 | 9,5 % |
+| 2026-07 | 9 | 1 378,7 | 4,5 % |
+| 2023-12 | 2 | 997,0 | 9,0 % |
+
+Douze fonds de tailles et de VL differentes ne convergent pas a 4 % pres par
+hasard. Et la derive lente (1 375 → 1 369 → 1 379) est celle du taux lui-meme.
+
+**Conclusion** : depuis **~mai 2026**, des VL de fonds en dollars sont
+enregistrees **en USD** dans une serie **declaree en NGN**. 14 fonds nigerians,
+blocs bas aux dates 2026-05-15, 2026-07-10, 2026-07-24, 2026-10-09 — et
+2026-10-09 est precisement la derniere VL nigerianne (C4.NIGERIA).
+
+### Deux de mes propres conclusions, retirees en cours de route
+
+1. J'ai d'abord annonce « **11 fonds sur 15 ont une VL a zero, le controle nomme
+   mal le defaut** ». **Faux**, et pour une raison instructive : la requete de C7
+   porte `WHERE v.value > 0`, mais j'avais mesure la serie de **l'API**, qui
+   **inclut** les zeros. J'interpretais une source differente de celle que je
+   commentais. **C7 est bien calibre** — il s'agit reellement de deux echelles.
+2. Mon detecteur de « point isole » exigeait un voisin a haute echelle **des deux
+   cotes**. Il ratait donc une **epoque** entiere a l'autre echelle, faute de
+   voisin a gauche en debut de serie.
+
+### Defaut distinct, releve au passage
+
+Hors perimetre de C7 qui filtre les zeros : **l'API sert bien une VL a 0,00 pour
+onze de ces fonds** — un point a zero sur une courbe de valeur liquidative. Le
+script le compte a part, et cela merite son propre controle.
+
+### Livrable
+
+`api_opcv/scripts/diag/ondemand/diag_echelle_devise_nigeria.js` — pousse sur la
+branche canonique, donc execute **sur S2 contre la base reelle** par le canal
+`doc-drift`. Il donnera ce que l'API ne peut pas : les **lignes exactes** de
+`valorisations` par fonds et par date, la devise **declaree** de chaque fonds —
+pour savoir laquelle des deux echelles est la bonne — et le taux **reellement
+stocke** dans `devisedechanges`.
+
+**Il ne corrige rien, deliberement.** Diviser une ligne **saine** par ~1 375
+fabriquerait le defaut symetrique, et plus discret car il produirait des valeurs
+d'apparence plausible.
+
+**Trois defauts de mon propre script**, corriges avant de le pousser : un module
+requis a un chemin inexistant alors que la convention du canal est `mysql2`
+direct ; une clause `WHERE` bricolee sans signification ; et une connexion
+declaree **dans** la fonction, donc invisible du `catch` — tout echec reel aurait
+ete masque par un `ReferenceError: conn is not defined`.
+
+**Prochaine action recommandee** : lire la sortie du script dans
+`docs/DIAG_ONDEMAND.md` au prochain passage du canal, puis **au proprietaire** —
+trancher la devise de reference des 14 fonds avant toute conversion ; appliquer
+M1 ; deployer le frontend.
+
+**A ne pas faire a la reprise** : ne **jamais** convertir avant que la devise de
+reference de chaque fonds soit tranchee ; ne pas croire que C7 est mal calibre,
+c'etait mon erreur ; ne pas traiter C3 comme un defaut de calcul — c'est une
+consequence de C7 ; ne pas interpreter la serie de l'API comme si elle etait
+celle du controle, elle inclut les zeros.
+
 ## POINT DE REPRISE COURANT — 2026-10-30 — Lot DL : pages outils documentees, et le sitemap de production est FIGE
 
 **Dernier etat stable** : `front_end_opcvm` build `✓ Compiled successfully`,
