@@ -13,6 +13,76 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-30 — Lot DN : la base renverse mon analyse — 10 des 14 fonds sont declares en USD
+
+**Dernier etat stable** : les deux depots propres, HEAD local = HEAD distant.
+Lot **de diagnostic seul** : aucune ecriture en base, aucun deploiement.
+
+**Le canal a la demande a repondu**, run `41074489232`, mesure du 2026-10-30
+14:49 UTC **contre la base de production**. Et il corrige ce que j'avais ecrit
+au lot DM.
+
+### La devise DECLAREE n'est pas celle que je supposais
+
+| declares | fonds | quelle echelle est FAUTIVE |
+|---|---|---|
+| **USD (10)** | 2765, 2766, 2771, 2772, 2773, 2774, 2775, 2777, 2778, 2809 | les valeurs **hautes** (~150 000) — du **NGN** contaminant |
+| **NGN (4)** | 1141, 1239, 2768, 2856 | les valeurs **basses** — du **USD** contaminant |
+
+**Le sens de la correction est donc INVERSE selon le fonds.** Mon enonce du lot
+DM — « des VL en USD dans une serie declaree en NGN » — ne valait que pour
+**4 fonds sur 14**. Je l'avais formule depuis l'API seule, **qui ne porte pas la
+devise declaree**.
+
+**C'est exactement le risque que l'avertissement du script annonçait** — « ne
+rien convertir avant d'avoir tranche la devise de reference de chaque fonds ».
+La base l'a confirme **avant qu'une seule ligne ne soit touchee** : une
+conversion uniforme aurait abime **dix fonds sur quatorze**, et en produisant
+des valeurs d'apparence plausible.
+
+**Volumetrie** : **182 lignes** dans le groupe bas, du 2026-03-25 au 2026-10-09.
+
+### Les zeros depassent tres largement les fonds de C7
+
+Mon plafond de 25 lignes **etait atteint** — un plafond atteint ne dit rien de
+l'ampleur reelle, et « 25 » pouvait se lire comme un total. Les fonds concernes
+vont bien au-dela des quatorze : **STANBIC IBTC ABSOLUTE en portait cinq a lui
+seul**, et Coronation Equity, ValuAlliance, Myrtle (x2), Alpha10 (x2), Apel
+Wealth, SCM Capital, CFG (x3), Zedcrest, Samtl, Fundvine, D Namaz, DLM y
+figurent. Le comptage sans plafond est relance.
+
+### Et le taux publie, existe-t-il ?
+
+Schema de `devisedechanges` releve : `id, paire, date, value, test`.
+L'echantillon ne montrait que **`USD/XAF`, `EUR/XAF`, `USD/XOF`** — aucune paire
+naira. Si la plateforme ne stocke **aucun** taux NGN, elle n'a aucun taux
+**publie** pour arbitrer les deux echelles, et le taux **implicite** que j'ai
+deduit des series — aussi coherent soit-il a 4 % pres — **ne doit pas servir a
+ecrire en base**. Le mandat l'interdit explicitement : aucune constante en dur
+tenue pour un taux reellement publie. La mesure est relancee pour trancher.
+
+### Un piege de metrique, signale
+
+Le ratio imprime par mon script est celui de la **frontiere**
+(min du groupe haut / max du groupe bas), **non** le max/min de C7. Deux
+metriques differentes : **329,4** a la frontiere pour le fonds 1141, contre
+**1467x** pour C7. Ne pas les confondre.
+
+**Fichiers** : `api_opcv/scripts/diag/ondemand/diag_echelle_devise_nigeria.js`
+(cree au lot DM, etendu ici).
+
+**Prochaine action recommandee** : lire la sortie du passage relance dans
+`docs/DIAG_ONDEMAND.md` (nombre total de zeros, existence d'une paire NGN) ;
+puis **au proprietaire** — trancher, fonds par fonds, quelle echelle conserver,
+en sachant que la reponse differe selon la devise declaree. Puis M1 et le
+deploiement frontend.
+
+**A ne pas faire a la reprise** : ne **jamais** appliquer une conversion
+uniforme aux 14 fonds — dix seraient abimes ; ne pas reprendre l'enonce du lot
+DM, corrige ici ; ne pas utiliser le taux implicite deduit des series pour
+ecrire en base ; ne pas lire « 25 zeros » comme un total, le plafond etait
+atteint ; ne pas confondre le ratio de frontiere avec celui de C7.
+
 ## POINT DE REPRISE COURANT — 2026-10-30 — Lot DM : la performance de 143 958 % affichee EST le taux de change
 
 **Dernier etat stable** : les deux depots propres, HEAD local = HEAD distant.
