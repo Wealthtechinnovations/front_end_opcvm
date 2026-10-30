@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { extractIdFromSlug } from "@/lib/utils";
 import { Fragment, JSXElementConstructor, Key, PromiseLikeOfReactNode, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import Header from '@/components/layout/Header';
 import { urlconstant, urlsite } from "@/lib/constants";
@@ -59,7 +60,12 @@ function diffColorClass(a: any, b: any): string {
 export default function Performance() {
   const params = useParams();
   const [showDescription, setShowDescription] = useState(false);
-  const selectedValues = Number(params.fondId);
+  // Tolere les deux formes d URL : identifiant numerique (`/1141`) et
+  // slug (`/afrinvest-dollar-fund-1141`). Expression reprise telle
+  // quelle de `funds/[fondId]/FundView.tsx`, deja en production.
+  // Sans elle, `Number()` rendait `NaN` sur un slug et la page
+  // appelait `/api/valLiq/NaN` — mesure du 2026-10-30, lot DJ.
+  const selectedValues = Number(extractIdFromSlug(params.fondId as string) || params.fondId);
   const [count, setCount] = useState(0);
 
   const incrementCount = () => {

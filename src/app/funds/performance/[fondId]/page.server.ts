@@ -19,15 +19,11 @@ import { metadonneesFiche } from "@/lib/fundMetadata";
  */
 export async function generateMetadata({ params }: { params: { fondId: string } }) {
     return metadonneesFiche(params.fondId, {
+        // Canonique a slug, comme les sept autres fiches. Elle etait
+        // provisoirement numerique au lot DJ parce que la vue rendait `NaN`
+        // sous une URL a slug ; le lot DK l'a rendue tolerante, la canonique
+        // designe donc a nouveau une page qui affiche ses donnees.
         chemin: 'performance',
-        // Canonique NUMERIQUE, et c'est deliberé : mesure du 2026-10-30, la
-        // vue Performances fait `Number(params.fondId)` et appelle donc
-        // `/api/valLiq/NaN` sous une URL a slug — le nom du fonds n'y apparait
-        // pas. Emettre la canonique a slug des sept autres fiches aurait
-        // designe a Google une page sans donnees : **pire que l'absence de
-        // metadonnee** que ce lot corrige. Elle repassera au slug quand les
-        // vues seront rendues tolerantes au slug (lot a venir).
-        slugDansUrl: false,
         suffixeTitre: 'Performances OPCVM Afrique',
         repli: 'Performances',
         description: f => `Performances du fonds OPCVM ${f.nom_fond}${f.avecIsin} du ${f.pays}${f.parGestion} : rendements YTD, 1 mois, 3 mois, 1 an, 3 ans, 5 ans et depuis création, comparés à son benchmark sur Fundafrique.`,

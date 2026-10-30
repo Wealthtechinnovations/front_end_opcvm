@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { extractIdFromSlug } from "@/lib/utils";
 import React, { Fragment, useEffect, useState, SetStateAction, ReactNode, Key } from "react";
 import { useRouter, useParams } from 'next/navigation';
 import Highcharts from 'highcharts';
@@ -199,7 +200,12 @@ export default function Fond() {
   const router = useRouter();
   const params = useParams();
 
-  const id = Number(params.fondId);
+  // Tolere les deux formes d URL : identifiant numerique (`/1141`) et
+  // slug (`/afrinvest-dollar-fund-1141`). Expression reprise telle
+  // quelle de `funds/[fondId]/FundView.tsx`, deja en production.
+  // Sans elle, `Number()` rendait `NaN` sur un slug et la page
+  // appelait `/api/.../NaN` — mesure du 2026-10-30, lot DJ.
+  const id = Number(extractIdFromSlug(params.fondId as string) || params.fondId);
   const [activeIndex, setActiveIndex] = useState(0); // Initialisation avec 0
   const [filteredDocument, setFilteredDocument] = useState<Document[] | null>(null);
   const [documents, setDocuments] = useState<Documents | null>(null);
