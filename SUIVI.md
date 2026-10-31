@@ -13,6 +13,73 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## POINT DE REPRISE COURANT — 2026-10-31 — Lot DQ : la PR frontend est fusionnee, la production ne la sert PAS, et mon hypothese du sitemap est refutee
+
+**Dernier etat stable** : `front_end_opcvm` canonique = `master` = `d24a5e8`,
+arbre propre. `api_opcv` a `fd3f190`, propre. Aucune ecriture en base, aucun
+deploiement declenche par moi.
+
+### La PR #1 du frontend a ete fusionnee — et cela a servi a mesurer
+
+`pull_request.closed`, `outcome: merged`. La branche canonique etait **0 en
+avance, 1 en retard** sur `master` : tout le travail du 30 octobre y est. J'ai
+avance la canonique en **avance rapide** apres avoir verifie que les deux
+**arbres sont identiques** — l'operation ne change donc aucun fichier.
+
+### Premier constat : une fusion n'est PAS un deploiement
+
+Verifie en production apres la fusion :
+
+| controle | resultat |
+|---|---|
+| `/funds/performance/1141` | titre **generique** |
+| `/tools/comparison`, `/tools/search` | titre **generique** |
+| `robots.txt` → questionnaire | **absent** |
+| sitemap | toujours **976** URL |
+
+La production tourne donc toujours sur l'ancien build. **Le deploiement reste a
+faire**, et il reste au proprietaire.
+
+### Second constat : mon hypothese du lot DL est REFUTEE
+
+Le meme test a borne l'age du build deploye, et c'est ce qui la fait tomber. La
+production sert **deja** les metadonnees corrigees des fiches fonds
+(« AFRINVEST DOLLAR FUND NGN NIGERIA - Synthese OPCVM Afrique | Fundafrique »),
+donc le build inclut le commit `b4252ae`. Et `force-dynamic` a ete ajoute au
+sitemap en `de23827`, **avant** ce commit : le build en service calcule donc le
+sitemap **a chaque requete**.
+
+**Un build recent ne peut pas avoir fige 854 fonds a sa construction.** Mon
+hypothese « donnees figees a la construction d'un deploiement ancien », que
+j'avais qualifiee de **dominante** au lot DL, tombe. L'argument que j'avançais —
+deux ratios differents (67,8 % et 54,1 %) — excluait bien une troncature
+uniforme, mais il **n'etablissait pas** un figement. J'ai pris une exclusion
+pour une demonstration.
+
+**Ce qui reste ecarte, et qu'il ne faut pas reinstruire** : cache HTTP
+(`max-age=0, must-revalidate`) ; seuil d'identifiant (les absents chevauchent les
+presents) ; slugs manquants ou en doublon (1 260 fonds, tous avec slug, zero
+doublon).
+
+**Test discriminant ecrit** :
+`api_opcv/scripts/diag/ondemand/diag_sitemap_854_vs_1260.js`. Il s'execute **sur
+S2**, ce que rien d'exterieur ne peut faire, et separe deux questions qu'aucune
+mesure seule ne tranche : combien de fonds l'API rend-elle **au serveur**
+(nom public et `localhost:3005`), et que calcule l'**application** avant Nginx
+(son port direct). Sa grille de lecture couvre les quatre combinaisons, y
+compris le cas ou le port 3000 est injoignable — auquel cas relever le port reel
+dans PM2 **avant** de conclure.
+
+**Prochaine action recommandee** : lire la sortie du script au prochain passage
+du canal ; puis **au proprietaire** — deployer le frontend (quatre corrections
+verifiees en attente), appliquer M1, arbitrer les lignes nigeriannes et
+marocaines.
+
+**A ne pas faire a la reprise** : ne pas croire qu'une fusion deploie ; ne pas
+reprendre l'hypothese du figement a la construction, elle est refutee ; ne pas
+reinstruire le cache HTTP, le seuil d'identifiant ni les slugs ; ne pas conclure
+depuis le port 3000 sans avoir verifie le port reel dans PM2.
+
 ## POINT DE REPRISE COURANT — 2026-10-30 — Lot DP : le 26 octobre marocain ne s'est pas auto-corrige, et la file gouvernee MCP ne concerne PAS ce chantier
 
 **Dernier etat stable** : les deux depots propres, HEAD local = HEAD distant.
