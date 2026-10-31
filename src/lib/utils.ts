@@ -3,6 +3,17 @@ export async function delay(ms: number) {
 }
 
 /**
+ * Formats a date string (YYYY-MM-DD or ISO) to DD/MM/YYYY for French display.
+ * Returns the original value if parsing fails.
+ */
+export function formatDateFR(dateStr: string | null | undefined): string {
+  if (!dateStr) return '-';
+  const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return String(dateStr);
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+/**
  * Generates a URL-friendly slug from text.
  * Handles French accented characters and special chars.
  */
