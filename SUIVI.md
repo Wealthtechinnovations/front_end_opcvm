@@ -13,6 +13,14 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## 2026-11-25 — AF-TASK-028 : préflight manuel et contrôle CI
+
+- Continuité `CS-AFRICAFUNDS-001` : API `ab3353b2532940d9fa7a4e87c4edd37a3981653f` (workflow manuel dry-run / apply-local, sans push), puis `fa881d271907088a7d774adcb8160065b08b1434` (contrat de tests intégré au Programme Directeur et WORK_LOG).
+- Preuves exact SHA `fa881d271907088a7d774adcb8160065b08b1434` : Programme Director [45613118299](https://github.com/Wealthtechinnovations/api_opcv/actions/runs/45613118299), Regulatory Plus [45613118607](https://github.com/Wealthtechinnovations/api_opcv/actions/runs/45613118607), Markdown Audit [45613118897](https://github.com/Wealthtechinnovations/api_opcv/actions/runs/45613118897), SUCCESS ; étape de test du préflight simulé SUCCESS. Frontend observé avant ce checkpoint : `8d8dcfd50e8a1cc7ad981aa2bb406be85074c247`.
+- Aucun changement de code métier, de queue, de branche ou de production. Claims encore observe-only. AF-TASK-028 reste IN_PROGRESS : dispatch réel et publication bi-repository gouvernée non prouvés. Exécuteur IA horaire dédié non activé : nouvelle création ChatGPT refusée (5/5 tâches actives). Ne pas désactiver d'autres projets sans autorisation.
+- NEXT_ACTION : recette manuelle réelle du workflow avec les deux HEAD live, qualifier identité/permissions minimales et verrou effectif, puis raccorder et certifier l'exécuteur codeur au Programme Directeur existant. Aucun déploiement S2 implicite.
+
+
 ## POINT DE REPRISE COURANT — 2026-10-31 — Lot DQ : la PR frontend est fusionnee, la production ne la sert PAS, et mon hypothese du sitemap est refutee
 
 **Dernier etat stable** : `front_end_opcvm` canonique = `master` = `d24a5e8`,
