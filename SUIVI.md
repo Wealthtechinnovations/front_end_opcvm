@@ -13,6 +13,14 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## 2026-11-25 — AF-TASK-028 : recette intégrée, leases/fencing et publication bi-repository
+
+- Continuité `CS-AFRICAFUNDS-001` : API `2a3bfb5ce79dff0e9bd9d7175802d84282d88e49` / [45641152852](https://github.com/Wealthtechinnovations/api_opcv/actions/runs/45641152852) : recette manuelle CI-equivalent PASS (`AF-EVD-073`). API `8e859434e7dc3f2e9bc03aed91503c2222ce4e8b` / [45641587680](https://github.com/Wealthtechinnovations/api_opcv/actions/runs/45641587680) : 7/7 tests de leases/fencing et CAS Git local (`AF-EVD-074`). API `4d6e1d34abf582d9460f3a7fe2bcea83706cf4c5` / [45641963101](https://github.com/Wealthtechinnovations/api_opcv/actions/runs/45641963101) : 5/5 tests de publication/reprise partielle Git isolée (`AF-EVD-075`).
+- Raccordement du plan au workflow manuel `006f975218e8345bbf42ae2fe7099b216279d8d9` ; CI initiale rouge sur checkout d'un worktree de test modifié, corrigée par `371b742e6f1b773f163921bee99ed762f3a9eff8`. [Run 45642729957](https://github.com/Wealthtechinnovations/api_opcv/actions/runs/45642729957), job 139305436077 SUCCESS ; `PUBLICATION_WORKFLOW_WIRING=PASS`, `MANUAL_WORKFLOW_CI_EQUIVALENT=PASS`, 7/7 leases, 6/6 publication, 6/6 projections exactes. Frontend de recette : `09c3cf780a8200f56c2b39f095f3cb0a1ea4873e`.
+- L'automatisation ChatGPT « Développement horaire AfricaFunds » est désormais active (la mention ancienne de saturation 5/5 est historique). Les passages précédents n'ont pas démontré de développement autonome productif. Aucun déclenchement manuel distant ni publication automatique, aucun claim legacy transféré, aucun transport d'écriture hébergé ni identité/horloge attestés, aucun déploiement S2. `AF-TASK-028` reste IN_PROGRESS ; l'autonomie complète n'est pas certifiée.
+- NEXT_ACTION : qualifier le transport distant authentifié à permissions minimales sur les deux seuls dépôts, l'admission effective/identité/horloge/fencing et le raccordement du moteur codeur ; prouver deux cycles productifs sans prompt et reprise réelle. Ne pas rejouer les tests verts sauf non-régression ; ne pas créer de seconde queue ni modifier les gates.
+
+
 ## 2026-11-25 — AF-TASK-028 : préflight manuel et contrôle CI
 
 - Continuité `CS-AFRICAFUNDS-001` : API `ab3353b2532940d9fa7a4e87c4edd37a3981653f` (workflow manuel dry-run / apply-local, sans push), puis `fa881d271907088a7d774adcb8160065b08b1434` (contrat de tests intégré au Programme Directeur et WORK_LOG).
