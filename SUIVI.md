@@ -13,6 +13,13 @@
 
 <!-- PROGRAMME_DIRECTOR:END -->
 
+## 2026-11-25 — AF-TASK-028 : raccordement distant, préflight réel
+
+- API `7861694728fce6763efa95838f4c1b6db33390a0` : [Programme Director 45644571701](https://github.com/Wealthtechinnovations/api_opcv/actions/runs/45644571701), job 139311954303 SUCCESS. Six tests du contrat d'observation PASS ; appel réel GitHub API depuis le runner, deux dépôts exacts, compte déclencheur Wealthtechinnovations ID 94637590, run/attempt exacts, cinq observations d'horloge GitHub dans la tolérance, deux HEAD alignés avec les checkouts, frontend de recette `b2d924a52f34b55b7a97605a3fa474b7941ad61d`. `REMOTE_EXECUTOR_READ_TRANSPORT=PASS`, `REMOTE_EXECUTOR_WRITER_GATE=CLOSED`. Preuve AF-EVD-077 à persister API.
+- Installation connecteur Wealthtechinnovations 158876244 : accès push constaté aux deux dépôts, mais 13 dépôts accessibles, donc identité minimale exclusive NON attestée. Le compte déclencheur du runner ne prouve pas une identité de writer autonome. Le claim AF-TASK-028 historique ACTIVE ne possède aucun lease moderne ; ne pas le transférer automatiquement ni simuler une réconciliation. Les autres tâches n'offrent pas de code change admissible avec les modes/dépendances/claims actuels.
+- NEXT_ACTION : qualifier une identité d'exécution strictement bornée, réconcilier le claim historique avec preuve de cessation des effets et autorité de transfert, raccorder transport CAS/fencing réel et moteur codeur, vérifier deux passages planifiés productifs distincts avec commits et CI indépendamment observés. Ne pas compter les commits manuels ni les runs CI seuls comme cycles autonomes. Ne pas modifier l'installation partagée, les protections, S2 ni les autres projets. Autonomie complète NON certifiée.
+
+
 ## 2026-11-25 — AF-TASK-028 : recette intégrée, leases/fencing et publication bi-repository
 
 - Continuité `CS-AFRICAFUNDS-001` : API `2a3bfb5ce79dff0e9bd9d7175802d84282d88e49` / [45641152852](https://github.com/Wealthtechinnovations/api_opcv/actions/runs/45641152852) : recette manuelle CI-equivalent PASS (`AF-EVD-073`). API `8e859434e7dc3f2e9bc03aed91503c2222ce4e8b` / [45641587680](https://github.com/Wealthtechinnovations/api_opcv/actions/runs/45641587680) : 7/7 tests de leases/fencing et CAS Git local (`AF-EVD-074`). API `4d6e1d34abf582d9460f3a7fe2bcea83706cf4c5` / [45641963101](https://github.com/Wealthtechinnovations/api_opcv/actions/runs/45641963101) : 5/5 tests de publication/reprise partielle Git isolée (`AF-EVD-075`).
